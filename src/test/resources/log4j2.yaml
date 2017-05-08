@@ -1,0 +1,6 @@
+Configuration:
+  status: fatal
+
+  Loggers:
+    Root:
+      level: fatal

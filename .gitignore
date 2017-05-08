@@ -1,0 +1,6 @@
+/.idea
+/.history
+/target
+**/target
+**/.DS_Store
+/log
