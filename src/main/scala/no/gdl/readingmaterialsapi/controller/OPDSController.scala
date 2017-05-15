@@ -37,6 +37,9 @@ trait OPDSController {
               {x.authors.map(auth => <author><name>{auth.name}</name></author>)}
               <updated>{sdf.format(new Date())}</updated>
               <summary>{x.description}</summary>
+              <link href={x.coverPhoto.large} type="image/jpeg" rel="http://opds-spec.org/image"/>
+              <link href={x.coverPhoto.small} type="image/png" rel="http://opds-spec.org/image/thumbnail"/>
+              <link href={x.downloads.epub} type="application/epub+zip" rel="http://opds-spec.org/acquisition/open-access"/>
             </entry>
           )}
         </feed>
