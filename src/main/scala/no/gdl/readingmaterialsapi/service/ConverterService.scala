@@ -90,6 +90,8 @@ trait ConverterService {
           readingMaterial.educationalUse,
           readingMaterial.educationalRole,
           readingMaterial.timeRequired,
+          rmInLanguage.datePublished,
+          rmInLanguage.dateCreated,
           readingMaterial.categories,
           CoverPhoto(rmInLanguage.coverPhoto.large, rmInLanguage.coverPhoto.small),
           Downloads(rmInLanguage.downloads.epub),

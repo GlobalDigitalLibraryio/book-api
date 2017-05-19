@@ -7,10 +7,11 @@
 
 package no.gdl.readingmaterialsapi.model.domain
 
+import java.text.SimpleDateFormat
 import java.util.Date
 
 import no.gdl.readingmaterialsapi.ReadingMaterialsApiProperties
-import org.json4s.FieldSerializer
+import org.json4s.{DefaultFormats, FieldSerializer}
 import org.json4s.FieldSerializer.ignore
 import org.json4s.native.Serialization.read
 import scalikejdbc._
@@ -30,7 +31,10 @@ case class ReadingMaterialInLanguage(id: Option[Long],
 
 
 object ReadingMaterialInLanguage extends SQLSyntaxSupport[ReadingMaterialInLanguage] {
-  implicit val formats = org.json4s.DefaultFormats
+  implicit val formats = new DefaultFormats {
+    override def dateFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
+  }
+
   override val tableName = "readingmaterialinlanguage"
   override val schemaName = Some(ReadingMaterialsApiProperties.MetaSchema)
 

@@ -8,6 +8,7 @@
 
 package no.gdl.readingmaterialsapi.controller
 
+import java.text.SimpleDateFormat
 import javax.servlet.http.HttpServletRequest
 
 import com.typesafe.scalalogging.LazyLogging
@@ -24,7 +25,10 @@ import org.scalatra.json.NativeJsonSupport
 import scala.util.{Failure, Success, Try}
 
 abstract class GdlController extends ScalatraServlet with NativeJsonSupport with LazyLogging {
-  protected implicit override val jsonFormats: Formats = DefaultFormats
+  protected implicit override val jsonFormats: Formats = new DefaultFormats {
+    override def dateFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS")
+  }
+
 
   before() {
     contentType = formats("json")

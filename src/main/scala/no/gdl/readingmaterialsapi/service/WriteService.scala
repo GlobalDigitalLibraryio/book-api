@@ -38,22 +38,17 @@ trait WriteService {
 
     def updateReadingMaterial(existing: no.gdl.readingmaterialsapi.model.domain.ReadingMaterial, newReadingMaterial: NewReadingMaterial): ReadingMaterial = {
       val inLanguageToKeep = existing.readingMaterialInLanguage.filterNot(_.language == newReadingMaterial.language)
-      val inLanguageToUpdate = existing.readingMaterialInLanguage.find(x => x.language == newReadingMaterial.language)
-      inLanguageToUpdate match {
-        case Some(x) =>
-          x.copy(
-            title = newReadingMaterial.title,
-            description = newReadingMaterial.description,
-            language = newReadingMaterial.language,
-            coverPhoto = CoverPhoto(newReadingMaterial.coverPhoto.large, newReadingMaterial.coverPhoto.small),
-            downloads = Downloads(newReadingMaterial.downloads.epub),
-            dateCreated = newReadingMaterial.dateCreated,
-            datePublished = newReadingMaterial.datePublished,
-            tags = newReadingMaterial.tags,
-            authors = newReadingMaterial.authors
-          )
-        case None => None
-      }
+      val inLanguageToUpdate = existing.readingMaterialInLanguage.find(_.language == newReadingMaterial.language)
+        .map(_.copy(title = newReadingMaterial.title,
+          description = newReadingMaterial.description,
+          language = newReadingMaterial.language,
+          coverPhoto = CoverPhoto(newReadingMaterial.coverPhoto.large, newReadingMaterial.coverPhoto.small),
+          downloads = Downloads(newReadingMaterial.downloads.epub),
+          dateCreated = newReadingMaterial.dateCreated,
+          datePublished = newReadingMaterial.datePublished,
+          tags = newReadingMaterial.tags,
+          authors = newReadingMaterial.authors))
+
 
       val toUpdate = existing.copy(
         title = newReadingMaterial.title,
@@ -73,4 +68,5 @@ trait WriteService {
       converterService.toApiReadingMaterial(readingMaterialsRepository.updateReadingMaterial(toUpdate), newReadingMaterial.language).get
     }
   }
+
 }

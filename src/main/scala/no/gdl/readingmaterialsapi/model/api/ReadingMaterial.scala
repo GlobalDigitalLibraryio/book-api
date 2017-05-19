@@ -7,6 +7,8 @@
 
 package no.gdl.readingmaterialsapi.model.api
 
+import java.util.Date
+
 import org.scalatra.swagger.annotations.ApiModel
 import org.scalatra.swagger.runtime.annotations.ApiModelProperty
 
@@ -46,6 +48,8 @@ case class ReadingMaterial(@(ApiModelProperty@field)(description = "The id of th
                            @(ApiModelProperty@field)(description = "Information about which educational use the reading material is for") educationalUse: Option[String],
                            @(ApiModelProperty@field)(description = "For which role is the reading material intended") educationalRole: Option[String],
                            @(ApiModelProperty@field)(description = "The time required to read through the material. (e.g. PT10M)") timeRequired: Option[String],
+                           @(ApiModelProperty@field)(description = "The date when this reading material was first published (iso-format)") datePublished: Option[Date],
+                           @(ApiModelProperty@field)(description = "The date when this reading material was created (iso-format)") dateCreated: Option[Date],
                            @(ApiModelProperty@field)(description = "Information about categories") categories: Seq[String],
                            @(ApiModelProperty@field)(description = "Cover Photo information") coverPhoto: CoverPhoto,
                            @(ApiModelProperty@field)(description = "Information about downloads") downloads: Downloads,
