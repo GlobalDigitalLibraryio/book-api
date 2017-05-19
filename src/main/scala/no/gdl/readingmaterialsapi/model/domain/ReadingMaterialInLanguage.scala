@@ -7,6 +7,8 @@
 
 package no.gdl.readingmaterialsapi.model.domain
 
+import java.util.Date
+
 import no.gdl.readingmaterialsapi.ReadingMaterialsApiProperties
 import org.json4s.FieldSerializer
 import org.json4s.FieldSerializer.ignore
@@ -21,8 +23,10 @@ case class ReadingMaterialInLanguage(id: Option[Long],
                                      language: String,
                                      coverPhoto: CoverPhoto,
                                      downloads: Downloads,
+                                     dateCreated: Option[Date],
+                                     datePublished: Option[Date],
                                      tags: Seq[String],
-                                     authors: Seq[Author])
+                                     authors: Seq[String])
 
 
 object ReadingMaterialInLanguage extends SQLSyntaxSupport[ReadingMaterialInLanguage] {
@@ -33,7 +37,7 @@ object ReadingMaterialInLanguage extends SQLSyntaxSupport[ReadingMaterialInLangu
   def apply(s: SyntaxProvider[ReadingMaterialInLanguage])(rs:WrappedResultSet): ReadingMaterialInLanguage = apply(s.resultName)(rs)
   def apply(s: ResultName[ReadingMaterialInLanguage])(rs: WrappedResultSet): ReadingMaterialInLanguage = {
     val meta = read[ReadingMaterialInLanguage](rs.string(s.c("document")))
-    ReadingMaterialInLanguage(Some(rs.long(s.c("id"))), Some(rs.int(s.c("revision"))), Some(rs.long(s.c("reading_material_id"))), meta.title, meta.description, meta.language, meta.coverPhoto, meta.downloads, meta.tags, meta.authors)
+    ReadingMaterialInLanguage(Some(rs.long(s.c("id"))), Some(rs.int(s.c("revision"))), Some(rs.long(s.c("reading_material_id"))), meta.title, meta.description, meta.language, meta.coverPhoto, meta.downloads,meta.dateCreated, meta.datePublished, meta.tags, meta.authors)
   }
 
   def opt(rmIL: ResultName[ReadingMaterialInLanguage])(rs: WrappedResultSet): Option[ReadingMaterialInLanguage] = rs.longOpt(rmIL.c("id")).map(_ => ReadingMaterialInLanguage(rmIL)(rs))

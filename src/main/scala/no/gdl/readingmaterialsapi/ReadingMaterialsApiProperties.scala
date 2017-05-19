@@ -34,7 +34,7 @@ object ReadingMaterialsApiProperties extends LazyLogging {
   val MaxPageSize = 100
   val IndexBulkSize = 200
 
-  val DefaultLanguage = "en"
+  val DefaultLanguage = "eng"
 
   lazy val MetaUserName = prop(PropertyKeys.MetaUserNameKey)
   lazy val MetaPassword = prop(PropertyKeys.MetaPasswordKey)

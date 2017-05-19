@@ -15,6 +15,15 @@ trait ConverterService {
   val converterService: ConverterService
 
   class ConverterService {
+    val DefaultLicense = License("cc-by-4.0", Some("Creative Commons Attribution 4.0 International"), Some("https://creativecommons.org/licenses/by/4.0/"))
+    val licenses = Map(
+      "cc-by-4.0" -> DefaultLicense,
+      "cc-by-sa-4.0" -> License("cc-by-sa-4.0", Some("Creative Commons Attribution-ShareAlike 4.0 International"), Some("https://creativecommons.org/licenses/by-sa/4.0/")),
+      "cc-by-nc-4.0" -> License("cc-by-nc-4.0", Some("Creative Commons Attribution-NonCommercial 4.0 International"), Some("https://creativecommons.org/licenses/by-nc/4.0/")),
+      "cc-by-nd-4.0" -> License("cc-by-nd-4.0", Some("Creative Commons Attribution-NoDerivatives 4.0 International"), Some("https://creativecommons.org/licenses/by-nd/4.0/")),
+      "cc-by-nc-sa-4.0" -> License("cc-by-nc-sa-4.0", Some("Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International"), Some("https://creativecommons.org/licenses/by-nd/4.0/"))
+    )
+
     def toDomainReadingMaterialInLanguage(rmInLanguage: NewReadingMaterialInLanguage): model.domain.ReadingMaterialInLanguage = {
       model.domain.ReadingMaterialInLanguage(
         None,
@@ -24,7 +33,11 @@ trait ConverterService {
         rmInLanguage.description,
         rmInLanguage.language,
         model.domain.CoverPhoto(rmInLanguage.coverPhoto.large, rmInLanguage.coverPhoto.small),
-        model.domain.Downloads(rmInLanguage.downloads.epub), rmInLanguage.tags, rmInLanguage.authors.map(a => model.domain.Author(a.id, a.name))
+        model.domain.Downloads(rmInLanguage.downloads.epub),
+        rmInLanguage.dateCreated,
+        rmInLanguage.datePublished,
+        rmInLanguage.tags,
+        rmInLanguage.authors
       )
     }
 
@@ -38,8 +51,10 @@ trait ConverterService {
         newReadingMaterial.language,
         model.domain.CoverPhoto(newReadingMaterial.coverPhoto.large, newReadingMaterial.coverPhoto.small),
         model.domain.Downloads(newReadingMaterial.downloads.epub),
+        newReadingMaterial.dateCreated,
+        newReadingMaterial.datePublished,
         newReadingMaterial.tags,
-        newReadingMaterial.authors.map(a => model.domain.Author(a.id, a.name))
+        newReadingMaterial.authors
       )
 
       model.domain.ReadingMaterial(
@@ -48,9 +63,13 @@ trait ConverterService {
         newReadingMaterial.title,
         newReadingMaterial.description,
         newReadingMaterial.language,
-        model.domain.License(newReadingMaterial.license.license, newReadingMaterial.license.description, newReadingMaterial.license.url),
+        licenses.getOrElse(newReadingMaterial.license, DefaultLicense).license,
         newReadingMaterial.publisher,
         newReadingMaterial.readingLevel,
+        newReadingMaterial.typicalAgeRange,
+        newReadingMaterial.educationalUse,
+        newReadingMaterial.educationalRole,
+        newReadingMaterial.timeRequired,
         newReadingMaterial.categories,
         Seq(rmInLanguage))
     }
@@ -64,14 +83,18 @@ trait ConverterService {
           rmInLanguage.description,
           language,
           readingMaterial.readingMaterialInLanguage.map(_.language),
-          License(readingMaterial.license.license, readingMaterial.license.description, readingMaterial.license.url),
+          licenses.getOrElse(readingMaterial.license, DefaultLicense),
           readingMaterial.publisher,
           readingMaterial.readingLevel,
+          readingMaterial.typicalAgeRange,
+          readingMaterial.educationalUse,
+          readingMaterial.educationalRole,
+          readingMaterial.timeRequired,
           readingMaterial.categories,
           CoverPhoto(rmInLanguage.coverPhoto.large, rmInLanguage.coverPhoto.small),
           Downloads(rmInLanguage.downloads.epub),
           rmInLanguage.tags,
-          rmInLanguage.authors.map(a => Author(a.id, a.name)))
+          rmInLanguage.authors)
       })
     }
   }

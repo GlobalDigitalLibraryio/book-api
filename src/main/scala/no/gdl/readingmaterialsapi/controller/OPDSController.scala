@@ -34,7 +34,7 @@ trait OPDSController {
             <entry>
               <id>urn:gdl:{x.id}</id>
               <title>{x.title}</title>
-              {x.authors.map(auth => <author><name>{auth.name}</name></author>)}
+              {x.authors.map(auth => <author><name>{auth}</name></author>)}
               <updated>{sdf.format(new Date())}</updated>
               <summary>{x.description}</summary>
               <link href={x.coverPhoto.large} type="image/jpeg" rel="http://opds-spec.org/image"/>

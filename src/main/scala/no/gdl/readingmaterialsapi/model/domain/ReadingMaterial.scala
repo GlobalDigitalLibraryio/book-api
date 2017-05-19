@@ -19,9 +19,13 @@ case class ReadingMaterial(id: Option[Long],
                            title: String,
                            description: String,
                            language: String,
-                           license: License,
+                           license: String,
                            publisher: String,
-                           readingLevel: String,
+                           readingLevel: Option[String],
+                           typicalAgeRange: Option[String],
+                           educationalUse: Option[String],
+                           educationalRole: Option[String],
+                           timeRequired: Option[String],
                            categories: Seq[String],
                            readingMaterialInLanguage: Seq[ReadingMaterialInLanguage] = Nil)
 
@@ -34,7 +38,7 @@ object ReadingMaterial extends SQLSyntaxSupport[ReadingMaterial] {
 
   def apply(s: ResultName[ReadingMaterial])(rs: WrappedResultSet): ReadingMaterial = {
     val meta = read[ReadingMaterial](rs.string(s.c("document")))
-    ReadingMaterial(Some(rs.long(s.c("id"))), Some(rs.int(s.c("revision"))), meta.title, meta.description, meta.language, meta.license, meta.publisher, meta.readingLevel, meta.categories)
+    ReadingMaterial(Some(rs.long(s.c("id"))), Some(rs.int(s.c("revision"))), meta.title, meta.description, meta.language, meta.license, meta.publisher, meta.readingLevel, meta.typicalAgeRange, meta.educationalUse, meta.educationalRole, meta.timeRequired, meta.categories)
   }
 
   val JSonSerializer = FieldSerializer[ReadingMaterial](

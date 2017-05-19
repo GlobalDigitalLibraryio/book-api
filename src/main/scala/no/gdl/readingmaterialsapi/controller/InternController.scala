@@ -9,18 +9,19 @@
 package no.gdl.readingmaterialsapi.controller
 
 import no.gdl.readingmaterialsapi.model.api.{NewReadingMaterial, NewReadingMaterialInLanguage}
-import no.gdl.readingmaterialsapi.service.WriteService
+import no.gdl.readingmaterialsapi.service.{ReadService, WriteService}
 import org.scalatra.NotFound
 
 trait InternController {
-  this: WriteService =>
+  this: WriteService with ReadService =>
   val internController: InternController
 
   class InternController extends GdlController {
     post("/new") {
-      writeService.newReadingMaterial(extract[NewReadingMaterial](request.body)) match {
-        case Some(x) => x
-        case None => NotFound("TODO: Denne kan nesten ikke være 404")
+      val newReadingMaterial = extract[NewReadingMaterial](request.body)
+      readService.withTitle(newReadingMaterial.title) match {
+        case Some(existing) => writeService.updateReadingMaterial(existing, newReadingMaterial)
+        case None => writeService.newReadingMaterial(newReadingMaterial)
       }
     }
 

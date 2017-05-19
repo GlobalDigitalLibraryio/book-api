@@ -15,6 +15,10 @@ trait ReadService {
   val readService: ReadService
 
   class ReadService {
+    def withTitle(title: String): Option[no.gdl.readingmaterialsapi.model.domain.ReadingMaterial] = {
+      readingMaterialsRepository.withTitle(title)
+    }
+
     def withId(id: Long, language: String): Option[ReadingMaterial] = {
       readingMaterialsRepository.withId(id).flatMap(c => converterService.toApiReadingMaterial(c, language))
     }

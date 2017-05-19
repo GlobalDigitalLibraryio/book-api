@@ -18,11 +18,25 @@ trait ReadingMaterialsRepository {
   this: DataSource =>
   val readingMaterialsRepository: ReadingMaterialsRepository
 
+  def inTransaction[A](work: DBSession => A)(implicit session: DBSession = null):A = {
+    Option(session) match {
+      case Some(x) => work(x)
+      case None => {
+        DB localTx { implicit newSession =>
+          work(newSession)
+        }
+      }
+    }
+  }
+
   class ReadingMaterialsRepository extends LazyLogging {
 
 
     implicit val formats = org.json4s.DefaultFormats
 
+    def withTitle(title: String): Option[ReadingMaterial] = {
+      readingMaterialWhere(sqls"rm.document->>'title' = $title")
+    }
 
     def withId(id: Long)(implicit session: DBSession = ReadOnlyAutoSession): Option[ReadingMaterial] = {
       readingMaterialWhere(sqls"rm.id = $id")
@@ -35,6 +49,51 @@ trait ReadingMaterialsRepository {
         .toMany(ReadingMaterialInLanguage.opt(rmIL.resultName))
         .map { (readingMaterial, readingMaterialInLanguage) => readingMaterial.copy(readingMaterialInLanguage = readingMaterialInLanguage) }
         .list.apply()
+    }
+
+    def updateReadingMaterial(toUpdate: ReadingMaterial)(implicit session: DBSession = AutoSession): ReadingMaterial = {
+      if(toUpdate.id.isEmpty) {
+        throw new RuntimeException("A non-persisted reading-material cannot be updated without being saved first")
+      }
+
+      val dataObject = new PGobject()
+      dataObject.setType("jsonb")
+      dataObject.setValue(write(toUpdate))
+
+      val newRevision = toUpdate.revision.getOrElse(0) + 1
+      val count = sql"update ${ReadingMaterial.table} set document=${dataObject}, revision=$newRevision where id=${toUpdate.id} and revision=${toUpdate.revision}".update.apply
+
+      if(count != 1) {
+        val message = s"Found revision mismatch when attempting to update reading-material ${toUpdate.revision}"
+        logger.info(message)
+        throw new RuntimeException(message) //TODO: Replace with Failure
+      }
+
+      val updatedRmInLanguage = toUpdate.readingMaterialInLanguage.map(updateReadingMaterialInLanguage)
+      toUpdate.copy(revision = Some(newRevision), readingMaterialInLanguage = updatedRmInLanguage)
+
+    }
+
+    def updateReadingMaterialInLanguage(toUpdate: ReadingMaterialInLanguage)(implicit session: DBSession = AutoSession): ReadingMaterialInLanguage = {
+      if(toUpdate.id.isEmpty) {
+        throw new RuntimeException("A non-persisted reading-material-in-language cannot be updated without being saved first")
+      }
+
+      val dataObject = new PGobject()
+      dataObject.setType("jsonb")
+      dataObject.setValue(write(toUpdate))
+
+      val newRevision = toUpdate.revision.getOrElse(0) + 1
+      val count = sql"update ${ReadingMaterialInLanguage.table} set document=${dataObject}, revision=$newRevision where id=${toUpdate.id} and revision=${toUpdate.revision}".update.apply
+
+      if(count != 1) {
+        val message = s"Found revision mismatch when attempting to update reading-material ${toUpdate.revision}"
+        logger.info(message)
+        throw new RuntimeException(message) //TODO: Replace with Failure
+      }
+
+      toUpdate.copy(revision = Some(newRevision))
+
     }
 
     def insertReadingMaterial(readingMaterial: ReadingMaterial) (implicit session: DBSession = AutoSession): ReadingMaterial = {
