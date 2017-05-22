@@ -9,8 +9,10 @@ package no.gdl.readingmaterialsapi.service
 
 import com.typesafe.scalalogging.LazyLogging
 import no.gdl.readingmaterialsapi.model.api.{NewReadingMaterial, NewReadingMaterialInLanguage, ReadingMaterial}
-import no.gdl.readingmaterialsapi.model.domain.{CoverPhoto, Downloads, License}
+import no.gdl.readingmaterialsapi.model.domain.{CoverPhoto, Downloads, ReadingMaterialInLanguage}
 import no.gdl.readingmaterialsapi.repository.ReadingMaterialsRepository
+
+import scala.util.{Failure, Success, Try}
 
 
 trait WriteService {
@@ -19,21 +21,39 @@ trait WriteService {
 
   class WriteService extends LazyLogging {
 
-    def newReadingMaterialInLanguage(id: Long, rmInLanguage: NewReadingMaterialInLanguage): Option[ReadingMaterial] = {
+    def newReadingMaterialInLanguage(id: Long, rmInLanguage: NewReadingMaterialInLanguage): Try[ReadingMaterial] = {
       readingMaterialsRepository.insertReadingMaterialInLanguage(
         converterService.toDomainReadingMaterialInLanguage(rmInLanguage).copy(readingMaterialId = Some(id)))
 
-      readingMaterialsRepository.withId(id).flatMap(a => converterService.toApiReadingMaterial(a, rmInLanguage.language))
+      readingMaterialsRepository.withId(id).flatMap(a => converterService.toApiReadingMaterial(a, rmInLanguage.language)) match {
+        case Some(x) => Success(x)
+        case None => Failure(new RuntimeException(s"Could not read newly inserted reading material for langeuage ${rmInLanguage.language}"))
+      }
     }
 
-    def newReadingMaterial(newReadingMaterial: NewReadingMaterial): ReadingMaterial = {
-      val inserted = converterService.toApiReadingMaterial(
-        readingMaterialsRepository.insertReadingMaterial(
-          converterService.toDomainReadingMaterial(newReadingMaterial)), newReadingMaterial.language).get
-      //TODO: Better handling of the option.get
+    def newReadingMaterial(newReadingMaterial: NewReadingMaterial): Try[ReadingMaterial] = {
+      converterService.toApiReadingMaterial(readingMaterialsRepository.insertReadingMaterial(
+        converterService.toDomainReadingMaterial(newReadingMaterial)), newReadingMaterial.language) match {
+        case Some(x) => Success(x)
+        case None => Failure(new RuntimeException(s"Could not read newly inserted reading material for langeuage ${newReadingMaterial.language}"))
+      }
+    }
 
-      logger.info(s"Added reading material with id = ${inserted.id}")
-      inserted
+    def updateReadingMaterialInLanguage(existing: ReadingMaterialInLanguage, newTranslation: NewReadingMaterialInLanguage): ReadingMaterialInLanguage = {
+      val newDomainTranslation = converterService.toDomainReadingMaterialInLanguage(newTranslation)
+      val toUpdate = existing.copy(
+        title = newDomainTranslation.title,
+        description = newDomainTranslation.description,
+        coverPhoto = newDomainTranslation.coverPhoto,
+        downloads = newDomainTranslation.downloads,
+        dateCreated = newDomainTranslation.dateCreated,
+        datePublished = newDomainTranslation.datePublished,
+        tags = newDomainTranslation.tags,
+        authors = newDomainTranslation.authors)
+
+      val updated = readingMaterialsRepository.updateReadingMaterialInLanguage(toUpdate)
+      logger.info(s"Updated readingmaterial in language with id = ${updated.id}")
+      updated
     }
 
     def updateReadingMaterial(existing: no.gdl.readingmaterialsapi.model.domain.ReadingMaterial, newReadingMaterial: NewReadingMaterial): ReadingMaterial = {

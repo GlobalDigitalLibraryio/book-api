@@ -11,10 +11,10 @@ import java.text.SimpleDateFormat
 import java.util.Date
 
 import no.gdl.readingmaterialsapi.ReadingMaterialsApiProperties.DefaultLanguage
-import no.gdl.readingmaterialsapi.service.ReadService
+import no.gdl.readingmaterialsapi.service.{ConverterService, ReadService}
 
 trait OPDSController {
-  this: ReadService =>
+  this: ReadService with ConverterService =>
   val opdsController: OPDSController
   val sdf: SimpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ")
 
@@ -25,12 +25,14 @@ trait OPDSController {
     }
 
     get("/catalog.atom") {
+      val language = paramOrDefault("language", DefaultLanguage)
+
         <feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/terms/" xmlns:opds="http://opds-spec.org/2010/catalog">
           <id>http://api.digitallibrary.io/reading-materials-api/opds/catalog.atom</id>
           <title>Global Digital Library - Open Access</title>
           <updated>2017-04-28T12:54:15Z</updated>
           <link href="http://api.digitallibrary.io/reading-materials-api/opds/catalog.atom" rel="self"/>
-          {readService.all(paramOrDefault("language", DefaultLanguage)).map(x =>
+          {readService.all(language).flatMap(c => converterService.toApiReadingMaterial(c, language)).map(x =>
             <entry>
               <id>urn:gdl:{x.id}</id>
               <title>{x.title}</title>

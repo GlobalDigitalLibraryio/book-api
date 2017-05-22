@@ -13,14 +13,14 @@ import no.gdl.readingmaterialsapi.model.api
 import no.gdl.readingmaterialsapi.model.api.{AccessDeniedException, Error, ValidationError}
 import no.gdl.readingmaterialsapi.model.domain.Sort
 import no.gdl.readingmaterialsapi.repository.ReadingMaterialsRepository
-import no.gdl.readingmaterialsapi.service.ReadService
+import no.gdl.readingmaterialsapi.service.{ConverterService, ReadService}
 import io.digitallibrary.network.AuthUser
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra._
 import org.scalatra.swagger.{ResponseMessage, Swagger, SwaggerSupport}
 
 trait ReadingMaterialsController {
-  this: ReadService with ReadingMaterialsRepository =>
+  this: ReadService with ConverterService =>
   val readingMaterialsController: ReadingMaterialsController
 
   class ReadingMaterialsController(implicit val swagger: Swagger) extends GdlController with SwaggerSupport {
@@ -68,15 +68,15 @@ trait ReadingMaterialsController {
       val pageSize = longOrDefault("page-size", DefaultPageSize)
       val page = longOrDefault("page", 1)
 
-      readService.all(language)
+      readService.all(language).flatMap(c => converterService.toApiReadingMaterial(c, language))
     }
 
     get("/:id", operation(getReadingMaterialDoc)) {
       val id = long("id")
       val language = paramOrDefault("language", DefaultLanguage)
 
-      readService.withId(id, language) match {
-        case Some(cover) => cover
+      readService.withId(id, language).map(c => converterService.toApiReadingMaterial(c, language)) match {
+        case Some(x) => x
         case None => NotFound(body = Error(Error.NOT_FOUND, s"No reading material with id $id found"))
       }
     }

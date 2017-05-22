@@ -8,6 +8,7 @@
 package no.gdl.readingmaterialsapi.service
 
 import no.gdl.readingmaterialsapi.model.api.ReadingMaterial
+import no.gdl.readingmaterialsapi.model.domain.ReadingMaterialInLanguage
 import no.gdl.readingmaterialsapi.repository.ReadingMaterialsRepository
 
 trait ReadService {
@@ -19,12 +20,16 @@ trait ReadService {
       readingMaterialsRepository.withTitle(title)
     }
 
-    def withId(id: Long, language: String): Option[ReadingMaterial] = {
-      readingMaterialsRepository.withId(id).flatMap(c => converterService.toApiReadingMaterial(c, language))
+    def withId(id: Long, language: String): Option[no.gdl.readingmaterialsapi.model.domain.ReadingMaterial] = {
+      readingMaterialsRepository.withId(id)
     }
 
-    def all(language: String): Seq[ReadingMaterial] = {
-      readingMaterialsRepository.all().flatMap(c => converterService.toApiReadingMaterial(c, language))
+    def readingMaterialInLanguageFor(id: Long, language: String): Option[no.gdl.readingmaterialsapi.model.domain.ReadingMaterialInLanguage] = {
+      readingMaterialsRepository.readingMaterialInLanguageFor(id, language)
+    }
+
+    def all(language: String): Seq[no.gdl.readingmaterialsapi.model.domain.ReadingMaterial] = {
+      readingMaterialsRepository.all()
     }
   }
 }

@@ -42,6 +42,10 @@ trait ReadingMaterialsRepository {
       readingMaterialWhere(sqls"rm.id = $id")
     }
 
+    def readingMaterialInLanguageFor(id: Long, language: String): Option[ReadingMaterialInLanguage] = {
+      withId(id).flatMap(_.readingMaterialInLanguage.find(_.language == language))
+    }
+
     def all()(implicit session: DBSession = ReadOnlyAutoSession): Seq[ReadingMaterial] = {
       val (rm, rmIL) = (ReadingMaterial.syntax("rm"), ReadingMaterialInLanguage.syntax("rmIL"))
       sql"select ${rm.result.*}, ${rmIL.result.*} from ${ReadingMaterial.as(rm)} left join ${ReadingMaterialInLanguage.as(rmIL)} on ${rm.id} = ${rmIL.readingMaterialId}"

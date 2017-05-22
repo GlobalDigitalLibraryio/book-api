@@ -10,7 +10,6 @@ package no.gdl.readingmaterialsapi.controller
 
 import no.gdl.readingmaterialsapi.model.api.{NewReadingMaterial, NewReadingMaterialInLanguage}
 import no.gdl.readingmaterialsapi.service.{ReadService, WriteService}
-import org.scalatra.NotFound
 
 trait InternController {
   this: WriteService with ReadService =>
@@ -21,14 +20,16 @@ trait InternController {
       val newReadingMaterial = extract[NewReadingMaterial](request.body)
       readService.withTitle(newReadingMaterial.title) match {
         case Some(existing) => writeService.updateReadingMaterial(existing, newReadingMaterial)
-        case None => writeService.newReadingMaterial(newReadingMaterial)
+        case None => writeService.newReadingMaterial(newReadingMaterial).get
       }
     }
 
     post("/:id/languages/") {
-      writeService.newReadingMaterialInLanguage(long("id"), extract[NewReadingMaterialInLanguage](request.body)) match {
-        case Some(x) => x
-        case None => NotFound("TODO: Denne kan nesten ikke være 404")
+      val bookId = long("id")
+      val newTranslation = extract[NewReadingMaterialInLanguage](request.body)
+      readService.readingMaterialInLanguageFor(bookId, newTranslation.language) match {
+        case Some(existing) => writeService.updateReadingMaterialInLanguage(existing, newTranslation)
+        case None => writeService.newReadingMaterialInLanguage(bookId, newTranslation).get
       }
     }
   }
