@@ -18,18 +18,23 @@ trait InternController {
   class InternController extends GdlController {
     post("/new") {
       val newReadingMaterial = extract[NewReadingMaterial](request.body)
-      readService.withTitle(newReadingMaterial.title) match {
+      readService.withExternalId(newReadingMaterial.externalId) match {
         case Some(existing) => writeService.updateReadingMaterial(existing, newReadingMaterial)
         case None => writeService.newReadingMaterial(newReadingMaterial).get
       }
     }
 
-    post("/:id/languages/") {
-      val bookId = long("id")
+    post("/:externalId/languages/") {
+      val externalId = params("externalId")
       val newTranslation = extract[NewReadingMaterialInLanguage](request.body)
-      readService.readingMaterialInLanguageFor(bookId, newTranslation.language) match {
+      readService.readingMaterialInLanguageWithExternalId(newTranslation.externalId) match {
         case Some(existing) => writeService.updateReadingMaterialInLanguage(existing, newTranslation)
-        case None => writeService.newReadingMaterialInLanguage(bookId, newTranslation).get
+        case None => {
+          readService.withExternalId(Some(externalId)) match {
+            case Some(existing) => writeService.newReadingMaterialInLanguage(existing.id.get, newTranslation).get
+            case None => throw new RuntimeException(s"No reading material with external_id = $externalId")
+          }
+        }
       }
     }
   }

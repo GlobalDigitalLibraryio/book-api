@@ -7,8 +7,8 @@
 
 package no.gdl.readingmaterialsapi.service
 
-import no.gdl.readingmaterialsapi.model.api.ReadingMaterial
-import no.gdl.readingmaterialsapi.model.domain.ReadingMaterialInLanguage
+
+import no.gdl.readingmaterialsapi.model.domain.{ReadingMaterial, ReadingMaterialInLanguage}
 import no.gdl.readingmaterialsapi.repository.ReadingMaterialsRepository
 
 trait ReadService {
@@ -16,19 +16,23 @@ trait ReadService {
   val readService: ReadService
 
   class ReadService {
-    def withTitle(title: String): Option[no.gdl.readingmaterialsapi.model.domain.ReadingMaterial] = {
+    def withTitle(title: String): Option[ReadingMaterial] = {
       readingMaterialsRepository.withTitle(title)
     }
 
-    def withId(id: Long, language: String): Option[no.gdl.readingmaterialsapi.model.domain.ReadingMaterial] = {
+    def withId(id: Long): Option[ReadingMaterial] = {
       readingMaterialsRepository.withId(id)
     }
 
-    def readingMaterialInLanguageFor(id: Long, language: String): Option[no.gdl.readingmaterialsapi.model.domain.ReadingMaterialInLanguage] = {
-      readingMaterialsRepository.readingMaterialInLanguageFor(id, language)
+    def withExternalId(externalId: Option[String]): Option[ReadingMaterial] = {
+      externalId.flatMap(readingMaterialsRepository.withExternalId)
     }
 
-    def all(language: String): Seq[no.gdl.readingmaterialsapi.model.domain.ReadingMaterial] = {
+    def readingMaterialInLanguageWithExternalId(externalId: Option[String]): Option[ReadingMaterialInLanguage] = {
+      externalId.flatMap(readingMaterialsRepository.readingMaterialInLanguageWithExternalId)
+    }
+
+    def all(language: String): Seq[ReadingMaterial] = {
       readingMaterialsRepository.all()
     }
   }

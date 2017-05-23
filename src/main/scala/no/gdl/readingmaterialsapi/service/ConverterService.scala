@@ -29,6 +29,7 @@ trait ConverterService {
         None,
         None,
         None,
+        rmInLanguage.externalId,
         rmInLanguage.title,
         rmInLanguage.description,
         rmInLanguage.language,
@@ -46,6 +47,7 @@ trait ConverterService {
         None,
         None,
         None,
+        newReadingMaterial.externalId,
         newReadingMaterial.title,
         newReadingMaterial.description,
         newReadingMaterial.language,
@@ -60,6 +62,7 @@ trait ConverterService {
       model.domain.ReadingMaterial(
         None,
         None,
+        newReadingMaterial.externalId,
         newReadingMaterial.title,
         newReadingMaterial.description,
         newReadingMaterial.language,

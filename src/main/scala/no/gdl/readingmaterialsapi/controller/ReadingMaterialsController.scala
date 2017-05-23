@@ -75,7 +75,7 @@ trait ReadingMaterialsController {
       val id = long("id")
       val language = paramOrDefault("language", DefaultLanguage)
 
-      readService.withId(id, language).map(c => converterService.toApiReadingMaterial(c, language)) match {
+      readService.withId(id).flatMap(c => converterService.toApiReadingMaterial(c, language)) match {
         case Some(x) => x
         case None => NotFound(body = Error(Error.NOT_FOUND, s"No reading material with id $id found"))
       }

@@ -42,8 +42,12 @@ trait ReadingMaterialsRepository {
       readingMaterialWhere(sqls"rm.id = $id")
     }
 
-    def readingMaterialInLanguageFor(id: Long, language: String): Option[ReadingMaterialInLanguage] = {
-      withId(id).flatMap(_.readingMaterialInLanguage.find(_.language == language))
+    def withExternalId(externalId: String)(implicit session: DBSession = ReadOnlyAutoSession): Option[ReadingMaterial] = {
+      readingMaterialWhere(sqls"rm.external_id = $externalId")
+    }
+
+    def readingMaterialInLanguageWithExternalId(externalId: String): Option[ReadingMaterialInLanguage] = {
+      readingMaterialInLanguageWhere(sqls"rmIL.external_id = $externalId")
     }
 
     def all()(implicit session: DBSession = ReadOnlyAutoSession): Seq[ReadingMaterial] = {
@@ -107,7 +111,7 @@ trait ReadingMaterialsRepository {
 
       val startRevision = 1
 
-      val readingMaterialId = sql"insert into ${ReadingMaterial.table} (document, revision) values (${dataObject}, $startRevision)".updateAndReturnGeneratedKey.apply
+      val readingMaterialId = sql"insert into ${ReadingMaterial.table} (document, revision, external_id) values (${dataObject}, $startRevision, ${readingMaterial.externalId})".updateAndReturnGeneratedKey.apply
       val inLanguages = readingMaterial.readingMaterialInLanguage.map(rm => {
         insertReadingMaterialInLanguage(rm.copy(readingMaterialId = Some(readingMaterialId)))
       })
@@ -120,7 +124,7 @@ trait ReadingMaterialsRepository {
       dataObject.setType("jsonb")
       dataObject.setValue(write(readingMaterialInLanguage))
 
-      val id = sql"insert into ${ReadingMaterialInLanguage.table} (reading_material_id, document, revision) values (${readingMaterialInLanguage.readingMaterialId}, ${dataObject}, $startRevision)".updateAndReturnGeneratedKey.apply
+      val id = sql"insert into ${ReadingMaterialInLanguage.table} (reading_material_id, document, revision, external_id) values (${readingMaterialInLanguage.readingMaterialId}, ${dataObject}, $startRevision, ${readingMaterialInLanguage.externalId})".updateAndReturnGeneratedKey.apply
       readingMaterialInLanguage.copy(id = Some(id), revision = Some(startRevision))
     }
 
@@ -132,6 +136,11 @@ trait ReadingMaterialsRepository {
         .map { (readingMaterial, readingMaterialInLanguage) => readingMaterial.copy(readingMaterialInLanguage = readingMaterialInLanguage) }
         .single.apply()
 
+    }
+
+    private def readingMaterialInLanguageWhere(whereClause: SQLSyntax)(implicit session: DBSession = ReadOnlyAutoSession): Option[ReadingMaterialInLanguage] = {
+      val rmIL = ReadingMaterialInLanguage.syntax("rmIL")
+      sql"select ${rmIL.result.*} from ${ReadingMaterialInLanguage.as(rmIL)} where $whereClause".map(ReadingMaterialInLanguage(rmIL)).single.apply
     }
   }
 

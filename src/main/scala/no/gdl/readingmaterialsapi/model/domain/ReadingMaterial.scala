@@ -16,6 +16,7 @@ import scalikejdbc._
 
 case class ReadingMaterial(id: Option[Long],
                            revision: Option[Int],
+                           externalId: Option[String],
                            title: String,
                            description: String,
                            language: String,
@@ -38,12 +39,13 @@ object ReadingMaterial extends SQLSyntaxSupport[ReadingMaterial] {
 
   def apply(s: ResultName[ReadingMaterial])(rs: WrappedResultSet): ReadingMaterial = {
     val meta = read[ReadingMaterial](rs.string(s.c("document")))
-    ReadingMaterial(Some(rs.long(s.c("id"))), Some(rs.int(s.c("revision"))), meta.title, meta.description, meta.language, meta.license, meta.publisher, meta.readingLevel, meta.typicalAgeRange, meta.educationalUse, meta.educationalRole, meta.timeRequired, meta.categories)
+    ReadingMaterial(Some(rs.long(s.c("id"))), Some(rs.int(s.c("revision"))), rs.stringOpt(s.c("external_id")), meta.title, meta.description, meta.language, meta.license, meta.publisher, meta.readingLevel, meta.typicalAgeRange, meta.educationalUse, meta.educationalRole, meta.timeRequired, meta.categories)
   }
 
   val JSonSerializer = FieldSerializer[ReadingMaterial](
     ignore("id") orElse
       ignore("revision") orElse
-      ignore("readingMaterialInLanguage")
+      ignore("readingMaterialInLanguage") orElse
+      ignore("externalId")
   )
 }

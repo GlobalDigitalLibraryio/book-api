@@ -9,7 +9,8 @@ package no.gdl.readingmaterialsapi.model.api
 
 import java.util.Date
 
-case class NewReadingMaterial(title: String,
+case class NewReadingMaterial(externalId: Option[String],
+                              title: String,
                               description: String,
                               language: String,
                               coverPhoto: CoverPhoto,
@@ -27,7 +28,8 @@ case class NewReadingMaterial(title: String,
                               educationalRole: Option[String],
                               timeRequired: Option[String])
 
-case class NewReadingMaterialInLanguage(title: String,
+case class NewReadingMaterialInLanguage(externalId: Option[String],
+                                        title: String,
                                         description: String,
                                         language: String,
                                         dateCreated: Option[Date],

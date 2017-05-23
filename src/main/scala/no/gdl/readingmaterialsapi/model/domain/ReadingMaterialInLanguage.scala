@@ -19,6 +19,7 @@ import scalikejdbc._
 case class ReadingMaterialInLanguage(id: Option[Long],
                                      revision: Option[Int],
                                      readingMaterialId: Option[Long],
+                                     externalId: Option[String],
                                      title: String,
                                      description: String,
                                      language: String,
@@ -41,7 +42,7 @@ object ReadingMaterialInLanguage extends SQLSyntaxSupport[ReadingMaterialInLangu
   def apply(s: SyntaxProvider[ReadingMaterialInLanguage])(rs:WrappedResultSet): ReadingMaterialInLanguage = apply(s.resultName)(rs)
   def apply(s: ResultName[ReadingMaterialInLanguage])(rs: WrappedResultSet): ReadingMaterialInLanguage = {
     val meta = read[ReadingMaterialInLanguage](rs.string(s.c("document")))
-    ReadingMaterialInLanguage(Some(rs.long(s.c("id"))), Some(rs.int(s.c("revision"))), Some(rs.long(s.c("reading_material_id"))), meta.title, meta.description, meta.language, meta.coverPhoto, meta.downloads,meta.dateCreated, meta.datePublished, meta.tags, meta.authors)
+    ReadingMaterialInLanguage(Some(rs.long(s.c("id"))), Some(rs.int(s.c("revision"))), Some(rs.long(s.c("reading_material_id"))), rs.stringOpt(s.c("external_id")), meta.title, meta.description, meta.language, meta.coverPhoto, meta.downloads,meta.dateCreated, meta.datePublished, meta.tags, meta.authors)
   }
 
   def opt(rmIL: ResultName[ReadingMaterialInLanguage])(rs: WrappedResultSet): Option[ReadingMaterialInLanguage] = rs.longOpt(rmIL.c("id")).map(_ => ReadingMaterialInLanguage(rmIL)(rs))
@@ -49,6 +50,7 @@ object ReadingMaterialInLanguage extends SQLSyntaxSupport[ReadingMaterialInLangu
   val JSonSerializer = FieldSerializer[ReadingMaterial](
     ignore("id") orElse
       ignore("revision") orElse
-      ignore("readingMaterialId")
+      ignore("readingMaterialId") orElse
+      ignore("externalId")
   )
 }
