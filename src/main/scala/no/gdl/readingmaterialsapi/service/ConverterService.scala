@@ -7,7 +7,8 @@
 
 package no.gdl.readingmaterialsapi.service
 
-import no.gdl.readingmaterialsapi.model
+import io.digitallibrary.network.ApplicationUrl
+import no.gdl.readingmaterialsapi.{ReadingMaterialsApiProperties, model}
 import no.gdl.readingmaterialsapi.model.api._
 
 
@@ -96,11 +97,22 @@ trait ConverterService {
           rmInLanguage.datePublished,
           rmInLanguage.dateCreated,
           readingMaterial.categories,
-          CoverPhoto(rmInLanguage.coverPhoto.large, rmInLanguage.coverPhoto.small),
-          Downloads(rmInLanguage.downloads.epub),
+          toApiCoverPhoto(rmInLanguage.coverPhoto),
+          toApiDownloads(rmInLanguage.downloads),
           rmInLanguage.tags,
           rmInLanguage.authors)
       })
+    }
+
+    def toApiDownloads(downloads: model.domain.Downloads): Downloads = {
+      Downloads(epub = s"${ApplicationUrl.getHost}${ReadingMaterialsApiProperties.EpubPath}/${downloads.epub}")
+    }
+
+    def toApiCoverPhoto(coverPhoto: model.domain.CoverPhoto): CoverPhoto = {
+      val small = s"${ApplicationUrl.getHost}${ReadingMaterialsApiProperties.ImagePath}/${coverPhoto.small}?width=${ReadingMaterialsApiProperties.CoverPhotoTumbSize}"
+      val large = s"${ApplicationUrl.getHost}${ReadingMaterialsApiProperties.ImagePath}/${coverPhoto.large}"
+
+      CoverPhoto(large, small)
     }
   }
 }

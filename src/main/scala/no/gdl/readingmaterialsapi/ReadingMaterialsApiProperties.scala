@@ -36,6 +36,14 @@ object ReadingMaterialsApiProperties extends LazyLogging {
 
   val DefaultLanguage = "eng"
 
+  val OpdsPath = "/reading-materials-api/opds"
+  val ApiPath = "/reading-materials-api/v1/reading-materials"
+  val ApiDocPath = "/reading-materials-api/api-docs"
+  val EpubPath = "/reading-materials-api/epub"
+  val ImagePath = "/image-api/v1/raw"
+
+  val CoverPhotoTumbSize = 200
+
   lazy val MetaUserName = prop(PropertyKeys.MetaUserNameKey)
   lazy val MetaPassword = prop(PropertyKeys.MetaPasswordKey)
   lazy val MetaResource = prop(PropertyKeys.MetaResourceKey)
