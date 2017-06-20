@@ -37,6 +37,7 @@ case class Author(@(ApiModelProperty@field)(description = "Id of the author") id
 @ApiModel(description = "Information about reading material")
 case class ReadingMaterial(@(ApiModelProperty@field)(description = "The id of the reading material") id: Long,
                            @(ApiModelProperty@field)(description = "The revision of the reading material") revision: Long,
+                           @(ApiModelProperty@field)(description = "User determined identifier") externalId: Option[String],
                            @(ApiModelProperty@field)(description = "The title of the reading material") title: String,
                            @(ApiModelProperty@field)(description = "Description of the reading material") description: String,
                            @(ApiModelProperty@field)(description = "Current language") language: String,

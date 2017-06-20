@@ -83,6 +83,7 @@ trait ConverterService {
         ReadingMaterial(
           readingMaterial.id.get,
           readingMaterial.revision.get,
+          rmInLanguage.externalId,
           rmInLanguage.title,
           rmInLanguage.description,
           language,
@@ -98,14 +99,14 @@ trait ConverterService {
           rmInLanguage.dateCreated,
           readingMaterial.categories,
           toApiCoverPhoto(rmInLanguage.coverPhoto),
-          toApiDownloads(rmInLanguage.downloads),
+          toApiDownloads(rmInLanguage.downloads, rmInLanguage.language),
           rmInLanguage.tags,
           rmInLanguage.authors)
       })
     }
 
-    def toApiDownloads(downloads: model.domain.Downloads): Downloads = {
-      Downloads(epub = s"${ApplicationUrl.getHost}${ReadingMaterialsApiProperties.EpubPath}/${downloads.epub}")
+    def toApiDownloads(downloads: model.domain.Downloads, language: String): Downloads = {
+      Downloads(epub = s"${ApplicationUrl.getHost}${ReadingMaterialsApiProperties.EpubPath}/$language/${downloads.epub}")
     }
 
     def toApiCoverPhoto(coverPhoto: model.domain.CoverPhoto): CoverPhoto = {
