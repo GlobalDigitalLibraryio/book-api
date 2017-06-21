@@ -8,11 +8,13 @@
 
 package no.gdl.readingmaterialsapi.controller
 
-import no.gdl.readingmaterialsapi.model.api.{NewReadingMaterial, NewReadingMaterialInLanguage}
-import no.gdl.readingmaterialsapi.service.{ReadService, WriteService}
+import no.gdl.readingmaterialsapi.ReadingMaterialsApiProperties.DefaultLanguage
+import no.gdl.readingmaterialsapi.model.api.{Error, NewReadingMaterial, NewReadingMaterialInLanguage}
+import no.gdl.readingmaterialsapi.service.{ConverterService, ReadService, WriteService}
+import org.scalatra.NotFound
 
 trait InternController {
-  this: WriteService with ReadService =>
+  this: WriteService with ReadService with ConverterService =>
   val internController: InternController
 
   class InternController extends GdlController {
@@ -35,6 +37,16 @@ trait InternController {
             case None => throw new RuntimeException(s"No reading material with external_id = $externalId")
           }
         }
+      }
+    }
+
+    get("/:externalId") {
+      val externalId = params.get("externalId")
+      val language = paramOrDefault("language", DefaultLanguage)
+
+      readService.withExternalId(externalId).flatMap(c => converterService.toApiReadingMaterial(c, language)) match {
+        case Some(x) => x
+        case None => NotFound(body = Error(Error.NOT_FOUND, s"No reading material with id $externalId found"))
       }
     }
   }
