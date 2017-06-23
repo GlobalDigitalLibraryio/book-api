@@ -49,7 +49,8 @@ trait WriteService {
         dateCreated = newDomainTranslation.dateCreated,
         datePublished = newDomainTranslation.datePublished,
         tags = newDomainTranslation.tags,
-        authors = newDomainTranslation.authors)
+        authors = newDomainTranslation.authors,
+        language = newDomainTranslation.language)
 
       val updated = readingMaterialsRepository.updateReadingMaterialInLanguage(toUpdate)
       logger.info(s"Updated readingmaterial in language with id = ${updated.id}")
