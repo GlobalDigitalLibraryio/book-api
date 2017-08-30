@@ -6,7 +6,7 @@ Configuration:
       name: Console
       target: SYSTEM_OUT
       PatternLayout:
-        Pattern: "[reading-materials-api] %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] (%X{correlationID}) %-5level %C.%M#%L: %msg%n"
+        Pattern: "[book-api] %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] (%X{correlationID}) %-5level %C.%M#%L: %msg%n"
 
   Loggers:
     Logger:

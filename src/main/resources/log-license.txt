@@ -1,5 +1,5 @@
 
-GDL Reading Materials-API. API for getting reading materials from Global Digital Library.
+GDL Book-API. API for getting books from Global Digital Library.
 Copyright (C) 2017 GDL
 
 This program is free software: you can redistribute it and/or modify

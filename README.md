@@ -1,3 +1,3 @@
-# reading-materials-api
+# book-api
 
-API for GDL Reading Materials API
+API for fetching books from GDL

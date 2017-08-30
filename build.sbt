@@ -27,10 +27,10 @@ lazy val commonSettings = Seq(
   scalaVersion := Scalaversion
 )
 
-lazy val reading_materials_api = (project in file(".")).
+lazy val book_api = (project in file(".")).
   settings(commonSettings: _*).
   settings(
-    name := "reading-materials-api",
+    name := "book-api",
     javacOptions ++= Seq("-source", "1.8", "-target", "1.8"),
     scalacOptions := Seq("-target:jvm-1.8"),
     libraryDependencies ++= Seq(
@@ -66,8 +66,8 @@ lazy val reading_materials_api = (project in file(".")).
 
 unmanagedResourceDirectories in Compile <+= (baseDirectory) {_ / "src/main/webapp"}
 
-assemblyJarName in assembly := "reading-materials-api.jar"
-mainClass in assembly := Some("no.gdl.readingmaterialsapi.JettyLauncher")
+assemblyJarName in assembly := "book-api.jar"
+mainClass in assembly := Some("no.gdl.bookapi.JettyLauncher")
 assemblyMergeStrategy in assembly := {
   case "mime.types" => MergeStrategy.filterDistinctLines
   case PathList("org", "joda", "convert", "ToString.class")  => MergeStrategy.first
