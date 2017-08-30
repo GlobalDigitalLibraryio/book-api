@@ -80,7 +80,6 @@ trait ConverterService {
     }
 
     def toApiBook(book: model.domain.Book, language: String): Option[Book] = {
-      logger.info("CONVERTING: " + book.title)
       book.bookInLanguage.foreach(b => print(s"${b.externalId} - ${b.title}"))
       book.bookInLanguage.find(a => a.language == language).map(rmInLanguage => {
         Book(

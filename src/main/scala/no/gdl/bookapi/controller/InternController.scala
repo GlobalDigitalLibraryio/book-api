@@ -21,7 +21,6 @@ trait InternController {
     post("/new") {
       val newBook = extract[NewBook](request.body)
 
-      logger.info(s"NEW ${newBook.externalId} --> ${newBook.title}")
       readService.withExternalId(newBook.externalId) match {
         case Some(existing) => writeService.updateBook(existing, newBook)
         case None => writeService.newBook(newBook).get
@@ -31,7 +30,6 @@ trait InternController {
     post("/:externalId/languages/") {
       val externalId = params("externalId")
       val newTranslation = extract[NewBookInLanguage](request.body)
-      logger.info(s"LANG $externalId --> ${newTranslation.title}")
 
       readService.bookInLanguageWithExternalId(newTranslation.externalId) match {
         case Some(existing) => writeService.updateBookInLanguage(existing, newTranslation)
