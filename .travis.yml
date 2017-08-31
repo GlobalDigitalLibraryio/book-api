@@ -1,0 +1,22 @@
+language: scala
+scala:
+  - 2.12.1
+jdk:
+  - oraclejdk8
+# Use container-based infrastructure
+sudo: false
+# These directories are cached to S3 at the end of the build
+cache:
+  directories:
+    - $HOME/.ivy2/cache
+    - $HOME/.sbt/boot/
+before_cache:
+  # Tricks to avoid unnecessary cache updates
+  - find $HOME/.ivy2 -name "ivydata-*.properties" -delete
+  - find $HOME/.sbt -name "*.lock" -delete
+notifications:
+  slack:
+    on_success: change
+    on_failure: always
+    rooms:
+      secure: bav5Yfgi5F+BxgsVz9sF5+9/7GZaBb7/IjUiFcMRhKuRzM/5FiR1KYvIzmkfBDoI1OSpXaAyUxNvagMkNX61vLgiMNj38juLfpE7BZ3XNv+Ip3dGwS57baOgzMdjKlbSK2XqdCyop6pm8n31hoT2CuMDcnXGiBB4i0cq21bFTznMMxGmmXZolyGZOCQ9IWcff4DjVM9bAhK0hAQ/ykLOfXv/hhpqY4m31ZnNtfXI2XnWGQ67Zs7gjOgSV0jMfC0qGKSGq+EJeqzQoxkLe+2G9o8Or4djCeqD5hnanmsyzkkgHj3CISleeKsrtRIkqQfQtsPr0pfkGaZhqaxpDEij2HUX1oKGB/1fbUCCQxet72j/4p8QcNfFBH6zvjtzUfJ+ohuzElkSWX2UhDVWKDLHe4bm2JQZvc4R5tIh1rJkPSyKdrhEfOBwoWBmmSIrS5reF/L8rwue2HixMiLj9A2fpwbXQydxSmwiM+hr76JfbK/JhWO3Dx5UxQLfqQlHt4NkuQOJikJVm4omoz8Ux/f2zrHDNYD8oka6wnmuY4Qlqehx2+j7nX2Yj+HxeoolGJDXPGpqjbdz5wUuWQ+WabBW2KDnaxO+Unxm8/lMWUwlu1/XI2AMfXRk3Pj2Cfg5RWuLhSiAFGL5Gw0T1x+/RMnutoI/KYQq3PJLzGq5bsAabvQ=
