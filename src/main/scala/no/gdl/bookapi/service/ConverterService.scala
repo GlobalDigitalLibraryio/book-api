@@ -86,12 +86,13 @@ trait ConverterService {
           book.id.get,
           book.revision.get,
           rmInLanguage.externalId,
+          "UUID", // TODO: #17 - UUID from DB
           rmInLanguage.title,
           rmInLanguage.description,
           language,
           book.bookInLanguage.map(_.language),
           licenses.getOrElse(book.license, DefaultLicense),
-          book.publisher,
+          Publisher(1, book.publisher), // TODO: #17 - Publisher from DB
           book.readingLevel,
           book.typicalAgeRange,
           book.educationalUse,
@@ -99,16 +100,19 @@ trait ConverterService {
           book.timeRequired,
           rmInLanguage.datePublished,
           rmInLanguage.dateCreated,
-          book.categories,
+          book.categories.map(x => Category(1, x)), // TODO: #17 - Category from DB
           toApiCoverPhoto(rmInLanguage.coverPhoto),
           toApiDownloads(rmInLanguage.downloads),
           rmInLanguage.tags,
-          rmInLanguage.authors)
+          rmInLanguage.authors.map(x => Contributor(1, "author", x)), // TODO: #17 - Contributor from DB
+          Seq())
       })
     }
 
     def toApiDownloads(downloads: model.domain.Downloads): Downloads = {
-      Downloads(epub = s"${ApplicationUrl.getHost}${BookApiProperties.EpubPath}/${downloads.epub}")
+      Downloads(
+        epub = s"${ApplicationUrl.getHost}${BookApiProperties.EpubPath}/${downloads.epub}", // TODO: #17 - Download EPub
+        pdf = s"${ApplicationUrl.getHost}${BookApiProperties.EpubPath}/${downloads.epub}") // TODO: #17 - Download PDF
     }
 
     def toApiCoverPhoto(coverPhoto: model.domain.CoverPhoto): CoverPhoto = {

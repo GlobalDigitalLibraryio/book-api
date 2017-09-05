@@ -8,9 +8,11 @@
 
 package no.gdl.bookapi.controller
 
+import java.util.{Date, UUID}
+
 import no.gdl.bookapi.BookApiProperties.{DefaultLanguage, DefaultPageSize}
 import no.gdl.bookapi.model.api
-import no.gdl.bookapi.model.api.{AccessDeniedException, Error, ValidationError}
+import no.gdl.bookapi.model.api.{AccessDeniedException, Book, Category, ChapterSummary, Contributor, CoverPhoto, Downloads, Error, License, Publisher, ValidationError}
 import no.gdl.bookapi.model.domain.Sort
 import no.gdl.bookapi.repository.BooksRepository
 import no.gdl.bookapi.service.{ConverterService, ReadService}
@@ -60,6 +62,17 @@ trait BooksController {
         authorizations "oauth2"
         responseMessages(response400, response404, response500))
 
+    val getBookForLanguageDoc =
+      (apiOperation[String]("getBook")
+        summary "Returns metadata about a book for the given language"
+        notes "Returns a book in the given language"
+        parameters(
+          pathParam[Long]("id").description("Id of the book that is to be returned"),
+          pathParam[String]("language").description("ISO 639-2 language code")
+        )
+        authorizations "oauth2"
+        responseMessages(response400, response404, response500))
+
 
     get("/", operation(filterBooksDoc)) {
       val filter = paramAsListOfString("filter")
@@ -79,6 +92,40 @@ trait BooksController {
         case Some(x) => x
         case None => NotFound(body = Error(Error.NOT_FOUND, s"No book with id $id found"))
       }
+    }
+
+    get("/:id/:lang", operation(getBookForLanguageDoc)) {
+      val id = long("id")
+      val language = params("lang")
+
+      Book(
+        id = id,
+        revision = 1,
+        externalId = Some(s"$id-eng"),
+        uuid = UUID.randomUUID().toString,
+        title = "Smile Please!",
+        description = "Follow the young deer as he races along with friends.",
+        language = language,
+        availableLanguages = Seq("eng", "amh", "nob"),
+        license = License("cc-by-4.0", Some("Creative Commons Attribution 4.0 International"), Some("https://creativecommons.org/licenses/by/4.0/")),
+        publisher = Publisher(1, "Pratham Books"),
+        readingLevel = Some("1"),
+        typicalAgeRange = Some("6-10"),
+        educationalUse = Some("reading"),
+        educationalRole = Some("learner"),
+        timeRequired = Some("PT10M"),
+        datePublished = Some(new Date()),
+        dateCreated = Some(new Date()),
+        categories = Seq(Category(1, "Animals"), Category(2, "Running")),
+        coverPhoto = CoverPhoto(large = "http://staging-proxy-95967625.eu-central-1.elb.amazonaws.com/image-api/v1/raw/2-smile-please.jpg", small = "http://staging-proxy-95967625.eu-central-1.elb.amazonaws.com/image-api/v1/raw/2-smile-please.jpg?width=200"),
+        downloads = Downloads(epub = "http://staging-proxy-95967625.eu-central-1.elb.amazonaws.com/book-api/epub/2-smile-please.epub", pdf = "http://staging-proxy-95967625.eu-central-1.elb.amazonaws.com/book-api/epub/2-smile-please.pdf"),
+        tags = Seq("deer", "running", "smile"),
+        contributors = Seq(Contributor(1, "author", "Sanjiv Jaiswal 'Sanjay'"), Contributor(2, "illustrator", "Ajit Narayan"), Contributor(3, "translator", "Manisha Chaudhry")),
+        chapters = Seq(
+          ChapterSummary(1, Some("Introduction"), s"http://staging-proxy-95967625.eu-central-1.elb.amazonaws.com/book-api/v1/books/$id/eng/chapters/1"),
+          ChapterSummary(2, Some("Putting on shoes"), s"http://staging-proxy-95967625.eu-central-1.elb.amazonaws.com/book-api/v1/books/$id/eng/chapters/2")
+        )
+      )
     }
 
     def assertHasRole(role: String): Unit = {
