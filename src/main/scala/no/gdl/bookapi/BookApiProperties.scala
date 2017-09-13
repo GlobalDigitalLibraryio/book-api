@@ -37,10 +37,15 @@ object BookApiProperties extends LazyLogging {
   val DefaultLanguage = "eng"
 
   val OpdsPath = "/book-api/opds"
+  val DownloadPath = "/book-api/download"
   val ApiPath = "/book-api/v1/books"
   val ApiDocPath = "/book-api/api-docs"
-  val EpubPath = "/book-api/epub"
+  val EpubPath = s"$DownloadPath/epub"
+  val PdfPath = s"$DownloadPath/pdf"
   val ImagePath = "/image-api/v1/raw"
+
+  val ImageApiHost = "image-api.gdl-local"
+  val InternalImageApiUrl = s"$ImageApiHost/image-api/v1/images"
 
   val CoverPhotoTumbSize = 200
 

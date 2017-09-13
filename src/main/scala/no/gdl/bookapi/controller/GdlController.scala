@@ -71,6 +71,16 @@ abstract class GdlController extends ScalatraServlet with NativeJsonSupport with
   def longOrDefault(paramName: String, default: Long): Long =
     paramOrDefault(paramName, default.toString).toLong
 
+  def intOrDefault(paramName: String, default: Int): Int = {
+    val value = paramOrDefault(paramName, default.toString)
+    if (value.forall(_.isDigit)) {
+      value.toInt
+    } else {
+      throw new ValidationException(errors = Seq(ValidationMessage(paramName, s"Invalid value for $paramName. Only digits are allowed.")))
+    }
+  }
+
+
   def paramAsListOfString(paramName: String)(implicit request: HttpServletRequest): List[String] = {
     params.get(paramName) match {
       case None => List.empty

@@ -8,45 +8,55 @@
 
 package no.gdl.bookapi.controller
 
-import no.gdl.bookapi.BookApiProperties.DefaultLanguage
-import no.gdl.bookapi.model.api.{Error, NewBook, NewBookInLanguage}
-import no.gdl.bookapi.service.{ConverterService, ReadService, WriteService}
+import no.gdl.bookapi.model.api.Error
+import no.gdl.bookapi.model.api.internal.{BookId, NewBook, NewChapter, NewTranslation}
+import no.gdl.bookapi.service.{ConverterService, ReadService, ValidationService, WriteService}
 import org.scalatra.NotFound
 
+import scala.util.{Failure, Success}
+
 trait InternController {
-  this: WriteService with ReadService with ConverterService =>
+  this: WriteService with ReadService with ConverterService with ValidationService =>
   val internController: InternController
 
   class InternController extends GdlController {
-    post("/new") {
+    post("/book/") {
       val newBook = extract[NewBook](request.body)
 
-      readService.withExternalId(newBook.externalId) match {
-        case Some(existing) => writeService.updateBook(existing, newBook)
-        case None => writeService.newBook(newBook).get
+      // TODO: Update book
+      writeService.newBook(newBook) match {
+        case Success(x) => x
+        case Failure(ex) => throw ex
       }
     }
 
-    post("/:externalId/languages/") {
-      val externalId = params("externalId")
-      val newTranslation = extract[NewBookInLanguage](request.body)
+    post("/book/:id/translation") {
+      val bookId = long("id")
+      val newTranslation = extract[NewTranslation](request.body)
 
-      readService.bookInLanguageWithExternalId(newTranslation.externalId) match {
-        case Some(existing) => writeService.updateBookInLanguage(existing, newTranslation)
-        case None => {
-          readService.withExternalId(Some(externalId)) match {
-            case Some(existing) => writeService.newBookInLanguage(existing.id.get, newTranslation).get
-            case None => throw new RuntimeException(s"No book with external_id = $externalId")
-          }
-        }
+      // TODO: Update if same ID
+      writeService.newTranslationForBook(bookId, newTranslation) match {
+        case Success(x) => x
+        case Failure(ex) => throw ex
+      }
+    }
+
+    post("/book/:bookid/translation/:translationid/chapters") {
+      val bookId = long("bookid")
+      val translationId = long("translationid")
+      val newChapter = extract[NewChapter](request.body)
+
+      // TODO: update chapter
+      writeService.newChapter(translationId, newChapter) match {
+        case Success(x) => x
+        case Failure(ex) => throw ex
       }
     }
 
     get("/:externalId") {
       val externalId = params.get("externalId")
-      val language = paramOrDefault("language", DefaultLanguage)
 
-      readService.withExternalId(externalId).flatMap(c => converterService.toApiBook(c, language)) match {
+      readService.withExternalId(externalId) match {
         case Some(x) => x
         case None => NotFound(body = Error(Error.NOT_FOUND, s"No book with id $externalId found"))
       }

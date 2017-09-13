@@ -15,7 +15,9 @@ import org.scalatra.swagger.runtime.annotations.ApiModelProperty
 import scala.annotation.meta.field
 
 @ApiModel(description = "Information about the licensing of the book")
-case class License(@(ApiModelProperty@field)(description = "The name of the license") license: String,
+case class License(@(ApiModelProperty@field)(description = "The id of the license") id: Int,
+                   @(ApiModelProperty@field)(description = "The revision of the license") revision: Int,
+                   @(ApiModelProperty@field)(description = "The name of the license") name: String,
                    @(ApiModelProperty@field)(description = "Description of the license") description: Option[String],
                    @(ApiModelProperty@field)(description = "Url to where the license can be found") url: Option[String])
 
@@ -33,21 +35,32 @@ case class Downloads(@(ApiModelProperty@field)(description = "URL to an epub-dow
 
 @ApiModel(description = "Information about the authors of the current book")
 case class Contributor(@(ApiModelProperty@field)(description = "Id of the author") id: Long,
+                       @(ApiModelProperty@field)(description = "The revision of the contributor") revision: Int,
                        @(ApiModelProperty@field)(description = "The type of the contributor") `type`: String,
                        @(ApiModelProperty@field)(description = "Name of the author") name: String)
 
 @ApiModel(description = "Information about the publisher of the current book")
 case class Publisher(@(ApiModelProperty@field)(description = "Id of the publisher") id: Long,
+                     @(ApiModelProperty@field)(description = "The revision of the publisher") revision: Int,
                      @(ApiModelProperty@field)(description = "Name of the publisher") name: String)
 
 @ApiModel(description = "Information about a category of a current book")
 case class Category(@(ApiModelProperty@field)(description = "Id for the category") id: Long,
+                    @(ApiModelProperty@field)(description = "The revision of the category") revision: Int,
                     @(ApiModelProperty@field)(description = "Name of the category") name: String)
 
 @ApiModel(description = "Information about a chapter in a book")
 case class ChapterSummary(@(ApiModelProperty@field)(description = "Id for the chapter") id: Long,
+                          @(ApiModelProperty@field)(description = "The sequence number of the chapter") seqNo: Int,
                           @(ApiModelProperty@field)(description = "Title of the chapter") title: Option[String],
                           @(ApiModelProperty@field)(description = "URL to where chapter can be found") url: String)
+
+@ApiModel(description = "Information about a chapter in a book")
+case class Chapter(@(ApiModelProperty@field)(description = "Id for the chapter") id: Long,
+                   @(ApiModelProperty@field)(description = "The revision of the chapter") revision: Int,
+                   @(ApiModelProperty@field)(description = "The sequence number of the chapter") seqNo: Int,
+                   @(ApiModelProperty@field)(description = "Title of the chapter") title: Option[String],
+                   @(ApiModelProperty@field)(description = "The HTML content of the chapter") content: String)
 
 @ApiModel(description = "Information about book")
 case class Book(@(ApiModelProperty@field)(description = "The id of the book") id: Long,

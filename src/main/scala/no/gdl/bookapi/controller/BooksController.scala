@@ -8,15 +8,11 @@
 
 package no.gdl.bookapi.controller
 
-import java.util.{Date, UUID}
-
-import no.gdl.bookapi.BookApiProperties.{DefaultLanguage, DefaultPageSize}
-import no.gdl.bookapi.model.api
-import no.gdl.bookapi.model.api.{AccessDeniedException, Book, Category, ChapterSummary, Contributor, CoverPhoto, Downloads, Error, License, Publisher, ValidationError}
-import no.gdl.bookapi.model.domain.Sort
-import no.gdl.bookapi.repository.BooksRepository
-import no.gdl.bookapi.service.{ConverterService, ReadService}
 import io.digitallibrary.network.AuthUser
+import no.gdl.bookapi.BookApiProperties.DefaultLanguage
+import no.gdl.bookapi.model.api
+import no.gdl.bookapi.model.api.{AccessDeniedException, Error, ValidationError}
+import no.gdl.bookapi.service.{ConverterService, ReadService}
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra._
 import org.scalatra.swagger.{ResponseMessage, Swagger, SwaggerSupport}
@@ -37,14 +33,12 @@ trait BooksController {
     val response404 = ResponseMessage(404, "Not found", Some("Error"))
     val response500 = ResponseMessage(500, "Unknown error", Some("Error"))
 
-    val filterBooksDoc =
+    val getAllBooksDoc =
       (apiOperation[String]("filterBooks")
-        summary "Returns books matching a filter"
-        notes "Returns a list of books"
+        summary s"Returns all books in the default language $DefaultLanguage"
+        notes s"Returns a list of books in $DefaultLanguage"
         parameters(
-          queryParam[Option[String]]("filter").description("A comma separated string containing filters"),
-          queryParam[Option[String]]("language").description(s"Only return results on the given language. Default is $DefaultLanguage"),
-          queryParam[Option[String]]("sort").description(s"Sort results. Valid options are ${Sort.values.mkString(", ")}"),
+          headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
           queryParam[Option[Int]]("page-size").description("Return this many results per page"),
           queryParam[Option[Int]]("page").description("Return results for this page")
         )
@@ -62,7 +56,7 @@ trait BooksController {
         authorizations "oauth2"
         responseMessages(response400, response404, response500))
 
-    val getBookForLanguageDoc =
+    val getBookInLanguageDoc =
       (apiOperation[String]("getBook")
         summary "Returns metadata about a book for the given language"
         notes "Returns a book in the given language"
@@ -74,64 +68,51 @@ trait BooksController {
         responseMessages(response400, response404, response500))
 
 
-    get("/", operation(filterBooksDoc)) {
-      val filter = paramAsListOfString("filter")
-      val language = paramOrDefault("language", DefaultLanguage)
-      val sort = Sort.valueOf(paramOrDefault("sort", "")).getOrElse(Sort.ByIdAsc)
-      val pageSize = longOrDefault("page-size", DefaultPageSize)
-      val page = longOrDefault("page", 1)
+    get("/", operation(getAllBooksDoc)) {
+      val pageSize = intOrDefault("page-size", 10).min(100).max(1)
+      val page = intOrDefault("page", 1).max(0)
 
-      readService.all(language).flatMap(c => converterService.toApiBook(c, language))
+      readService.withLanguage(DefaultLanguage, pageSize, page)
     }
 
-    get("/:id", operation(getBookDoc)) {
-      val id = long("id")
-      val language = paramOrDefault("language", DefaultLanguage)
+    get("/:lang/?" ) {
+      val pageSize = intOrDefault("page-size", 10).min(100).max(1)
+      val page = intOrDefault("page", 1).max(0)
 
-      readService.withId(id).flatMap(c => converterService.toApiBook(c, language)) match {
-        case Some(x) => x
-        case None => NotFound(body = Error(Error.NOT_FOUND, s"No book with id $id found"))
-      }
+      readService.withLanguage(params("lang"), pageSize, page)
     }
 
-    get("/:id/:lang", operation(getBookForLanguageDoc)) {
+    get("/:lang/:id/?", operation(getBookInLanguageDoc)) {
       val id = long("id")
       val language = params("lang")
 
-      Book(
-        id = id,
-        revision = 1,
-        externalId = Some(s"$id-eng"),
-        uuid = UUID.randomUUID().toString,
-        title = "Smile Please!",
-        description = "Follow the young deer as he races along with friends.",
-        language = language,
-        availableLanguages = Seq("eng", "amh", "nob"),
-        license = License("cc-by-4.0", Some("Creative Commons Attribution 4.0 International"), Some("https://creativecommons.org/licenses/by/4.0/")),
-        publisher = Publisher(1, "Pratham Books"),
-        readingLevel = Some("1"),
-        typicalAgeRange = Some("6-10"),
-        educationalUse = Some("reading"),
-        educationalRole = Some("learner"),
-        timeRequired = Some("PT10M"),
-        datePublished = Some(new Date()),
-        dateCreated = Some(new Date()),
-        categories = Seq(Category(1, "Animals"), Category(2, "Running")),
-        coverPhoto = CoverPhoto(large = "http://staging-proxy-95967625.eu-central-1.elb.amazonaws.com/image-api/v1/raw/2-smile-please.jpg", small = "http://staging-proxy-95967625.eu-central-1.elb.amazonaws.com/image-api/v1/raw/2-smile-please.jpg?width=200"),
-        downloads = Downloads(epub = "http://staging-proxy-95967625.eu-central-1.elb.amazonaws.com/book-api/epub/2-smile-please.epub", pdf = "http://staging-proxy-95967625.eu-central-1.elb.amazonaws.com/book-api/epub/2-smile-please.pdf"),
-        tags = Seq("deer", "running", "smile"),
-        contributors = Seq(Contributor(1, "author", "Sanjiv Jaiswal 'Sanjay'"), Contributor(2, "illustrator", "Ajit Narayan"), Contributor(3, "translator", "Manisha Chaudhry")),
-        chapters = Seq(
-          ChapterSummary(1, Some("Introduction"), s"http://staging-proxy-95967625.eu-central-1.elb.amazonaws.com/book-api/v1/books/$id/eng/chapters/1"),
-          ChapterSummary(2, Some("Putting on shoes"), s"http://staging-proxy-95967625.eu-central-1.elb.amazonaws.com/book-api/v1/books/$id/eng/chapters/2")
-        )
-      )
+      readService.withIdAndLanguage(id, language) match {
+        case Some(x) => x
+        case None => NotFound(body = Error(Error.NOT_FOUND, s"No book with id $id and language $language found"))
+      }
+    }
+
+    get("/:lang/:id/chapters/?") {
+      val language = params("lang")
+      val id = long("id")
+
+      readService.chaptersForIdAndLanguage(id, language)
+    }
+
+    get("/:lang/:bookid/chapters/:chapterid/?") {
+      val language = params("lang")
+      val bookId = long("bookid")
+      val chapterId = long("chapterid")
+
+      readService.chapterForBookWithLanguageAndId(bookId, language, chapterId) match {
+        case Some(x) => x
+        case None => NotFound(body = Error(Error.NOT_FOUND, s"No chapter with id $chapterId for book with id $bookId and language $language found."))
+      }
     }
 
     def assertHasRole(role: String): Unit = {
       if (!AuthUser.hasRole(role))
         throw new AccessDeniedException("User is missing required role to perform this operation")
     }
-
   }
 }

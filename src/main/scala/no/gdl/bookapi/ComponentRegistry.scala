@@ -8,10 +8,11 @@
 
 package no.gdl.bookapi
 
-import no.gdl.bookapi.controller.{HealthController, InternController, OPDSController, BooksController}
-import no.gdl.bookapi.integration.{DataSource, ElasticClient, JestClientFactory}
+import io.digitallibrary.network.GdlClient
+import no.gdl.bookapi.controller._
+import no.gdl.bookapi.integration.{DataSource, ElasticClient, ImageApiClient, JestClientFactory}
 import no.gdl.bookapi.repository.BooksRepository
-import no.gdl.bookapi.service.{ConverterService, ReadService, WriteService}
+import no.gdl.bookapi.service.{ConverterService, ReadService, ValidationService, WriteService}
 import org.postgresql.ds.PGPoolingDataSource
 import scalikejdbc.{ConnectionPool, DataSourceConnectionPool}
 
@@ -26,6 +27,10 @@ object ComponentRegistry
   with InternController
   with HealthController
   with OPDSController
+  with GdlClient
+  with ImageApiClient
+  with DownloadController
+  with ValidationService
 {
   implicit val swagger = new BookSwagger
 
@@ -52,4 +57,8 @@ object ComponentRegistry
   lazy val converterService = new ConverterService
 
   lazy val jestClient = JestClientFactory.getClient()
+  lazy val gdlClient = new GdlClient
+  lazy val imageApiClient = new ImageApiClient
+  lazy val downloadController = new DownloadController
+  lazy val validationService = new ValidationService
 }

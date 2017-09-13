@@ -7,4 +7,28 @@
 
 package no.gdl.bookapi.model.domain
 
-case class License(license: String, description: Option[String], url: Option[String])
+import no.gdl.bookapi.BookApiProperties
+import scalikejdbc._
+
+case class License(id: Option[Int],
+                   revision: Option[Int],
+                   name: String,
+                   description: Option[String],
+                   url: Option[String])
+
+object License extends SQLSyntaxSupport[License] {
+  implicit val formats = org.json4s.DefaultFormats
+  override val tableName = "license"
+  override val schemaName = Some(BookApiProperties.MetaSchema)
+
+  def apply(lic: SyntaxProvider[License])(rs: WrappedResultSet): License = apply(lic.resultName)(rs)
+  def apply(lic: ResultName[License])(rs: WrappedResultSet): License = {
+    License(
+      rs.intOpt(lic.id),
+      rs.intOpt(lic.revision),
+      rs.string(lic.name),
+      rs.stringOpt(lic.description),
+      rs.stringOpt(lic.url)
+    )
+  }
+}

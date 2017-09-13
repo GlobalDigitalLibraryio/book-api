@@ -7,119 +7,171 @@
 
 package no.gdl.bookapi.service
 
+import java.util.UUID
+
+import com.netaporter.uri.dsl._
 import com.typesafe.scalalogging.LazyLogging
-import io.digitallibrary.network.ApplicationUrl
+import no.gdl.bookapi.BookApiProperties.Domain
+import no.gdl.bookapi.integration.ImageApiClient
+import no.gdl.bookapi.model._
+import no.gdl.bookapi.model.api.internal.{NewChapter, NewEducationalAlignment, NewTranslation}
 import no.gdl.bookapi.{BookApiProperties, model}
-import no.gdl.bookapi.model.api._
 
 
 trait ConverterService {
+  this: ImageApiClient =>
   val converterService: ConverterService
 
   class ConverterService extends LazyLogging {
-    val DefaultLicense = License("cc-by-4.0", Some("Creative Commons Attribution 4.0 International"), Some("https://creativecommons.org/licenses/by/4.0/"))
-    val licenses = Map(
-      "cc-by-4.0" -> DefaultLicense,
-      "cc-by-sa-4.0" -> License("cc-by-sa-4.0", Some("Creative Commons Attribution-ShareAlike 4.0 International"), Some("https://creativecommons.org/licenses/by-sa/4.0/")),
-      "cc-by-nc-4.0" -> License("cc-by-nc-4.0", Some("Creative Commons Attribution-NonCommercial 4.0 International"), Some("https://creativecommons.org/licenses/by-nc/4.0/")),
-      "cc-by-nd-4.0" -> License("cc-by-nd-4.0", Some("Creative Commons Attribution-NoDerivatives 4.0 International"), Some("https://creativecommons.org/licenses/by-nd/4.0/")),
-      "cc-by-nc-sa-4.0" -> License("cc-by-nc-sa-4.0", Some("Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International"), Some("https://creativecommons.org/licenses/by-nd/4.0/"))
-    )
+    def toDomainChapter(newChapter: NewChapter, translationId: Long): domain.Chapter = domain.Chapter(
+      id = None,
+      revision = None,
+      translationId = translationId,
+      seqNo = newChapter.seqNo,
+      title = newChapter.title,
+      content = newChapter.content)
 
-    def toDomainBookInLanguage(bookInLanguage: NewBookInLanguage): model.domain.BookInLanguage = {
-      model.domain.BookInLanguage(
+
+    def toDomainTranslation(newTranslation: NewTranslation, bookId: Long) = {
+      domain.Translation(
         None,
         None,
-        None,
-        bookInLanguage.externalId,
-        bookInLanguage.title,
-        bookInLanguage.description,
-        bookInLanguage.language,
-        model.domain.CoverPhoto(bookInLanguage.coverPhoto.large, bookInLanguage.coverPhoto.small),
-        model.domain.Downloads(bookInLanguage.downloads.epub),
-        bookInLanguage.dateCreated,
-        bookInLanguage.datePublished,
-        bookInLanguage.tags,
-        bookInLanguage.authors
+        bookId,
+        newTranslation.externalId,
+        UUID.randomUUID().toString,
+        newTranslation.title,
+        newTranslation.about,
+        newTranslation.numPages,
+        newTranslation.language,
+        newTranslation.datePublished,
+        newTranslation.dateCreated,
+        categoryIds = Seq(),
+        newTranslation.coverphoto,
+        newTranslation.tags,
+        newTranslation.isBasedOnUrl,
+        newTranslation.educationalUse,
+        newTranslation.educationalRole,
+        eaId = None,
+        newTranslation.timeRequired,
+        newTranslation.typicalAgeRange,
+        newTranslation.readingLevel,
+        newTranslation.interactivityType,
+        newTranslation.learningResourceType,
+        newTranslation.accessibilityApi,
+        newTranslation.accessibilityControl,
+        newTranslation.accessibilityFeature,
+        newTranslation.accessibilityHazard,
+        newTranslation.educationalAlignment.map(toDomainEducationalAlignment),
+        chapters = Seq(),
+        contributors = Seq(),
+        categories = Seq()
       )
     }
 
-    def toDomainBook(newBook: NewBook): model.domain.Book = {
-      val bookInLanguage = model.domain.BookInLanguage(
+    def toDomainEducationalAlignment(newEducationalAlignment: NewEducationalAlignment): domain.EducationalAlignment = {
+      domain.EducationalAlignment(
         None,
         None,
-        None,
-        newBook.externalId,
-        newBook.title,
-        newBook.description,
-        newBook.language,
-        model.domain.CoverPhoto(newBook.coverPhoto.large, newBook.coverPhoto.small),
-        model.domain.Downloads(newBook.downloads.epub),
-        newBook.dateCreated,
-        newBook.datePublished,
-        newBook.tags,
-        newBook.authors
+        newEducationalAlignment.alignmentType,
+        newEducationalAlignment.educationalFramework,
+        newEducationalAlignment.targetDescription,
+        newEducationalAlignment.targetName,
+        newEducationalAlignment.targetUrl
       )
-
-      model.domain.Book(
-        None,
-        None,
-        newBook.externalId,
-        newBook.title,
-        newBook.description,
-        newBook.language,
-        licenses.getOrElse(newBook.license, DefaultLicense).license,
-        newBook.publisher,
-        newBook.readingLevel,
-        newBook.typicalAgeRange,
-        newBook.educationalUse,
-        newBook.educationalRole,
-        newBook.timeRequired,
-        newBook.categories,
-        Seq(bookInLanguage))
     }
 
-    def toApiBook(book: model.domain.Book, language: String): Option[Book] = {
-      book.bookInLanguage.foreach(b => print(s"${b.externalId} - ${b.title}"))
-      book.bookInLanguage.find(a => a.language == language).map(rmInLanguage => {
-        Book(
+
+    def toDomainLicense(license: api.License): domain.License = {
+      domain.License(Option(license.id), Option(license.revision), license.name, license.description, license.url)
+    }
+
+    def toDomainPublisher(publisher: api.Publisher): domain.Publisher = {
+      domain.Publisher(Option(publisher.id), Option(publisher.revision), publisher.name)
+    }
+
+    def toApiLicense(license: domain.License): api.License =
+      api.License(license.id.get, license.revision.get, license.name, license.description, license.url)
+
+    def toApiPublisher(publisher: domain.Publisher): api.Publisher = api.Publisher(publisher.id.get, publisher.revision.get, publisher.name)
+
+    def toApiCategories(categories: Seq[domain.Category]): Seq[api.Category] =
+      categories.map(c => api.Category(c.id.get, c.revision.get, c.name))
+
+    def toApiContributors(contributors: Seq[domain.Contributor]): Seq[api.Contributor] =
+      contributors.map(c => api.Contributor(c.id.get, c.revision.get, c.`type`, c.person.name))
+
+    def toApiChapterSummary(chapters: Seq[domain.Chapter], bookId: Long, language: String): Seq[api.ChapterSummary] = chapters.map(c => toApiChapterSummary(c, bookId, language))
+
+    def toApiChapterSummary(chapter: domain.Chapter, bookId: Long, language: String): api.ChapterSummary = api.ChapterSummary(
+      chapter.id.get,
+      chapter.seqNo,
+      chapter.title,
+      s"${Domain}${BookApiProperties.ApiPath}/${language}/${bookId}/chapters/${chapter.id.get}")
+
+    def toApiChapter(chapter: domain.Chapter): api.Chapter = api.Chapter(
+      chapter.id.get,
+      chapter.revision.get,
+      chapter.seqNo,
+      chapter.title,
+      chapter.content)
+
+    def toApiBook(translation: Option[domain.Translation], availableLanguages: Seq[String], book: Option[domain.Book]): Option[api.Book] = {
+      def toApiBookInternal(translation: domain.Translation, book: domain.Book, availableLanguages: Seq[String]): api.Book = {
+        model.api.Book(
           book.id.get,
           book.revision.get,
-          rmInLanguage.externalId,
-          "UUID", // TODO: #17 - UUID from DB
-          rmInLanguage.title,
-          rmInLanguage.description,
-          language,
-          book.bookInLanguage.map(_.language),
-          licenses.getOrElse(book.license, DefaultLicense),
-          Publisher(1, book.publisher), // TODO: #17 - Publisher from DB
-          book.readingLevel,
-          book.typicalAgeRange,
-          book.educationalUse,
-          book.educationalRole,
-          book.timeRequired,
-          rmInLanguage.datePublished,
-          rmInLanguage.dateCreated,
-          book.categories.map(x => Category(1, x)), // TODO: #17 - Category from DB
-          toApiCoverPhoto(rmInLanguage.coverPhoto),
-          toApiDownloads(rmInLanguage.downloads),
-          rmInLanguage.tags,
-          rmInLanguage.authors.map(x => Contributor(1, "author", x)), // TODO: #17 - Contributor from DB
-          Seq())
-      })
+          translation.externalId,
+          translation.uuid,
+          translation.title,
+          translation.about,
+          translation.language,
+          availableLanguages,
+          toApiLicense(book.license),
+          toApiPublisher(book.publisher),
+          translation.readingLevel,
+          translation.typicalAgeRange,
+          translation.educationalUse,
+          translation.educationalRole,
+          translation.timeRequired,
+          translation.datePublished,
+          translation.dateCreated,
+          toApiCategories(translation.categories),
+          toApiCoverPhoto(translation.coverphoto),
+          toApiDownloads(translation),
+          translation.tags,
+          toApiContributors(translation.contributors),
+          toApiChapterSummary(translation.chapters, translation.bookId, translation.language)
+        )
+      }
+
+      for {
+        b <- book
+        t <- translation
+        api <- Some(toApiBookInternal(t, b, availableLanguages))
+      } yield api
     }
 
-    def toApiDownloads(downloads: model.domain.Downloads): Downloads = {
-      Downloads(
-        epub = s"${ApplicationUrl.getHost}${BookApiProperties.EpubPath}/${downloads.epub}", // TODO: #17 - Download EPub
-        pdf = s"${ApplicationUrl.getHost}${BookApiProperties.EpubPath}/${downloads.epub}") // TODO: #17 - Download PDF
+    def toApiDownloads(translation: domain.Translation): api.Downloads = {
+      api.Downloads(
+        epub = s"$Domain${BookApiProperties.EpubPath}/${translation.language}/${translation.uuid}.epub", // TODO: #17 - Download EPub
+        pdf = s"$Domain${BookApiProperties.PdfPath}/${translation.language}/${translation.uuid}.pdf") // TODO: #17 - Download PDF
     }
 
-    def toApiCoverPhoto(coverPhoto: model.domain.CoverPhoto): CoverPhoto = {
-      val small = s"${ApplicationUrl.getHost}${BookApiProperties.ImagePath}/${coverPhoto.small}?width=${BookApiProperties.CoverPhotoTumbSize}"
-      val large = s"${ApplicationUrl.getHost}${BookApiProperties.ImagePath}/${coverPhoto.large}"
+    def toApiCoverPhoto(imageIdOpt: Option[Long]): api.CoverPhoto = {
+      val imageUrl = s"$Domain{PATH}"
 
-      CoverPhoto(large, small)
+      val coverPhoto = imageIdOpt
+        .flatMap(imageId => imageApiClient.imageMetaWithId(imageId))
+        .map(imageMeta => {
+          val large = imageUrl.replace("{PATH}", imageMeta.imageUrl.path)
+          val small = s"$large?widht=200"
+          api.CoverPhoto(large, small)
+        })
+
+      coverPhoto match {
+        case Some(x) => x
+        case None => api.CoverPhoto("url-to-placeholder-image", "url-to-placeholder-image") //TODO: Solve placeholder-photo
+      }
     }
   }
 }
