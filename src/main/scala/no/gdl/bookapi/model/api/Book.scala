@@ -21,9 +21,6 @@ case class License(@(ApiModelProperty@field)(description = "The id of the licens
                    @(ApiModelProperty@field)(description = "Description of the license") description: Option[String],
                    @(ApiModelProperty@field)(description = "Url to where the license can be found") url: Option[String])
 
-@ApiModel(description = "Information about the current and available language for book")
-case class Language(@(ApiModelProperty@field)(description = "Current language") current: String,
-                    @(ApiModelProperty@field)(description = "List of available languages") available: Seq[String])
 
 @ApiModel(description = "Information about where to find the cover-photo for the book")
 case class CoverPhoto(@(ApiModelProperty@field)(description = "URL to a large version of the cover-photo") large: String,
@@ -62,6 +59,10 @@ case class Chapter(@(ApiModelProperty@field)(description = "Id for the chapter")
                    @(ApiModelProperty@field)(description = "Title of the chapter") title: Option[String],
                    @(ApiModelProperty@field)(description = "The HTML content of the chapter") content: String)
 
+@ApiModel(description = "Information about a language")
+case class Language(@(ApiModelProperty@field)(description = "ISO 639-2 code") code: String,
+                    @(ApiModelProperty@field)(description = "Human readable name of the language") name: String)
+
 @ApiModel(description = "Information about book")
 case class Book(@(ApiModelProperty@field)(description = "The id of the book") id: Long,
                 @(ApiModelProperty@field)(description = "The revision of the book") revision: Long,
@@ -69,8 +70,8 @@ case class Book(@(ApiModelProperty@field)(description = "The id of the book") id
                 @(ApiModelProperty@field)(description = "A UUID for this book") uuid: String,
                 @(ApiModelProperty@field)(description = "The title of the book") title: String,
                 @(ApiModelProperty@field)(description = "Description of the book") description: String,
-                @(ApiModelProperty@field)(description = "Current language") language: String,
-                @(ApiModelProperty@field)(description = "Languages available") availableLanguages: Seq[String],
+                @(ApiModelProperty@field)(description = "Current language") language: Language,
+                @(ApiModelProperty@field)(description = "Languages available") availableLanguages: Seq[Language],
                 @(ApiModelProperty@field)(description = "Licensing information") license: License,
                 @(ApiModelProperty@field)(description = "Information about publisher") publisher: Publisher,
                 @(ApiModelProperty@field)(description = "Information about reading level") readingLevel: Option[String],

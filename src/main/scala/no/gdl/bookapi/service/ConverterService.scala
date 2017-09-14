@@ -7,7 +7,7 @@
 
 package no.gdl.bookapi.service
 
-import java.util.UUID
+import java.util.{Locale, UUID}
 
 import com.netaporter.uri.dsl._
 import com.typesafe.scalalogging.LazyLogging
@@ -124,8 +124,8 @@ trait ConverterService {
           translation.uuid,
           translation.title,
           translation.about,
-          translation.language,
-          availableLanguages,
+          toApiLanguage(translation.language),
+          availableLanguages.map(toApiLanguage),
           toApiLicense(book.license),
           toApiPublisher(book.publisher),
           translation.readingLevel,
@@ -172,6 +172,15 @@ trait ConverterService {
         case Some(x) => x
         case None => api.CoverPhoto("url-to-placeholder-image", "url-to-placeholder-image") //TODO: Solve placeholder-photo
       }
+    }
+  }
+
+  def toApiLanguage(languageCode: String): api.Language = {
+    val locale = new Locale(languageCode)
+    val displayLanguage = Option(locale.getDisplayLanguage(locale))
+    displayLanguage match {
+      case Some(x) => api.Language(languageCode, x)
+      case None => api.Language(languageCode, languageCode)
     }
   }
 }

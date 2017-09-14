@@ -108,6 +108,14 @@ trait BooksController {
         case Some(x) => x
         case None => NotFound(body = Error(Error.NOT_FOUND, s"No chapter with id $chapterId for book with id $bookId and language $language found."))
       }
+
+    }
+
+    get("/:lang/similar/:id/?") {
+      val pageSize = intOrDefault("page-size", 10).min(100).max(1)
+      val page = intOrDefault("page", 1).max(0)
+
+      readService.withLanguage(params("lang"), pageSize, page)
     }
 
     def assertHasRole(role: String): Unit = {
