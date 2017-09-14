@@ -30,11 +30,14 @@ CREATE TABLE publisher (
 );
 
 DROP TABLE bookinlanguage;
+DROP TABLE book;
 
-ALTER TABLE BOOK ADD COLUMN publisher_id INTEGER REFERENCES publisher(id);
-ALTER TABLE BOOK ADD COLUMN license_id INTEGER REFERENCES license(id);
-ALTER TABLE BOOK DROP COLUMN document;
-ALTER TABLE BOOK DROP COLUMN external_id;
+CREATE TABLE book (
+  id BIGSERIAL PRIMARY KEY,
+  revision INTEGER NOT NULL DEFAULT 1,
+  publisher_id INTEGER REFERENCES publisher(id),
+  license_id INTEGER REFERENCES license(id)
+);
 
 CREATE TABLE educational_alignment(
   id SERIAL PRIMARY KEY,
@@ -79,7 +82,7 @@ CREATE TABLE translation (
 CREATE TABLE chapter (
   id BIGSERIAL PRIMARY KEY,
   revision INTEGER NOT NULL DEFAULT 1,
-  translation_id BIGINT REFERENCES translation(id) NOT NULL,
+  translation_id BIGINT REFERENCES translation(id) ON DELETE CASCADE NOT NULL,
   seq_no INTEGER NOT NULL,
   title text,
   content text NOT NULL
@@ -88,8 +91,8 @@ CREATE TABLE chapter (
 CREATE TABLE contributor (
   id BIGSERIAL PRIMARY KEY,
   revision INTEGER NOT NULL DEFAULT 1,
-  person_id INTEGER REFERENCES person(id) NOT NULL,
-  translation_id BIGINT REFERENCES translation(id) NOT NULL,
+  person_id INTEGER REFERENCES person(id) ON DELETE CASCADE NOT NULL,
+  translation_id BIGINT REFERENCES translation(id) ON DELETE CASCADE NOT NULL,
   type TEXT NOT NULL
 );
 
