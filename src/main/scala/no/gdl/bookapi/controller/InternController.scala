@@ -11,7 +11,7 @@ package no.gdl.bookapi.controller
 import no.gdl.bookapi.model.api.Error
 import no.gdl.bookapi.model.api.internal.{NewBook, NewChapter, NewTranslation}
 import no.gdl.bookapi.service.{ConverterService, ReadService, ValidationService, WriteService}
-import org.scalatra.NotFound
+import org.scalatra.{Conflict, NotFound, Ok}
 
 import scala.util.{Failure, Success}
 
@@ -34,10 +34,12 @@ trait InternController {
       val bookId = long("id")
       val newTranslation = extract[NewTranslation](request.body)
 
-      // TODO: Update if same ID
-      writeService.newTranslationForBook(bookId, newTranslation) match {
-        case Success(x) => x
-        case Failure(ex) => throw ex
+      readService.withIdAndLanguage(bookId, newTranslation.language) match {
+        case Some(_) => Conflict(body = Error(Error.ALREADY_EXISTS, s"A translation with language '${newTranslation.language}' already exists for book with id '$bookId'. Updating is not supported yet"))
+        case None => writeService.newTranslationForBook(bookId, newTranslation) match {
+          case Success(x) => x
+          case Failure(ex) => throw ex
+        }
       }
     }
 

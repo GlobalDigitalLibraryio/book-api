@@ -34,6 +34,7 @@ object Error {
   val INDEX_MISSING = "INDEX_MISSING"
   val RESOURCE_OUTDATED = "RESOURCE_OUTDATED"
   val ACCESS_DENIED = "ACCESS DENIED"
+  val ALREADY_EXISTS = "ALREADY EXISTS"
 
   val GENERIC_DESCRIPTION = s"Ooops. Something we didn't anticipate occured. We have logged the error, and will look into it. But feel free to contact ${BookApiProperties.ContactEmail} if the error persists."
   val VALIDATION_DESCRIPTION = "Validation Error"
