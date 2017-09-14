@@ -320,7 +320,7 @@ trait BooksRepository {
     def chaptersForBookIdAndLanguage(bookId: Long, language: String)(implicit session: DBSession = ReadOnlyAutoSession): Seq[Chapter] = {
       select
         .from(Chapter as ch)
-        .rightJoin(Translation as t).on(ch.translationId, t.id)
+        .leftJoin(Translation as t).on(ch.translationId, t.id)
         .where.eq(t.bookId, bookId).and.eq(t.language, language).toSQL
         .map(Chapter(ch)).list().apply()
 
