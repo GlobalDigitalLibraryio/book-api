@@ -32,7 +32,7 @@ trait BooksController {
     val response500 = ResponseMessage(500, "Unknown error", Some("Error"))
 
     val getAllBooksDoc =
-      (apiOperation[String]("filterBooks")
+      (apiOperation[Seq[api.SearchResult]]("getAllBooks")
         summary s"Returns all books in the default language $DefaultLanguage"
         notes s"Returns a list of books in $DefaultLanguage"
         parameters(
@@ -40,6 +40,18 @@ trait BooksController {
           queryParam[Option[Int]]("page-size").description("Return this many results per page"),
           queryParam[Option[Int]]("page").description("Return results for this page")
         )
+        authorizations "oauth2"
+        responseMessages(response500))
+
+    val getAllBooksInLangDoc =
+      (apiOperation[Seq[api.SearchResult]]("getAllBooksInLangDoc")
+        summary s"Returns all books in the default language $DefaultLanguage"
+        notes s"Returns a list of books in $DefaultLanguage"
+        parameters(
+        headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
+        queryParam[Option[Int]]("page-size").description("Return this many results per page"),
+        queryParam[Option[Int]]("page").description("Return results for this page")
+      )
         authorizations "oauth2"
         responseMessages(response500))
 
@@ -73,7 +85,7 @@ trait BooksController {
       readService.withLanguage(DefaultLanguage, pageSize, page)
     }
 
-    get("/:lang/?" ) {
+    get("/:lang/?", operation(getAllBooksInLangDoc) ) {
       val pageSize = intOrDefault("page-size", 10).min(100).max(1)
       val page = intOrDefault("page", 1).max(0)
 

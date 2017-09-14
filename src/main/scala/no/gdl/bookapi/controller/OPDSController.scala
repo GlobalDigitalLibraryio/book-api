@@ -41,7 +41,7 @@ trait OPDSController {
         <title>Global Digital Library - Open Access</title>
         <updated>2017-04-28T12:54:15Z</updated>
         <link href="http://api.digitallibrary.io/book-api/opds/catalog.atom" rel="self"/>
-        {readService.withLanguage(language, pageSize, page).map(x =>
+        {readService.withLanguage(language, pageSize, page).results.map(x =>
         <entry>
           <id>urn:gdl:{x.id}</id>
           <title>{x.title}</title>

@@ -34,9 +34,16 @@ trait ReadService {
       booksRepository.licenseWithName(license)
     }
 
-    def withLanguage(language: String, pageSize: Int, page: Int): Seq[api.Book] = {
-      booksRepository.bookIdsWithLanguage(language, pageSize, page)
-        .flatMap(id => withIdAndLanguage(id, language))
+    def withLanguage(language: String, pageSize: Int, page: Int): api.SearchResult = {
+      val searchResult = booksRepository.bookIdsWithLanguage(language, pageSize, page)
+      val books = searchResult.results.flatMap(id => withIdAndLanguage(id, language))
+
+      api.SearchResult(
+        books.length,
+        searchResult.page,
+        searchResult.pageSize,
+        converterService.toApiLanguage(searchResult.language),
+        books)
     }
 
     def withIdAndLanguage(bookId: Long, language: String): Option[api.Book] = {

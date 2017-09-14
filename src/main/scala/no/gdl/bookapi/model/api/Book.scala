@@ -90,6 +90,14 @@ case class Book(@(ApiModelProperty@field)(description = "The id of the book") id
                 @(ApiModelProperty@field)(description = "Information about the contributors of this book") contributors: Seq[Contributor],
                 @(ApiModelProperty@field)(description = "Information about the chapters in the book") chapters: Seq[ChapterSummary])
 
+@ApiModel(description = "Information about search results")
+case class SearchResult(@(ApiModelProperty@field)(description = "The total number of books matching this query") totalCount: Long,
+                        @(ApiModelProperty@field)(description = "For which page results are shown from") page: Int,
+                        @(ApiModelProperty@field)(description = "The number of results per page") pageSize: Int,
+                        @(ApiModelProperty@field)(description = "The chosen language") language: Language,
+                        @(ApiModelProperty@field)(description = "The results") results: Seq[Book])
+
+
 case object LocalDateSerializer extends CustomSerializer[LocalDate](format => ( {
   case JString(p) => LocalDate.parse(p)
   case JNull => null

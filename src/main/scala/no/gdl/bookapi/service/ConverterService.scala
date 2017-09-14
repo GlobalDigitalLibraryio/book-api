@@ -173,14 +173,15 @@ trait ConverterService {
         case None => api.CoverPhoto("url-to-placeholder-image", "url-to-placeholder-image") //TODO: Solve placeholder-photo
       }
     }
-  }
 
-  def toApiLanguage(languageCode: String): api.Language = {
-    val locale = new Locale(languageCode)
-    val displayLanguage = Option(locale.getDisplayLanguage(locale))
-    displayLanguage match {
-      case Some(x) => api.Language(languageCode, x)
-      case None => api.Language(languageCode, languageCode)
+    def toApiLanguage(languageCode: String): api.Language = {
+      val locale = new Locale(languageCode)
+      val displayLanguage = Option(locale.getDisplayLanguage(locale))
+      displayLanguage match {
+        case Some(x) => api.Language(languageCode, x)
+        case None => api.Language(languageCode, languageCode)
+      }
     }
   }
+
 }

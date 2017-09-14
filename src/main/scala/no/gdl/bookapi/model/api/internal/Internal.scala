@@ -8,7 +8,6 @@
 package no.gdl.bookapi.model.api.internal
 
 import java.time.LocalDate
-import java.util.Date
 
 
 

@@ -337,15 +337,17 @@ trait BooksRepository {
         .map(Chapter(ch)).single().apply()
     }
 
-    def bookIdsWithLanguage(language: String, pageSize: Int, page: Int)(implicit session: DBSession = ReadOnlyAutoSession): Seq[Long] = {
+    def bookIdsWithLanguage(language: String, pageSize: Int, page: Int)(implicit session: DBSession = ReadOnlyAutoSession): SearchResult[Long] = {
       val limit = pageSize.max(1)
       val offset = (page.max(1) - 1) * pageSize
 
-      select(t.result.bookId)
+      val results = select(t.result.bookId)
         .from(Translation as t)
         .where.eq(t.language, language).limit(limit).offset(offset)
         .toSQL
         .map(_.long(1)).list().apply()
+
+      SearchResult[Long](results.length, page, pageSize, language, results)
     }
 
     def withId(id: Long)(implicit session: DBSession = ReadOnlyAutoSession): Option[Book] = {
