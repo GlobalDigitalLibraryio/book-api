@@ -48,7 +48,7 @@ lazy val book_api = (project in file(".")).
       "org.eclipse.jetty" % "jetty-webapp" % Jettyversion % "container;compile",
       "org.eclipse.jetty" % "jetty-plus" % Jettyversion % "container",
       "org.json4s"   %% "json4s-native" % "3.5.0",
-      "org.scalikejdbc" %% "scalikejdbc" % "2.5.0",
+      "org.scalikejdbc" %% "scalikejdbc" % "3.0.2",
       "org.postgresql" % "postgresql" % "9.4-1201-jdbc4",
       "org.flywaydb" % "flyway-core" % "4.0",
       "com.netaporter" %% "scala-uri" % "0.4.16",

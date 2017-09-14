@@ -7,6 +7,7 @@
 
 package no.gdl.bookapi.model.api.internal
 
+import java.time.LocalDate
 import java.util.Date
 
 
@@ -36,8 +37,8 @@ case class NewTranslation(externalId: Option[String],
                           about: String,
                           numPages: Option[Int],
                           language: String,
-                          datePublished: Option[Date],
-                          dateCreated: Option[Date],
+                          datePublished: Option[LocalDate],
+                          dateCreated: Option[LocalDate],
                           coverphoto: Option[Long],
                           tags: Seq[String],
                           isBasedOnUrl: Option[String],

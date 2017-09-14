@@ -7,8 +7,10 @@
 
 package no.gdl.bookapi.model.api
 
-import java.util.Date
+import java.time.LocalDate
 
+import org.json4s.CustomSerializer
+import org.json4s.JsonAST.{JNull, JString}
 import org.scalatra.swagger.annotations.ApiModel
 import org.scalatra.swagger.runtime.annotations.ApiModelProperty
 
@@ -79,11 +81,18 @@ case class Book(@(ApiModelProperty@field)(description = "The id of the book") id
                 @(ApiModelProperty@field)(description = "Information about which educational use the book is for") educationalUse: Option[String],
                 @(ApiModelProperty@field)(description = "For which role is the book intended") educationalRole: Option[String],
                 @(ApiModelProperty@field)(description = "The time required to read through the book. (e.g. PT10M)") timeRequired: Option[String],
-                @(ApiModelProperty@field)(description = "The date when this book was first published (iso-format)") datePublished: Option[Date],
-                @(ApiModelProperty@field)(description = "The date when this book was created (iso-format)") dateCreated: Option[Date],
+                @(ApiModelProperty@field)(description = "The date when this book was first published (iso-format)") datePublished: Option[LocalDate],
+                @(ApiModelProperty@field)(description = "The date when this book was created (iso-format)") dateCreated: Option[LocalDate],
                 @(ApiModelProperty@field)(description = "Information about categories") categories: Seq[Category],
                 @(ApiModelProperty@field)(description = "Cover Photo information") coverPhoto: CoverPhoto,
                 @(ApiModelProperty@field)(description = "Information about downloads") downloads: Downloads,
                 @(ApiModelProperty@field)(description = "Keywords for the book") tags: Seq[String],
                 @(ApiModelProperty@field)(description = "Information about the contributors of this book") contributors: Seq[Contributor],
                 @(ApiModelProperty@field)(description = "Information about the chapters in the book") chapters: Seq[ChapterSummary])
+
+case object LocalDateSerializer extends CustomSerializer[LocalDate](format => ( {
+  case JString(p) => LocalDate.parse(p)
+  case JNull => null
+}, {
+  case ld: LocalDate => JString(ld.toString)
+}))

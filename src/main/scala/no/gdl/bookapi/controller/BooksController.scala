@@ -13,7 +13,6 @@ import no.gdl.bookapi.BookApiProperties.DefaultLanguage
 import no.gdl.bookapi.model.api
 import no.gdl.bookapi.model.api.{AccessDeniedException, Error, ValidationError}
 import no.gdl.bookapi.service.{ConverterService, ReadService}
-import org.json4s.{DefaultFormats, Formats}
 import org.scalatra._
 import org.scalatra.swagger.{ResponseMessage, Swagger, SwaggerSupport}
 
@@ -22,7 +21,6 @@ trait BooksController {
   val booksController: BooksController
 
   class BooksController(implicit val swagger: Swagger) extends GdlController with SwaggerSupport {
-    protected implicit override val jsonFormats: Formats = DefaultFormats
     protected val applicationDescription = "API for grouping content from ndla.no."
 
     registerModel[api.Error]

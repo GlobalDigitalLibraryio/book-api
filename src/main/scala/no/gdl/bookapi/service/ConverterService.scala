@@ -164,7 +164,7 @@ trait ConverterService {
         .flatMap(imageId => imageApiClient.imageMetaWithId(imageId))
         .map(imageMeta => {
           val large = imageUrl.replace("{PATH}", imageMeta.imageUrl.path)
-          val small = s"$large?widht=200"
+          val small = s"$large?width=200"
           api.CoverPhoto(large, small)
         })
 

@@ -9,7 +9,7 @@
 package no.gdl.bookapi.controller
 
 import no.gdl.bookapi.model.api.Error
-import no.gdl.bookapi.model.api.internal.{BookId, NewBook, NewChapter, NewTranslation}
+import no.gdl.bookapi.model.api.internal.{NewBook, NewChapter, NewTranslation}
 import no.gdl.bookapi.service.{ConverterService, ReadService, ValidationService, WriteService}
 import org.scalatra.NotFound
 

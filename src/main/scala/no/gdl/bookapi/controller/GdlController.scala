@@ -12,9 +12,9 @@ import java.text.SimpleDateFormat
 import javax.servlet.http.HttpServletRequest
 
 import com.typesafe.scalalogging.LazyLogging
-import no.gdl.bookapi.BookApiProperties.{CorrelationIdHeader, CorrelationIdKey}
-import no.gdl.bookapi.model.api.{AccessDeniedException, Error, NotFoundException, OptimisticLockException, ValidationError, ValidationException, ValidationMessage}
 import io.digitallibrary.network.{ApplicationUrl, AuthUser, CorrelationID}
+import no.gdl.bookapi.BookApiProperties.{CorrelationIdHeader, CorrelationIdKey}
+import no.gdl.bookapi.model.api.{AccessDeniedException, Error, LocalDateSerializer, NotFoundException, OptimisticLockException, ValidationError, ValidationException, ValidationMessage}
 import org.apache.logging.log4j.ThreadContext
 import org.elasticsearch.index.IndexNotFoundException
 import org.json4s.native.Serialization.read
@@ -27,7 +27,7 @@ import scala.util.{Failure, Success, Try}
 abstract class GdlController extends ScalatraServlet with NativeJsonSupport with LazyLogging {
   protected implicit override val jsonFormats: Formats = new DefaultFormats {
     override def dateFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS")
-  }
+  } + LocalDateSerializer
 
 
   before() {
