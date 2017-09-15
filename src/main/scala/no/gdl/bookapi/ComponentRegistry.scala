@@ -11,14 +11,14 @@ package no.gdl.bookapi
 import io.digitallibrary.network.GdlClient
 import no.gdl.bookapi.controller._
 import no.gdl.bookapi.integration.{DataSource, ElasticClient, ImageApiClient, JestClientFactory}
-import no.gdl.bookapi.repository.BooksRepository
+import no.gdl.bookapi.repository.TransactionHandler
 import no.gdl.bookapi.service.{ConverterService, ReadService, ValidationService, WriteService}
 import org.postgresql.ds.PGPoolingDataSource
 import scalikejdbc.{ConnectionPool, DataSourceConnectionPool}
 
 object ComponentRegistry
   extends DataSource
-  with BooksRepository
+  with TransactionHandler
   with ReadService
   with WriteService
   with ElasticClient
@@ -51,7 +51,6 @@ object ComponentRegistry
   lazy val internController = new InternController
   lazy val opdsController = new OPDSController
 
-  lazy val booksRepository = new BooksRepository
   lazy val readService = new ReadService
   lazy val writeService = new WriteService
   lazy val converterService = new ConverterService

@@ -157,21 +157,16 @@ trait ConverterService {
         pdf = s"$Domain${BookApiProperties.PdfPath}/${translation.language}/${translation.uuid}.pdf") // TODO: #17 - Download PDF
     }
 
-    def toApiCoverPhoto(imageIdOpt: Option[Long]): api.CoverPhoto = {
+    def toApiCoverPhoto(imageIdOpt: Option[Long]): Option[api.CoverPhoto] = {
       val imageUrl = s"$Domain{PATH}"
 
-      val coverPhoto = imageIdOpt
-        .flatMap(imageId => imageApiClient.imageMetaWithId(imageId))
+      imageIdOpt.flatMap(imageId =>
+        imageApiClient.imageMetaWithId(imageId))
         .map(imageMeta => {
           val large = imageUrl.replace("{PATH}", imageMeta.imageUrl.path)
           val small = s"$large?width=200"
           api.CoverPhoto(large, small)
         })
-
-      coverPhoto match {
-        case Some(x) => x
-        case None => api.CoverPhoto("url-to-placeholder-image", "url-to-placeholder-image") //TODO: Solve placeholder-photo
-      }
     }
 
     def toApiLanguage(languageCode: String): api.Language = {

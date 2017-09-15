@@ -20,6 +20,7 @@ object License extends SQLSyntaxSupport[License] {
   implicit val formats = org.json4s.DefaultFormats
   override val tableName = "license"
   override val schemaName = Some(BookApiProperties.MetaSchema)
+  private val lic = syntax
 
   def apply(lic: SyntaxProvider[License])(rs: WrappedResultSet): License = apply(lic.resultName)(rs)
   def apply(lic: ResultName[License])(rs: WrappedResultSet): License = {
@@ -30,5 +31,9 @@ object License extends SQLSyntaxSupport[License] {
       rs.stringOpt(lic.description),
       rs.stringOpt(lic.url)
     )
+  }
+
+  def withName(license: String)(implicit session: DBSession = ReadOnlyAutoSession): Option[License] = {
+    sql"select ${lic.result.*} from ${License.as(lic)} where LOWER(${lic.name}) = LOWER($license)".map(License(lic)).single.apply
   }
 }

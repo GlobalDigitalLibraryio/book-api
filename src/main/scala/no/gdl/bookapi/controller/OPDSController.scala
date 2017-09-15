@@ -45,11 +45,13 @@ trait OPDSController {
         <entry>
           <id>urn:gdl:{x.id}</id>
           <title>{x.title}</title>
-          {x.contributors.map(contrib => <author><name>{contrib}</name></author>)}
+          {x.contributors.map(contrib => <author><name>{contrib.name}</name></author>)}
           <updated>{sdf.format(new Date())}</updated>
           <summary>{x.description}</summary>
-          <link href={x.coverPhoto.large} type="image/jpeg" rel="http://opds-spec.org/image"/>
-          <link href={x.coverPhoto.small} type="image/png" rel="http://opds-spec.org/image/thumbnail"/>
+          {if(x.coverPhoto.isDefined) {
+            <link href={x.coverPhoto.get.large} type="image/jpeg" rel="http://opds-spec.org/image"/>
+            <link href={x.coverPhoto.get.small} type="image/png" rel="http://opds-spec.org/image/thumbnail"/>
+          }}
           <link href={x.downloads.epub} type="application/epub+zip" rel="http://opds-spec.org/acquisition/open-access"/>
           <link href={x.downloads.pdf} type="application/pdf" rel="http://opds-spec.org/acquisition/open-access"/>
         </entry>

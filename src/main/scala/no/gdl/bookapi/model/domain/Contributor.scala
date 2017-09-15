@@ -34,5 +34,19 @@ object Contributor extends SQLSyntaxSupport[Contributor] {
 
   def opt(ctb: SyntaxProvider[Contributor], p: SyntaxProvider[Person])(rs: WrappedResultSet): Option[Contributor] =
     rs.longOpt(ctb.resultName.id).map(_ => Contributor(ctb, p)(rs))
+
+  def add(contributor: Contributor)(implicit session: DBSession = AutoSession): Contributor = {
+    val ctb = Contributor.column
+    val startRevision = 1
+
+    val id = insert.into(Contributor).namedValues(
+      ctb.revision -> startRevision,
+      ctb.personId -> contributor.person.id.get,
+      ctb.translationId -> contributor.translationId,
+      ctb.`type` -> contributor.`type`
+    ).toSQL.updateAndReturnGeneratedKey().apply()
+
+    contributor.copy(id = Some(id), revision = Some(startRevision))
+  }
 }
 

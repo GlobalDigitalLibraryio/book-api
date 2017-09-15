@@ -12,7 +12,7 @@ import javax.sql
 import io.digitallibrary.network.GdlClient
 import no.gdl.bookapi.controller.{BooksController, DownloadController, HealthController}
 import no.gdl.bookapi.integration.{DataSource, ElasticClient, ImageApiClient, NdlaJestClient}
-import no.gdl.bookapi.repository.BooksRepository
+import no.gdl.bookapi.repository.TransactionHandler
 import no.gdl.bookapi.service.{ConverterService, ReadService, ValidationService, WriteService}
 import org.scalatest.mockito.MockitoSugar._
 
@@ -22,7 +22,7 @@ trait TestEnvironment
   with WriteService
   with ElasticClient
   with ConverterService
-  with BooksRepository
+  with TransactionHandler
   with BooksController
   with HealthController
   with GdlClient
@@ -31,7 +31,6 @@ trait TestEnvironment
   with ValidationService
 {
   val dataSource = mock[sql.DataSource]
-  val booksRepository = mock[BooksRepository]
   val readService = mock[ReadService]
   val writeService = mock[WriteService]
   val converterService = mock[ConverterService]

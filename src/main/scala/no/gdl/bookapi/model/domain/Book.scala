@@ -10,6 +10,8 @@ package no.gdl.bookapi.model.domain
 import no.gdl.bookapi.BookApiProperties
 import scalikejdbc._
 
+import scala.util.Try
+
 
 case class Book(id: Option[Long],
                 revision: Option[Int],
@@ -22,6 +24,7 @@ object Book extends SQLSyntaxSupport[Book] {
   implicit val formats = org.json4s.DefaultFormats
   override val tableName = "book"
   override val schemaName = Some(BookApiProperties.MetaSchema)
+  private val (b, lic, pub) = (Book.syntax, License.syntax, Publisher.syntax)
 
   def apply(b: SyntaxProvider[Book], pub: SyntaxProvider[Publisher], lic: SyntaxProvider[License])(rs: WrappedResultSet): Book =
     apply(b.resultName, pub.resultName, lic.resultName)(rs)
@@ -34,5 +37,31 @@ object Book extends SQLSyntaxSupport[Book] {
       rs.long(b.licenseId),
       Publisher.apply(pub)(rs),
       License.apply(lic)(rs))
+
+  def withId(id: Long)(implicit session: DBSession = ReadOnlyAutoSession): Option[Book] = {
+    select
+      .from(Book as b)
+      .innerJoin(License as lic).on(b.licenseId, lic.id)
+      .innerJoin(Publisher as pub).on(b.publisherId, pub.id)
+      .where.eq(b.id, id).toSQL
+      .map(Book.apply(b, pub, lic)).single().apply()
+  }
+
+  def add(newBook: Book)(implicit session: DBSession = AutoSession): Try[Book] = {
+    val b = Book.column
+    val startRevision = 1
+
+    Try{
+      val id = insert.into(Book).namedValues(
+        b.revision -> startRevision,
+        b.publisherId -> newBook.publisherId,
+        b.licenseId -> newBook.licenseId
+      ).toSQL
+        .updateAndReturnGeneratedKey()
+        .apply()
+
+      newBook.copy(id = Some(id), revision = Some(startRevision))
+    }
+  }
 
 }

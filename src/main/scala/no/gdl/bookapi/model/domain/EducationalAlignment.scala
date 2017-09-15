@@ -37,4 +37,19 @@ object EducationalAlignment extends SQLSyntaxSupport[EducationalAlignment] {
   def opt(ea: SyntaxProvider[EducationalAlignment])(rs: WrappedResultSet): Option[EducationalAlignment] =
     rs.longOpt(ea.resultName.id).map(_ => EducationalAlignment(ea)(rs))
 
+  def add(educationalAlignment: EducationalAlignment)(implicit session: DBSession = AutoSession): EducationalAlignment = {
+    val ea = EducationalAlignment.column
+    val startRevision = 1
+
+    val id = insert.into(EducationalAlignment).namedValues(
+      ea.revision -> startRevision,
+      ea.alignmentType -> educationalAlignment.alignmentType,
+      ea.educationalFramework -> educationalAlignment.educationalFramework,
+      ea.targetDescription -> educationalAlignment.targetDescription,
+      ea.targetName -> educationalAlignment.targetName,
+      ea.targetUrl -> educationalAlignment.targetUrl
+    ).toSQL.updateAndReturnGeneratedKey().apply()
+
+    educationalAlignment.copy(id = Some(id), revision = Some(startRevision))
+  }
 }
