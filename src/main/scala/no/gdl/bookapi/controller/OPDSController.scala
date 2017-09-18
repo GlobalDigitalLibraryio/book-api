@@ -43,7 +43,7 @@ trait OPDSController {
         <link href="http://api.digitallibrary.io/book-api/opds/catalog.atom" rel="self"/>
         {readService.withLanguage(language, pageSize, page).results.map(x =>
         <entry>
-          <id>urn:gdl:{x.id}</id>
+          <id>urn:uuid:{x.uuid}</id>
           <title>{x.title}</title>
           {x.contributors.map(contrib => <author><name>{contrib.name}</name></author>)}
           <updated>{sdf.format(new Date())}</updated>

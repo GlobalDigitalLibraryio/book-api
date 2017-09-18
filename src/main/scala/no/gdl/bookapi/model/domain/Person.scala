@@ -33,7 +33,7 @@ object Person extends SQLSyntaxSupport[Person] {
     rs.longOpt(p.resultName.id).map(_ => Person(p)(rs))
 
   def withName(name: String)(implicit session: DBSession = ReadOnlyAutoSession): Option[Person] = {
-    sql"select ${p.result.*} from ${Person.as(p)} where LOWER(${p.name}) = LOWER($name)".map(Person(p)).single.apply
+    sql"select ${p.result.*} from ${Person.as(p)} where LOWER(${p.name}) = LOWER($name) order by ${p.id}".map(Person(p)).list.apply.headOption
   }
 
   def add(person: Person)(implicit session: DBSession = AutoSession): Person = {

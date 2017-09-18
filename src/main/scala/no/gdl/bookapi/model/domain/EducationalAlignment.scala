@@ -22,6 +22,7 @@ object EducationalAlignment extends SQLSyntaxSupport[EducationalAlignment] {
   implicit val formats = org.json4s.DefaultFormats
   override val tableName = "educational_alignment"
   override val schemaName = Some(BookApiProperties.MetaSchema)
+  private val ea = EducationalAlignment.syntax
 
   def apply(ea: SyntaxProvider[EducationalAlignment])(rs: WrappedResultSet): EducationalAlignment = apply(ea.resultName)(rs)
   def apply(ea: ResultName[EducationalAlignment])(rs: WrappedResultSet): EducationalAlignment =
@@ -51,5 +52,12 @@ object EducationalAlignment extends SQLSyntaxSupport[EducationalAlignment] {
     ).toSQL.updateAndReturnGeneratedKey().apply()
 
     educationalAlignment.copy(id = Some(id), revision = Some(startRevision))
+  }
+
+  def withId(id: Long)(implicit session: DBSession = ReadOnlyAutoSession): Option[EducationalAlignment] = {
+    select
+      .from(EducationalAlignment as ea)
+      .where.eq(ea.id, id).toSQL
+      .map(EducationalAlignment(ea)).single().apply()
   }
 }

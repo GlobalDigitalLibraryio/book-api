@@ -41,7 +41,7 @@ trait WriteService {
         validPublisher <- validationService.validatePublisher(optPublisher)
         persistedBook <- inTransaction { implicit session =>
           val persistedPublisher = validPublisher.id match {
-            case None => Publisher.add(validPublisher)
+            case None => Try(Publisher.add(validPublisher))
             case Some(_) => Success(validPublisher)
           }
 

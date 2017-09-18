@@ -21,6 +21,7 @@ object Contributor extends SQLSyntaxSupport[Contributor] {
   implicit val formats = org.json4s.DefaultFormats
   override val tableName = "contributor"
   override val schemaName = Some(BookApiProperties.MetaSchema)
+  private val (ctb, p) = (Contributor.syntax, Person.syntax)
 
   def apply(ctb: SyntaxProvider[Contributor], p: SyntaxProvider[Person])(rs: WrappedResultSet): Contributor = apply(ctb.resultName, p.resultName)(rs)
   def apply(ctb: ResultName[Contributor], p: ResultName[Person])(rs: WrappedResultSet) = new Contributor(
@@ -47,6 +48,14 @@ object Contributor extends SQLSyntaxSupport[Contributor] {
     ).toSQL.updateAndReturnGeneratedKey().apply()
 
     contributor.copy(id = Some(id), revision = Some(startRevision))
+  }
+
+  def forTranslationId(translationId: Long)(implicit session: DBSession = ReadOnlyAutoSession): Seq[Contributor] = {
+    select
+      .from(Contributor as ctb)
+      .innerJoin(Person as p).on(p.id, ctb.personId)
+      .where.eq(ctb.translationId, translationId).toSQL
+      .map(Contributor(ctb, p)).list().apply()
   }
 }
 

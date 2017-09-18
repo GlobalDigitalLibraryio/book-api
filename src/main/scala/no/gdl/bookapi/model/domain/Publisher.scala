@@ -13,9 +13,9 @@ import scalikejdbc._
 import scala.util.Try
 
 
-case class Publisher (id: Option[Long],
-                      revision: Option[Int],
-                      name: String)
+case class Publisher(id: Option[Long],
+                     revision: Option[Int],
+                     name: String)
 
 object Publisher extends SQLSyntaxSupport[Publisher] {
   implicit val formats = org.json4s.DefaultFormats
@@ -24,6 +24,7 @@ object Publisher extends SQLSyntaxSupport[Publisher] {
   private val pub = syntax
 
   def apply(pub: SyntaxProvider[Publisher])(rs: WrappedResultSet): Publisher = apply(pub.resultName)(rs)
+
   def apply(pub: ResultName[Publisher])(rs: WrappedResultSet): Publisher = {
     Publisher(
       rs.longOpt(pub.id),
@@ -33,22 +34,20 @@ object Publisher extends SQLSyntaxSupport[Publisher] {
   }
 
   def withName(publisher: String)(implicit session: DBSession = ReadOnlyAutoSession): Option[Publisher] = {
-    sql"select ${pub.result.*} from ${Publisher.as(pub)} where LOWER(${pub.name}) = LOWER($publisher)".map(Publisher(pub)).single.apply
+    sql"select ${pub.result.*} from ${Publisher.as(pub)} where LOWER(${pub.name}) = LOWER($publisher) order by ${pub.id}".map(Publisher(pub)).list.apply.headOption
   }
 
-  def add(publisher: Publisher)(implicit session: DBSession = AutoSession): Try[Publisher] = {
+  def add(publisher: Publisher)(implicit session: DBSession = AutoSession): Publisher = {
     val p = Publisher.column
     val startRevision = 1
 
-    Try {
-      val id = insert.into(Publisher).namedValues(
-        p.revision -> startRevision,
-        p.name -> publisher.name
-      ).toSQL
-        .updateAndReturnGeneratedKey()
-        .apply()
+    val id = insert.into(Publisher).namedValues(
+      p.revision -> startRevision,
+      p.name -> publisher.name
+    ).toSQL
+      .updateAndReturnGeneratedKey()
+      .apply()
 
-      publisher.copy(id = Some(id), revision = Some(startRevision))
-    }
+    publisher.copy(id = Some(id), revision = Some(startRevision))
   }
 }

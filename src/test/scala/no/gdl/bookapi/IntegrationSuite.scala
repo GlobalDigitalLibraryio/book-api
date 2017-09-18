@@ -7,10 +7,9 @@
 
 package no.gdl.bookapi
 
-import javax.sql.DataSource
-
 import io.digitallibrary.network.secrets.PropertyKeys
 import org.postgresql.ds.PGPoolingDataSource
+import scalikejdbc._
 
 abstract class IntegrationSuite extends UnitSuite {
 
@@ -19,10 +18,28 @@ abstract class IntegrationSuite extends UnitSuite {
   setEnv(PropertyKeys.MetaResourceKey, "postgres")
   setEnv(PropertyKeys.MetaServerKey, "127.0.0.1")
   setEnv(PropertyKeys.MetaPortKey, "5432")
-  setEnv(PropertyKeys.MetaSchemaKey, "listingapitest")
+  setEnv(PropertyKeys.MetaSchemaKey, "bookapitest")
 
+  override def beforeAll(): Unit = {
+    TestDBMigrator.migrate()
+  }
 
-  def getDataSource: DataSource = {
+  def withRollback[A](work: DBSession => A): A = {
+    using(DB(conn = ConnectionPool.borrow())) { db =>
+      try {
+        db.begin()
+        db.withinTx { implicit session =>
+          work(session)
+        }
+      } finally {
+        db.rollbackIfActive()
+      }
+    }
+  }
+}
+
+object TestDBMigrator {
+  def migrate(): Unit = this.synchronized {
     val datasource = new PGPoolingDataSource()
     datasource.setUser(BookApiProperties.MetaUserName)
     datasource.setPassword(BookApiProperties.MetaPassword)
@@ -32,6 +49,8 @@ abstract class IntegrationSuite extends UnitSuite {
     datasource.setInitialConnections(BookApiProperties.MetaInitialConnections)
     datasource.setMaxConnections(BookApiProperties.MetaMaxConnections)
     datasource.setCurrentSchema(BookApiProperties.MetaSchema)
-    datasource
+
+    DBMigrator.migrate(datasource)
+    ConnectionPool.singleton(new DataSourceConnectionPool(datasource))
   }
 }

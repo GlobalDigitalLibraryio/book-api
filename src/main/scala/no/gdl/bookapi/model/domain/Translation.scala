@@ -133,13 +133,10 @@ object Translation extends SQLSyntaxSupport[Translation] {
       .map { (tra, eaT, ch) => tra.copy(educationalAlignment = eaT.headOption, chapters = ch) }.single().apply()
 
     val translationWithContributors = translationWithChapters.map(t => {
-      val contributors = select
-        .from(Contributor as ctb)
-        .innerJoin(Person as p).on(p.id, ctb.personId)
-        .where.eq(ctb.translationId, t.id).toSQL
-        .map(Contributor(ctb, p)).list().apply()
-
-      t.copy(contributors = contributors)
+      t.copy(contributors = t.id match {
+        case None => Seq()
+        case Some(translationId) => Contributor.forTranslationId(translationId)
+      })
     })
 
     val translationWithCategories = translationWithContributors.map(t => {
@@ -168,13 +165,10 @@ object Translation extends SQLSyntaxSupport[Translation] {
       .map { (tra, eaT, ch) => tra.copy(educationalAlignment = eaT.headOption, chapters = ch) }.single().apply()
 
     val translationWithContributors = translationWithChapters.map(t => {
-      val contributors = select
-        .from(Contributor as ctb)
-        .innerJoin(Person as p).on(p.id, ctb.personId)
-        .where.eq(ctb.translationId, t.id).toSQL
-        .map(Contributor(ctb, p)).list().apply()
-
-      t.copy(contributors = contributors)
+      t.copy(contributors = t.id match {
+        case None => Seq()
+        case Some(translationId) => Contributor.forTranslationId(translationId)
+      })
     })
 
     val translationWithCategories = translationWithContributors.map(t => {

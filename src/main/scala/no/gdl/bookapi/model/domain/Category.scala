@@ -32,7 +32,10 @@ object Category extends SQLSyntaxSupport[Category] {
     rs.longOpt(cat.resultName.id).map(_ => Category(cat)(rs))
 
   def withName(category: String)(implicit session: DBSession = AutoSession): Option[Category] = {
-    sql"select ${cat.result.*} from ${Category.as(cat)} where LOWER(${cat.name}) = LOWER($category)".map(Category(cat)).single.apply
+    sql"select ${cat.result.*} from ${Category.as(cat)} where LOWER(${cat.name}) = LOWER($category) order by ${cat.id}"
+      .map(Category(cat))
+      .list()
+      .apply.headOption
   }
 
   def add(newCategory: Category)(implicit session: DBSession = AutoSession): Category = {
