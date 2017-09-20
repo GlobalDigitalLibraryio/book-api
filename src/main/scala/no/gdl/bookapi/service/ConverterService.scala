@@ -19,7 +19,7 @@ import no.gdl.bookapi.{BookApiProperties, model}
 
 
 trait ConverterService {
-  this: ImageApiClient =>
+  this: ImageApiClient with ContentConverter =>
   val converterService: ConverterService
 
   class ConverterService extends LazyLogging {
@@ -41,12 +41,12 @@ trait ConverterService {
         UUID.randomUUID().toString,
         newTranslation.title,
         newTranslation.about,
-        newTranslation.numPages,
+        newTranslation.numPages.map(_.toInt),
         newTranslation.language,
         newTranslation.datePublished,
         newTranslation.dateCreated,
         categoryIds = Seq(),
-        newTranslation.coverphoto,
+        newTranslation.coverphoto.map(_.toLong),
         newTranslation.tags,
         newTranslation.isBasedOnUrl,
         newTranslation.educationalUse,
@@ -113,7 +113,7 @@ trait ConverterService {
       chapter.revision.get,
       chapter.seqNo,
       chapter.title,
-      chapter.content)
+      contentConverter.toApiContent(chapter.content))
 
     def toApiBook(translation: Option[domain.Translation], availableLanguages: Seq[String], book: Option[domain.Book]): Option[api.Book] = {
       def toApiBookInternal(translation: domain.Translation, book: domain.Book, availableLanguages: Seq[String]): api.Book = {
@@ -125,7 +125,7 @@ trait ConverterService {
           translation.title,
           translation.about,
           toApiLanguage(translation.language),
-          availableLanguages.map(toApiLanguage),
+          availableLanguages.map(toApiLanguage).sortBy(_.name),
           toApiLicense(book.license),
           toApiPublisher(book.publisher),
           translation.readingLevel,

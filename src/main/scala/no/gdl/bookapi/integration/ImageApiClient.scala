@@ -11,7 +11,8 @@ import com.typesafe.scalalogging.LazyLogging
 import io.digitallibrary.network.GdlClient
 import io.digitallibrary.network.model.HttpRequestException
 import no.gdl.bookapi.BookApiProperties
-
+import no.gdl.bookapi.BookApiProperties.Domain
+import com.netaporter.uri.dsl._
 import scala.util.{Failure, Success}
 import scalaj.http.{Http, HttpRequest}
 
@@ -21,6 +22,10 @@ trait ImageApiClient {
   val imageApiClient: ImageApiClient
 
   class ImageApiClient extends LazyLogging {
+    def imageUrlFor(id: Long): Option[String] = {
+      imageMetaWithId(id).map(x => s"$Domain${x.imageUrl.path}")
+    }
+
     def imageMetaWithId(id: Long): Option[ImageMetaInformation] = doRequest(
       Http(s"http://${BookApiProperties.InternalImageApiUrl}/$id"))
 

@@ -1,8 +1,18 @@
+/*
+ * Part of GDL book_api.
+ * Copyright (C) 2017 Global Digital Library
+ *
+ * See LICENSE
+ */
+
 package no.gdl.bookapi.service
 
-/**
-  * Created by kes on 19/09/2017.
-  */
-class ContentConverterTest {
+import no.gdl.bookapi.{TestEnvironment, UnitSuite}
+
+
+class ContentConverterTest extends UnitSuite with TestEnvironment {
+
+  val service = new ContentConverter
+
 
 }

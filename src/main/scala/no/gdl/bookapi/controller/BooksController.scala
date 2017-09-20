@@ -104,34 +104,34 @@ trait BooksController {
       val pageSize = intOrDefault("page-size", 10).min(100).max(1)
       val page = intOrDefault("page", 1).max(0)
 
-      readService.withLanguage(params("lang"), pageSize, page)
+      readService.withLanguage(language("lang"), pageSize, page)
     }
 
     get("/:lang/:id/?", operation(getBook)) {
       val id = long("id")
-      val language = params("lang")
+      val lang = language("lang")
 
-      readService.withIdAndLanguage(id, language) match {
+      readService.withIdAndLanguage(id, lang) match {
         case Some(x) => x
-        case None => NotFound(body = Error(Error.NOT_FOUND, s"No book with id $id and language $language found"))
+        case None => NotFound(body = Error(Error.NOT_FOUND, s"No book with id $id and language $lang found"))
       }
     }
 
     get("/:lang/:id/chapters/?", operation(getChapters)) {
-      val language = params("lang")
+      val lang = language("lang")
       val id = long("id")
 
-      readService.chaptersForIdAndLanguage(id, language)
+      readService.chaptersForIdAndLanguage(id, lang)
     }
 
     get("/:lang/:bookid/chapters/:chapterid/?", operation(getChapter)) {
-      val language = params("lang")
+      val lang = language("lang")
       val bookId = long("bookid")
       val chapterId = long("chapterid")
 
-      readService.chapterForBookWithLanguageAndId(bookId, language, chapterId) match {
+      readService.chapterForBookWithLanguageAndId(bookId, lang, chapterId) match {
         case Some(x) => x
-        case None => NotFound(body = Error(Error.NOT_FOUND, s"No chapter with id $chapterId for book with id $bookId and language $language found."))
+        case None => NotFound(body = Error(Error.NOT_FOUND, s"No chapter with id $chapterId for book with id $bookId and language $lang found."))
       }
     }
 
@@ -139,7 +139,7 @@ trait BooksController {
       val pageSize = intOrDefault("page-size", 10).min(100).max(1)
       val page = intOrDefault("page", 1).max(0)
 
-      readService.withLanguage(params("lang"), pageSize, page)
+      readService.withLanguage(language("lang"), pageSize, page)
     }
 
     def assertHasRole(role: String): Unit = {

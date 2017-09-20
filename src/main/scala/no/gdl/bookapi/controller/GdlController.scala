@@ -80,6 +80,13 @@ abstract class GdlController extends ScalatraServlet with NativeJsonSupport with
     }
   }
 
+  def language(paramName: String)(implicit request: HttpServletRequest): String = {
+    val paramValue = params(paramName)
+    Try(new java.util.Locale(paramValue).getISO3Language) match {
+      case Success(x) => x
+      case Failure(_) => paramValue
+    }
+  }
 
   def paramAsListOfString(paramName: String)(implicit request: HttpServletRequest): List[String] = {
     params.get(paramName) match {
