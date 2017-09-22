@@ -223,6 +223,14 @@ object Translation extends SQLSyntaxSupport[Translation] {
       .map(_.string(1)).list().apply()
   }
 
+  def allAvailableLevels(language: Option[String])(implicit session: DBSession = ReadOnlyAutoSession): Seq[String] = {
+    select(sqls.distinct(t.result.readingLevel))
+      .from(Translation as t)
+      .where(sqls.toAndConditionOpt(
+        language.map(lang => sqls.eq(t.language, lang))
+      )).orderBy(t.readingLevel).toSQL.map(_.string(1)).list().apply()
+  }
+
   def add(translation: Translation)(implicit session: DBSession = AutoSession): Translation = {
     import collection.JavaConverters._
 

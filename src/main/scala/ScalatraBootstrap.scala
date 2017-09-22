@@ -17,6 +17,7 @@ class ScalatraBootstrap extends LifeCycle {
     context.mount(ComponentRegistry.opdsController, BookApiProperties.OpdsPath, "opds")
     context.mount(ComponentRegistry.downloadController, BookApiProperties.DownloadPath, "downloads")
     context.mount(ComponentRegistry.languageController, BookApiProperties.LanguagesPath, "languages")
+    context.mount(ComponentRegistry.levelController, BookApiProperties.LevelsPath, "levels")
     context.mount(ComponentRegistry.resourcesApp, BookApiProperties.ApiDocPath)
     context.mount(ComponentRegistry.healthController, "/health")
     context.mount(ComponentRegistry.internController, "/intern")

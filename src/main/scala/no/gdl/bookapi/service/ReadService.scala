@@ -20,6 +20,10 @@ trait ReadService {
       Translation.allAvailableLanguages().map(converterService.toApiLanguage).sortBy(_.name)
     }
 
+    def listAvailableLevelsForLanguage(lang: Option[String] = None): Seq[String] =
+      Translation.allAvailableLevels(lang)
+
+
     def withLanguage(language: String, pageSize: Int, page: Int): api.SearchResult = {
       val searchResult = Translation.bookIdsWithLanguage(language, pageSize, page)
       val books = searchResult.results.flatMap(id => withIdAndLanguage(id, language))
