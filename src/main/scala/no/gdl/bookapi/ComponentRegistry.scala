@@ -27,6 +27,7 @@ object ComponentRegistry
   with BooksController
   with LanguageController
   with LevelController
+  with EditorPickController
   with InternController
   with HealthController
   with OPDSController
@@ -66,4 +67,5 @@ object ComponentRegistry
   lazy val contentConverter = new ContentConverter
   lazy val languageController = new LanguageController
   lazy val levelController = new LevelController
+  lazy val editorPickController = new EditorPickController
 }
