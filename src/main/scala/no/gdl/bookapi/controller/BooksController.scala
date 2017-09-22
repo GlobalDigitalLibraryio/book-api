@@ -21,7 +21,7 @@ trait BooksController {
   val booksController: BooksController
 
   class BooksController(implicit val swagger: Swagger) extends GdlController with SwaggerSupport {
-    protected val applicationDescription = "API for grouping content from ndla.no."
+    protected val applicationDescription = "API for getting books from GDL."
 
     registerModel[api.Error]
     registerModel[ValidationError]

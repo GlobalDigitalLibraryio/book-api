@@ -217,6 +217,12 @@ object Translation extends SQLSyntaxSupport[Translation] {
     translationWithCategories
   }
 
+  def allAvailableLanguages()(implicit session: DBSession = ReadOnlyAutoSession): Seq[String] = {
+    select(sqls.distinct(t.result.language))
+      .from(Translation as t).toSQL
+      .map(_.string(1)).list().apply()
+  }
+
   def add(translation: Translation)(implicit session: DBSession = AutoSession): Translation = {
     import collection.JavaConverters._
 

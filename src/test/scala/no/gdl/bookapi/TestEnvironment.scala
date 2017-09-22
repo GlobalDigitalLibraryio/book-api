@@ -10,7 +10,7 @@ package no.gdl.bookapi
 import javax.sql
 
 import io.digitallibrary.network.GdlClient
-import no.gdl.bookapi.controller.{BooksController, DownloadController, HealthController}
+import no.gdl.bookapi.controller.{BooksController, DownloadController, HealthController, LanguageController}
 import no.gdl.bookapi.integration.{DataSource, ElasticClient, ImageApiClient, NdlaJestClient}
 import no.gdl.bookapi.repository.TransactionHandler
 import no.gdl.bookapi.service._
@@ -25,6 +25,7 @@ trait TestEnvironment
   with ContentConverter
   with TransactionHandler
   with BooksController
+  with LanguageController
   with HealthController
   with GdlClient
   with ImageApiClient
@@ -39,6 +40,7 @@ trait TestEnvironment
   val resourcesApp = mock[ResourcesApp]
   val healthController = mock[HealthController]
   val booksController = mock[BooksController]
+  val languageController = mock[LanguageController]
 
   val jestClient = mock[NdlaJestClient]
 
