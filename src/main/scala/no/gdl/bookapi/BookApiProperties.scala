@@ -38,6 +38,7 @@ object BookApiProperties extends LazyLogging {
 
   val OpdsPath = "/book-api/opds"
   val DownloadPath = "/book-api/download"
+  val LanguagesPath = "/book-api/v1/languages"
   val ApiPath = "/book-api/v1/books"
   val ApiDocPath = "/book-api/api-docs"
   val EpubPath = s"$DownloadPath/epub"
