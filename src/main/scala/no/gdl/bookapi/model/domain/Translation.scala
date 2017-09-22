@@ -11,6 +11,8 @@ import java.sql.PreparedStatement
 import java.time.LocalDate
 
 import no.gdl.bookapi.BookApiProperties
+import no.gdl.bookapi.model.api.OptimisticLockException
+import no.gdl.bookapi.model.domain.Translation.{ch, t}
 import scalikejdbc._
 
 case class Translation(id: Option[Long],
@@ -151,6 +153,38 @@ object Translation extends SQLSyntaxSupport[Translation] {
     translationWithCategories
   }
 
+  def withId(translationId: Long)(implicit session: DBSession = ReadOnlyAutoSession): Option[Translation] = {
+    val translationWithChapters = select
+      .from(Translation as t)
+      .leftJoin(EducationalAlignment as ea).on(t.eaId, t.id)
+      .leftJoin(Chapter as ch).on(t.id, ch.translationId)
+      .where.eq(t.id, translationId).toSQL
+      .one(Translation(t))
+      .toManies(
+        rs => EducationalAlignment.opt(ea)(rs),
+        rs => Chapter.opt(ch)(rs)
+      )
+      .map { (tra, eaT, ch) => tra.copy(educationalAlignment = eaT.headOption, chapters = ch) }.single().apply()
+
+    val translationWithContributors = translationWithChapters.map(t => {
+      t.copy(contributors = t.id match {
+        case None => Seq()
+        case Some(id) => Contributor.forTranslationId(id)
+      })
+    })
+
+    val translationWithCategories = translationWithContributors.map(t => {
+      val categories = select
+        .from(Category as cat)
+        .where.in(cat.id, t.categoryIds).toSQL
+        .map(Category(cat)).list().apply()
+
+      t.copy(categories = categories)
+    })
+
+    translationWithCategories
+  }
+
   def withExternalId(externalId: String)(implicit session: DBSession = ReadOnlyAutoSession): Option[Translation] = {
     val translationWithChapters = select
       .from(Translation as t)
@@ -256,5 +290,57 @@ object Translation extends SQLSyntaxSupport[Translation] {
                ${categoryBinder})""".updateAndReturnGeneratedKey().apply()
 
     translation.copy(id = Some(id), revision = Some(startRevision))
+  }
+
+  def update(replacement: Translation)(implicit session: DBSession = AutoSession): Translation = {
+    import collection.JavaConverters._
+
+    val t = Translation.column
+    val nextRevision = replacement.revision.getOrElse(0) + 1
+
+    val categoryBinder = ParameterBinder(
+      value = replacement.categoryIds,
+      binder = (stmt: PreparedStatement, idx: Int) => stmt.setArray(idx, stmt.getConnection.createArrayOf("bigint", replacement.categoryIds.asJava.toArray))
+    )
+
+    val tagBinder = ParameterBinder(
+      value = replacement.tags,
+      binder = (stmt: PreparedStatement, idx: Int) => stmt.setArray(idx, stmt.getConnection.createArrayOf("text", replacement.tags.asJava.toArray))
+    )
+
+    val count = sql"""
+      update ${Translation.table} set
+        ${t.revision} = ${nextRevision},
+        ${t.title} = ${replacement.title},
+        ${t.about} = ${replacement.about},
+        ${t.numPages} = ${replacement.numPages},
+        ${t.language} = ${replacement.language},
+        ${t.datePublished} = ${replacement.datePublished},
+        ${t.dateCreated} = ${replacement.dateCreated},
+        ${t.coverphoto} = ${replacement.coverphoto},
+        ${t.isBasedOnUrl} = ${replacement.isBasedOnUrl},
+        ${t.educationalUse} = ${replacement.educationalUse},
+        ${t.educationalRole} = ${replacement.educationalRole},
+        ${t.eaId} = ${replacement.eaId},
+        ${t.timeRequired} = ${replacement.timeRequired},
+        ${t.typicalAgeRange} = ${replacement.typicalAgeRange},
+        ${t.readingLevel} = ${replacement.readingLevel},
+        ${t.interactivityType} = ${replacement.interactivityType},
+        ${t.learningResourceType} = ${replacement.learningResourceType},
+        ${t.accessibilityApi} = ${replacement.accessibilityApi},
+        ${t.accessibilityControl} = ${replacement.accessibilityControl},
+        ${t.accessibilityFeature} = ${replacement.accessibilityFeature},
+        ${t.accessibilityHazard} = ${replacement.accessibilityHazard},
+        ${t.tags} = ${tagBinder},
+        ${t.categoryIds} = ${categoryBinder}
+       where ${t.id} = ${replacement.id}
+       and ${t.revision} = ${replacement.revision}
+      """.update().apply()
+
+    if(count != 1) {
+      throw new OptimisticLockException()
+    } else {
+      replacement.copy(revision = Some(nextRevision))
+    }
   }
 }

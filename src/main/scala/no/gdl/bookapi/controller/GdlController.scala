@@ -24,7 +24,7 @@ import org.scalatra.json.NativeJsonSupport
 
 import scala.util.{Failure, Success, Try}
 
-abstract class GdlController extends ScalatraServlet with NativeJsonSupport with LazyLogging {
+abstract class GdlController extends ScalatraServlet with NativeJsonSupport with LazyLogging with ContentEncodingSupport {
   protected implicit override val jsonFormats: Formats = new DefaultFormats {
     override def dateFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS")
   } + LocalDateSerializer

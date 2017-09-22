@@ -18,6 +18,7 @@ case class Contributor (id: Option[Long],
                         person: Person)
 
 object Contributor extends SQLSyntaxSupport[Contributor] {
+
   implicit val formats = org.json4s.DefaultFormats
   override val tableName = "contributor"
   override val schemaName = Some(BookApiProperties.MetaSchema)
@@ -48,6 +49,14 @@ object Contributor extends SQLSyntaxSupport[Contributor] {
     ).toSQL.updateAndReturnGeneratedKey().apply()
 
     contributor.copy(id = Some(id), revision = Some(startRevision))
+  }
+
+  def remove(contributor: Contributor)(implicit session: DBSession = ReadOnlyAutoSession): Unit = {
+    val ctb = Contributor.column
+    delete
+      .from(Contributor)
+      .where.eq(ctb.id, contributor.id)
+      .toSQL.update().apply()
   }
 
   def forTranslationId(translationId: Long)(implicit session: DBSession = ReadOnlyAutoSession): Seq[Contributor] = {

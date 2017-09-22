@@ -8,6 +8,7 @@
 package no.gdl.bookapi.model.domain
 
 import no.gdl.bookapi.BookApiProperties
+import no.gdl.bookapi.model.api.OptimisticLockException
 import scalikejdbc._
 
 import scala.util.Try
@@ -61,6 +62,27 @@ object Book extends SQLSyntaxSupport[Book] {
         .apply()
 
       newBook.copy(id = Some(id), revision = Some(startRevision))
+    }
+  }
+
+  def updateBook(book: Book)(implicit session: DBSession = AutoSession): Try[Book] = {
+    val b = Book.column
+    val newRevision = book.revision.getOrElse(0) + 1
+
+    Try{
+      val count = update(Book).set(
+        b.revision -> newRevision,
+        b.publisherId -> book.publisherId,
+        b.licenseId -> book.licenseId
+      ).where
+        .eq(b.id, book.id).and
+        .eq(b.revision, book.revision).toSQL.update().apply()
+
+      if(count != 1) {
+        throw new OptimisticLockException()
+      } else {
+        book.copy(revision = Some(newRevision))
+      }
     }
   }
 
