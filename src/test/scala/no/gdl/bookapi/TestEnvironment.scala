@@ -27,6 +27,7 @@ trait TestEnvironment
   with BooksController
   with LanguageController
   with LevelController
+  with EditorPickController
   with HealthController
   with GdlClient
   with ImageApiClient
@@ -43,6 +44,7 @@ trait TestEnvironment
   val booksController = mock[BooksController]
   val languageController = mock[LanguageController]
   val levelController = mock[LevelController]
+  val editorPickController = mock[EditorPickController]
 
   val jestClient = mock[NdlaJestClient]
 

@@ -46,7 +46,7 @@ trait BooksController {
       notes s"Returns a list of books in the specified language"
       parameters(
       headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
-      pathParam[Long]("lang").description("Desired language for books specified in ISO 639-2 format."),
+      pathParam[String]("lang").description("Desired language for books specified in ISO 639-2 format."),
       queryParam[Option[Int]]("page-size").description("Return this many results per page."),
       queryParam[Option[Int]]("page").description("Return results for this page."))
       authorizations "oauth2"
