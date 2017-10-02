@@ -136,12 +136,11 @@ trait BooksController {
     }
 
     get("/:lang/similar/:id/?", operation(getSimilar)) {
-      val pageSize = intOrDefault("page-size", 10).min(100).max(1)
-      val page = intOrDefault("page", 1).max(1)
-      val lang = language("lang")
-      val bookId = long("id")
-
-      readService.similarTo(bookId, lang, pageSize, page)
+      readService.similarTo(
+        long("id"),
+        language("lang"),
+        intOrDefault("page-size", 10).min(100).max(1),
+        intOrDefault("page", 1).max(1))
     }
 
     def assertHasRole(role: String): Unit = {

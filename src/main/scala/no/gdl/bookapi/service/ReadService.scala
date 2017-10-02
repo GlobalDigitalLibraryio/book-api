@@ -15,6 +15,7 @@ trait ReadService {
   this: ConverterService =>
   val readService: ReadService
 
+  // TODO: Create tests for this class after #59 is resolved
   class ReadService {
     def listAvailableLanguages: Seq[api.Language] = {
       Translation.allAvailableLanguages().map(converterService.toApiLanguage).sortBy(_.name)

@@ -69,6 +69,70 @@ class TranslationTest extends IntegrationSuite with TestEnvironment {
     }
   }
 
+  test("that bookIdsWithLanguageAndLevel returns ids with same language when level is None") {
+    withRollback { implicit  session =>
+      val book1 = addBookDef()
+      val book2 = addBookDef()
+      val book3 = addBookDef()
+
+      val translationForBook1 = addTranslationDef("ext1", "title 1", book1.id.get, "xho", None)
+      val translationForBook2 = addTranslationDef("ext2", "title 2", book2.id.get, "xho", None)
+      val translationForBook3 = addTranslationDef("ext3", "title 3", book3.id.get, "xho", None)
+
+      val ids = Translation.bookIdsWithLanguageAndLevel("xho", None, 10, 1)
+      ids.length should be(3)
+      ids.min should equal (book1.id.get)
+      ids.max should equal (book3.id.get)
+    }
+  }
+
+  test("that bookIdsWithLanguageAndLevel only returns ids for same level") {
+    withRollback { implicit session =>
+      val book1 = addBookDef()
+      val book2 = addBookDef()
+      val book3 = addBookDef()
+
+      val translationForBook1 = addTranslationDef("ext1", "title 1", book1.id.get, "xho", Some("2"))
+      val translationForBook2 = addTranslationDef("ext2", "title 2", book2.id.get, "xho", Some("2"))
+      val translationForBook3 = addTranslationDef("ext3", "title 3", book3.id.get, "xho", Some("1"))
+
+      val ids = Translation.bookIdsWithLanguageAndLevel("xho", Some("2"), 10, 1)
+      ids.length should be(2)
+      ids.min should equal (book1.id.get)
+      ids.max should equal (book2.id.get)
+    }
+  }
+
+  test("that bookIdsWithLanguageAndLevel returns correct page and pagesize") {
+    withRollback { implicit session =>
+      val book1 = addBookDef()
+      val book2 = addBookDef()
+      val book3 = addBookDef()
+      val book4 = addBookDef()
+
+      val translationForBook1 = addTranslationDef("ext1", "title 1", book1.id.get, "xho", None)
+      val translationForBook2 = addTranslationDef("ext2", "title 2", book2.id.get, "xho", None)
+      val translationForBook3 = addTranslationDef("ext3", "title 3", book3.id.get, "xho", None)
+      val translationForBook4 = addTranslationDef("ext4", "title 4", book4.id.get, "xho", None)
+
+      val page1 = Translation.bookIdsWithLanguageAndLevel("xho", None, 1, 1)
+      page1.length should be(1)
+      page1.min should equal (book1.id.get)
+
+      val page2 = Translation.bookIdsWithLanguageAndLevel("xho", None, 1, 2)
+      page2.length should be(1)
+      page2.min should equal (book2.id.get)
+
+      val page3 = Translation.bookIdsWithLanguageAndLevel("xho", None, 1, 3)
+      page3.length should be(1)
+      page3.min should equal (book3.id.get)
+
+      val doublePage = Translation.bookIdsWithLanguageAndLevel("xho", None, 2, 2)
+      doublePage.length should be(2)
+      doublePage.min should equal (book3.id.get)
+      doublePage.max should equal (book4.id.get)
+    }
+  }
 }
 
 object TranslationTest {
@@ -80,7 +144,7 @@ object TranslationTest {
     bookTry.get
   }
 
-  def addTranslationDef(externalId: String, title: String, bookId: Long, language: String)(implicit session: DBSession = AutoSession): Translation = {
+  def addTranslationDef(externalId: String, title: String, bookId: Long, language: String, readingLevel: Option[String] = None)(implicit session: DBSession = AutoSession): Translation = {
     val cat1 = Category.add(Category(None, None, "some-category"))
 
     val translationDef = Translation(
@@ -104,7 +168,7 @@ object TranslationTest {
       eaId = None,
       timeRequired = None,
       typicalAgeRange = None,
-      readingLevel = None,
+      readingLevel = readingLevel,
       interactivityType = None,
       learningResourceType = None,
       accessibilityApi = None,
