@@ -5,20 +5,23 @@
  * See LICENSE
  */
 
-package no.gdl.bookapi.model.domain
+package no.gdl.bookapi.repository
 
+import no.gdl.bookapi.model.domain.Person
 import no.gdl.bookapi.{IntegrationSuite, TestEnvironment}
 
 
-class PersonTest extends IntegrationSuite with TestEnvironment {
+class PersonRepositoryTest extends IntegrationSuite with TestEnvironment {
+
+  override val personRepository = new PersonRepository
 
   test("that Person is added") {
     withRollback { implicit session =>
       val testName = "some-name"
 
-      Person.add(Person(None, None, testName))
+      personRepository.add(Person(None, None, testName))
 
-      val withName = Person.withName(testName)
+      val withName = personRepository.withName(testName)
       withName.isDefined should be(true)
       withName.head.id.isDefined should be(true)
       withName.head.revision.isDefined should be(true)
@@ -27,7 +30,7 @@ class PersonTest extends IntegrationSuite with TestEnvironment {
   }
 
   test("that withName returns None when no Persons with given name") {
-    val withName = Person.withName(s"some-name${System.currentTimeMillis()}")
+    val withName = personRepository.withName(s"some-name${System.currentTimeMillis()}")
     withName should be (None)
   }
 
@@ -36,11 +39,11 @@ class PersonTest extends IntegrationSuite with TestEnvironment {
       val testName = s"Some-person-${System.currentTimeMillis()}"
       val personDef = Person(None, None, testName)
 
-      val person1 = Person.add(personDef)
-      val person2 = Person.add(personDef)
-      val person3 = Person.add(personDef)
+      val person1 = personRepository.add(personDef)
+      val person2 = personRepository.add(personDef)
+      val person3 = personRepository.add(personDef)
 
-      val withName = Person.withName(testName)
+      val withName = personRepository.withName(testName)
       withName.isDefined should be(true)
       withName.head.id.isDefined should be(true)
       withName.head.id.get should equal(person1.id.get)

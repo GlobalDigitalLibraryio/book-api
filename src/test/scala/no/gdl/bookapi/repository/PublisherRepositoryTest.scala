@@ -5,19 +5,22 @@
  * See LICENSE
  */
 
-package no.gdl.bookapi.model.domain
+package no.gdl.bookapi.repository
 
+import no.gdl.bookapi.model.domain.Publisher
 import no.gdl.bookapi.{IntegrationSuite, TestEnvironment}
 
-class PublisherTest extends IntegrationSuite with TestEnvironment {
+class PublisherRepositoryTest extends IntegrationSuite with TestEnvironment {
+
+  override val publisherRepository = new PublisherRepository
 
   test("that Publisher is added") {
     withRollback { implicit session =>
       val testName = "some-name"
 
-      Publisher.add(Publisher(None, None, testName))
+      publisherRepository.add(Publisher(None, None, testName))
 
-      val withName = Publisher.withName(testName)
+      val withName = publisherRepository.withName(testName)
       withName.isDefined should be(true)
       withName.head.id.isDefined should be(true)
       withName.head.revision.isDefined should be(true)
@@ -26,7 +29,7 @@ class PublisherTest extends IntegrationSuite with TestEnvironment {
   }
 
   test("that withName returns None when no Publisher with given name") {
-    val withName = Publisher.withName(s"some-name${System.currentTimeMillis()}")
+    val withName = publisherRepository.withName(s"some-name${System.currentTimeMillis()}")
     withName should be (None)
   }
 
@@ -35,11 +38,11 @@ class PublisherTest extends IntegrationSuite with TestEnvironment {
       val testName = s"Some-publisher-${System.currentTimeMillis()}"
       val publisherDef = Publisher(None, None, testName)
 
-      val publisher1 = Publisher.add(publisherDef)
-      val publisher2 = Publisher.add(publisherDef)
-      val publisher3 = Publisher.add(publisherDef)
+      val publisher1 = publisherRepository.add(publisherDef)
+      val publisher2 = publisherRepository.add(publisherDef)
+      val publisher3 = publisherRepository.add(publisherDef)
 
-      val withName = Publisher.withName(testName)
+      val withName = publisherRepository.withName(testName)
       withName.isDefined should be(true)
       withName.head.id.isDefined should be(true)
       withName.head.id.get should equal(publisher1.id.get)

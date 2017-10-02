@@ -5,12 +5,15 @@
  * See LICENSE
  */
 
-package no.gdl.bookapi.model.domain
+package no.gdl.bookapi.repository
 
+import no.gdl.bookapi.model.domain.License
 import no.gdl.bookapi.{IntegrationSuite, TestEnvironment}
 
 
-class LicenseTest extends IntegrationSuite with TestEnvironment {
+class LicenseRepositoryTest extends IntegrationSuite with TestEnvironment {
+
+  override val licenseRepository = new LicenseRepository
 
   test("that License is added") {
     withRollback { implicit session =>
@@ -20,9 +23,9 @@ class LicenseTest extends IntegrationSuite with TestEnvironment {
 
       val licenseDef = License(None, None, testName, testDesc, testUrl)
 
-      License.add(licenseDef)
+      licenseRepository.add(licenseDef)
 
-      val withName = License.withName(testName)
+      val withName = licenseRepository.withName(testName)
       withName.isDefined should be(true)
       withName.head.id.isDefined should be(true)
       withName.head.revision.isDefined should be(true)
@@ -33,7 +36,7 @@ class LicenseTest extends IntegrationSuite with TestEnvironment {
   }
 
   test("that withName returns None when no License with given name") {
-    val withName = License.withName(s"some-name${System.currentTimeMillis()}")
+    val withName = licenseRepository.withName(s"some-name${System.currentTimeMillis()}")
     withName should be (None)
   }
 
@@ -42,11 +45,11 @@ class LicenseTest extends IntegrationSuite with TestEnvironment {
       val testName = s"Some-license-${System.currentTimeMillis()}"
       val licenseDef = License(None, None, testName, None, None)
 
-      val license1 = License.add(licenseDef)
-      val license2 = License.add(licenseDef)
-      val license3 = License.add(licenseDef)
+      val license1 = licenseRepository.add(licenseDef)
+      val license2 = licenseRepository.add(licenseDef)
+      val license3 = licenseRepository.add(licenseDef)
 
-      val withName = License.withName(testName)
+      val withName = licenseRepository.withName(testName)
       withName.isDefined should be(true)
       withName.head.id.isDefined should be(true)
       withName.head.id.get should equal(license1.id.get)

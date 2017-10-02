@@ -12,7 +12,7 @@ import javax.sql
 import io.digitallibrary.network.GdlClient
 import no.gdl.bookapi.controller._
 import no.gdl.bookapi.integration.{DataSource, ElasticClient, ImageApiClient, NdlaJestClient}
-import no.gdl.bookapi.repository.TransactionHandler
+import no.gdl.bookapi.repository._
 import no.gdl.bookapi.service._
 import org.scalatest.mockito.MockitoSugar._
 
@@ -33,6 +33,15 @@ trait TestEnvironment
   with ImageApiClient
   with DownloadController
   with ValidationService
+  with BookRepository
+  with CategoryRepository
+  with ChapterRepository
+  with ContributorRepository
+  with TranslationRepository
+  with EducationalAlignmentRepository
+  with LicenseRepository
+  with PersonRepository
+  with PublisherRepository
 {
   val dataSource = mock[sql.DataSource]
   val readService = mock[ReadService]
@@ -53,4 +62,13 @@ trait TestEnvironment
   val downloadController = mock[DownloadController]
   val validationService = mock[ValidationService]
   val contentConverter = mock[ContentConverter]
+  val bookRepository = mock[BookRepository]
+  val categoryRepository = mock[CategoryRepository]
+  val chapterRepository = mock[ChapterRepository]
+  val contributorRepository = mock[ContributorRepository]
+  val translationRepository = mock[TranslationRepository]
+  val educationalAlignmentRepository = mock[EducationalAlignmentRepository]
+  val licenseRepository = mock[LicenseRepository]
+  val personRepository = mock[PersonRepository]
+  val publisherRepository = mock[PublisherRepository]
 }

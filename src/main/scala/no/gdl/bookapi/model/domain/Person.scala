@@ -20,7 +20,6 @@ object Person extends SQLSyntaxSupport[Person] {
   override val tableName = "person"
   override val schemaName = Some(BookApiProperties.MetaSchema)
   override val columns = Seq("id", "revision", "name")
-  private val p = Person.syntax
 
   def apply(p: SyntaxProvider[Person])(rs: WrappedResultSet): Person = apply(p.resultName)(rs)
   def apply(p: ResultName[Person])(rs: WrappedResultSet) = new Person(
@@ -32,19 +31,4 @@ object Person extends SQLSyntaxSupport[Person] {
   def opt(p: SyntaxProvider[Person])(rs: WrappedResultSet): Option[Person] =
     rs.longOpt(p.resultName.id).map(_ => Person(p)(rs))
 
-  def withName(name: String)(implicit session: DBSession = ReadOnlyAutoSession): Option[Person] = {
-    sql"select ${p.result.*} from ${Person.as(p)} where LOWER(${p.name}) = LOWER($name) order by ${p.id}".map(Person(p)).list.apply.headOption
-  }
-
-  def add(person: Person)(implicit session: DBSession = AutoSession): Person = {
-    val p = Person.column
-    val startRevision = 1
-
-    val id = insert.into(Person).namedValues(
-      p.revision -> startRevision,
-      p.name -> person.name
-    ).toSQL.updateAndReturnGeneratedKey().apply()
-
-    person.copy(id = Some(id), revision = Some(startRevision))
-  }
 }

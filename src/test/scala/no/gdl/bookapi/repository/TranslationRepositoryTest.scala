@@ -5,17 +5,23 @@
  * See LICENSE
  */
 
-package no.gdl.bookapi.model.domain
+package no.gdl.bookapi.repository
 
 import java.time.LocalDate
 import java.util.UUID
 
-import no.gdl.bookapi.model.domain.TranslationTest.{addBookDef, addTranslationDef}
+import no.gdl.bookapi.model.domain._
 import no.gdl.bookapi.{IntegrationSuite, TestEnvironment}
 import scalikejdbc.{AutoSession, DBSession}
 
 
-class TranslationTest extends IntegrationSuite with TestEnvironment {
+class TranslationRepositoryTest extends IntegrationSuite with TestEnvironment {
+
+  override val bookRepository = new BookRepository
+  override val categoryRepository = new CategoryRepository
+  override val translationRepository = new TranslationRepository
+  override val licenseRepository = new LicenseRepository
+  override val publisherRepository = new PublisherRepository
 
   test("that Translation is added") {
     withRollback { implicit session =>
@@ -26,7 +32,7 @@ class TranslationTest extends IntegrationSuite with TestEnvironment {
       addedTranslation.id.isDefined should be(true)
       addedTranslation.revision.isDefined should be(true)
 
-      val readTranslation = Translation.forBookIdAndLanguage(book.id.get, language)
+      val readTranslation = translationRepository.forBookIdAndLanguage(book.id.get, language)
       readTranslation.isDefined should be(true)
       readTranslation.head.id should equal(addedTranslation.id)
       readTranslation.head.title should equal("Some title")
@@ -50,7 +56,7 @@ class TranslationTest extends IntegrationSuite with TestEnvironment {
       val translationForBook4Nob = addTranslationDef("ext8", "Title 4 - nob", book4.id.get, "nob")
 
 
-      val searchResult = Translation.bookIdsWithLanguage("eng", 10, 1)
+      val searchResult = translationRepository.bookIdsWithLanguage("eng", 10, 1)
       searchResult.language should equal("eng")
       searchResult.results.length should be(2)
       searchResult.results.sorted should equal(Seq(book1.id.get, book2.id.get))
@@ -65,23 +71,19 @@ class TranslationTest extends IntegrationSuite with TestEnvironment {
       val amh = addTranslationDef("ext1", "title 1", book1.id.get, "amh")
       val swa = addTranslationDef("ext1", "title 1", book1.id.get, "swa")
 
-      Translation.languagesFor(book1.id.get).sorted should equal(Seq("amh", "eng", "nob", "swa"))
+      translationRepository.languagesFor(book1.id.get).sorted should equal(Seq("amh", "eng", "nob", "swa"))
     }
   }
 
-}
+  def addBookDef()(implicit session: DBSession = AutoSession): Book = {
+    val publisher = publisherRepository.add(Publisher(None, None, "Publisher Name"))
+    val license = licenseRepository.add(License(None, None, "License Name", None, None))
 
-object TranslationTest {
-  def addBookDef(implicit session: DBSession = AutoSession): Book = {
-    val publisher = Publisher.add(Publisher(None, None, "Publisher Name"))
-    val license = License.add(License(None, None, "License Name", None, None))
-
-    val bookTry = Book.add(Book(None, None, publisher.id.get, license.id.get, publisher, license))
-    bookTry.get
+    bookRepository.add(Book(None, None, publisher.id.get, license.id.get, publisher, license))
   }
 
   def addTranslationDef(externalId: String, title: String, bookId: Long, language: String)(implicit session: DBSession = AutoSession): Translation = {
-    val cat1 = Category.add(Category(None, None, "some-category"))
+    val cat1 = categoryRepository.add(Category(None, None, "some-category"))
 
     val translationDef = Translation(
       id = None,
@@ -117,6 +119,6 @@ object TranslationTest {
       categories = Seq(cat1)
     )
 
-    Translation.add(translationDef)
+    translationRepository.add(translationDef)
   }
 }
