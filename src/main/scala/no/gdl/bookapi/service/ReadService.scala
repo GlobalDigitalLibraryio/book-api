@@ -44,6 +44,19 @@ trait ReadService {
       converterService.toApiBook(translation, availableLanguages, book)
     }
 
+    def similarTo(bookId: Long, language: String, pageSize: Int, page: Int): api.SearchResult = {
+      withIdAndLanguage(bookId, language) match {
+        case None => api.SearchResult(0, page, pageSize, converterService.toApiLanguage(language), Seq())
+        case Some(book) =>
+          val books = Translation
+            .bookIdsWithLanguageAndLevel(language, book.readingLevel, pageSize, page)
+            .flatMap(id => withIdAndLanguage(id, language))
+            .filter(_.id != bookId)
+
+          api.SearchResult(books.length, page, pageSize, converterService.toApiLanguage(language), books)
+      }
+    }
+
     def chaptersForIdAndLanguage(bookId: Long, language: String): Seq[api.ChapterSummary] = {
       Chapter.chaptersForBookIdAndLanguage(bookId, language).map(c => converterService.toApiChapterSummary(c, bookId, language))
     }
