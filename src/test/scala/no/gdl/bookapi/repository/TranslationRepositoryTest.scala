@@ -48,13 +48,12 @@ class TranslationRepositoryTest extends IntegrationSuite with TestEnvironment {
       val book3 = addBookDef()
       val book4 = addBookDef()
 
-      val translationForBook1Eng = addTranslationDef("ext1", "Title 1 - eng", book1.id.get, "eng")
-      val translationForBook1Nob = addTranslationDef("ext2", "Title 1 - nob", book1.id.get, "nob")
-      val translationForBook2Eng = addTranslationDef("ext3", "Title 2 - eng", book2.id.get, "eng")
-      val translationForBook2Nob = addTranslationDef("ext4", "Title 2 - nob", book2.id.get, "nob")
-      val translationForBook3Nob = addTranslationDef("ext6", "Title 3 - nob", book3.id.get, "nob")
-      val translationForBook4Nob = addTranslationDef("ext8", "Title 4 - nob", book4.id.get, "nob")
-
+      addTranslationDef("ext1", "Title 1 - eng", book1.id.get, "eng")
+      addTranslationDef("ext2", "Title 1 - nob", book1.id.get, "nob")
+      addTranslationDef("ext3", "Title 2 - eng", book2.id.get, "eng")
+      addTranslationDef("ext4", "Title 2 - nob", book2.id.get, "nob")
+      addTranslationDef("ext6", "Title 3 - nob", book3.id.get, "nob")
+      addTranslationDef("ext8", "Title 4 - nob", book4.id.get, "nob")
 
       val searchResult = translationRepository.bookIdsWithLanguage("eng", 10, 1)
       searchResult.language should equal("eng")
@@ -66,12 +65,71 @@ class TranslationRepositoryTest extends IntegrationSuite with TestEnvironment {
   test("that languagesFor returns all languages for the given book") {
     withRollback { implicit session =>
       val book1 = addBookDef()
-      val eng = addTranslationDef("ext1", "title 1", book1.id.get, "eng")
-      val nob = addTranslationDef("ext1", "title 1", book1.id.get, "nob")
-      val amh = addTranslationDef("ext1", "title 1", book1.id.get, "amh")
-      val swa = addTranslationDef("ext1", "title 1", book1.id.get, "swa")
+      addTranslationDef("ext1", "title 1", book1.id.get, "eng")
+      addTranslationDef("ext1", "title 1", book1.id.get, "nob")
+      addTranslationDef("ext1", "title 1", book1.id.get, "amh")
+      addTranslationDef("ext1", "title 1", book1.id.get, "swa")
 
       translationRepository.languagesFor(book1.id.get).sorted should equal(Seq("amh", "eng", "nob", "swa"))
+    }
+  }
+
+  test("that bookIdsWithLanguageAndLevel returns ids with same language when level is None") {
+    withRollback { implicit  session =>
+      val book1 = addBookDef()
+      val book2 = addBookDef()
+      val book3 = addBookDef()
+      val book4 = addBookDef()
+
+      addTranslationDef("ext1", "title 1", book1.id.get, "xho")
+      addTranslationDef("ext2", "title 2", book2.id.get, "amh")
+      addTranslationDef("ext3", "title 3", book3.id.get, "xho")
+      addTranslationDef("ext4", "title 4", book4.id.get, "xho")
+
+      val ids = translationRepository.bookIdsWithLanguageAndLevel("xho", None, 10, 1)
+
+      ids.results should equal (Seq(book1.id.get, book3.id.get, book4.id.get))
+    }
+  }
+
+  test("that bookIdsWithLanguageAndLevel only returns ids for same level") {
+    withRollback { implicit session =>
+      val book1 = addBookDef()
+      val book2 = addBookDef()
+      val book3 = addBookDef()
+
+      addTranslationDef("ext1", "title 1", book1.id.get, "xho", Some("2"))
+      addTranslationDef("ext2", "title 2", book2.id.get, "xho", Some("2"))
+      addTranslationDef("ext3", "title 3", book3.id.get, "xho", Some("1"))
+
+      val ids = translationRepository.bookIdsWithLanguageAndLevel("xho", Some("2"), 10, 1)
+      ids.results should equal (Seq(book1.id.get, book2.id.get))
+    }
+  }
+
+  test("that bookIdsWithLanguageAndLevel returns correct page and pagesize") {
+    withRollback { implicit session =>
+      val book1 = addBookDef()
+      val book2 = addBookDef()
+      val book3 = addBookDef()
+      val book4 = addBookDef()
+
+      addTranslationDef("ext1", "title 1", book1.id.get, "xho", None)
+      addTranslationDef("ext2", "title 2", book2.id.get, "xho", None)
+      addTranslationDef("ext3", "title 3", book3.id.get, "xho", None)
+      addTranslationDef("ext4", "title 4", book4.id.get, "xho", None)
+
+      val page1 = translationRepository.bookIdsWithLanguageAndLevel("xho", None, 1, 1)
+      page1.results should equal (Seq(book1.id.get))
+
+      val page2 = translationRepository.bookIdsWithLanguageAndLevel("xho", None, 1, 2)
+      page2.results should equal (Seq(book2.id.get))
+
+      val page3 = translationRepository.bookIdsWithLanguageAndLevel("xho", None, 1, 3)
+      page3.results should equal (Seq(book3.id.get))
+
+      val doublePage = translationRepository.bookIdsWithLanguageAndLevel("xho", None, 2, 2)
+      doublePage.results should equal(Seq(book3.id.get, book4.id.get))
     }
   }
 
@@ -82,7 +140,7 @@ class TranslationRepositoryTest extends IntegrationSuite with TestEnvironment {
     bookRepository.add(Book(None, None, publisher.id.get, license.id.get, publisher, license))
   }
 
-  def addTranslationDef(externalId: String, title: String, bookId: Long, language: String)(implicit session: DBSession = AutoSession): Translation = {
+  def addTranslationDef(externalId: String, title: String, bookId: Long, language: String, readingLevel: Option[String] = None)(implicit session: DBSession = AutoSession): Translation = {
     val cat1 = categoryRepository.add(Category(None, None, "some-category"))
 
     val translationDef = Translation(
@@ -106,7 +164,7 @@ class TranslationRepositoryTest extends IntegrationSuite with TestEnvironment {
       eaId = None,
       timeRequired = None,
       typicalAgeRange = None,
-      readingLevel = None,
+      readingLevel = readingLevel,
       interactivityType = None,
       learningResourceType = None,
       accessibilityApi = None,
@@ -116,8 +174,7 @@ class TranslationRepositoryTest extends IntegrationSuite with TestEnvironment {
       educationalAlignment = None,
       chapters = Seq(),
       contributors = Seq(),
-      categories = Seq(cat1)
-    )
+      categories = Seq(cat1))
 
     translationRepository.add(translationDef)
   }

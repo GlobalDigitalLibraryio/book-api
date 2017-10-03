@@ -80,6 +80,10 @@ abstract class GdlController extends ScalatraServlet with NativeJsonSupport with
     }
   }
 
+  def optLong(paramName: String)(implicit request: HttpServletRequest): Option[Long] = {
+    params.get(paramName).filter(_.forall(_.isDigit)).map(_.toLong)
+  }
+
   def language(paramName: String)(implicit request: HttpServletRequest): String = {
     val paramValue = params(paramName)
     Try(new java.util.Locale(paramValue).getISO3Language) match {

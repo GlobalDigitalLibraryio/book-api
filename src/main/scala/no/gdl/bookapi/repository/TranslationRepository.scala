@@ -46,6 +46,30 @@ trait TranslationRepository {
       SearchResult[Long](results.length, page, pageSize, language, results)
     }
 
+    def bookIdsWithLanguageAndLevel(language: String, readingLevel: Option[String], pageSize: Int, page: Int)(implicit session: DBSession = ReadOnlyAutoSession): SearchResult[Long] = {
+      val limit = pageSize.max(1)
+      val offset = (page.max(1) - 1) * pageSize
+
+      val num_matching = select(sqls.count)
+        .from(Translation as t)
+        .where
+        .eq(t.language, language)
+        .and(
+          sqls.toAndConditionOpt(readingLevel.map(l => sqls.eq(t.readingLevel, l))))
+        .toSQL.map(_.long(1)).single().apply()
+
+      val results = select(t.result.bookId)
+        .from(Translation as t)
+        .where
+        .eq(t.language, language)
+        .and(
+          sqls.toAndConditionOpt(readingLevel.map(l => sqls.eq(t.readingLevel, l))))
+        .limit(limit).offset(offset).toSQL
+        .map(_.long(1)).list().apply()
+
+      SearchResult[Long](num_matching.getOrElse(0), page, pageSize, language, results)
+    }
+
     def forBookIdAndLanguage(bookId: Long, language: String)(implicit session: DBSession = ReadOnlyAutoSession): Option[Translation] = {
       val translationWithChapters = select
         .from(Translation as t)

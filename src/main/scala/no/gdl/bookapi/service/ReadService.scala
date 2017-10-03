@@ -15,6 +15,7 @@ trait ReadService {
   this: ConverterService with BookRepository with ChapterRepository with TranslationRepository =>
   val readService: ReadService
 
+  // TODO: Create tests for this class after #59 is resolved
   class ReadService {
     def listAvailableLanguages: Seq[api.Language] = {
       translationRepository.allAvailableLanguages().map(converterService.toApiLanguage).sortBy(_.name)
@@ -24,12 +25,26 @@ trait ReadService {
       translationRepository.allAvailableLevels(lang)
 
 
+    def withLanguageAndLevel(language: String, readingLevel: Option[String], pageSize: Int, page: Int): api.SearchResult = {
+      val searchResult = translationRepository
+        .bookIdsWithLanguageAndLevel(language, readingLevel, pageSize, page)
+
+      val books = searchResult.results.flatMap(id => withIdAndLanguage(id, language))
+
+      api.SearchResult(
+        searchResult.totalCount,
+        searchResult.page,
+        searchResult.pageSize,
+        converterService.toApiLanguage(language),
+        books)
+    }
+
     def withLanguage(language: String, pageSize: Int, page: Int): api.SearchResult = {
       val searchResult = translationRepository.bookIdsWithLanguage(language, pageSize, page)
       val books = searchResult.results.flatMap(id => withIdAndLanguage(id, language))
 
       api.SearchResult(
-        books.length,
+        searchResult.totalCount,
         searchResult.page,
         searchResult.pageSize,
         converterService.toApiLanguage(searchResult.language),
@@ -42,6 +57,26 @@ trait ReadService {
       val book: Option[domain.Book] = bookRepository.withId(bookId)
 
       converterService.toApiBook(translation, availableLanguages, book)
+    }
+
+    def similarTo(bookId: Long, language: String, pageSize: Int, page: Int): api.SearchResult = {
+      withIdAndLanguage(bookId, language) match {
+        case None => api.SearchResult(0, page, pageSize, converterService.toApiLanguage(language), Seq())
+        case Some(book) =>
+          val searchResult = translationRepository
+            .bookIdsWithLanguageAndLevel(language, book.readingLevel, pageSize, page)
+
+          val books = searchResult.results
+            .flatMap(id => withIdAndLanguage(id, language))
+            .filter(_.id != bookId)
+
+          api.SearchResult(
+            searchResult.totalCount,
+            searchResult.page,
+            searchResult.pageSize,
+            converterService.toApiLanguage(language),
+            books)
+      }
     }
 
     def chaptersForIdAndLanguage(bookId: Long, language: String): Seq[api.ChapterSummary] = {

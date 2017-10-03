@@ -7,11 +7,9 @@
 
 package no.gdl.bookapi.model.domain
 
-import java.sql.PreparedStatement
 import java.time.LocalDate
 
 import no.gdl.bookapi.BookApiProperties
-import no.gdl.bookapi.model.api.OptimisticLockException
 import scalikejdbc._
 
 case class Translation(id: Option[Long],
@@ -51,7 +49,6 @@ object Translation extends SQLSyntaxSupport[Translation] {
   implicit val formats = org.json4s.DefaultFormats
   override val tableName = "translation"
   override val schemaName = Some(BookApiProperties.MetaSchema)
-
 
   def apply(t: SyntaxProvider[Translation])(rs: WrappedResultSet): Translation = apply(t.resultName)(rs)
   def apply(t: ResultName[Translation])(rs: WrappedResultSet): Translation = Translation(
