@@ -7,15 +7,10 @@
 
 package no.gdl.bookapi.repository
 
-import java.time.LocalDate
-import java.util.UUID
-
-import no.gdl.bookapi.model.domain._
 import no.gdl.bookapi.{IntegrationSuite, TestEnvironment}
-import scalikejdbc.{AutoSession, DBSession}
 
 
-class TranslationRepositoryTest extends IntegrationSuite with TestEnvironment {
+class TranslationRepositoryTest extends IntegrationSuite with TestEnvironment with RepositoryTestHelpers {
 
   override val bookRepository = new BookRepository
   override val categoryRepository = new CategoryRepository
@@ -39,7 +34,6 @@ class TranslationRepositoryTest extends IntegrationSuite with TestEnvironment {
       readTranslation.head.categories.length should be(1)
     }
   }
-
 
   test("that bookIdsWithLanguage only returns ids for translations in given language") {
     withRollback { implicit session =>
@@ -131,51 +125,5 @@ class TranslationRepositoryTest extends IntegrationSuite with TestEnvironment {
       val doublePage = translationRepository.bookIdsWithLanguageAndLevel("xho", None, 2, 2)
       doublePage.results should equal(Seq(book3.id.get, book4.id.get))
     }
-  }
-
-  def addBookDef()(implicit session: DBSession = AutoSession): Book = {
-    val publisher = publisherRepository.add(Publisher(None, None, "Publisher Name"))
-    val license = licenseRepository.add(License(None, None, "License Name", None, None))
-
-    bookRepository.add(Book(None, None, publisher.id.get, license.id.get, publisher, license))
-  }
-
-  def addTranslationDef(externalId: String, title: String, bookId: Long, language: String, readingLevel: Option[String] = None)(implicit session: DBSession = AutoSession): Translation = {
-    val cat1 = categoryRepository.add(Category(None, None, "some-category"))
-
-    val translationDef = Translation(
-      id = None,
-      revision = None,
-      bookId = bookId,
-      externalId = Some(externalId),
-      uuid = UUID.randomUUID().toString,
-      title = title,
-      about = "Some description",
-      numPages = Some(123),
-      language = language,
-      datePublished = Some(LocalDate.now()),
-      dateCreated = Some(LocalDate.now()),
-      categoryIds = Seq(cat1.id.get),
-      coverphoto = None,
-      tags = Seq("tag1", "tag2"),
-      isBasedOnUrl = None,
-      educationalUse = None,
-      educationalRole = None,
-      eaId = None,
-      timeRequired = None,
-      typicalAgeRange = None,
-      readingLevel = readingLevel,
-      interactivityType = None,
-      learningResourceType = None,
-      accessibilityApi = None,
-      accessibilityControl = None,
-      accessibilityFeature = None,
-      accessibilityHazard = None,
-      educationalAlignment = None,
-      chapters = Seq(),
-      contributors = Seq(),
-      categories = Seq(cat1))
-
-    translationRepository.add(translationDef)
   }
 }

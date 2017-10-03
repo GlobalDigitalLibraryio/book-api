@@ -7,15 +7,11 @@
 
 package no.gdl.bookapi.repository
 
-import java.time.LocalDate
-import java.util.UUID
-
 import no.gdl.bookapi.model.domain._
 import no.gdl.bookapi.{IntegrationSuite, TestEnvironment}
-import scalikejdbc.{AutoSession, DBSession}
 
 
-class ChapterRepositoryTest extends IntegrationSuite with TestEnvironment {
+class ChapterRepositoryTest extends IntegrationSuite with TestEnvironment with RepositoryTestHelpers {
 
   override val bookRepository = new BookRepository
   override val categoryRepository = new CategoryRepository
@@ -65,52 +61,4 @@ class ChapterRepositoryTest extends IntegrationSuite with TestEnvironment {
       chapter.head.content should equal(chapter1.content)
     }
   }
-
-  def addBookDef()(implicit session: DBSession = AutoSession): Book = {
-    val publisher = publisherRepository.add(Publisher(None, None, "Publisher Name"))
-    val license = licenseRepository.add(License(None, None, "License Name", None, None))
-
-    bookRepository.add(Book(None, None, publisher.id.get, license.id.get, publisher, license))
-  }
-
-  def addTranslationDef(externalId: String, title: String, bookId: Long, language: String)(implicit session: DBSession = AutoSession): Translation = {
-    val cat1 = categoryRepository.add(Category(None, None, "some-category"))
-
-    val translationDef = Translation(
-      id = None,
-      revision = None,
-      bookId = bookId,
-      externalId = Some(externalId),
-      uuid = UUID.randomUUID().toString,
-      title = title,
-      about = "Some description",
-      numPages = Some(123),
-      language = language,
-      datePublished = Some(LocalDate.now()),
-      dateCreated = Some(LocalDate.now()),
-      categoryIds = Seq(cat1.id.get),
-      coverphoto = None,
-      tags = Seq("tag1", "tag2"),
-      isBasedOnUrl = None,
-      educationalUse = None,
-      educationalRole = None,
-      eaId = None,
-      timeRequired = None,
-      typicalAgeRange = None,
-      readingLevel = None,
-      interactivityType = None,
-      learningResourceType = None,
-      accessibilityApi = None,
-      accessibilityControl = None,
-      accessibilityFeature = None,
-      accessibilityHazard = None,
-      educationalAlignment = None,
-      chapters = Seq(),
-      contributors = Seq(),
-      categories = Seq(cat1)
-    )
-
-    translationRepository.add(translationDef)
-  }
-
 }
