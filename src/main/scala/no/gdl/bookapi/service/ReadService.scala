@@ -15,6 +15,7 @@ trait ReadService {
   this: ConverterService =>
   val readService: ReadService
 
+  // TODO: Create tests for this class after #59 is resolved
   class ReadService {
     def listAvailableLanguages: Seq[api.Language] = {
       Translation.allAvailableLanguages().map(converterService.toApiLanguage).sortBy(_.name)
@@ -42,6 +43,19 @@ trait ReadService {
       val book: Option[domain.Book] = Book.withId(bookId)
 
       converterService.toApiBook(translation, availableLanguages, book)
+    }
+
+    def similarTo(bookId: Long, language: String, pageSize: Int, page: Int): api.SearchResult = {
+      withIdAndLanguage(bookId, language) match {
+        case None => api.SearchResult(0, page, pageSize, converterService.toApiLanguage(language), Seq())
+        case Some(book) =>
+          val books = Translation
+            .bookIdsWithLanguageAndLevel(language, book.readingLevel, pageSize, page)
+            .flatMap(id => withIdAndLanguage(id, language))
+            .filter(_.id != bookId)
+
+          api.SearchResult(books.length, page, pageSize, converterService.toApiLanguage(language), books)
+      }
     }
 
     def chaptersForIdAndLanguage(bookId: Long, language: String): Seq[api.ChapterSummary] = {

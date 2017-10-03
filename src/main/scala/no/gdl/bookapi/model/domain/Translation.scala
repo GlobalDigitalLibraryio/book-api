@@ -120,6 +120,21 @@ object Translation extends SQLSyntaxSupport[Translation] {
     SearchResult[Long](results.length, page, pageSize, language, results)
   }
 
+  def bookIdsWithLanguageAndLevel(language: String, readingLevel: Option[String], pageSize: Int, page: Int)(implicit session: DBSession = ReadOnlyAutoSession): Seq[Long] = {
+    val limit = pageSize.max(1)
+    val offset = (page.max(1) - 1) * pageSize
+
+    select(t.result.bookId)
+      .from(Translation as t)
+      .where
+      .eq(t.language, language)
+      .and(
+        sqls.toAndConditionOpt(readingLevel.map(l => sqls.eq(t.readingLevel, l))))
+      .limit(limit).offset(offset).toSQL
+      .map(_.long(1)).list().apply()
+
+  }
+
   def forBookIdAndLanguage(bookId: Long, language: String)(implicit session: DBSession = ReadOnlyAutoSession): Option[Translation] = {
     val translationWithChapters = select
       .from(Translation as t)
@@ -351,7 +366,7 @@ object Translation extends SQLSyntaxSupport[Translation] {
        and ${t.revision} = ${replacement.revision}
       """.update().apply()
 
-    if(count != 1) {
+    if (count != 1) {
       throw new OptimisticLockException()
     } else {
       replacement.copy(revision = Some(nextRevision))
