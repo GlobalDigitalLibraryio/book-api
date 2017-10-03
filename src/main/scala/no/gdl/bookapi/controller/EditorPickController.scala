@@ -39,13 +39,11 @@ trait EditorPickController {
       responseMessages response500)
 
     get("/", operation(getAllPicks)) {
-      // TODO: Implement actual editors pick lookup in #52
-      readService.withLanguage(DefaultLanguage, 5, 1).results
+      readService.editorsPickForLanguage(DefaultLanguage)
     }
 
     get("/:lang", operation(getAllPicksInLang)) {
-      //TODO: Implement actual editors pick lookup in #52
-      readService.withLanguage(language("lang"), 5, 1).results
+      readService.editorsPickForLanguage(language("lang"))
     }
   }
 

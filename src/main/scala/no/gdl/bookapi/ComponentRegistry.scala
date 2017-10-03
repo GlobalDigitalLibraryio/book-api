@@ -11,7 +11,7 @@ package no.gdl.bookapi
 import io.digitallibrary.network.GdlClient
 import no.gdl.bookapi.controller._
 import no.gdl.bookapi.integration.{DataSource, ElasticClient, ImageApiClient, JestClientFactory}
-import no.gdl.bookapi.repository.TransactionHandler
+import no.gdl.bookapi.repository.{EditorsPickRepository, TransactionHandler}
 import no.gdl.bookapi.service._
 import org.postgresql.ds.PGPoolingDataSource
 import scalikejdbc.{ConnectionPool, DataSourceConnectionPool}
@@ -35,6 +35,7 @@ object ComponentRegistry
   with ImageApiClient
   with DownloadController
   with ValidationService
+  with EditorsPickRepository
 {
   implicit val swagger = new BookSwagger
 
@@ -68,4 +69,5 @@ object ComponentRegistry
   lazy val languageController = new LanguageController
   lazy val levelController = new LevelController
   lazy val editorPickController = new EditorPickController
+  lazy val editorsPickRepository = new EditorsPickRepository
 }
