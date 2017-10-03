@@ -25,12 +25,26 @@ trait ReadService {
       Translation.allAvailableLevels(lang)
 
 
+    def withLanguageAndLevel(language: String, readingLevel: Option[String], pageSize: Int, page: Int): api.SearchResult = {
+      val searchResult = Translation
+        .bookIdsWithLanguageAndLevel(language, readingLevel, pageSize, page)
+
+      val books = searchResult.results.flatMap(id => withIdAndLanguage(id, language))
+
+      api.SearchResult(
+        searchResult.totalCount,
+        searchResult.page,
+        searchResult.pageSize,
+        converterService.toApiLanguage(language),
+        books)
+    }
+
     def withLanguage(language: String, pageSize: Int, page: Int): api.SearchResult = {
       val searchResult = Translation.bookIdsWithLanguage(language, pageSize, page)
       val books = searchResult.results.flatMap(id => withIdAndLanguage(id, language))
 
       api.SearchResult(
-        books.length,
+        searchResult.totalCount,
         searchResult.page,
         searchResult.pageSize,
         converterService.toApiLanguage(searchResult.language),
@@ -49,12 +63,19 @@ trait ReadService {
       withIdAndLanguage(bookId, language) match {
         case None => api.SearchResult(0, page, pageSize, converterService.toApiLanguage(language), Seq())
         case Some(book) =>
-          val books = Translation
+          val searchResult = Translation
             .bookIdsWithLanguageAndLevel(language, book.readingLevel, pageSize, page)
+
+          val books = searchResult.results
             .flatMap(id => withIdAndLanguage(id, language))
             .filter(_.id != bookId)
 
-          api.SearchResult(books.length, page, pageSize, converterService.toApiLanguage(language), books)
+          api.SearchResult(
+            searchResult.totalCount,
+            searchResult.page,
+            searchResult.pageSize,
+            converterService.toApiLanguage(language),
+            books)
       }
     }
 

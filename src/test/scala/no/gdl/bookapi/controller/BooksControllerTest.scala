@@ -23,11 +23,12 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
 
   test("that GET / will get books with default language") {
     val result = SearchResult(0, 1, 10, Language("eng", "Englist"), Seq(TestData.DefaultBook))
-    when(readService.withLanguage(BookApiProperties.DefaultLanguage, 10, 1)).thenReturn(result)
+    when(readService.withLanguageAndLevel(BookApiProperties.DefaultLanguage, Some("1"), 10, 1)).thenReturn(result)
 
-    get("/", Map(
+    get("/", Map("reading-level" -> "1",
         "page-size" -> "10",
         "page" -> "1")) {
+
       status should equal (200)
       val searchResult = read[SearchResult](body)
       searchResult.results.length should be (1)
@@ -35,13 +36,13 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
     }
   }
 
-  test("that GET /:lang will get books with language from query") {
+  test("that GET /:lang will get books with language") {
     val language = TestData.norwegian_bokmal
 
     val result = SearchResult(0, 1, 10, language, Seq(TestData.DefaultBook))
-    when(readService.withLanguage(language.code, 10, 1)).thenReturn(result)
+    when(readService.withLanguageAndLevel(language.code, Some("2"), 10, 1)).thenReturn(result)
 
-    get("/nob", Map("page-size" -> "10", "page" -> "1")) {
+    get("/nob", Map("reading-level" -> "2", "page-size" -> "10", "page" -> "1")) {
       status should equal (200)
       val searchResult = read[SearchResult](body)
       searchResult.results.length should be (1)

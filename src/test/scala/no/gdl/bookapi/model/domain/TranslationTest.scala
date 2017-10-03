@@ -80,9 +80,9 @@ class TranslationTest extends IntegrationSuite with TestEnvironment {
       val translationForBook3 = addTranslationDef("ext3", "title 3", book3.id.get, "xho", None)
 
       val ids = Translation.bookIdsWithLanguageAndLevel("xho", None, 10, 1)
-      ids.length should be(3)
-      ids.min should equal (book1.id.get)
-      ids.max should equal (book3.id.get)
+      ids.results.length should be(3)
+      ids.results.min should equal (book1.id.get)
+      ids.results.max should equal (book3.id.get)
     }
   }
 
@@ -97,9 +97,9 @@ class TranslationTest extends IntegrationSuite with TestEnvironment {
       val translationForBook3 = addTranslationDef("ext3", "title 3", book3.id.get, "xho", Some("1"))
 
       val ids = Translation.bookIdsWithLanguageAndLevel("xho", Some("2"), 10, 1)
-      ids.length should be(2)
-      ids.min should equal (book1.id.get)
-      ids.max should equal (book2.id.get)
+      ids.results.length should be(2)
+      ids.results.min should equal (book1.id.get)
+      ids.results.max should equal (book2.id.get)
     }
   }
 
@@ -116,21 +116,21 @@ class TranslationTest extends IntegrationSuite with TestEnvironment {
       val translationForBook4 = addTranslationDef("ext4", "title 4", book4.id.get, "xho", None)
 
       val page1 = Translation.bookIdsWithLanguageAndLevel("xho", None, 1, 1)
-      page1.length should be(1)
-      page1.min should equal (book1.id.get)
+      page1.results.length should be(1)
+      page1.results.min should equal (book1.id.get)
 
       val page2 = Translation.bookIdsWithLanguageAndLevel("xho", None, 1, 2)
-      page2.length should be(1)
-      page2.min should equal (book2.id.get)
+      page2.results.length should be(1)
+      page2.results.min should equal (book2.id.get)
 
       val page3 = Translation.bookIdsWithLanguageAndLevel("xho", None, 1, 3)
-      page3.length should be(1)
-      page3.min should equal (book3.id.get)
+      page3.results.length should be(1)
+      page3.results.min should equal (book3.id.get)
 
       val doublePage = Translation.bookIdsWithLanguageAndLevel("xho", None, 2, 2)
-      doublePage.length should be(2)
-      doublePage.min should equal (book3.id.get)
-      doublePage.max should equal (book4.id.get)
+      doublePage.results.length should be(2)
+      doublePage.results.min should equal (book3.id.get)
+      doublePage.results.max should equal (book4.id.get)
     }
   }
 }
