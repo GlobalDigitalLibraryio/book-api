@@ -25,10 +25,7 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
     val result = SearchResult(0, 1, 10, Language("eng", "Englist"), Seq(TestData.DefaultBook))
     when(readService.withLanguageAndLevel(BookApiProperties.DefaultLanguage, Some("1"), 10, 1)).thenReturn(result)
 
-    get("/", Map("reading-level" -> "1",
-        "page-size" -> "10",
-        "page" -> "1")) {
-
+    get("/?reading-level=1&page-size=10&page=1") {
       status should equal (200)
       val searchResult = read[SearchResult](body)
       searchResult.results.length should be (1)
@@ -42,7 +39,7 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
     val result = SearchResult(0, 1, 10, language, Seq(TestData.DefaultBook))
     when(readService.withLanguageAndLevel(language.code, Some("2"), 10, 1)).thenReturn(result)
 
-    get("/nob", Map("reading-level" -> "2", "page-size" -> "10", "page" -> "1")) {
+    get("/nob?reading-level=2&page-size=10&page=1") {
       status should equal (200)
       val searchResult = read[SearchResult](body)
       searchResult.results.length should be (1)
