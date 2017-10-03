@@ -82,7 +82,7 @@ class TranslationTest extends IntegrationSuite with TestEnvironment {
 
       val ids = Translation.bookIdsWithLanguageAndLevel("xho", None, 10, 1)
 
-      ids should equal (Seq(book1.id.get, book3.id.get, book4.id.get))
+      ids.results should equal (Seq(book1.id.get, book3.id.get, book4.id.get))
     }
   }
 
@@ -97,7 +97,7 @@ class TranslationTest extends IntegrationSuite with TestEnvironment {
       addTranslationDef("ext3", "title 3", book3.id.get, "xho", Some("1"))
 
       val ids = Translation.bookIdsWithLanguageAndLevel("xho", Some("2"), 10, 1)
-      ids should equal (Seq(book1.id.get, book2.id.get))
+      ids.results should equal (Seq(book1.id.get, book2.id.get))
     }
   }
 
@@ -114,16 +114,16 @@ class TranslationTest extends IntegrationSuite with TestEnvironment {
       addTranslationDef("ext4", "title 4", book4.id.get, "xho", None)
 
       val page1 = Translation.bookIdsWithLanguageAndLevel("xho", None, 1, 1)
-      page1 should equal (Seq(book1.id.get))
+      page1.results should equal (Seq(book1.id.get))
 
       val page2 = Translation.bookIdsWithLanguageAndLevel("xho", None, 1, 2)
-      page2 should equal (Seq(book2.id.get))
+      page2.results should equal (Seq(book2.id.get))
 
       val page3 = Translation.bookIdsWithLanguageAndLevel("xho", None, 1, 3)
-      page3 should equal (Seq(book3.id.get))
+      page3.results should equal (Seq(book3.id.get))
 
       val doublePage = Translation.bookIdsWithLanguageAndLevel("xho", None, 2, 2)
-      doublePage should equal(Seq(book3.id.get, book4.id.get))
+      doublePage.results should equal(Seq(book3.id.get, book4.id.get))
     }
   }
 }
