@@ -11,6 +11,10 @@ package no.gdl.bookapi.model.domain
 object Sort  extends Enumeration {
   val ByIdDesc = Value("-id")
   val ByIdAsc = Value("id")
+  val ByTitleDesc = Value("-title")
+  val ByTitleAsc = Value("title")
+  val ByArrivalDateDesc = Value("-arrivaldate")
+  val ByArrivalDateAsc = Value("arrivaldate")
 
   def valueOf(s:String): Option[Sort.Value] = {
     Sort.values.find(_.toString == s)

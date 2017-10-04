@@ -12,6 +12,7 @@ import io.digitallibrary.network.AuthUser
 import no.gdl.bookapi.BookApiProperties.DefaultLanguage
 import no.gdl.bookapi.model.api
 import no.gdl.bookapi.model.api.{AccessDeniedException, Error, ValidationError}
+import no.gdl.bookapi.model.domain.Sort
 import no.gdl.bookapi.service.{ConverterService, ReadService}
 import org.scalatra._
 import org.scalatra.swagger.{ResponseMessage, Swagger, SwaggerSupport}
@@ -99,16 +100,18 @@ trait BooksController {
       val pageSize = intOrDefault("page-size", 10).min(100).max(1)
       val page = intOrDefault("page", 1).max(1)
       val readingLevel = params.get("reading-level")
+      val sort = Sort.valueOf(paramOrNone("sort")).getOrElse(Sort.ByIdAsc)
 
-      readService.withLanguageAndLevel(DefaultLanguage, readingLevel, pageSize, page)
+      readService.withLanguageAndLevel(DefaultLanguage, readingLevel, pageSize, page, sort)
     }
 
     get("/:lang/?", operation(getAllBooksInLang)) {
       val pageSize = intOrDefault("page-size", 10).min(100).max(1)
       val page = intOrDefault("page", 1).max(1)
       val readingLevel = params.get("reading-level")
+      val sort = Sort.valueOf(paramOrNone("sort")).getOrElse(Sort.ByIdAsc)
 
-      readService.withLanguageAndLevel(language("lang"), readingLevel, pageSize, page)
+      readService.withLanguageAndLevel(language("lang"), readingLevel, pageSize, page, sort)
     }
 
     get("/:lang/:id/?", operation(getBook)) {
@@ -122,10 +125,7 @@ trait BooksController {
     }
 
     get("/:lang/:id/chapters/?", operation(getChapters)) {
-      val lang = language("lang")
-      val id = long("id")
-
-      readService.chaptersForIdAndLanguage(id, lang)
+      readService.chaptersForIdAndLanguage(long("id"), language("lang"))
     }
 
     get("/:lang/:bookid/chapters/:chapterid/?", operation(getChapter)) {
@@ -144,7 +144,8 @@ trait BooksController {
         long("id"),
         language("lang"),
         intOrDefault("page-size", 10).min(100).max(1),
-        intOrDefault("page", 1).max(1))
+        intOrDefault("page", 1).max(1),
+        Sort.valueOf(paramOrNone("sort")).getOrElse(Sort.ByIdAsc))
     }
 
     def assertHasRole(role: String): Unit = {

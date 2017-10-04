@@ -46,7 +46,7 @@ object TestData {
 
     val DefaultBook = api.Book(
       1, 1, Some("external-1"), DefaultUuid, "Title", "Description", english, Seq(english, norwegian_bokmal), DefaultLicense, DefaultPublisher,
-      Some(Level1), Some(ageRangeDefault), None, None, None, Some(today), Some(yesterday), Seq(category1, category2), None, api.Downloads(epub, pdf), Seq(), Seq(DefaultContributor), Seq(ChapterSummary1))
+      Some(Level1), Some(ageRangeDefault), None, None, None, Some(today), Some(yesterday), today, Seq(category1, category2), None, api.Downloads(epub, pdf), Seq(), Seq(DefaultContributor), Seq(ChapterSummary1))
 
   }
 
@@ -81,6 +81,7 @@ object TestData {
       language = DefaultLanguage,
       datePublished = Some(today),
       dateCreated = Some(yesterday),
+      dateArrived = today,
       categoryIds = Seq(DefaultCategory.id.get),
       coverphoto = None,
       tags = Seq("tag1", "tag2"),

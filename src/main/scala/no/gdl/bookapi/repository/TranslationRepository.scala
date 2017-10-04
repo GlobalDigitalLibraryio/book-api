@@ -46,7 +46,7 @@ trait TranslationRepository {
       SearchResult[Long](results.length, page, pageSize, language, results)
     }
 
-    def bookIdsWithLanguageAndLevel(language: String, readingLevel: Option[String], pageSize: Int, page: Int)(implicit session: DBSession = ReadOnlyAutoSession): SearchResult[Long] = {
+    def bookIdsWithLanguageAndLevel(language: String, readingLevel: Option[String], pageSize: Int, page: Int, sortDef: Sort.Value)(implicit session: DBSession = ReadOnlyAutoSession): SearchResult[Long] = {
       val limit = pageSize.max(1)
       val offset = (page.max(1) - 1) * pageSize
 
@@ -64,6 +64,7 @@ trait TranslationRepository {
         .eq(t.language, language)
         .and(
           sqls.toAndConditionOpt(readingLevel.map(l => sqls.eq(t.readingLevel, l))))
+        .append(getSorting(sortDef))
         .limit(limit).offset(offset).toSQL
         .map(_.long(1)).list().apply()
 
@@ -210,6 +211,7 @@ trait TranslationRepository {
                 ${t.language},
                 ${t.datePublished},
                 ${t.dateCreated},
+                ${t.dateArrived},
                 ${t.coverphoto},
                 ${t.isBasedOnUrl},
                 ${t.educationalUse},
@@ -237,6 +239,7 @@ trait TranslationRepository {
                ${translation.language},
                ${translation.datePublished},
                ${translation.dateCreated},
+               ${translation.dateArrived},
                ${translation.coverphoto},
                ${translation.isBasedOnUrl},
                ${translation.educationalUse},
@@ -283,6 +286,7 @@ trait TranslationRepository {
         ${t.language} = ${replacement.language},
         ${t.datePublished} = ${replacement.datePublished},
         ${t.dateCreated} = ${replacement.dateCreated},
+        ${t.dateArrived} = ${replacement.dateArrived},
         ${t.coverphoto} = ${replacement.coverphoto},
         ${t.isBasedOnUrl} = ${replacement.isBasedOnUrl},
         ${t.educationalUse} = ${replacement.educationalUse},
@@ -308,6 +312,15 @@ trait TranslationRepository {
       } else {
         replacement.copy(revision = Some(nextRevision))
       }
+    }
+
+    private def getSorting(sortDef: Sort.Value) = sortDef match {
+      case (Sort.ByIdAsc) => sqls.orderBy(t.id).asc
+      case (Sort.ByIdDesc) => sqls.orderBy(t.id).desc
+      case (Sort.ByTitleAsc) => sqls.orderBy(t.title).asc
+      case (Sort.ByTitleDesc) => sqls.orderBy(t.title).desc
+      case (Sort.ByArrivalDateAsc) => sqls.orderBy(t.dateArrived).asc
+      case (Sort.ByArrivalDateDesc) => sqls.orderBy(t.dateArrived).desc
     }
   }
 

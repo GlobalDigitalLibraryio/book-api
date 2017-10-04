@@ -7,7 +7,7 @@
 
 package no.gdl.bookapi.service
 
-import no.gdl.bookapi.model.domain.{EditorsPick, SearchResult}
+import no.gdl.bookapi.model.domain.{EditorsPick, SearchResult, Sort}
 import org.mockito.Mockito._
 import org.mockito.Matchers._
 import no.gdl.bookapi.{TestData, TestEnvironment, UnitSuite}
@@ -66,7 +66,7 @@ class ReadServiceTest extends UnitSuite with TestEnvironment {
     when(converterService.toApiBook(None, Seq(), None)).thenReturn(None)
     when(converterService.toApiLanguage("nob")).thenReturn(TestData.Api.norwegian_bokmal)
 
-    val searchResult = readService.similarTo(1, "nob", 10, 1)
+    val searchResult = readService.similarTo(1, "nob", 10, 1, Sort.ByIdAsc)
     searchResult.results should equal (Seq())
     searchResult.language should equal (TestData.Api.norwegian_bokmal)
     searchResult.page should equal (1)
@@ -97,9 +97,9 @@ class ReadServiceTest extends UnitSuite with TestEnvironment {
     when(converterService.toApiBook(Some(translation2), Seq("nob"), Some(book2))).thenReturn(Some(similarBook))
 
     val expectedSearchResult = SearchResult[Long](2, page, pageSize, "nob", Seq(TestData.Api.DefaultBook.id, 2))
-    when(translationRepository.bookIdsWithLanguageAndLevel("nob", TestData.Api.DefaultBook.readingLevel, pageSize, page)).thenReturn(expectedSearchResult)
+    when(translationRepository.bookIdsWithLanguageAndLevel("nob", TestData.Api.DefaultBook.readingLevel, pageSize, page, Sort.ByIdAsc)).thenReturn(expectedSearchResult)
 
-    val searchResult = readService.similarTo(TestData.Api.DefaultBook.id, "nob", pageSize, page)
+    val searchResult = readService.similarTo(TestData.Api.DefaultBook.id, "nob", pageSize, page, Sort.ByIdAsc)
     searchResult.results should equal (Seq(similarBook))
   }
 }

@@ -9,6 +9,7 @@ package no.gdl.bookapi.service
 
 
 import no.gdl.bookapi.model._
+import no.gdl.bookapi.model.domain.Sort
 import no.gdl.bookapi.repository.{BookRepository, ChapterRepository, TranslationRepository}
 import no.gdl.bookapi.repository.EditorsPickRepository
 
@@ -35,9 +36,9 @@ trait ReadService {
       translationRepository.allAvailableLevels(lang)
 
 
-    def withLanguageAndLevel(language: String, readingLevel: Option[String], pageSize: Int, page: Int): api.SearchResult = {
+    def withLanguageAndLevel(language: String, readingLevel: Option[String], pageSize: Int, page: Int, sort: Sort.Value): api.SearchResult = {
       val searchResult = translationRepository
-        .bookIdsWithLanguageAndLevel(language, readingLevel, pageSize, page)
+        .bookIdsWithLanguageAndLevel(language, readingLevel, pageSize, page, sort)
 
       val books = searchResult.results.flatMap(id => withIdAndLanguage(id, language))
 
@@ -69,12 +70,12 @@ trait ReadService {
       converterService.toApiBook(translation, availableLanguages, book)
     }
 
-    def similarTo(bookId: Long, language: String, pageSize: Int, page: Int): api.SearchResult = {
+    def similarTo(bookId: Long, language: String, pageSize: Int, page: Int, sort: Sort.Value): api.SearchResult = {
       withIdAndLanguage(bookId, language) match {
         case None => api.SearchResult(0, page, pageSize, converterService.toApiLanguage(language), Seq())
         case Some(book) =>
           val searchResult = translationRepository
-            .bookIdsWithLanguageAndLevel(language, book.readingLevel, pageSize, page)
+            .bookIdsWithLanguageAndLevel(language, book.readingLevel, pageSize, page, sort)
 
           val books = searchResult.results
             .flatMap(id => withIdAndLanguage(id, language))
