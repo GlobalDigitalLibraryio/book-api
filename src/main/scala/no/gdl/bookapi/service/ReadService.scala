@@ -16,7 +16,6 @@ trait ReadService {
   this: ConverterService with BookRepository with ChapterRepository with TranslationRepository with EditorsPickRepository =>
   val readService: ReadService
 
-  // TODO: Create tests for this class after #59 is resolved
   class ReadService {
     def editorsPickForLanguage(language: String): Seq[api.Book] = {
       editorsPickRepository.forLanguage(language) match {
