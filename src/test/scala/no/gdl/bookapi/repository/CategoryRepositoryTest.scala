@@ -5,18 +5,21 @@
  * See LICENSE
  */
 
-package no.gdl.bookapi.model.domain
+package no.gdl.bookapi.repository
 
+import no.gdl.bookapi.model.domain.Category
 import no.gdl.bookapi.{IntegrationSuite, TestEnvironment}
 
-class CategoryTest extends IntegrationSuite with TestEnvironment {
+class CategoryRepositoryTest extends IntegrationSuite with TestEnvironment {
+
+  override val categoryRepository = new CategoryRepository
 
   test("That category is added") {
     withRollback { implicit session =>
       val testName = "Some-test-name"
 
-      Category.add(Category(None, None, testName))
-      val category = Category.withName(testName)
+      categoryRepository.add(Category(None, None, testName))
+      val category = categoryRepository.withName(testName)
 
       category.isDefined should be(true)
       category.head.id.isDefined should be(true)
@@ -26,7 +29,7 @@ class CategoryTest extends IntegrationSuite with TestEnvironment {
   }
 
   test("that withName returns None when no Categories with given name") {
-    val withName = Category.withName(s"some-category-${System.currentTimeMillis()}")
+    val withName = categoryRepository.withName(s"some-category-${System.currentTimeMillis()}")
     withName should be(None)
   }
 
@@ -35,11 +38,11 @@ class CategoryTest extends IntegrationSuite with TestEnvironment {
       val testName = s"Some-category-${System.currentTimeMillis()}"
       val categoryDef = Category(None, None, testName)
 
-      val cat1 = Category.add(categoryDef)
-      val cat2 = Category.add(categoryDef)
-      val cat3 = Category.add(categoryDef)
+      val cat1 = categoryRepository.add(categoryDef)
+      val cat2 = categoryRepository.add(categoryDef)
+      val cat3 = categoryRepository.add(categoryDef)
 
-      val withName = Category.withName(testName)
+      val withName = categoryRepository.withName(testName)
       withName.isDefined should be(true)
       withName.head.id.isDefined should be(true)
       withName.head.id.get should equal(cat1.id.get)

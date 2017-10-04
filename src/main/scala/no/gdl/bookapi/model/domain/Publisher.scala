@@ -21,7 +21,6 @@ object Publisher extends SQLSyntaxSupport[Publisher] {
   implicit val formats = org.json4s.DefaultFormats
   override val tableName = "publisher"
   override val schemaName = Some(BookApiProperties.MetaSchema)
-  private val pub = syntax
 
   def apply(pub: SyntaxProvider[Publisher])(rs: WrappedResultSet): Publisher = apply(pub.resultName)(rs)
 
@@ -31,23 +30,5 @@ object Publisher extends SQLSyntaxSupport[Publisher] {
       rs.intOpt(pub.revision),
       rs.string(pub.name)
     )
-  }
-
-  def withName(publisher: String)(implicit session: DBSession = ReadOnlyAutoSession): Option[Publisher] = {
-    sql"select ${pub.result.*} from ${Publisher.as(pub)} where LOWER(${pub.name}) = LOWER($publisher) order by ${pub.id}".map(Publisher(pub)).list.apply.headOption
-  }
-
-  def add(publisher: Publisher)(implicit session: DBSession = AutoSession): Publisher = {
-    val p = Publisher.column
-    val startRevision = 1
-
-    val id = insert.into(Publisher).namedValues(
-      p.revision -> startRevision,
-      p.name -> publisher.name
-    ).toSQL
-      .updateAndReturnGeneratedKey()
-      .apply()
-
-    publisher.copy(id = Some(id), revision = Some(startRevision))
   }
 }
