@@ -37,7 +37,8 @@ trait BooksController {
       parameters(
       headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
       queryParam[Option[Int]]("page-size").description("Return this many results per page."),
-      queryParam[Option[Int]]("page").description("Return results for this page."))
+      queryParam[Option[Int]]("page").description("Return results for this page."),
+      queryParam[Option[Int]]("reading-level").description("Return only books matching this reading level."))
       authorizations "oauth2"
       responseMessages response500)
 
@@ -48,7 +49,8 @@ trait BooksController {
       headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
       pathParam[String]("lang").description("Desired language for books specified in ISO 639-2 format."),
       queryParam[Option[Int]]("page-size").description("Return this many results per page."),
-      queryParam[Option[Int]]("page").description("Return results for this page."))
+      queryParam[Option[Int]]("page").description("Return results for this page."),
+      queryParam[Option[Int]]("reading-level").description("Return only books matching this reading level."))
       authorizations "oauth2"
       responseMessages response500)
 
@@ -96,15 +98,17 @@ trait BooksController {
     get("/", operation(getAllBooks)) {
       val pageSize = intOrDefault("page-size", 10).min(100).max(1)
       val page = intOrDefault("page", 1).max(1)
+      val readingLevel = params.get("reading-level")
 
-      readService.withLanguage(DefaultLanguage, pageSize, page)
+      readService.withLanguageAndLevel(DefaultLanguage, readingLevel, pageSize, page)
     }
 
     get("/:lang/?", operation(getAllBooksInLang)) {
       val pageSize = intOrDefault("page-size", 10).min(100).max(1)
       val page = intOrDefault("page", 1).max(1)
+      val readingLevel = params.get("reading-level")
 
-      readService.withLanguage(language("lang"), pageSize, page)
+      readService.withLanguageAndLevel(language("lang"), readingLevel, pageSize, page)
     }
 
     get("/:lang/:id/?", operation(getBook)) {

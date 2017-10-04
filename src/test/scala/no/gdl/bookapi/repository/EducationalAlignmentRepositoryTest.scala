@@ -5,19 +5,22 @@
  * See LICENSE
  */
 
-package no.gdl.bookapi.model.domain
+package no.gdl.bookapi.repository
 
+import no.gdl.bookapi.model.domain.EducationalAlignment
 import no.gdl.bookapi.{IntegrationSuite, TestEnvironment}
 
-class EducationalAlignmentTest extends IntegrationSuite with TestEnvironment {
+class EducationalAlignmentRepositoryTest extends IntegrationSuite with TestEnvironment {
+
+  override val educationalAlignmentRepository = new EducationalAlignmentRepository
 
   test("that EducationalAlignment is added") {
     withRollback { implicit session =>
       val educationalAlignmentDef = EducationalAlignment(None, None, Some("alignmentType"), None, None, None, None)
 
-      val inserted = EducationalAlignment.add(educationalAlignmentDef)
+      val inserted = educationalAlignmentRepository.add(educationalAlignmentDef)
 
-      val withId = EducationalAlignment.withId(inserted.id.get)
+      val withId = educationalAlignmentRepository.withId(inserted.id.get)
       withId.isDefined should be(true)
       withId.head.id.isDefined should be(true)
       withId.head.revision.isDefined should be(true)
@@ -26,7 +29,7 @@ class EducationalAlignmentTest extends IntegrationSuite with TestEnvironment {
   }
 
   test("that withId returns None when id does not exist") {
-    val withId = EducationalAlignment.withId(100)
+    val withId = educationalAlignmentRepository.withId(100)
     withId should be (None)
   }
 }

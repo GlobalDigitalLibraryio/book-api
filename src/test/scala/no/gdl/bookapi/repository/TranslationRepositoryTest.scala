@@ -5,17 +5,18 @@
  * See LICENSE
  */
 
-package no.gdl.bookapi.model.domain
+package no.gdl.bookapi.repository
 
-import java.time.LocalDate
-import java.util.UUID
-
-import no.gdl.bookapi.model.domain.TranslationTest.{addBookDef, addTranslationDef}
 import no.gdl.bookapi.{IntegrationSuite, TestEnvironment}
-import scalikejdbc.{AutoSession, DBSession}
 
 
-class TranslationTest extends IntegrationSuite with TestEnvironment {
+class TranslationRepositoryTest extends IntegrationSuite with TestEnvironment with RepositoryTestHelpers {
+
+  override val bookRepository = new BookRepository
+  override val categoryRepository = new CategoryRepository
+  override val translationRepository = new TranslationRepository
+  override val licenseRepository = new LicenseRepository
+  override val publisherRepository = new PublisherRepository
 
   test("that Translation is added") {
     withRollback { implicit session =>
@@ -26,14 +27,13 @@ class TranslationTest extends IntegrationSuite with TestEnvironment {
       addedTranslation.id.isDefined should be(true)
       addedTranslation.revision.isDefined should be(true)
 
-      val readTranslation = Translation.forBookIdAndLanguage(book.id.get, language)
+      val readTranslation = translationRepository.forBookIdAndLanguage(book.id.get, language)
       readTranslation.isDefined should be(true)
       readTranslation.head.id should equal(addedTranslation.id)
       readTranslation.head.title should equal("Some title")
       readTranslation.head.categories.length should be(1)
     }
   }
-
 
   test("that bookIdsWithLanguage only returns ids for translations in given language") {
     withRollback { implicit session =>
@@ -49,7 +49,7 @@ class TranslationTest extends IntegrationSuite with TestEnvironment {
       addTranslationDef("ext6", "Title 3 - nob", book3.id.get, "nob")
       addTranslationDef("ext8", "Title 4 - nob", book4.id.get, "nob")
 
-      val searchResult = Translation.bookIdsWithLanguage("eng", 10, 1)
+      val searchResult = translationRepository.bookIdsWithLanguage("eng", 10, 1)
       searchResult.language should equal("eng")
       searchResult.results.length should be(2)
       searchResult.results.sorted should equal(Seq(book1.id.get, book2.id.get))
@@ -64,7 +64,7 @@ class TranslationTest extends IntegrationSuite with TestEnvironment {
       addTranslationDef("ext1", "title 1", book1.id.get, "amh")
       addTranslationDef("ext1", "title 1", book1.id.get, "swa")
 
-      Translation.languagesFor(book1.id.get).sorted should equal(Seq("amh", "eng", "nob", "swa"))
+      translationRepository.languagesFor(book1.id.get).sorted should equal(Seq("amh", "eng", "nob", "swa"))
     }
   }
 
@@ -80,9 +80,9 @@ class TranslationTest extends IntegrationSuite with TestEnvironment {
       addTranslationDef("ext3", "title 3", book3.id.get, "xho")
       addTranslationDef("ext4", "title 4", book4.id.get, "xho")
 
-      val ids = Translation.bookIdsWithLanguageAndLevel("xho", None, 10, 1)
+      val ids = translationRepository.bookIdsWithLanguageAndLevel("xho", None, 10, 1)
 
-      ids should equal (Seq(book1.id.get, book3.id.get, book4.id.get))
+      ids.results should equal (Seq(book1.id.get, book3.id.get, book4.id.get))
     }
   }
 
@@ -96,8 +96,8 @@ class TranslationTest extends IntegrationSuite with TestEnvironment {
       addTranslationDef("ext2", "title 2", book2.id.get, "xho", Some("2"))
       addTranslationDef("ext3", "title 3", book3.id.get, "xho", Some("1"))
 
-      val ids = Translation.bookIdsWithLanguageAndLevel("xho", Some("2"), 10, 1)
-      ids should equal (Seq(book1.id.get, book2.id.get))
+      val ids = translationRepository.bookIdsWithLanguageAndLevel("xho", Some("2"), 10, 1)
+      ids.results should equal (Seq(book1.id.get, book2.id.get))
     }
   }
 
@@ -113,67 +113,17 @@ class TranslationTest extends IntegrationSuite with TestEnvironment {
       addTranslationDef("ext3", "title 3", book3.id.get, "xho", None)
       addTranslationDef("ext4", "title 4", book4.id.get, "xho", None)
 
-      val page1 = Translation.bookIdsWithLanguageAndLevel("xho", None, 1, 1)
-      page1 should equal (Seq(book1.id.get))
+      val page1 = translationRepository.bookIdsWithLanguageAndLevel("xho", None, 1, 1)
+      page1.results should equal (Seq(book1.id.get))
 
-      val page2 = Translation.bookIdsWithLanguageAndLevel("xho", None, 1, 2)
-      page2 should equal (Seq(book2.id.get))
+      val page2 = translationRepository.bookIdsWithLanguageAndLevel("xho", None, 1, 2)
+      page2.results should equal (Seq(book2.id.get))
 
-      val page3 = Translation.bookIdsWithLanguageAndLevel("xho", None, 1, 3)
-      page3 should equal (Seq(book3.id.get))
+      val page3 = translationRepository.bookIdsWithLanguageAndLevel("xho", None, 1, 3)
+      page3.results should equal (Seq(book3.id.get))
 
-      val doublePage = Translation.bookIdsWithLanguageAndLevel("xho", None, 2, 2)
-      doublePage should equal(Seq(book3.id.get, book4.id.get))
+      val doublePage = translationRepository.bookIdsWithLanguageAndLevel("xho", None, 2, 2)
+      doublePage.results should equal(Seq(book3.id.get, book4.id.get))
     }
-  }
-}
-
-object TranslationTest {
-  def addBookDef(implicit session: DBSession = AutoSession): Book = {
-    val publisher = Publisher.add(Publisher(None, None, "Publisher Name"))
-    val license = License.add(License(None, None, "License Name", None, None))
-
-    val bookTry = Book.add(Book(None, None, publisher.id.get, license.id.get, publisher, license))
-    bookTry.get
-  }
-
-  def addTranslationDef(externalId: String, title: String, bookId: Long, language: String, readingLevel: Option[String] = None)(implicit session: DBSession = AutoSession): Translation = {
-    val cat1 = Category.add(Category(None, None, "some-category"))
-
-    val translationDef = Translation(
-      id = None,
-      revision = None,
-      bookId = bookId,
-      externalId = Some(externalId),
-      uuid = UUID.randomUUID().toString,
-      title = title,
-      about = "Some description",
-      numPages = Some(123),
-      language = language,
-      datePublished = Some(LocalDate.now()),
-      dateCreated = Some(LocalDate.now()),
-      categoryIds = Seq(cat1.id.get),
-      coverphoto = None,
-      tags = Seq("tag1", "tag2"),
-      isBasedOnUrl = None,
-      educationalUse = None,
-      educationalRole = None,
-      eaId = None,
-      timeRequired = None,
-      typicalAgeRange = None,
-      readingLevel = readingLevel,
-      interactivityType = None,
-      learningResourceType = None,
-      accessibilityApi = None,
-      accessibilityControl = None,
-      accessibilityFeature = None,
-      accessibilityHazard = None,
-      educationalAlignment = None,
-      chapters = Seq(),
-      contributors = Seq(),
-      categories = Seq(cat1)
-    )
-
-    Translation.add(translationDef)
   }
 }

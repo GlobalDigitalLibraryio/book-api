@@ -19,7 +19,7 @@ object Category extends SQLSyntaxSupport[Category] {
   override val tableName = "category"
   override val schemaName = Some(BookApiProperties.MetaSchema)
   override val columns = Seq("id", "revision", "name")
-  private val cat = Category.syntax
+
 
   def apply(cat: SyntaxProvider[Category])(rs: WrappedResultSet): Category = apply(cat.resultName)(rs)
   def apply(cat: ResultName[Category])(rs: WrappedResultSet) = new Category(
@@ -30,23 +30,4 @@ object Category extends SQLSyntaxSupport[Category] {
 
   def opt(cat: SyntaxProvider[Category])(rs: WrappedResultSet): Option[Category] =
     rs.longOpt(cat.resultName.id).map(_ => Category(cat)(rs))
-
-  def withName(category: String)(implicit session: DBSession = AutoSession): Option[Category] = {
-    sql"select ${cat.result.*} from ${Category.as(cat)} where LOWER(${cat.name}) = LOWER($category) order by ${cat.id}"
-      .map(Category(cat))
-      .list()
-      .apply.headOption
-  }
-
-  def add(newCategory: Category)(implicit session: DBSession = AutoSession): Category = {
-    val c = Category.column
-    val startRevision = 1
-
-    val id = insert.into(Category).namedValues(
-      c.revision -> startRevision,
-      c.name -> newCategory.name
-    ).toSQL.updateAndReturnGeneratedKey().apply()
-
-    newCategory.copy(id = Some(id), revision = Some(startRevision))
-  }
 }
