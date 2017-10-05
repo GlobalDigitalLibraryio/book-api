@@ -13,11 +13,11 @@ import no.gdl.bookapi.service.ReadService
 import org.scalatra.swagger.{ResponseMessage, Swagger, SwaggerSupport}
 
 
-trait EditorPickController {
+trait EditorsPickController {
   this: ReadService =>
-  val editorPickController: EditorPickController
+  val editorsPickController: EditorsPickController
 
-  class EditorPickController (implicit val swagger: Swagger) extends GdlController with SwaggerSupport {
+  class EditorsPickController(implicit val swagger: Swagger) extends GdlController with SwaggerSupport {
     protected val applicationDescription = "API for retrieving Editors chosen books from GDL"
 
     registerModel[api.Error]

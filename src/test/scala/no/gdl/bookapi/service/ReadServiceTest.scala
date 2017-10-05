@@ -96,10 +96,9 @@ class ReadServiceTest extends UnitSuite with TestEnvironment {
     when(converterService.toApiLanguage("nob")).thenReturn(TestData.Api.norwegian_bokmal)
     when(converterService.toApiBook(Some(translation2), Seq("nob"), Some(book2))).thenReturn(Some(similarBook))
 
-    val expectedSearchResult = SearchResult[Long](2, page, pageSize, "nob", Seq(TestData.Api.DefaultBook.id, 2))
-    when(translationRepository.bookIdsWithLanguageAndLevel("nob", TestData.Api.DefaultBook.readingLevel, pageSize, page)).thenReturn(expectedSearchResult)
+    val searchResult = SearchResult[Long](2, page, pageSize, "nob", Seq(TestData.Api.DefaultBook.id, 2))
+    when(translationRepository.bookIdsWithLanguageAndLevel("nob", TestData.Api.DefaultBook.readingLevel, pageSize, page)).thenReturn(searchResult)
 
-    val searchResult = readService.similarTo(TestData.Api.DefaultBook.id, "nob", pageSize, page)
-    searchResult.results should equal (Seq(similarBook))
+    readService.similarTo(TestData.Api.DefaultBook.id, "nob", pageSize, page).results should equal (Seq(similarBook))
   }
 }
