@@ -65,6 +65,9 @@ abstract class GdlController extends ScalatraServlet with NativeJsonSupport with
 
   override def renderPipeline = customRenderer orElse super.renderPipeline
 
+  def paramOrNone(paramName: String)(implicit request: HttpServletRequest): Option[String] =
+    params.get(paramName).map(_.trim).filterNot(_.isEmpty())
+
   def paramOrDefault(paramName: String, default: String)(implicit request: HttpServletRequest): String =
     params.get(paramName).map(_.trim).filterNot(_.isEmpty()).getOrElse(default)
 

@@ -7,6 +7,7 @@
 
 package no.gdl.bookapi.service
 
+import java.time.LocalDate
 import java.util.{Locale, UUID}
 
 import com.netaporter.uri.dsl._
@@ -61,6 +62,7 @@ trait ConverterService {
         newTranslation.accessibilityControl,
         newTranslation.accessibilityFeature,
         newTranslation.accessibilityHazard,
+        newTranslation.dateArrived.getOrElse(LocalDate.now()),
         newTranslation.educationalAlignment.map(toDomainEducationalAlignment),
         chapters = Seq(),
         contributors = Seq(),
@@ -135,6 +137,7 @@ trait ConverterService {
           translation.timeRequired,
           translation.datePublished,
           translation.dateCreated,
+          translation.dateArrived,
           toApiCategories(translation.categories),
           toApiCoverPhoto(translation.coverphoto),
           toApiDownloads(translation),

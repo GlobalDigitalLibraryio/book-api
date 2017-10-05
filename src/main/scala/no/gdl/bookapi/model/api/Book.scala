@@ -83,6 +83,7 @@ case class Book(@(ApiModelProperty@field)(description = "The id of the book") id
                 @(ApiModelProperty@field)(description = "The time required to read through the book. (e.g. PT10M)") timeRequired: Option[String],
                 @(ApiModelProperty@field)(description = "The date when this book was first published (iso-format)") datePublished: Option[LocalDate],
                 @(ApiModelProperty@field)(description = "The date when this book was created (iso-format)") dateCreated: Option[LocalDate],
+                @(ApiModelProperty@field)(description = "The date when this book arrived to the Global Digital Library (iso-format)") dateArrived: LocalDate,
                 @(ApiModelProperty@field)(description = "Information about categories") categories: Seq[Category],
                 @(ApiModelProperty@field)(description = "Cover Photo information") coverPhoto: Option[CoverPhoto],
                 @(ApiModelProperty@field)(description = "Information about downloads") downloads: Downloads,
