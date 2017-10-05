@@ -27,7 +27,7 @@ object ComponentRegistry
   with BooksController
   with LanguageController
   with LevelController
-  with EditorPickController
+  with EditorsPickController
   with InternController
   with HealthController
   with OPDSController
@@ -77,7 +77,7 @@ object ComponentRegistry
   lazy val contentConverter = new ContentConverter
   lazy val languageController = new LanguageController
   lazy val levelController = new LevelController
-  lazy val editorPickController = new EditorPickController
+  lazy val editorsPickController = new EditorsPickController
   lazy val editorsPickRepository = new EditorsPickRepository
   lazy val bookRepository = new BookRepository
   lazy val categoryRepository = new CategoryRepository
