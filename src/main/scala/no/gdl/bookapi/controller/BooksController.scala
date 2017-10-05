@@ -105,7 +105,7 @@ trait BooksController {
 
     get("/:lang/?", operation(getAllBooksInLang)) {
       val pageSize = intOrDefault("page-size", 10).min(100).max(1)
-      val page = intOrDefault("page", 1).max(0)
+      val page = intOrDefault("page", 1).max(1)
       val readingLevel = params.get("reading-level")
 
       readService.withLanguageAndLevel(language("lang"), readingLevel, pageSize, page)

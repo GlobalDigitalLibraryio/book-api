@@ -13,11 +13,11 @@ import no.gdl.bookapi.service.ReadService
 import org.scalatra.swagger.{ResponseMessage, Swagger, SwaggerSupport}
 
 
-trait EditorPickController {
+trait EditorsPickController {
   this: ReadService =>
-  val editorPickController: EditorPickController
+  val editorsPickController: EditorsPickController
 
-  class EditorPickController (implicit val swagger: Swagger) extends GdlController with SwaggerSupport {
+  class EditorsPickController(implicit val swagger: Swagger) extends GdlController with SwaggerSupport {
     protected val applicationDescription = "API for retrieving Editors chosen books from GDL"
 
     registerModel[api.Error]
@@ -39,13 +39,11 @@ trait EditorPickController {
       responseMessages response500)
 
     get("/", operation(getAllPicks)) {
-      // TODO: Implement actual editors pick lookup in #52
-      readService.withLanguage(DefaultLanguage, 5, 1).results
+      readService.editorsPickForLanguage(DefaultLanguage)
     }
 
     get("/:lang", operation(getAllPicksInLang)) {
-      //TODO: Implement actual editors pick lookup in #52
-      readService.withLanguage(language("lang"), 5, 1).results
+      readService.editorsPickForLanguage(language("lang"))
     }
   }
 

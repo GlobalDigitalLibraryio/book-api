@@ -10,13 +10,23 @@ package no.gdl.bookapi.service
 
 import no.gdl.bookapi.model._
 import no.gdl.bookapi.repository.{BookRepository, ChapterRepository, TranslationRepository}
+import no.gdl.bookapi.repository.EditorsPickRepository
 
 trait ReadService {
-  this: ConverterService with BookRepository with ChapterRepository with TranslationRepository =>
+  this: ConverterService with BookRepository with ChapterRepository with TranslationRepository with EditorsPickRepository =>
   val readService: ReadService
 
-  // TODO: Create tests for this class after #59 is resolved
   class ReadService {
+    def editorsPickForLanguage(language: String): Seq[api.Book] = {
+      editorsPickRepository.forLanguage(language) match {
+        case None => Seq()
+        case Some(editorsPick) =>
+          editorsPick.translationIds.flatMap(trId =>
+            translationRepository.withId(trId).flatMap(tr =>
+              converterService.toApiBook(Some(tr), translationRepository.languagesFor(tr.bookId), bookRepository.withId(tr.bookId))))
+      }
+    }
+
     def listAvailableLanguages: Seq[api.Language] = {
       translationRepository.allAvailableLanguages().map(converterService.toApiLanguage).sortBy(_.name)
     }

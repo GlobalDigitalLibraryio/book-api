@@ -27,12 +27,13 @@ trait TestEnvironment
   with BooksController
   with LanguageController
   with LevelController
-  with EditorPickController
+  with EditorsPickController
   with HealthController
   with GdlClient
   with ImageApiClient
   with DownloadController
   with ValidationService
+  with EditorsPickRepository
   with BookRepository
   with CategoryRepository
   with ChapterRepository
@@ -53,7 +54,7 @@ trait TestEnvironment
   val booksController = mock[BooksController]
   val languageController = mock[LanguageController]
   val levelController = mock[LevelController]
-  val editorPickController = mock[EditorPickController]
+  val editorsPickController = mock[EditorsPickController]
 
   val jestClient = mock[NdlaJestClient]
 
@@ -62,6 +63,7 @@ trait TestEnvironment
   val downloadController = mock[DownloadController]
   val validationService = mock[ValidationService]
   val contentConverter = mock[ContentConverter]
+  val editorsPickRepository = mock[EditorsPickRepository]
   val bookRepository = mock[BookRepository]
   val categoryRepository = mock[CategoryRepository]
   val chapterRepository = mock[ChapterRepository]

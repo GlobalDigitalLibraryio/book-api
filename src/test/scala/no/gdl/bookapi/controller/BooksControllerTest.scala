@@ -22,7 +22,7 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
   addServlet(controller, "/*")
 
   test("that GET / will get books with default language") {
-    val result = SearchResult(0, 1, 10, Language("eng", "Englist"), Seq(TestData.DefaultBook))
+    val result = SearchResult(0, 1, 10, Language("eng", "Englist"), Seq(TestData.Api.DefaultBook))
     when(readService.withLanguageAndLevel(BookApiProperties.DefaultLanguage, Some("1"), 10, 1)).thenReturn(result)
 
     get("/?reading-level=1&page-size=10&page=1") {
@@ -34,16 +34,16 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
   }
 
   test("that GET /:lang will get books with language") {
-    val language = TestData.norwegian_bokmal
+    val language = TestData.Api.norwegian_bokmal
 
-    val result = SearchResult(0, 1, 10, language, Seq(TestData.DefaultBook))
+    val result = SearchResult(0, 1, 10, language, Seq(TestData.Api.DefaultBook))
     when(readService.withLanguageAndLevel(language.code, Some("2"), 10, 1)).thenReturn(result)
 
     get("/nob?reading-level=2&page-size=10&page=1") {
       status should equal (200)
       val searchResult = read[SearchResult](body)
       searchResult.results.length should be (1)
-      searchResult.results.head.uuid should equal(TestData.DefaultBook.uuid)
+      searchResult.results.head.uuid should equal(TestData.Api.DefaultBook.uuid)
     }
   }
 
@@ -62,12 +62,12 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
   }
 
   test("that GET /:lang/:id returns book when found") {
-    when(readService.withIdAndLanguage(any[Long], any[String])).thenReturn(Some(TestData.DefaultBook))
+    when(readService.withIdAndLanguage(any[Long], any[String])).thenReturn(Some(TestData.Api.DefaultBook))
 
     get("/eng/1") {
       status should equal (200)
       val book = read[Book](body)
-      book.uuid should equal (TestData.DefaultBook.uuid)
+      book.uuid should equal (TestData.Api.DefaultBook.uuid)
     }
   }
 
@@ -79,11 +79,11 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
   }
 
   test("that GET /:lang/:bookid/chapters/:chapterid returns chapter when found") {
-    when(readService.chapterForBookWithLanguageAndId(any[Long], any[String], any[Long])).thenReturn(Some(TestData.Chapter1))
+    when(readService.chapterForBookWithLanguageAndId(any[Long], any[String], any[Long])).thenReturn(Some(TestData.Api.Chapter1))
     get("/eng/1/chapters/1") {
       status should equal (200)
       val chapter = read[Chapter](body)
-      chapter.title should equal (TestData.Chapter1.title)
+      chapter.title should equal (TestData.Api.Chapter1.title)
     }
   }
 }
