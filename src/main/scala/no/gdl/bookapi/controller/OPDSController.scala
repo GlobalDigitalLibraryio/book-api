@@ -16,7 +16,7 @@ import no.gdl.bookapi.service.{ConverterService, ReadService}
 trait OPDSController {
   this: ReadService with ConverterService =>
   val opdsController: OPDSController
-  val sdf: SimpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ")
+  val sdf: SimpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX")
 
   class OPDSController extends GdlController {
 

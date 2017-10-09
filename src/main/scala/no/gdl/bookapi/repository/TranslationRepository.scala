@@ -136,6 +136,38 @@ trait TranslationRepository {
       translationWithCategories
     }
 
+    def withUuId(uuid: String)(implicit session: DBSession = ReadOnlyAutoSession): Option[Translation] = {
+      val translationWithChapters = select
+        .from(Translation as t)
+        .leftJoin(EducationalAlignment as ea).on(t.eaId, t.id)
+        .leftJoin(Chapter as ch).on(t.id, ch.translationId)
+        .where.eq(t.uuid, uuid).toSQL
+        .one(Translation(t))
+        .toManies(
+          rs => EducationalAlignment.opt(ea)(rs),
+          rs => Chapter.opt(ch)(rs)
+        )
+        .map { (tra, eaT, ch) => tra.copy(educationalAlignment = eaT.headOption, chapters = ch) }.single().apply()
+
+      val translationWithContributors = translationWithChapters.map(t => {
+        t.copy(contributors = t.id match {
+          case None => Seq()
+          case Some(id) => contributorRepository.forTranslationId(id)
+        })
+      })
+
+      val translationWithCategories = translationWithContributors.map(t => {
+        val categories = select
+          .from(Category as cat)
+          .where.in(cat.id, t.categoryIds).toSQL
+          .map(Category(cat)).list().apply()
+
+        t.copy(categories = categories)
+      })
+
+      translationWithCategories
+    }
+
     def withExternalId(externalId: String)(implicit session: DBSession = ReadOnlyAutoSession): Option[Translation] = {
       val translationWithChapters = select
         .from(Translation as t)

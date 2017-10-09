@@ -34,7 +34,7 @@ lazy val book_api = (project in file(".")).
     javacOptions ++= Seq("-source", "1.8", "-target", "1.8"),
     scalacOptions := Seq("-target:jvm-1.8"),
     libraryDependencies ++= Seq(
-      "gdl" %% "network" % "0.4",
+      "gdl" %% "network" % "0.5",
       "com.typesafe.scala-logging" %% "scala-logging" % ScalaLoggingVersion,
       "org.apache.logging.log4j" % "log4j-api" % Log4JVersion,
       "org.apache.logging.log4j" % "log4j-core" % Log4JVersion,
@@ -60,7 +60,8 @@ lazy val book_api = (project in file(".")).
       "com.sksamuel.elastic4s" %% "elastic4s-http" % Elastic4sVersion,
       "org.elasticsearch" % "elasticsearch" % ElasticsearchVersion % "test",
       "vc.inreach.aws" % "aws-signing-request-interceptor" % "0.0.16",
-      "org.jsoup" % "jsoup" % JsoupVersion
+      "org.jsoup" % "jsoup" % JsoupVersion,
+      "coza.opencollab" % "epub-creator" % "1.0.0"
     )
   ).enablePlugins(DockerPlugin).enablePlugins(GitVersioning).enablePlugins(JettyPlugin)
 
@@ -114,3 +115,5 @@ resolvers ++= Seq(
   scala.util.Properties.envOrNone("GDL_RELEASES").map(repo => "GDL Release Sonatype Nexus Repository Manager" at repo),
   scala.util.Properties.envOrNone("NDLA_RELEASES").map(repo => "NDLA Release Sonatype Nexus Repository Manager" at repo)
 ).flatten
+
+resolvers += "OpenCollab Nexus Release Repo" at "http://nexus.opencollab.co.za/nexus/content/repositories/releases"

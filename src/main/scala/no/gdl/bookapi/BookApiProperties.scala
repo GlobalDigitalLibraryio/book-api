@@ -52,6 +52,9 @@ object BookApiProperties extends LazyLogging {
 
   val CoverPhotoTumbSize = 200
 
+  val EpubCssTemplate = "/epub/epub_style.css"
+  val ChapterTemplate = "/epub/chapter_template.xhtml"
+
   lazy val MetaUserName = prop(PropertyKeys.MetaUserNameKey)
   lazy val MetaPassword = prop(PropertyKeys.MetaPasswordKey)
   lazy val MetaResource = prop(PropertyKeys.MetaResourceKey)
