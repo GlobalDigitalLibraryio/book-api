@@ -21,7 +21,7 @@ case class EPubChapter(seqNo: Int, content: String, ePubCss: EPubCss, mimeType: 
        |<html xmlns="http://www.w3.org/1999/xhtml">
        |<head>
        |    <title>$title</title>
-       |    <link href="${ePubCss.href}" rel="stylesheet" type="text/css"/>
+       |    <link href="${ePubCss.href}" rel="stylesheet" type="${ePubCss.mimeType}"/>
        |</head>
        |<body>$content</body>
        |</html>
