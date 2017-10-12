@@ -62,7 +62,9 @@ trait ChapterRepository {
       select
         .from(Chapter as ch)
         .leftJoin(Translation as t).on(ch.translationId, t.id)
-        .where.eq(t.bookId, bookId).and.eq(t.language, language).toSQL
+        .where.eq(t.bookId, bookId).and.eq(t.language, language)
+        .orderBy(ch.seqNo).asc
+        .toSQL
         .map(Chapter(ch)).list().apply()
 
     }

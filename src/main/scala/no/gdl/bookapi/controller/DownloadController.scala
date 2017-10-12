@@ -7,11 +7,14 @@
 
 package no.gdl.bookapi.controller
 
-import no.gdl.bookapi.service.ReadService
-import org.scalatra.Ok
+import no.gdl.bookapi.model.api.Error
+import no.gdl.bookapi.service.{EPubService, ReadService}
+import org.scalatra.{InternalServerError, NotFound, Ok}
+
+import scala.util.{Failure, Success}
 
 trait DownloadController {
-  this: ReadService =>
+  this: ReadService with EPubService =>
   val downloadController: DownloadController
 
   class DownloadController extends GdlController {
@@ -24,8 +27,17 @@ trait DownloadController {
       val filename = params("filename")
 
       filename match {
-        case epubPattern(uuid) => Ok(body = s"Here you soon will find $uuid.epub in $language")
-        case _ => halt(status = 400, body = "Invalid input")
+        case epubPattern(uuid) =>
+          ePubService.createEPub(language, uuid) match {
+            case None => NotFound(body = Error(Error.NOT_FOUND, s"No book with filename $filename found."))
+            case Some(Success(book)) =>
+              contentType = "application/octet-stream"
+              book.writeToStream(response.getOutputStream)
+            case Some(Failure(ex)) =>
+              logger.error("Could not generate epub", ex)
+              InternalServerError(body=Error.GenericError)
+          }
+        case _ => NotFound(body = Error(Error.NOT_FOUND, s"No book with filename $filename found."))
       }
     }
 
@@ -35,7 +47,7 @@ trait DownloadController {
 
       filename match {
         case pdfPattern(uuid) => Ok(body = s"Here you soon will find $uuid.pdf in $language")
-        case _ => halt(status = 400, body = "Invalid input")
+        case _ => NotFound(body = Error(Error.NOT_FOUND, s"No book with filename $filename found."))
       }
     }
   }
