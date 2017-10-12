@@ -9,7 +9,6 @@ package no.gdl.bookapi.model.domain
 
 import no.gdl.bookapi.BookApiProperties
 import org.jsoup.Jsoup
-import org.jsoup.nodes.Entities.EscapeMode
 import org.jsoup.select.Elements
 import scalikejdbc._
 
@@ -21,19 +20,14 @@ case class Chapter(id: Option[Long],
                    content: String) {
 
   def imagesInChapter(): Seq[Long] = {
-    import com.netaporter.uri.dsl._
-
     val document = Jsoup.parseBodyFragment(content)
     val images: Elements = document.select("embed[data-resource='image']")
-    var imageIds: Seq[Long] = Seq()
 
-    for (i <- 0 until images.size()) {
-      val image = images.get(i)
-      val nodeId = image.attr("data-resource_id")
-      imageIds = imageIds :+ nodeId.toLong
-    }
-
-    imageIds
+    for {
+      i <- 0 until images.size()
+      image = images.get(i)
+      nodeId = image.attr("data-resource_id")
+    } yield nodeId.toLong
   }
 }
 

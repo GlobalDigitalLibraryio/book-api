@@ -92,7 +92,5 @@ object ComponentRegistry
   lazy val personRepository = new PersonRepository
   lazy val publisherRepository = new PublisherRepository
 
-  lazy val ePubService = new EPubService(
-    cssTemplate = Source.fromInputStream(getClass.getResourceAsStream(BookApiProperties.EpubCssTemplate)).mkString,
-    chapterTemplate = Source.fromInputStream(getClass.getResourceAsStream(BookApiProperties.ChapterTemplate)).mkString)
+  lazy val ePubService = new EPubService
 }

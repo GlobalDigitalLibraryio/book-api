@@ -7,13 +7,12 @@
 
 package no.gdl.bookapi.service
 
-import java.text.MessageFormat
-
 import com.netaporter.uri.dsl._
 import com.typesafe.scalalogging.LazyLogging
 import coza.opencollab.epub.creator.model.{Content, EpubBook, TocLink}
 import no.gdl.bookapi.integration.ImageApiClient
 import no.gdl.bookapi.model._
+import no.gdl.bookapi.model.domain.{EPubChapter, EPubCss}
 import no.gdl.bookapi.repository.{ChapterRepository, TranslationRepository}
 
 import scala.util.{Failure, Success, Try}
@@ -22,15 +21,7 @@ trait EPubService {
   this: TranslationRepository with ChapterRepository with ContentConverter with ImageApiClient =>
   val ePubService: EPubService
 
-  class EPubService(cssTemplate: String, chapterTemplate: String) extends LazyLogging {
-    private val EpubCssHref = "epub.css"
-    private val EpubCssMimeType = "text/css"
-    private val EpubXhtmlMimeType = "application/xhtml+xml"
-
-    private def ChapterTitleTemplate(seqNo: Int) = s"Chapter $seqNo"
-
-    private def ChapterHref(seqNo: Int) = s"chapter-$seqNo.xhtml"
-
+  class EPubService() extends LazyLogging {
     def createEPub(language: String, uuid: String): Option[Try[EpubBook]] = {
       translationRepository.withUuId(uuid).map(translation =>
         buildEPubFor(translation, chapterRepository.chaptersForBookIdAndLanguage(translation.bookId, language)))
@@ -38,11 +29,12 @@ trait EPubService {
 
     private def buildEPubFor(translation: domain.Translation, chapters: Seq[domain.Chapter]): Try[EpubBook] = {
       Try {
-        val authors = translation.contributors.filter(_.`type` == "Author").map(_.person.name).mkString(",")
+        val authors = translation.contributors.filter(_.`type` == "Author").map(_.person.name).mkString(", ")
         val book = new EpubBook(translation.language, translation.uuid, translation.title, authors)
 
         // Add CSS to ePub
-        book.addContent(cssTemplate.getBytes(), EpubCssMimeType, EpubCssHref, false, false)
+        val ePubCss = EPubCss()
+        book.addContent(ePubCss.asBytes, ePubCss.mimeType, ePubCss.href, false, false)
 
         // Add CoverPhoto if defined, throw exception when trouble
         translation.coverphoto.foreach(coverPhotoId => {
@@ -53,7 +45,8 @@ trait EPubService {
                 downloadedImage.bytes,
                 downloadedImage.metaInformation.contentType,
                 downloadedImage.metaInformation.domainUrl.pathParts.last.part)
-          }})
+          }
+        })
 
         // Add chapter, and return Table Of Content links for each chapter
         val tocLinks = chapters.map(chapter => {
@@ -65,15 +58,16 @@ trait EPubService {
               image.bytes,
               image.metaInformation.contentType,
               image.metaInformation.domainUrl.pathParts.last.part,
-              false, false)})
+              false, false)
+          })
 
-          val content = contentConverter.toEPubContent(chapter.content, images)
-          val title = chapter.title.getOrElse(ChapterTitleTemplate(chapter.seqNo))
-          val href = ChapterHref(chapter.seqNo)
-          val htmlContent = MessageFormat.format(chapterTemplate, title, content)
-          book.addContent(new Content(EpubXhtmlMimeType, href, htmlContent.getBytes))
+          val ePubChapter = EPubChapter(
+            chapter.seqNo,
+            contentConverter.toEPubContent(chapter.content, images),
+            ePubCss)
 
-          new TocLink(href, title, title)
+          book.addContent(new Content(ePubChapter.mimeType, ePubChapter.href, ePubChapter.asBytes))
+          new TocLink(ePubChapter.href, ePubChapter.title, ePubChapter.title)
         })
 
         book.setTocLinks(scala.collection.JavaConverters.seqAsJavaList(tocLinks))

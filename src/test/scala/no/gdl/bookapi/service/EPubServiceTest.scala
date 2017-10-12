@@ -18,7 +18,7 @@ import scala.util.{Failure, Success}
 
 class EPubServiceTest extends UnitSuite with TestEnvironment {
 
-  override val ePubService = new EPubService("css", "chapter")
+  override val ePubService = new EPubService
 
   test("that createEPub returns None when uuid not found") {
     when(translationRepository.withUuId("123")).thenReturn(None)
