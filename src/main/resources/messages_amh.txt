@@ -1,0 +1,10 @@
+opds_root_title=ግሎባል ዲጂታል ላይብረሪ - የመጽሐፍ ካታሎግ
+
+new_entries_feed_title=አዲስ ምዝቦች
+new_entries_feed_description=በአለምአቀፍ ዲጂታል ላይብረሪ ውስጥ አዳዲስ ግቤቶች
+
+level_feed_title=ደረጃ
+level_feed_description=ለተመረጠው ደረጃ መጽሐፍት
+
+featured_feed_title=አርታኢዎች ይመርጣሉ
+featured_feed_description=አርታኢዎች ይመርጣሉ

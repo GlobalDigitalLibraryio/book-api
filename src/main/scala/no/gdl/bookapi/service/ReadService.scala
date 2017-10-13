@@ -50,8 +50,8 @@ trait ReadService {
         books)
     }
 
-    def withLanguage(language: String, pageSize: Int, page: Int): api.SearchResult = {
-      val searchResult = translationRepository.bookIdsWithLanguage(language, pageSize, page)
+    def withLanguage(language: String, pageSize: Int, page: Int, sort: Sort.Value): api.SearchResult = {
+      val searchResult = translationRepository.bookIdsWithLanguage(language, pageSize, page, sort)
       val books = searchResult.results.flatMap(id => withIdAndLanguage(id, language))
 
       api.SearchResult(

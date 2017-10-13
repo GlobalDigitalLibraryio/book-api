@@ -33,13 +33,15 @@ trait TranslationRepository {
         .map(_.string(1)).list().apply()
     }
 
-    def bookIdsWithLanguage(language: String, pageSize: Int, page: Int)(implicit session: DBSession = ReadOnlyAutoSession): SearchResult[Long] = {
+    def bookIdsWithLanguage(language: String, pageSize: Int, page: Int, sortDef: Sort.Value)(implicit session: DBSession = ReadOnlyAutoSession): SearchResult[Long] = {
       val limit = pageSize.max(1)
       val offset = (page.max(1) - 1) * pageSize
 
       val results = select(t.result.bookId)
         .from(Translation as t)
-        .where.eq(t.language, language).limit(limit).offset(offset)
+        .where.eq(t.language, language)
+        .append(getSorting(sortDef))
+        .limit(limit).offset(offset)
         .toSQL
         .map(_.long(1)).list().apply()
 

@@ -8,9 +8,12 @@
 package no.gdl.bookapi.controller
 
 import java.text.SimpleDateFormat
-import java.util.Date
+import java.util.{Date, UUID}
 
-import no.gdl.bookapi.BookApiProperties.DefaultLanguage
+import com.osinka.i18n.{Lang, Messages}
+import no.gdl.bookapi.BookApiProperties.OpdsPath
+import no.gdl.bookapi.model._
+import no.gdl.bookapi.model.domain.Sort
 import no.gdl.bookapi.service.{ConverterService, ReadService}
 
 trait OPDSController {
@@ -20,6 +23,8 @@ trait OPDSController {
 
   class OPDSController extends GdlController {
 
+
+
     val page = 1
     val pageSize = 10000 //TODO: Create partial opds feed entries, to solve paging
 
@@ -27,21 +32,115 @@ trait OPDSController {
       contentType = formats("xml")
     }
 
-    get("/:lang/catalog.atom") {
-      showOpdsForLanguage(params("lang"))
+    get("/:lang/root.xml") {
+      val lang = language("lang")
+      val feedName = s"/$lang/root.xml"
+
+      showNavigationRoot(getFeedId(feedName), language("lang"))
     }
 
-    get("/catalog.atom") {
-      showOpdsForLanguage(DefaultLanguage)
+    get("/:lang/new.xml") {
+      val lang = language("lang")
+      val feedUrl = s"/$lang/new.xml"
+
+      showAcquisitionFeed(
+        feedUrl,
+        Messages("new_entries_feed_title")(Lang(lang)),
+        readService.withLanguage(
+          language = language("lang"),
+          pageSize = pageSize,
+          page = page,
+          sort = Sort.ByArrivalDateDesc
+        ).results
+      )
     }
 
-    private def showOpdsForLanguage(language: String) = {
+    get("/:lang/featured.xml") {
+      val lang = language("lang")
+      val feedUrl = s"/$lang/featured.xml"
+
+      showAcquisitionFeed(
+        feedUrl,
+        Messages("featured_feed_title")(Lang(lang)),
+        readService.editorsPickForLanguage(lang)
+      )
+    }
+
+    get("/:lang/level:lev.xml") {
+      val lang = language("lang")
+      val level = params("lev")
+
+      val feedUrl = s"/$lang/level$level.xml"
+      val feedTitle = s"${Messages("level_feed_title")(Lang(lang))} $level"
+
+      showAcquisitionFeed(
+        feedUrl,
+        feedTitle,
+        readService.withLanguageAndLevel(
+          language = lang,
+          readingLevel = Some(level),
+          pageSize = pageSize,
+          page = page,
+          sort = Sort.ByTitleAsc
+        ).results
+      )
+    }
+
+    private def showNavigationRoot(feedUrl: String, language: String) = {
+      implicit val messageLang = Lang(language)
+      val levelMessagePrefix: String = Messages("level_feed_title")
+
+      <feed xmlns="http://www.w3.org/2005/Atom">
+        <id>{getFeedId(feedUrl)}</id>
+        <link rel="self"
+              href={feedUrl}
+              type="application/atom+xml;profile=opds-catalog;kind=navigation"/>
+        <link rel="start"
+              href={feedUrl}
+              type="application/atom+xml;profile=opds-catalog;kind=navigation"/>
+        <title>{Messages("opds_root_title")}</title>
+        <updated>2010-01-10T10:03:10Z</updated>
+
+        <entry>
+          <title>{Messages("new_entries_feed_title")}</title>
+          <link rel="http://opds-spec.org/sort/new"
+                href={s"$OpdsPath/$language/new.xml"}
+                type="application/atom+xml;profile=opds-catalog;kind=acquisition"/>
+          <updated>2010-01-10T10:01:01Z</updated>
+          <id>{getFeedId(s"/$language/new.xml")}</id>
+          <content type="text">{Messages("new_entries_feed_description")}</content>
+        </entry>
+
+        <entry>
+          <title>{Messages("featured_feed_title")}</title>
+          <link rel="http://opds-spec.org/featured"
+                href={s"$OpdsPath/$language/featured.xml"}
+                type="application/atom+xml;profile=opds-catalog;kind=acquisition"/>
+          <updated>2010-01-10T10:01:01Z</updated>
+          <id>{getFeedId(s"/$language/featured.xml")}</id>
+          <content type="text">{Messages("featured_feed_description")}</content>
+        </entry>
+
+        {readService.listAvailableLevelsForLanguage(Some(language)).map(level =>
+          <entry>
+            <title>{s"$levelMessagePrefix $level"}</title>
+            <link href={s"$OpdsPath/$language/level$level.xml"}
+                  type="application/atom+xml;profile=opds-catalog;kind=acquisition"/>
+            <updated>2010-01-10T10:01:01Z</updated>
+            <id>{getFeedId(s"/$language/level$level.xml")}</id>
+            <content type="text">{Messages("level_feed_description")}</content>
+          </entry>
+        )}
+      </feed>
+    }
+
+    private def showAcquisitionFeed(feedUrl: String, feedTitle: String, books: Seq[api.Book]) = {
       <feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/terms/" xmlns:opds="http://opds-spec.org/2010/catalog">
-        <id>http://api.digitallibrary.io/book-api/opds/catalog.atom</id>
-        <title>Global Digital Library - Open Access</title>
+        <id>{getFeedId(feedUrl)}</id>
+        <title>{feedTitle}</title>
         <updated>2017-04-28T12:54:15Z</updated>
-        <link href="http://api.digitallibrary.io/book-api/opds/catalog.atom" rel="self"/>
-        {readService.withLanguage(language, pageSize, page).results.map(x =>
+        <link href={feedUrl} rel="self"/>
+        {books.map(x =>
         <entry>
           <id>urn:uuid:{x.uuid}</id>
           <title>{x.title}</title>
@@ -57,6 +156,11 @@ trait OPDSController {
         </entry>
       )}
       </feed>
+    }
+
+    private def getFeedId(feedUrl: String) = {
+      // TODO: Implement lookup of uuid for feed, and generate for new feeds
+      s"urn:uuid:${UUID.randomUUID().toString}"
     }
 
   }
