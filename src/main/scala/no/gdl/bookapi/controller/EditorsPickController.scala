@@ -39,11 +39,17 @@ trait EditorsPickController {
       responseMessages response500)
 
     get("/", operation(getAllPicks)) {
-      readService.editorsPickForLanguage(DefaultLanguage)
+      readService.editorsPickForLanguage(DefaultLanguage) match {
+        case None => Seq()
+        case Some(editorsPick) => editorsPick.books
+      }
     }
 
     get("/:lang", operation(getAllPicksInLang)) {
-      readService.editorsPickForLanguage(language("lang"))
+      readService.editorsPickForLanguage(language("lang")) match {
+        case None => Seq()
+        case Some(editorsPick) => editorsPick.books
+      }
     }
   }
 

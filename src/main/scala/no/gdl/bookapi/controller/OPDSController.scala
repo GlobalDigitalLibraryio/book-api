@@ -8,6 +8,8 @@
 package no.gdl.bookapi.controller
 
 import java.text.SimpleDateFormat
+import java.time.format.DateTimeFormatter
+import java.time.{LocalDate, ZoneId}
 import java.util.{Date, UUID}
 
 import com.osinka.i18n.{Lang, Messages}
@@ -15,15 +17,15 @@ import no.gdl.bookapi.BookApiProperties.OpdsPath
 import no.gdl.bookapi.model._
 import no.gdl.bookapi.model.domain.Sort
 import no.gdl.bookapi.service.{ConverterService, ReadService}
+import org.scalatra.NotFound
 
 trait OPDSController {
   this: ReadService with ConverterService =>
   val opdsController: OPDSController
   val sdf: SimpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX")
+  val dtf: DateTimeFormatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME
 
   class OPDSController extends GdlController {
-
-
 
     val page = 1
     val pageSize = 10000 //TODO: Create partial opds feed entries, to solve paging
@@ -36,58 +38,92 @@ trait OPDSController {
       val lang = language("lang")
       val feedName = s"/$lang/root.xml"
 
-      showNavigationRoot(getFeedId(feedName), language("lang"))
+      val levelsForLanguage = readService.listAvailableLevelsForLanguage(Some(lang))
+
+      if(levelsForLanguage.nonEmpty) {
+        showNavigationRoot(getFeedId(feedName), language("lang"), levelsForLanguage)
+      } else {
+        contentType = "text/plain"
+        NotFound(body = "No books available for language.")
+      }
     }
 
     get("/:lang/new.xml") {
       val lang = language("lang")
-      val feedUrl = s"/$lang/new.xml"
+      val books = readService.withLanguage(
+        language = language("lang"),
+        pageSize = pageSize,
+        page = page,
+        sort = Sort.ByArrivalDateDesc
+      ).results
 
-      showAcquisitionFeed(
-        feedUrl,
-        Messages("new_entries_feed_title")(Lang(lang)),
-        readService.withLanguage(
-          language = language("lang"),
-          pageSize = pageSize,
-          page = page,
-          sort = Sort.ByArrivalDateDesc
-        ).results
-      )
+      if (books.nonEmpty){
+        val feedUrl = s"/$lang/new.xml"
+        val feedUpdated = books.head.dateArrived
+
+        showAcquisitionFeed(
+          feedUrl,
+          Messages("new_entries_feed_title")(Lang(lang)),
+          feedUpdated,
+          books
+        )
+      } else {
+        contentType = "text/plain"
+        NotFound(body = "No books available for language.")
+      }
     }
 
     get("/:lang/featured.xml") {
       val lang = language("lang")
       val feedUrl = s"/$lang/featured.xml"
 
-      showAcquisitionFeed(
-        feedUrl,
-        Messages("featured_feed_title")(Lang(lang)),
-        readService.editorsPickForLanguage(lang)
-      )
+      val editorsPick = readService.editorsPickForLanguage(lang)
+
+      if (editorsPick.nonEmpty) {
+        showAcquisitionFeed(
+          feedUrl,
+          Messages("featured_feed_title")(Lang(lang)),
+          editorsPick.get.dateChanged,
+          editorsPick.get.books
+        )
+      } else {
+        contentType = "text/plain"
+        NotFound(body = "No books available for language.")
+      }
     }
 
     get("/:lang/level:lev.xml") {
       val lang = language("lang")
       val level = params("lev")
 
-      val feedUrl = s"/$lang/level$level.xml"
-      val feedTitle = s"${Messages("level_feed_title")(Lang(lang))} $level"
+      val books = readService.withLanguageAndLevel(
+        language = lang,
+        readingLevel = Some(level),
+        pageSize = pageSize,
+        page = page,
+        sort = Sort.ByTitleAsc
+      ).results
 
-      showAcquisitionFeed(
-        feedUrl,
-        feedTitle,
-        readService.withLanguageAndLevel(
-          language = lang,
-          readingLevel = Some(level),
-          pageSize = pageSize,
-          page = page,
-          sort = Sort.ByTitleAsc
-        ).results
-      )
+      if(books.nonEmpty){
+        implicit val localDateOrdering: Ordering[LocalDate] = Ordering.by(_.toEpochDay)
+
+        val feedUrl = s"/$lang/level$level.xml"
+        val feedTitle = s"${Messages("level_feed_title")(Lang(lang))} $level"
+        val feedUpdated = books.maxBy(_.dateArrived).dateArrived
+        showAcquisitionFeed(
+          feedUrl,
+          feedTitle,
+          feedUpdated,
+          books
+        )
+      } else {
+        contentType = "text/plain"
+        NotFound(body = "No books available for language.")
+      }
     }
 
-    private def showNavigationRoot(feedUrl: String, language: String) = {
-      implicit val messageLang = Lang(language)
+    private def showNavigationRoot(feedUrl: String, language: String, levels: Seq[String]) = {
+      implicit val messageLang: Lang = Lang(language)
       val levelMessagePrefix: String = Messages("level_feed_title")
 
       <feed xmlns="http://www.w3.org/2005/Atom">
@@ -121,7 +157,7 @@ trait OPDSController {
           <content type="text">{Messages("featured_feed_description")}</content>
         </entry>
 
-        {readService.listAvailableLevelsForLanguage(Some(language)).map(level =>
+        {levels.map(level =>
           <entry>
             <title>{s"$levelMessagePrefix $level"}</title>
             <link href={s"$OpdsPath/$language/level$level.xml"}
@@ -134,11 +170,11 @@ trait OPDSController {
       </feed>
     }
 
-    private def showAcquisitionFeed(feedUrl: String, feedTitle: String, books: Seq[api.Book]) = {
+    private def showAcquisitionFeed(feedUrl: String, feedTitle: String, feedUpdated: LocalDate, books: Seq[api.Book]) = {
       <feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/terms/" xmlns:opds="http://opds-spec.org/2010/catalog">
         <id>{getFeedId(feedUrl)}</id>
         <title>{feedTitle}</title>
-        <updated>2017-04-28T12:54:15Z</updated>
+        <updated>{feedUpdated.atStartOfDay(ZoneId.systemDefault()).format(dtf)}</updated>
         <link href={feedUrl} rel="self"/>
         {books.map(x =>
         <entry>

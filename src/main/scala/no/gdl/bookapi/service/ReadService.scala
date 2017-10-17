@@ -18,14 +18,20 @@ trait ReadService {
   val readService: ReadService
 
   class ReadService {
-    def editorsPickForLanguage(language: String): Seq[api.Book] = {
-      editorsPickRepository.forLanguage(language) match {
-        case None => Seq()
-        case Some(editorsPick) =>
-          editorsPick.translationIds.flatMap(trId =>
+    def editorsPickForLanguage(language: String): Option[api.EditorsPick] = {
+      editorsPickRepository.forLanguage(language).map(editorsPick => {
+          val books = editorsPick.translationIds.flatMap(trId =>
             translationRepository.withId(trId).flatMap(tr =>
               converterService.toApiBook(Some(tr), translationRepository.languagesFor(tr.bookId), bookRepository.withId(tr.bookId))))
-      }
+
+        api.EditorsPick(
+          editorsPick.id.get,
+          editorsPick.revision.get,
+          converterService.toApiLanguage(editorsPick.language),
+          books,
+          editorsPick.dateChanged)
+
+      })
     }
 
     def listAvailableLanguages: Seq[api.Language] = {

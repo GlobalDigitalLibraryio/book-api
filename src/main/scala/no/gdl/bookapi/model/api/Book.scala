@@ -98,6 +98,12 @@ case class SearchResult(@(ApiModelProperty@field)(description = "The total numbe
                         @(ApiModelProperty@field)(description = "The chosen language") language: Language,
                         @(ApiModelProperty@field)(description = "The results") results: Seq[Book])
 
+@ApiModel(description = "Information about the editors picks")
+case class EditorsPick(@(ApiModelProperty@field)(description = "The id of the editors pick") id: Long,
+                       @(ApiModelProperty@field)(description = "The revision of the editors pick") revision: Long,
+                       @(ApiModelProperty@field)(description = "Language for the editors pick") language: Language,
+                       @(ApiModelProperty@field)(description = "The list of books") books: Seq[Book],
+                       @(ApiModelProperty@field)(description = "The date when the editors picks last changed") dateChanged: LocalDate)
 
 case object LocalDateSerializer extends CustomSerializer[LocalDate](format => ( {
   case JString(p) => LocalDate.parse(p)

@@ -33,11 +33,13 @@ trait EditorsPickRepository {
         insert into ${EditorsPick.table} (
           ${ep.revision},
           ${ep.language},
-          ${ep.translationIds})
+          ${ep.translationIds},
+          ${ep.dateChanged})
         values (
          ${startRevision},
          ${editorsPick.language},
-         ${translationBinder})""".updateAndReturnGeneratedKey().apply()
+         ${translationBinder},
+         ${editorsPick.dateChanged})""".updateAndReturnGeneratedKey().apply()
 
       editorsPick.copy(id = Some(id), revision = Some(startRevision))
     }
