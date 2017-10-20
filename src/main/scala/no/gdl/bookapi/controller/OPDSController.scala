@@ -60,7 +60,7 @@ trait OPDSController {
       }
 
       feed match {
-        case Some(x) => showAcquisitionFeed2(x)
+        case Some(x) => showAcquisitionFeed(x)
         case None =>
           contentType = "text/plain"
           NotFound(body = "No books available for language.")
@@ -69,45 +69,33 @@ trait OPDSController {
 
     get(BookApiProperties.OpdsNewUrl) {
       val lang = language("lang")
-      val books = readService.withLanguage(
-        language = language("lang"),
-        pageSize = pageSize,
-        page = page,
-        sort = Sort.ByArrivalDateDesc
-      ).results
+      val feedTitle = Messages("new_entries_feed_title")(Lang(lang))
 
-      if (books.nonEmpty){
-        val feedUrl = s"/$lang/new.xml"
-        val feedUpdated = books.head.dateArrived
+      val feed = feedService.feedForUrl(request.getRequestURI, lang, feedTitle) {
+        feedService.newEntriesFor(lang)
+      }
 
-        showAcquisitionFeed(
-          feedUrl,
-          Messages("new_entries_feed_title")(Lang(lang)),
-          feedUpdated,
-          books
-        )
-      } else {
-        contentType = "text/plain"
-        NotFound(body = "No books available for language.")
+      feed match {
+        case Some(x) => showAcquisitionFeed(x)
+        case None =>
+          contentType = "text/plain"
+          NotFound(body = "No books available for language.")
       }
     }
 
     get(BookApiProperties.OpdsFeaturedUrl) {
       val lang = language("lang")
-      val feedUrl = s"/$lang/featured.xml"
+      val feedTitle = Messages("featured_feed_title")(Lang(lang))
 
-      val editorsPick = readService.editorsPickForLanguage(lang)
+      val feed = feedService.feedForUrl(request.getRequestURI, lang, feedTitle) {
+        feedService.editorsPickForLanguage(lang)
+      }
 
-      if (editorsPick.nonEmpty) {
-        showAcquisitionFeed(
-          feedUrl,
-          Messages("featured_feed_title")(Lang(lang)),
-          editorsPick.get.dateChanged,
-          editorsPick.get.books
-        )
-      } else {
-        contentType = "text/plain"
-        NotFound(body = "No books available for language.")
+      feed match {
+        case Some(x) => showAcquisitionFeed(x)
+        case None =>
+          contentType = "text/plain"
+          NotFound(body = "No books available for language.")
       }
     }
 
@@ -121,40 +109,11 @@ trait OPDSController {
       }
 
       feed match {
-        case Some(x) => showAcquisitionFeed2(x)
+        case Some(x) => showAcquisitionFeed(x)
         case None =>
           contentType = "text/plain"
           NotFound(body = "No books available for language.")
       }
-
-
-//      val lang = language("lang")
-//      val level = params("lev")
-//
-//      val books = readService.withLanguageAndLevel(
-//        language = lang,
-//        readingLevel = Some(level),
-//        pageSize = pageSize,
-//        page = page,
-//        sort = Sort.ByTitleAsc
-//      ).results
-//
-//      if(books.nonEmpty){
-//        implicit val localDateOrdering: Ordering[LocalDate] = Ordering.by(_.toEpochDay)
-//
-//        val feedUrl = s"/$lang/level$level.xml"
-//        val feedTitle = s"${Messages("level_feed_title")(Lang(lang))} $level"
-//        val feedUpdated = books.maxBy(_.dateArrived).dateArrived
-//        showAcquisitionFeed(
-//          feedUrl,
-//          feedTitle,
-//          feedUpdated,
-//          books
-//        )
-//      } else {
-//        contentType = "text/plain"
-//        NotFound(body = "No books available for language.")
-//      }
     }
 
     private def showNavigationRoot(feedUrl: String, language: String, levels: Seq[String]) = {
@@ -205,7 +164,7 @@ trait OPDSController {
       </feed>
     }
 
-    private def showAcquisitionFeed2(feed: Feed) = {
+    private def showAcquisitionFeed(feed: Feed) = {
       <feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/terms/" xmlns:opds="http://opds-spec.org/2010/catalog">
         <id>{feed.feedDefinition.uuid}</id>
         <title>{feed.title}</title>
@@ -224,7 +183,7 @@ trait OPDSController {
           }}
           <link href={feedEntry.book.downloads.epub} type="application/epub+zip" rel="http://opds-spec.org/acquisition/open-access"/>
           <link href={feedEntry.book.downloads.pdf} type="application/pdf" rel="http://opds-spec.org/acquisition/open-access"/>
-          {feedEntry.categories.map(category =>
+          {feedEntry.categories.sortBy(_.sortOrder).reverse.map(category =>
             <link href={category.url} rel="collection" title={category.title}/>
           )}
         </entry>
@@ -232,29 +191,6 @@ trait OPDSController {
       </feed>
     }
 
-    private def showAcquisitionFeed(feedUrl: String, feedTitle: String, feedUpdated: LocalDate, books: Seq[api.Book]) = {
-      <feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/terms/" xmlns:opds="http://opds-spec.org/2010/catalog">
-        <id>{getFeedId(feedUrl)}</id>
-        <title>{feedTitle}</title>
-        <updated>{feedUpdated.atStartOfDay(ZoneId.systemDefault()).format(dtf)}</updated>
-        <link href={feedUrl} rel="self"/>
-        {books.map(x =>
-        <entry>
-          <id>urn:uuid:{x.uuid}</id>
-          <title>{x.title}</title>
-          {x.contributors.map(contrib => <author><name>{contrib.name}</name></author>)}
-          <updated>{sdf.format(new Date())}</updated>
-          <summary>{x.description}</summary>
-          {if(x.coverPhoto.isDefined) {
-            <link href={x.coverPhoto.get.large} type="image/jpeg" rel="http://opds-spec.org/image"/>
-              <link href={x.coverPhoto.get.small} type="image/png" rel="http://opds-spec.org/image/thumbnail"/>
-        }}
-          <link href={x.downloads.epub} type="application/epub+zip" rel="http://opds-spec.org/acquisition/open-access"/>
-          <link href={x.downloads.pdf} type="application/pdf" rel="http://opds-spec.org/acquisition/open-access"/>
-        </entry>
-      )}
-      </feed>
-    }
 
     private def getFeedId(feedUrl: String) = {
       // TODO: Implement lookup of uuid for feed, and generate for new feeds

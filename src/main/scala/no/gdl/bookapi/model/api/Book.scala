@@ -120,7 +120,8 @@ case class FeedEntry (@(ApiModelProperty@field)(description = "The book associat
 
 @ApiModel(description = "Information about an feed category in an opds-feed")
 case class FeedCategory(@(ApiModelProperty@field)(description = "The url to the category feed") url: String,
-                        @(ApiModelProperty@field)(description = "The title for this cateogry feed") title: String)
+                        @(ApiModelProperty@field)(description = "The title for this cateogry feed") title: String,
+                        @(ApiModelProperty@field)(description = "The sort order for this category") sortOrder: Int = 100)
 
 case object LocalDateSerializer extends CustomSerializer[LocalDate](format => ( {
   case JString(p) => LocalDate.parse(p)

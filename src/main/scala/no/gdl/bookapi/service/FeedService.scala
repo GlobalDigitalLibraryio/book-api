@@ -24,11 +24,17 @@ trait FeedService {
   val feedService: FeedService
 
   class FeedService extends LazyLogging {
+
     val page = 1
     val pageSize = 10000 //TODO: Create partial opds feed entries, to solve paging
 
+    def newEntriesFor(lang: String): Seq[FeedEntry] = {
+      readService.withLanguage(lang, BookApiProperties.OpdsJustArrivedLimit, 1, Sort.ByArrivalDateDesc).results.map(FeedEntry(_))
+    }
 
-
+    def editorsPickForLanguage(lang: String): Seq[FeedEntry] = {
+      readService.editorsPickForLanguage(lang).map(_.books).getOrElse(Seq()).map(FeedEntry(_))
+    }
 
     def feedEntriesForLanguage(language: String): Seq[FeedEntry] = {
       val allBooks = readService.withLanguage(
@@ -59,7 +65,7 @@ trait FeedService {
       ).results.map(book => api.FeedEntry(book))
     }
 
-    def feedForUrl(url: String, language: String, feedTitle:String)(getBooks: => Seq[FeedEntry]): Option[api.Feed] = {
+    def feedForUrl(url: String, language: String, feedTitle: String)(getBooks: => Seq[FeedEntry]): Option[api.Feed] = {
       feedRepository.forUrl(url).map(feedDefinition => {
         api.Feed(
           api.FeedDefinition(
@@ -79,7 +85,7 @@ trait FeedService {
         .replace(BookApiProperties.OpdsLanguageParam, language)
 
       feedEntry.copy(
-        categories = feedEntry.categories :+ FeedCategory(url, title))
+        categories = feedEntry.categories :+ FeedCategory(url, title, sortOrder = 1))
     }
 
     def addJustArrivedCategory(feedEntry: FeedEntry, language: String): FeedEntry = {
@@ -88,11 +94,12 @@ trait FeedService {
         .replace(BookApiProperties.OpdsLanguageParam, language)
 
       feedEntry.copy(
-        categories = feedEntry.categories :+ FeedCategory(url, title))
+        categories = feedEntry.categories :+ FeedCategory(url, title, sortOrder = 2))
     }
 
     def addLevelCategory(feedEntry: FeedEntry, language: String): FeedEntry = {
       val level = feedEntry.book.readingLevel.getOrElse(BookApiProperties.DefaultReadingLevel)
+
       val readingLevelCategoryTitle = s"${Messages("level_feed_title")(Lang(language))} $level"
 
       val readingLevelUrl = s"${BookApiProperties.Domain}${BookApiProperties.OpdsPath}${BookApiProperties.OpdsLevelUrl}"
@@ -100,7 +107,7 @@ trait FeedService {
         .replace(BookApiProperties.OpdsLevelParam, level)
 
       feedEntry.copy(
-        categories = feedEntry.categories :+ FeedCategory(readingLevelUrl, readingLevelCategoryTitle))
+        categories = feedEntry.categories :+ FeedCategory(readingLevelUrl, readingLevelCategoryTitle, sortOrder = level.toInt + 2))
 
     }
 
