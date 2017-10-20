@@ -13,14 +13,16 @@ import java.time.{LocalDate, ZoneId}
 import java.util.{Date, UUID}
 
 import com.osinka.i18n.{Lang, Messages}
+import no.gdl.bookapi.BookApiProperties
 import no.gdl.bookapi.BookApiProperties.OpdsPath
 import no.gdl.bookapi.model._
+import no.gdl.bookapi.model.api.{Feed, FeedEntry}
 import no.gdl.bookapi.model.domain.Sort
-import no.gdl.bookapi.service.{ConverterService, ReadService}
+import no.gdl.bookapi.service.{ConverterService, FeedService, ReadService}
 import org.scalatra.NotFound
 
 trait OPDSController {
-  this: ReadService with ConverterService =>
+  this: ReadService with ConverterService with FeedService =>
   val opdsController: OPDSController
   val sdf: SimpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX")
   val dtf: DateTimeFormatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME
@@ -34,7 +36,8 @@ trait OPDSController {
       contentType = formats("xml")
     }
 
-    get("/:lang/root.xml") {
+
+    get(BookApiProperties.OpdsNavUrl) {
       val lang = language("lang")
       val feedName = s"/$lang/root.xml"
 
@@ -48,7 +51,23 @@ trait OPDSController {
       }
     }
 
-    get("/:lang/new.xml") {
+    get(BookApiProperties.OpdsRootUrl) {
+      val lang = language("lang")
+      val feedTitle = Messages("default_feed_title")(Lang(lang))
+
+      val feed = feedService.feedForUrl(request.getRequestURI, lang, feedTitle) {
+        feedService.feedEntriesForLanguage(lang)
+      }
+
+      feed match {
+        case Some(x) => showAcquisitionFeed2(x)
+        case None =>
+          contentType = "text/plain"
+          NotFound(body = "No books available for language.")
+      }
+    }
+
+    get(BookApiProperties.OpdsNewUrl) {
       val lang = language("lang")
       val books = readService.withLanguage(
         language = language("lang"),
@@ -73,7 +92,7 @@ trait OPDSController {
       }
     }
 
-    get("/:lang/featured.xml") {
+    get(BookApiProperties.OpdsFeaturedUrl) {
       val lang = language("lang")
       val feedUrl = s"/$lang/featured.xml"
 
@@ -92,34 +111,50 @@ trait OPDSController {
       }
     }
 
-    get("/:lang/level:lev.xml") {
+    get(BookApiProperties.OpdsLevelUrl) {
       val lang = language("lang")
       val level = params("lev")
+      val feedTitle = s"${Messages("level_feed_title")(Lang(lang))} $level"
 
-      val books = readService.withLanguageAndLevel(
-        language = lang,
-        readingLevel = Some(level),
-        pageSize = pageSize,
-        page = page,
-        sort = Sort.ByTitleAsc
-      ).results
-
-      if(books.nonEmpty){
-        implicit val localDateOrdering: Ordering[LocalDate] = Ordering.by(_.toEpochDay)
-
-        val feedUrl = s"/$lang/level$level.xml"
-        val feedTitle = s"${Messages("level_feed_title")(Lang(lang))} $level"
-        val feedUpdated = books.maxBy(_.dateArrived).dateArrived
-        showAcquisitionFeed(
-          feedUrl,
-          feedTitle,
-          feedUpdated,
-          books
-        )
-      } else {
-        contentType = "text/plain"
-        NotFound(body = "No books available for language.")
+      val feed = feedService.feedForUrl(request.getRequestURI, lang, feedTitle) {
+        feedService.feedEntriesForLanguageAndLevel(lang, level)
       }
+
+      feed match {
+        case Some(x) => showAcquisitionFeed2(x)
+        case None =>
+          contentType = "text/plain"
+          NotFound(body = "No books available for language.")
+      }
+
+
+//      val lang = language("lang")
+//      val level = params("lev")
+//
+//      val books = readService.withLanguageAndLevel(
+//        language = lang,
+//        readingLevel = Some(level),
+//        pageSize = pageSize,
+//        page = page,
+//        sort = Sort.ByTitleAsc
+//      ).results
+//
+//      if(books.nonEmpty){
+//        implicit val localDateOrdering: Ordering[LocalDate] = Ordering.by(_.toEpochDay)
+//
+//        val feedUrl = s"/$lang/level$level.xml"
+//        val feedTitle = s"${Messages("level_feed_title")(Lang(lang))} $level"
+//        val feedUpdated = books.maxBy(_.dateArrived).dateArrived
+//        showAcquisitionFeed(
+//          feedUrl,
+//          feedTitle,
+//          feedUpdated,
+//          books
+//        )
+//      } else {
+//        contentType = "text/plain"
+//        NotFound(body = "No books available for language.")
+//      }
     }
 
     private def showNavigationRoot(feedUrl: String, language: String, levels: Seq[String]) = {
@@ -170,6 +205,33 @@ trait OPDSController {
       </feed>
     }
 
+    private def showAcquisitionFeed2(feed: Feed) = {
+      <feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/terms/" xmlns:opds="http://opds-spec.org/2010/catalog">
+        <id>{feed.feedDefinition.uuid}</id>
+        <title>{feed.title}</title>
+        <updated>{feed.updated.atStartOfDay(ZoneId.systemDefault()).format(dtf)}</updated>
+        <link href={feed.feedDefinition.url} rel="self"/>
+        {feed.content.map(feedEntry =>
+        <entry>
+          <id>urn:uuid:{feedEntry.book.uuid}</id>
+          <title>{feedEntry.book.title}</title>
+          {feedEntry.book.contributors.map(contrib => <author><name>{contrib.name}</name></author>)}
+          <updated>{sdf.format(new Date())}</updated>
+          <summary>{feedEntry.book.description}</summary>
+          {if(feedEntry.book.coverPhoto.isDefined) {
+            <link href={feedEntry.book.coverPhoto.get.large} type="image/jpeg" rel="http://opds-spec.org/image"/>
+            <link href={feedEntry.book.coverPhoto.get.small} type="image/png" rel="http://opds-spec.org/image/thumbnail"/>
+          }}
+          <link href={feedEntry.book.downloads.epub} type="application/epub+zip" rel="http://opds-spec.org/acquisition/open-access"/>
+          <link href={feedEntry.book.downloads.pdf} type="application/pdf" rel="http://opds-spec.org/acquisition/open-access"/>
+          {feedEntry.categories.map(category =>
+            <link href={category.url} rel="collection" title={category.title}/>
+          )}
+        </entry>
+      )}
+      </feed>
+    }
+
     private def showAcquisitionFeed(feedUrl: String, feedTitle: String, feedUpdated: LocalDate, books: Seq[api.Book]) = {
       <feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/terms/" xmlns:opds="http://opds-spec.org/2010/catalog">
         <id>{getFeedId(feedUrl)}</id>
@@ -185,8 +247,8 @@ trait OPDSController {
           <summary>{x.description}</summary>
           {if(x.coverPhoto.isDefined) {
             <link href={x.coverPhoto.get.large} type="image/jpeg" rel="http://opds-spec.org/image"/>
-            <link href={x.coverPhoto.get.small} type="image/png" rel="http://opds-spec.org/image/thumbnail"/>
-          }}
+              <link href={x.coverPhoto.get.small} type="image/png" rel="http://opds-spec.org/image/thumbnail"/>
+        }}
           <link href={x.downloads.epub} type="application/epub+zip" rel="http://opds-spec.org/acquisition/open-access"/>
           <link href={x.downloads.pdf} type="application/pdf" rel="http://opds-spec.org/acquisition/open-access"/>
         </entry>

@@ -8,3 +8,5 @@ level_feed_description=ለተመረጠው ደረጃ መጽሐፍት
 
 featured_feed_title=አርታኢዎች ይመርጣሉ
 featured_feed_description=አርታኢዎች ይመርጣሉ
+
+default_feed_title=መጽሐፍት ከዓለምአቀፍ ዲጂታል ላይብረሪ

@@ -8,3 +8,5 @@ level_feed_description=Bøker med angitt lesenivå
 
 featured_feed_title=Redaktørens anbefalinger
 featured_feed_description=Redaktørens anbefalinger
+
+default_feed_title=Bøker fra Global Digital Library
