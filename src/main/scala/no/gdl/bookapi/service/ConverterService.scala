@@ -161,12 +161,10 @@ trait ConverterService {
     }
 
     def toApiCoverPhoto(imageIdOpt: Option[Long]): Option[api.CoverPhoto] = {
-      val imageUrl = s"$Domain{PATH}"
-
       imageIdOpt.flatMap(imageId =>
         imageApiClient.imageMetaWithId(imageId))
         .map(imageMeta => {
-          val large = imageUrl.replace("{PATH}", imageMeta.imageUrl.path)
+          val large = imageMeta.imageUrl
           val small = s"$large?width=200"
           api.CoverPhoto(large, small)
         })

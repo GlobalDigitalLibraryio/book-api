@@ -53,7 +53,7 @@ trait ContentConverter {
         val nodeId = image.attr("data-resource_id")
 
         val url = downloadedImages.find(_.metaInformation.id == nodeId) match {
-          case Some(x) => x.metaInformation.domainUrl.pathParts.last.part
+          case Some(x) => x.metaInformation.imageUrl.pathParts.last.part
           case None => throw new NotFoundException(s"Could not find image for id $nodeId")
         }
 
