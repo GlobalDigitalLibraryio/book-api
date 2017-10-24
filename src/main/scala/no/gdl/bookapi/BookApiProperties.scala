@@ -12,6 +12,7 @@ import com.typesafe.scalalogging.LazyLogging
 import io.digitallibrary.network.Domains
 import io.digitallibrary.network.secrets.PropertyKeys
 import io.digitallibrary.network.secrets.Secrets.readSecrets
+import no.gdl.bookapi.model.domain.FeedDefinition
 
 import scala.util.Properties._
 import scala.util.{Failure, Success}
@@ -41,11 +42,12 @@ object BookApiProperties extends LazyLogging {
   val OpdsLanguageParam = ":lang"
   val OpdsLevelParam = ":lev"
 
-  val OpdsNavUrl = s"/$OpdsLanguageParam/nav.xml"
-  val OpdsRootUrl = s"/$OpdsLanguageParam/root.xml"
-  val OpdsNewUrl = s"/$OpdsLanguageParam/new.xml"
-  val OpdsFeaturedUrl = s"/$OpdsLanguageParam/featured.xml"
-  val OpdsLevelUrl = s"/$OpdsLanguageParam/level$OpdsLevelParam.xml"
+  val OpdsNavUrl = FeedDefinition(s"/$OpdsLanguageParam/nav.xml", "opds_nav_title", None)
+  val OpdsRootUrl = FeedDefinition(s"/$OpdsLanguageParam/root.xml", "opds_root_title", None)
+  val OpdsNewUrl = FeedDefinition(s"/$OpdsLanguageParam/new.xml", "new_entries_feed_title", Some("new_entries_feed_description"))
+  val OpdsFeaturedUrl = FeedDefinition(s"/$OpdsLanguageParam/featured.xml", "featured_feed_title", Some("featured_feed_description"))
+  val OpdsLevelUrl = FeedDefinition(s"/$OpdsLanguageParam/level$OpdsLevelParam.xml", "level_feed_title", Some("level_feed_description"))
+
   val OpdsFeeds = Seq(OpdsNavUrl, OpdsRootUrl, OpdsNewUrl, OpdsFeaturedUrl, OpdsLevelUrl)
   val OpdsJustArrivedLimit = 15
 

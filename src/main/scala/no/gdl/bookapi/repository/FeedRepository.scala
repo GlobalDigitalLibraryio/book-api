@@ -32,7 +32,9 @@ trait FeedRepository {
       val id = insert.into(Feed).namedValues(
         f.revision -> startRevision,
         f.url -> feed.url,
-        f.uuid -> feed.uuid
+        f.uuid -> feed.uuid,
+        f.titleKey -> feed.titleKey,
+        f.descriptionKey -> feed.descriptionKey
       ).toSQL.updateAndReturnGeneratedKey().apply()
 
       feed.copy(id = Some(id), revision = Some(startRevision))

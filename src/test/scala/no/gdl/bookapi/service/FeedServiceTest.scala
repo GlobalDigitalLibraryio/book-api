@@ -25,13 +25,13 @@ class FeedServiceTest extends UnitSuite with TestEnvironment {
     when(translationRepository.allAvailableLanguages()).thenReturn(languages)
     when(translationRepository.allAvailableLevels(any[Option[String]])(any[DBSession])).thenReturn(levels)
 
-    val calculatedFeedUrls = feedService.calculateFeedUrls
+    val calculatedFeedUrls = feedService.calculateFeeds
     calculatedFeedUrls.size should be (5)
 
-    val expectedFeeds = BookApiProperties.OpdsFeeds.map(feed =>
-      s"${OpdsPath}${feed.replace(OpdsLevelParam, "1").replace(OpdsLanguageParam, LanguageCodeEnglish)}")
+    val expectedFeedUrls = BookApiProperties.OpdsFeeds.map(feed =>
+      s"$OpdsPath${feed.url.replace(OpdsLevelParam, "1").replace(OpdsLanguageParam, LanguageCodeEnglish)}")
 
-    expectedFeeds.sorted should equal (calculatedFeedUrls.sorted)
+    expectedFeedUrls.sorted should equal (calculatedFeedUrls.map(_.url).sorted)
   }
 
   test("that calculateFeedUrls calculates correct number of feeds for multiple languages and levels") {
@@ -43,7 +43,7 @@ class FeedServiceTest extends UnitSuite with TestEnvironment {
     when(translationRepository.allAvailableLanguages()).thenReturn(languages)
     when(translationRepository.allAvailableLevels(any[Option[String]])(any[DBSession])).thenReturn(levels)
 
-    val calculatedFeedUrls = feedService.calculateFeedUrls
+    val calculatedFeedUrls = feedService.calculateFeeds
     calculatedFeedUrls.size should be (expectedNumberOfFeeds)
   }
 

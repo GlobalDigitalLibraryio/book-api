@@ -112,7 +112,7 @@ case class FeedDefinition(@(ApiModelProperty@field)(description = "The internal 
                           @(ApiModelProperty@field)(description = "The uuid of the feed") uuid: String)
 
 @ApiModel(description = "Information about an OPDS-Feed")
-case class Feed (feedDefinition: FeedDefinition, title: String, updated: LocalDate, content: Seq[FeedEntry])
+case class Feed (feedDefinition: FeedDefinition, title: String, description: Option[String], rel: Option[String], updated: LocalDate, content: Seq[FeedEntry])
 
 @ApiModel(description = "Information about an Entry in an OPDS-Feed")
 case class FeedEntry (@(ApiModelProperty@field)(description = "The book associated with this entry") book: Book,
