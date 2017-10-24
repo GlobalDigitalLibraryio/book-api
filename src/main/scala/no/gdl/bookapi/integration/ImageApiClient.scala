@@ -28,13 +28,13 @@ trait ImageApiClient {
       imageMetaWithId(id) match {
         case None => Failure(new NotFoundException(s"Image with id $id was not found"))
         case Some(imageMetaInformation) =>
-          gdlClient.fetchBytes(Http(imageMetaInformation.domainUrl))
+          gdlClient.fetchBytes(Http(imageMetaInformation.imageUrl))
             .map(bytes => DownloadedImage(imageMetaInformation, bytes))
       }
     }
 
     def imageUrlFor(id: Long): Option[String] = {
-      imageMetaWithId(id).map(_.domainUrl)
+      imageMetaWithId(id).map(_.imageUrl)
     }
 
     def imageMetaWithId(id: Long): Option[ImageMetaInformation] = doRequest(
@@ -51,10 +51,6 @@ trait ImageApiClient {
 
 }
 
-case class ImageMetaInformation(id: String, metaUrl: String, imageUrl: String, size: Int, contentType: String) {
-  def domainUrl: String = {
-    s"$Domain${imageUrl.path}"
-  }
-}
+case class ImageMetaInformation(id: String, metaUrl: String, imageUrl: String, size: Int, contentType: String)
 
 case class DownloadedImage(metaInformation: ImageMetaInformation, bytes: Array[Byte])
