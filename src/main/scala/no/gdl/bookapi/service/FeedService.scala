@@ -148,9 +148,7 @@ trait FeedService {
 
     def addLevelCategory(feedEntry: FeedEntry, language: String): FeedEntry = {
       val level = feedEntry.book.readingLevel.getOrElse(BookApiProperties.DefaultReadingLevel)
-
-      val readingLevelCategoryTitle = s"${Messages("level_feed_title")(Lang(language))} $level"
-
+      val readingLevelCategoryTitle = s"${Messages("level_feed_title", level)(Lang(language))}"
       val readingLevelUrl = s"${BookApiProperties.Domain}${levelUrl(language, level)}"
 
       feedEntry.copy(
