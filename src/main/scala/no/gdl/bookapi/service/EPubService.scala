@@ -44,7 +44,7 @@ trait EPubService {
               book.addCoverImage(
                 downloadedImage.bytes,
                 downloadedImage.metaInformation.contentType,
-                downloadedImage.metaInformation.domainUrl.pathParts.last.part)
+                downloadedImage.metaInformation.imageUrl.pathParts.last.part)
           }
         })
 
@@ -57,7 +57,7 @@ trait EPubService {
             book.addContent(
               image.bytes,
               image.metaInformation.contentType,
-              image.metaInformation.domainUrl.pathParts.last.part,
+              image.metaInformation.imageUrl.pathParts.last.part,
               false, false)
           })
 
