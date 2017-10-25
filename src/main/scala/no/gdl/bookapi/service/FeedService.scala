@@ -81,7 +81,6 @@ trait FeedService {
 
     def fullListOfFeedEntries(language: String): Seq[FeedEntry] = {
       val featuredBooks = editorsPickForLanguage(language).map(addFeaturedCategory(_, language))
-
       val justArrived = newEntriesFor(language).map(addJustArrivedCategory(_, language))
 
       val allBooks = readService.withLanguage(
@@ -90,7 +89,6 @@ trait FeedService {
         page = page,
         sort = Sort.ByArrivalDateDesc
       ).results.map(book => FeedEntry(book)).map(addLevelCategory(_, language)).sortBy(_.book.readingLevel)
-
 
       featuredBooks ++ justArrived ++ allBooks
     }

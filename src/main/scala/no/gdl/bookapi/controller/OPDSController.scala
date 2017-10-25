@@ -110,7 +110,7 @@ trait OPDSController {
     }
 
     private def renderAcquisitionFeed(feed: Feed) = {
-      <feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/terms/" xmlns:opds="http://opds-spec.org/2010/catalog">
+      <feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/terms/" xmlns:opds="http://opds-spec.org/2010/catalog" xmlns:lrmi="http://purl.org/dcx/lrmi-terms/">
         <id>{feed.feedDefinition.uuid}</id>
         <title>{feed.title}</title>
         <updated>{feed.updated.atStartOfDay(ZoneId.systemDefault()).format(dtf)}</updated>
@@ -125,6 +125,7 @@ trait OPDSController {
               </author>
             )}
             <updated>{sdf.format(new Date())}</updated>
+            <lrmi:educationalAlignment alignmentType="readingLevel" targetName={feedEntry.book.readingLevel.getOrElse("1")} />
             <summary>{feedEntry.book.description}</summary>
             {if (feedEntry.book.coverPhoto.isDefined) {
               <link href={feedEntry.book.coverPhoto.get.large} type="image/jpeg" rel="http://opds-spec.org/image"/>
