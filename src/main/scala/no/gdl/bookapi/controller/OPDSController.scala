@@ -8,7 +8,7 @@
 package no.gdl.bookapi.controller
 
 import java.text.SimpleDateFormat
-import java.time.ZoneId
+import java.time.{LocalDate, ZoneId}
 import java.time.format.DateTimeFormatter
 import java.util.Date
 import javax.servlet.http.HttpServletRequest
@@ -36,25 +36,27 @@ trait OPDSController {
     }
 
     get(BookApiProperties.OpdsRootUrl.url) {
-      acquisitionFeed {
+      acquisitionFeed() {
         feedService.fullListOfFeedEntries(language("lang"))
       }
     }
 
     get(BookApiProperties.OpdsNewUrl.url) {
-      acquisitionFeed {
+      acquisitionFeed() {
         feedService.newEntriesFor(language("lang"))
       }
     }
 
     get(BookApiProperties.OpdsFeaturedUrl.url) {
-      acquisitionFeed {
+      val updated = readService.editorsPickForLanguage(language("lang")).map(_.dateChanged)
+
+      acquisitionFeed(updated) {
         feedService.editorsPickForLanguage(language("lang"))
       }
     }
 
     get(BookApiProperties.OpdsLevelUrl.url) {
-      acquisitionFeed {
+      acquisitionFeed() {
         feedService.feedEntriesForLanguageAndLevel(language("lang"), params("lev"))
       }
     }
@@ -97,9 +99,9 @@ trait OPDSController {
       </feed>
     }
 
-    private def acquisitionFeed(getBooks: => Seq[FeedEntry])(implicit request: HttpServletRequest) = {
+    private def acquisitionFeed(feedUpdated: Option[LocalDate] = None)(getBooks: => Seq[FeedEntry])(implicit request: HttpServletRequest) = {
       val lang = language("lang")
-      feedService.feedForUrl(request.getRequestURI, lang)(getBooks) match {
+      feedService.feedForUrl(request.getRequestURI, lang, feedUpdated)(getBooks) match {
         case Some(x) => renderAcquisitionFeed(x)
         case None =>
           contentType = "text/plain"

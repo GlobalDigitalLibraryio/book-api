@@ -24,6 +24,7 @@ trait FeedService {
   val feedService: FeedService
 
   class FeedService extends LazyLogging {
+    implicit val localDateOrdering: Ordering[LocalDate] = Ordering.by(_.toEpochDay)
 
     val page = 1
     val pageSize = 10000 //TODO: Create partial opds feed entries, to solve paging
@@ -31,6 +32,7 @@ trait FeedService {
     def feedsForNavigation(language: String): Seq[api.Feed] = {
       implicit val lang: Lang = Lang(language)
 
+      val justArrivedUpdated = newEntriesFor(language).map(_.book.dateArrived).headOption.getOrElse(LocalDate.now())
       val justArrived = feedRepository.forUrl(justArrivedUrl(language)).map(definition =>
         api.Feed(
           api.FeedDefinition(
@@ -41,8 +43,9 @@ trait FeedService {
           Messages(definition.titleKey),
           definition.descriptionKey.map(Messages(_)),
           Some("http://opds-spec.org/sort/new"),
-          LocalDate.now(), Seq()))
+          justArrivedUpdated, Seq()))
 
+      val featuredUpdated = readService.editorsPickForLanguage(language).map(_.dateChanged).getOrElse(LocalDate.now())
       val featured = feedRepository.forUrl(featuredUrl(language)).map(definition =>
         api.Feed(
           api.FeedDefinition(
@@ -53,11 +56,13 @@ trait FeedService {
           Messages(definition.titleKey),
           definition.descriptionKey.map(Messages(_)),
           Some("http://opds-spec.org/featured"),
-          LocalDate.now(), Seq()))
+          featuredUpdated, Seq()))
 
       val levels: Seq[api.Feed] = readService.listAvailableLevelsForLanguage(Some(language))
         .flatMap(level => {
           val url = levelUrl(language, level)
+          val levelUpdated = feedEntriesForLanguageAndLevel(language, level).map(_.book.dateArrived).sorted.reverse.headOption.getOrElse(LocalDate.now())
+
           feedRepository.forUrl(url).map(definition =>
             api.Feed(
               api.FeedDefinition(
@@ -68,7 +73,7 @@ trait FeedService {
               Messages(definition.titleKey, level),
               definition.descriptionKey.map(Messages(_)),
               None,
-              LocalDate.now(), Seq()))
+              levelUpdated, Seq()))
         })
 
       Seq(featured, justArrived).flatten ++ levels
@@ -108,7 +113,14 @@ trait FeedService {
       ).results.map(book => api.FeedEntry(book))
     }
 
-    def feedForUrl(url: String, language: String)(getBooks: => Seq[FeedEntry]): Option[api.Feed] = {
+    def feedForUrl(url: String, language: String, feedUpdated: Option[LocalDate] = None)(getBooks: => Seq[FeedEntry]): Option[api.Feed] = {
+      val books = getBooks
+
+      val updated = feedUpdated match {
+        case Some(x) => x
+        case None => books.sortBy(_.book.dateArrived).reverse.headOption.map(_.book.dateArrived).getOrElse(LocalDate.now())
+      }
+
       feedRepository.forUrl(url).map(feedDefinition => {
         api.Feed(
           api.FeedDefinition(
@@ -119,8 +131,8 @@ trait FeedService {
           Messages(feedDefinition.titleKey)(Lang(language)),
           feedDefinition.descriptionKey.map(Messages(_)(Lang(language))),
           Some("self"),
-          LocalDate.now(), // TODO: Get correct updated url.
-          getBooks)
+          updated,
+          books)
       })
     }
 
@@ -193,5 +205,4 @@ trait FeedService {
       feedRepository.add(feed)
     }
   }
-
 }
