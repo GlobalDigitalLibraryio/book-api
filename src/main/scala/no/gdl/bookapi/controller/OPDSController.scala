@@ -56,7 +56,7 @@ trait OPDSController {
     }
 
     get(BookApiProperties.OpdsLevelUrl.url) {
-      acquisitionFeed() {
+      acquisitionFeed(titleArgs = Seq(params("lev"))) {
         feedService.feedEntriesForLanguageAndLevel(language("lang"), params("lev"))
       }
     }
@@ -99,9 +99,9 @@ trait OPDSController {
       </feed>
     }
 
-    private def acquisitionFeed(feedUpdated: Option[LocalDate] = None)(getBooks: => Seq[FeedEntry])(implicit request: HttpServletRequest) = {
+    private def acquisitionFeed(feedUpdated: Option[LocalDate] = None, titleArgs: Seq[Any] = Seq())(getBooks: => Seq[FeedEntry])(implicit request: HttpServletRequest) = {
       val lang = language("lang")
-      feedService.feedForUrl(request.getRequestURI, lang, feedUpdated)(getBooks) match {
+      feedService.feedForUrl(request.getRequestURI, lang, feedUpdated, titleArgs)(getBooks) match {
         case Some(x) => renderAcquisitionFeed(x)
         case None =>
           contentType = "text/plain"

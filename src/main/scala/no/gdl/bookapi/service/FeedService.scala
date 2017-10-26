@@ -111,7 +111,7 @@ trait FeedService {
       ).results.map(book => api.FeedEntry(book))
     }
 
-    def feedForUrl(url: String, language: String, feedUpdated: Option[LocalDate] = None)(getBooks: => Seq[FeedEntry]): Option[api.Feed] = {
+    def feedForUrl(url: String, language: String, feedUpdated: Option[LocalDate] = None, titleArgs: Seq[Any] = Seq())(getBooks: => Seq[FeedEntry]): Option[api.Feed] = {
       val books = getBooks
 
       val updated = feedUpdated match {
@@ -126,7 +126,7 @@ trait FeedService {
             feedDefinition.revision.get,
             feedDefinition.url,
             feedDefinition.uuid),
-          Messages(feedDefinition.titleKey)(Lang(language)),
+          Messages(feedDefinition.titleKey, titleArgs:_*)(Lang(language)),
           feedDefinition.descriptionKey.map(Messages(_)(Lang(language))),
           Some("self"),
           updated,
