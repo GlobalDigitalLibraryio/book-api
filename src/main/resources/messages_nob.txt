@@ -1,4 +1,5 @@
-opds_root_title=Global Digital Library - Bok katalog
+opds_nav_title=Global Digital Library - Bokkatalog
+opds_root_title=Global Digital Library - Bokkatalog
 
 new_entries_feed_title=Nyeste bøker
 new_entries_feed_description=De sist ankomne bøkene i Global Digital Library

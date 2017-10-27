@@ -46,6 +46,7 @@ trait TestEnvironment
   with EPubService
   with FeedRepository
   with FeedService
+  with OPDSController
 {
   val dataSource = mock[sql.DataSource]
   val readService = mock[ReadService]
@@ -79,4 +80,5 @@ trait TestEnvironment
   val ePubService = mock[EPubService]
   val feedRepository = mock[FeedRepository]
   val feedService = mock[FeedService]
+  val opdsController = mock[OPDSController]
 }

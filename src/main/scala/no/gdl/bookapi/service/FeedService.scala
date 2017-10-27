@@ -17,23 +17,44 @@ import no.gdl.bookapi.BookApiProperties.{OpdsLanguageParam, OpdsLevelParam}
 import no.gdl.bookapi.model._
 import no.gdl.bookapi.model.api.{FeedCategory, FeedEntry}
 import no.gdl.bookapi.model.domain.Sort
-import no.gdl.bookapi.repository.{FeedRepository, TranslationRepository}
+import no.gdl.bookapi.repository.{EditorsPickRepository, FeedRepository, TranslationRepository}
 
 trait FeedService {
-  this: FeedRepository with TranslationRepository with ReadService with ConverterService =>
+  this: FeedRepository with TranslationRepository with EditorsPickRepository with ReadService with ConverterService =>
   val feedService: FeedService
 
   class FeedService extends LazyLogging {
     implicit val localDateOrdering: Ordering[LocalDate] = Ordering.by(_.toEpochDay)
 
     val page = 1
-    val pageSize = 10000 //TODO: Create partial opds feed entries, to solve paging
+    val pageSize = 10000 //TODO in #94: Create partial opds feed entries, to solve paging
+
+    def feedForUrl(url: String, language: String, feedUpdated: Option[LocalDate], titleArgs: Seq[String], books: => Seq[FeedEntry]): Option[api.Feed] = {
+      val updated = feedUpdated match {
+        case Some(x) => x
+        case None => books.sortBy(_.book.dateArrived).reverse.headOption.map(_.book.dateArrived).getOrElse(LocalDate.now())
+      }
+
+      feedRepository.forUrl(url).map(feedDefinition => {
+        api.Feed(
+          api.FeedDefinition(
+            feedDefinition.id.get,
+            feedDefinition.revision.get,
+            s"${BookApiProperties.Domain}${feedDefinition.url}",
+            feedDefinition.uuid),
+          Messages(feedDefinition.titleKey, titleArgs:_*)(Lang(language)),
+          feedDefinition.descriptionKey.map(Messages(_)(Lang(language))),
+          Some("self"),
+          updated,
+          books)
+      })
+    }
 
     def feedsForNavigation(language: String): Seq[api.Feed] = {
       implicit val lang: Lang = Lang(language)
 
-      val justArrivedUpdated = newEntriesFor(language).map(_.book.dateArrived).headOption.getOrElse(LocalDate.now())
-      val justArrived = feedRepository.forUrl(justArrivedUrl(language)).map(definition =>
+      val justArrivedUpdated = translationRepository.latestArrivalDateFor(language)
+      val justArrived = feedRepository.forUrl(justArrivedPath(language)).map(definition =>
         api.Feed(
           api.FeedDefinition(
             definition.id.get,
@@ -45,8 +66,8 @@ trait FeedService {
           Some("http://opds-spec.org/sort/new"),
           justArrivedUpdated, Seq()))
 
-      val featuredUpdated = readService.editorsPickForLanguage(language).map(_.dateChanged).getOrElse(LocalDate.now())
-      val featured = feedRepository.forUrl(featuredUrl(language)).map(definition =>
+
+      val featured = feedRepository.forUrl(featuredPath(language)).map(definition =>
         api.Feed(
           api.FeedDefinition(
             definition.id.get,
@@ -56,12 +77,13 @@ trait FeedService {
           Messages(definition.titleKey),
           definition.descriptionKey.map(Messages(_)),
           Some("http://opds-spec.org/featured"),
-          featuredUpdated, Seq()))
+          editorsPickLastUpdated(language).getOrElse(LocalDate.now()),
+          Seq()))
 
       val levels: Seq[api.Feed] = readService.listAvailableLevelsForLanguage(Some(language))
         .flatMap(level => {
-          val url = levelUrl(language, level)
-          val levelUpdated = feedEntriesForLanguageAndLevel(language, level).map(_.book.dateArrived).sorted.reverse.headOption.getOrElse(LocalDate.now())
+          val url = levelPath(language, level)
+          val levelUpdated = translationRepository.latestArrivalDateFor(language, level)
 
           feedRepository.forUrl(url).map(definition =>
             api.Feed(
@@ -79,9 +101,9 @@ trait FeedService {
       Seq(featured, justArrived).flatten ++ levels
     }
 
-    def fullListOfFeedEntries(language: String): Seq[FeedEntry] = {
-      val featuredBooks = editorsPickForLanguage(language).map(addFeaturedCategory(_, language))
-      val justArrived = newEntriesFor(language).map(addJustArrivedCategory(_, language))
+    def allEntries(language: String): Seq[FeedEntry] = {
+      val featuredBooks = editorsPicks(language).map(addFeaturedCategory(_, language))
+      val justArrived = newEntries(language).map(addJustArrivedCategory(_, language))
 
       val allBooks = readService.withLanguage(
         language = language,
@@ -93,15 +115,14 @@ trait FeedService {
       featuredBooks ++ justArrived ++ allBooks
     }
 
-    def newEntriesFor(lang: String): Seq[FeedEntry] = {
-      readService.withLanguage(lang, BookApiProperties.OpdsJustArrivedLimit, 1, Sort.ByArrivalDateDesc).results.map(FeedEntry(_))
-    }
+    def newEntries(lang: String): Seq[FeedEntry] = readService.withLanguage(
+      lang, BookApiProperties.OpdsJustArrivedLimit, 1, Sort.ByArrivalDateDesc).results.map(FeedEntry(_))
 
-    def editorsPickForLanguage(lang: String): Seq[FeedEntry] = {
-      readService.editorsPickForLanguage(lang).map(_.books).getOrElse(Seq()).map(FeedEntry(_))
-    }
+    def editorsPickLastUpdated(language: String): Option[LocalDate] = editorsPickRepository.lastUpdatedEditorsPick(language)
+    def editorsPicks(lang: String): Seq[FeedEntry] = readService.editorsPickForLanguage(lang)
+      .map(_.books).getOrElse(Seq()).map(FeedEntry(_))
 
-    def feedEntriesForLanguageAndLevel(language: String, level: String): Seq[FeedEntry] = {
+    def entriesForLanguageAndLevel(language: String, level: String): Seq[FeedEntry] = {
       readService.withLanguageAndLevel(
         language = language,
         readingLevel = Some(level),
@@ -111,61 +132,35 @@ trait FeedService {
       ).results.map(book => api.FeedEntry(book))
     }
 
-    def feedForUrl(url: String, language: String, feedUpdated: Option[LocalDate] = None, titleArgs: Seq[Any] = Seq())(getBooks: => Seq[FeedEntry]): Option[api.Feed] = {
-      val books = getBooks
-
-      val updated = feedUpdated match {
-        case Some(x) => x
-        case None => books.sortBy(_.book.dateArrived).reverse.headOption.map(_.book.dateArrived).getOrElse(LocalDate.now())
-      }
-
-      feedRepository.forUrl(url).map(feedDefinition => {
-        api.Feed(
-          api.FeedDefinition(
-            feedDefinition.id.get,
-            feedDefinition.revision.get,
-            feedDefinition.url,
-            feedDefinition.uuid),
-          Messages(feedDefinition.titleKey, titleArgs:_*)(Lang(language)),
-          feedDefinition.descriptionKey.map(Messages(_)(Lang(language))),
-          Some("self"),
-          updated,
-          books)
-      })
-    }
-
     def addFeaturedCategory(feedEntry: FeedEntry, language: String): FeedEntry = {
       val title = Messages("featured_feed_title")(Lang(language))
-      val url = s"${BookApiProperties.Domain}${featuredUrl(language)}"
-
+      val url = s"${BookApiProperties.Domain}${featuredPath(language)}"
       feedEntry.copy(
         categories = feedEntry.categories :+ FeedCategory(url, title, sortOrder = 1))
     }
 
-    def featuredUrl(language: String): String = s"${BookApiProperties.OpdsPath}${BookApiProperties.OpdsFeaturedUrl.url}"
-      .replace(BookApiProperties.OpdsLanguageParam, language)
-
     def addJustArrivedCategory(feedEntry: FeedEntry, language: String): FeedEntry = {
       val title = Messages("new_entries_feed_title")(Lang(language))
-      val url = s"${BookApiProperties.Domain}${justArrivedUrl(language)}"
-
+      val url = s"${BookApiProperties.Domain}${justArrivedPath(language)}"
       feedEntry.copy(
         categories = feedEntry.categories :+ FeedCategory(url, title, sortOrder = 2))
     }
 
-    def justArrivedUrl(language: String): String = s"${BookApiProperties.OpdsPath}${BookApiProperties.OpdsNewUrl.url}"
-      .replace(BookApiProperties.OpdsLanguageParam, language)
-
     def addLevelCategory(feedEntry: FeedEntry, language: String): FeedEntry = {
       val level = feedEntry.book.readingLevel.getOrElse(BookApiProperties.DefaultReadingLevel)
       val readingLevelCategoryTitle = s"${Messages("level_feed_title", level)(Lang(language))}"
-      val readingLevelUrl = s"${BookApiProperties.Domain}${levelUrl(language, level)}"
-
+      val readingLevelUrl = s"${BookApiProperties.Domain}${levelPath(language, level)}"
       feedEntry.copy(
         categories = feedEntry.categories :+ FeedCategory(readingLevelUrl, readingLevelCategoryTitle, sortOrder = level.toInt + 2))
     }
 
-    def levelUrl(language: String, level: String): String = s"${BookApiProperties.OpdsPath}${BookApiProperties.OpdsLevelUrl.url}"
+    def featuredPath(language: String): String = s"${BookApiProperties.OpdsPath}${BookApiProperties.OpdsFeaturedUrl.url}"
+      .replace(BookApiProperties.OpdsLanguageParam, language)
+
+    def justArrivedPath(language: String): String = s"${BookApiProperties.OpdsPath}${BookApiProperties.OpdsNewUrl.url}"
+      .replace(BookApiProperties.OpdsLanguageParam, language)
+
+    def levelPath(language: String, level: String): String = s"${BookApiProperties.OpdsPath}${BookApiProperties.OpdsLevelUrl.url}"
       .replace(BookApiProperties.OpdsLanguageParam, language)
       .replace(BookApiProperties.OpdsLevelParam, level)
 

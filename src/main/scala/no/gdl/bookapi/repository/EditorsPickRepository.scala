@@ -8,6 +8,7 @@
 package no.gdl.bookapi.repository
 
 import java.sql.PreparedStatement
+import java.time.LocalDate
 
 import no.gdl.bookapi.model.domain.EditorsPick
 import scalikejdbc._
@@ -42,6 +43,13 @@ trait EditorsPickRepository {
          ${editorsPick.dateChanged})""".updateAndReturnGeneratedKey().apply()
 
       editorsPick.copy(id = Some(id), revision = Some(startRevision))
+    }
+
+    def lastUpdatedEditorsPick(language: String)(implicit session: DBSession = ReadOnlyAutoSession): Option[LocalDate] = {
+      select(ep.dateChanged)
+        .from(EditorsPick as ep)
+        .where.eq(ep.language, language).toSQL
+        .map(_.localDate(1)).single.apply()
     }
 
     def forLanguage(language: String)(implicit session: DBSession = ReadOnlyAutoSession): Option[EditorsPick] = {

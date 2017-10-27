@@ -9,6 +9,7 @@ package no.gdl.bookapi.service
 
 import no.gdl.bookapi.BookApiProperties.{OpdsLanguageParam, OpdsLevelParam, OpdsPath}
 import no.gdl.bookapi.TestData.{LanguageCodeAmharic, LanguageCodeEnglish, LanguageCodeNorwegian}
+import no.gdl.bookapi.model.api.FeedEntry
 import no.gdl.bookapi.{BookApiProperties, TestData, TestEnvironment, UnitSuite}
 import org.mockito.Matchers._
 import org.mockito.Mockito._
@@ -47,6 +48,39 @@ class FeedServiceTest extends UnitSuite with TestEnvironment {
     calculatedFeedUrls.size should be (expectedNumberOfFeeds)
   }
 
+  test("that featuredPath returns expected path for language"){
+    feedService.featuredPath("amh") should equal ("/book-api/opds/amh/featured.xml")
+  }
 
+  test("that levelPath returns expected path for language and level") {
+    feedService.levelPath("amh", "1") should equal ("/book-api/opds/amh/level1.xml")
+  }
 
+  test("that justArrivedPath returns expected path for language") {
+    feedService.justArrivedPath("amh") should equal ("/book-api/opds/amh/new.xml")
+  }
+
+  test("that addFeaturedCategory adds category with correct url") {
+    val feedEntry = FeedEntry(TestData.Api.DefaultBook, Seq())
+    val withCategory = feedService.addFeaturedCategory(feedEntry, "amh")
+
+    withCategory.categories.size should be (1)
+    withCategory.categories.head.url should equal (s"${BookApiProperties.Domain}/book-api/opds/amh/featured.xml")
+  }
+
+  test("that addJustArrivedCategory adds category with correct url") {
+    val feedEntry = FeedEntry(TestData.Api.DefaultBook, Seq())
+    val withCategory = feedService.addJustArrivedCategory(feedEntry, "amh")
+
+    withCategory.categories.size should be (1)
+    withCategory.categories.head.url should equal (s"${BookApiProperties.Domain}/book-api/opds/amh/new.xml")
+  }
+
+  test("that addLevelCategory adds category with correct url") {
+    val feedEntry = FeedEntry(TestData.Api.DefaultBook, Seq())
+    val withCategory = feedService.addLevelCategory(feedEntry, "amh")
+
+    withCategory.categories.size should be (1)
+    withCategory.categories.head.url should equal (s"${BookApiProperties.Domain}/book-api/opds/amh/level${feedEntry.book.readingLevel.get}.xml")
+  }
 }

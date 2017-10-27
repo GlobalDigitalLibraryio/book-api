@@ -1,3 +1,4 @@
+opds_nav_title=ግሎባል ዲጂታል ላይብረሪ - የመጽሐፍ ካታሎግ
 opds_root_title=ግሎባል ዲጂታል ላይብረሪ - የመጽሐፍ ካታሎግ
 
 new_entries_feed_title=አዲስ ምዝቦች
