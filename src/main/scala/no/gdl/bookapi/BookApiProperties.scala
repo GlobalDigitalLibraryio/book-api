@@ -89,16 +89,12 @@ object BookApiProperties extends LazyLogging {
     // TODO Replace explicit CloudFront URLs with sub-domains created in Route 53:
     // Prod:        https://books.api.digitallibrary.io
     // Other envs:  https://books.<env>.api.digitallibrary.io
-    if (env.equals("prod")) {
-      "TODO"
-    } else if (env.equals("staging")) {
-      "TODO"
-    } else if (env.equals("test")) {
-      "https://dzoxgfkzkvnkl.cloudfront.net"
-    } else if (env.equals("local")) {
-      Domain + DownloadPath
-    } else {
-      throw new IllegalArgumentException(s"$env is not a valid env")
+    env match {
+      case "prod" => "TODO"
+      case "staging" => "TODO"
+      case "test" => "https://dzoxgfkzkvnkl.cloudfront.net"
+      case "local" => Domain + DownloadPath
+      case _ => throw new IllegalArgumentException(s"$env is not a valid env")
     }
   }
 }
