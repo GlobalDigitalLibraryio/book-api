@@ -10,7 +10,6 @@ package no.gdl.bookapi.service
 import java.time.LocalDate
 import java.util.{Locale, UUID}
 
-import com.netaporter.uri.dsl._
 import com.typesafe.scalalogging.LazyLogging
 import no.gdl.bookapi.BookApiProperties.Domain
 import no.gdl.bookapi.integration.ImageApiClient
@@ -156,8 +155,8 @@ trait ConverterService {
 
     def toApiDownloads(translation: domain.Translation): api.Downloads = {
       api.Downloads(
-        epub = s"$Domain${BookApiProperties.EpubPath}/${translation.language}/${translation.uuid}.epub", // TODO: #17 - Download EPub
-        pdf = s"$Domain${BookApiProperties.PdfPath}/${translation.language}/${translation.uuid}.pdf") // TODO: #17 - Download PDF
+        epub = s"${BookApiProperties.CloudFrontUrl}/epub/${translation.language}/${translation.uuid}.epub", // TODO: #17 - Download EPub
+        pdf = s"${BookApiProperties.CloudFrontUrl}/pdf/${translation.language}/${translation.uuid}.pdf") // TODO: #17 - Download PDF
     }
 
     def toApiCoverPhoto(imageIdOpt: Option[Long]): Option[api.CoverPhoto] = {

@@ -62,6 +62,7 @@ lazy val book_api = (project in file(".")).
       "vc.inreach.aws" % "aws-signing-request-interceptor" % "0.0.16",
       "org.jsoup" % "jsoup" % JsoupVersion,
       "coza.opencollab" % "epub-creator" % "1.0.0",
+      "com.osinka.i18n" %% "scala-i18n" % "1.0.2",
       "com.github.librepdf" % "openpdf" % "1.0.4",
       "org.xhtmlrenderer" % "flying-saucer-core" % "9.1.7",
       "org.xhtmlrenderer" % "flying-saucer-pdf" % "9.1.7"

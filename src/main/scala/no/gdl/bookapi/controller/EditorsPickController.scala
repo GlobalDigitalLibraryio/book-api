@@ -40,10 +40,14 @@ trait EditorsPickController {
 
     get("/", operation(getAllPicks)) {
       readService.editorsPickForLanguage(DefaultLanguage)
+        .map(_.books)
+        .getOrElse(Seq())
     }
 
     get("/:lang", operation(getAllPicksInLang)) {
       readService.editorsPickForLanguage(language("lang"))
+        .map(_.books)
+        .getOrElse(Seq())
     }
   }
 

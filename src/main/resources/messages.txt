@@ -1,0 +1,13 @@
+opds_nav_title=Global Digital Library - Book Catalog
+opds_root_title=Global Digital Library - Book Catalog
+
+new_entries_feed_title=New entries
+new_entries_feed_description=The newest entries in the Global Digital Library
+
+level_feed_title=Level {0}
+level_feed_description=Books for selected level
+
+featured_feed_title=Editor's picks
+featured_feed_description=Editor's picks
+
+default_feed_title=Books from Global Digital Library

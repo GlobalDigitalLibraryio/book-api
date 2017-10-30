@@ -10,13 +10,13 @@ package no.gdl.bookapi.controller
 
 import no.gdl.bookapi.model.api.Error
 import no.gdl.bookapi.model.api.internal.{NewBook, NewChapter, NewTranslation, TranslationId}
-import no.gdl.bookapi.service.{ConverterService, ReadService, ValidationService, WriteService}
+import no.gdl.bookapi.service._
 import org.scalatra.{Conflict, NotFound, Ok}
 
 import scala.util.{Failure, Success}
 
 trait InternController {
-  this: WriteService with ReadService with ConverterService with ValidationService =>
+  this: WriteService with ReadService with ConverterService with ValidationService with FeedService =>
   val internController: InternController
 
   class InternController extends GdlController {
@@ -117,6 +117,9 @@ trait InternController {
       }
     }
 
+    get("/feeds/") {
+      feedService.generateFeeds()
+    }
 
   }
 }

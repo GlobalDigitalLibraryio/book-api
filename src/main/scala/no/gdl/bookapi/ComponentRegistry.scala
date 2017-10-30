@@ -49,6 +49,8 @@ object ComponentRegistry
   with PublisherRepository
   with EPubService
   with PdfService
+  with FeedRepository
+  with FeedService
 {
   implicit val swagger = new BookSwagger
 
@@ -95,4 +97,6 @@ object ComponentRegistry
 
   lazy val ePubService = new EPubService
   lazy val pdfService = new PdfService
+  lazy val feedRepository = new FeedRepository
+  lazy val feedService = new FeedService
 }

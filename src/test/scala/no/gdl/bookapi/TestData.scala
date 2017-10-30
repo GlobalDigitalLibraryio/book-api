@@ -11,6 +11,7 @@ import java.time.LocalDate
 import java.util.UUID
 
 import no.gdl.bookapi.model._
+import no.gdl.bookapi.model.api.FeedCategory
 import no.gdl.bookapi.model.domain.{Category, Chapter, Contributor, EducationalAlignment}
 
 object TestData {
@@ -29,6 +30,8 @@ object TestData {
 
 
   object Api {
+
+
     val english = api.Language(LanguageCodeEnglish, "English")
     val norwegian_bokmal = api.Language(LanguageCodeNorwegian, "Bokmål, Norwegian")
     val amharic = api.Language(LanguageCodeAmharic, "Amharic")
@@ -48,6 +51,10 @@ object TestData {
       1, 1, Some("external-1"), DefaultUuid, "Title", "Description", english, Seq(english, norwegian_bokmal), DefaultLicense, DefaultPublisher,
       Some(Level1), Some(ageRangeDefault), None, None, None, Some(today), Some(yesterday), today, Seq(category1, category2), None, api.Downloads(epub, pdf), Seq(), Seq(DefaultContributor), Seq(ChapterSummary1))
 
+    val DefaultFeedDefinition = api.FeedDefinition(1, 1, "some-url", "some-uuid")
+    val DefaultFeed = api.Feed(DefaultFeedDefinition, "default title", Some("default description"), Some("default-rel"), yesterday, Seq())
+    val DefaultFeedEntry = api.FeedEntry(DefaultBook, Seq())
+    val DefaultFeedCategory = FeedCategory("some-url", "some-title", 1)
   }
 
   object Domain {
