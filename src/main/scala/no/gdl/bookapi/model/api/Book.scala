@@ -98,12 +98,12 @@ case class SearchResult(@(ApiModelProperty@field)(description = "The total numbe
                         @(ApiModelProperty@field)(description = "The chosen language") language: Language,
                         @(ApiModelProperty@field)(description = "The results") results: Seq[Book])
 
-@ApiModel(description = "Information about the editors picks")
-case class EditorsPick(@(ApiModelProperty@field)(description = "The id of the editors pick") id: Long,
-                       @(ApiModelProperty@field)(description = "The revision of the editors pick") revision: Long,
-                       @(ApiModelProperty@field)(description = "Language for the editors pick") language: Language,
+@ApiModel(description = "Information about the editor's picks")
+case class EditorsPick(@(ApiModelProperty@field)(description = "The id of the editor's pick") id: Long,
+                       @(ApiModelProperty@field)(description = "The revision of the editor's pick") revision: Long,
+                       @(ApiModelProperty@field)(description = "Language for the editor's pick") language: Language,
                        @(ApiModelProperty@field)(description = "The list of books") books: Seq[Book],
-                       @(ApiModelProperty@field)(description = "The date when the editors picks last changed") dateChanged: LocalDate)
+                       @(ApiModelProperty@field)(description = "The date when the editor's picks last changed") dateChanged: LocalDate)
 
 
 case class FeedDefinition(@(ApiModelProperty@field)(description = "The internal id of the opds feed") id: Long,
@@ -118,7 +118,7 @@ case class Feed (feedDefinition: FeedDefinition, title: String, description: Opt
 case class FeedEntry (@(ApiModelProperty@field)(description = "The book associated with this entry") book: Book,
                       @(ApiModelProperty@field)(description = "The revision of the feed") categories: Seq[FeedCategory] = Seq())
 
-@ApiModel(description = "Information about an feed category in an opds-feed")
+@ApiModel(description = "Information about a feed category in an opds-feed")
 case class FeedCategory(@(ApiModelProperty@field)(description = "The url to the category feed") url: String,
                         @(ApiModelProperty@field)(description = "The title for this cateogry feed") title: String,
                         @(ApiModelProperty@field)(description = "The sort order for this category") sortOrder: Int = 100)

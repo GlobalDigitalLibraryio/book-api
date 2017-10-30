@@ -19,7 +19,7 @@ class FeedServiceTest extends UnitSuite with TestEnvironment {
 
   override val feedService = new FeedService
 
-  test("that calculateFeedUuids returns correct urls for one language and one level") {
+  test("that calculateFeeds returns correct urls for one language and one level") {
     val languages = Seq(LanguageCodeEnglish)
     val levels = Seq("1")
 
