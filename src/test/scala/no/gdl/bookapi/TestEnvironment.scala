@@ -44,6 +44,7 @@ trait TestEnvironment
   with PersonRepository
   with PublisherRepository
   with EPubService
+  with PdfService
 {
   val dataSource = mock[sql.DataSource]
   val readService = mock[ReadService]
@@ -75,4 +76,5 @@ trait TestEnvironment
   val personRepository = mock[PersonRepository]
   val publisherRepository = mock[PublisherRepository]
   val ePubService = mock[EPubService]
+  val pdfService = mock[PdfService]
 }

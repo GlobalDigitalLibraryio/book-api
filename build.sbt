@@ -61,7 +61,10 @@ lazy val book_api = (project in file(".")).
       "org.elasticsearch" % "elasticsearch" % ElasticsearchVersion % "test",
       "vc.inreach.aws" % "aws-signing-request-interceptor" % "0.0.16",
       "org.jsoup" % "jsoup" % JsoupVersion,
-      "coza.opencollab" % "epub-creator" % "1.0.0"
+      "coza.opencollab" % "epub-creator" % "1.0.0",
+      "com.github.librepdf" % "openpdf" % "1.0.4",
+      "org.xhtmlrenderer" % "flying-saucer-core" % "9.1.7",
+      "org.xhtmlrenderer" % "flying-saucer-pdf" % "9.1.7"
     )
   ).enablePlugins(DockerPlugin).enablePlugins(GitVersioning).enablePlugins(JettyPlugin)
 
