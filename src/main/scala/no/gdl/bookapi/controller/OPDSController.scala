@@ -8,56 +8,134 @@
 package no.gdl.bookapi.controller
 
 import java.text.SimpleDateFormat
+import java.time.{LocalDate, ZoneId}
+import java.time.format.DateTimeFormatter
 import java.util.Date
+import javax.servlet.http.HttpServletRequest
 
-import no.gdl.bookapi.BookApiProperties.DefaultLanguage
-import no.gdl.bookapi.service.{ConverterService, ReadService}
+import no.gdl.bookapi.BookApiProperties
+import no.gdl.bookapi.model.api.{Feed, FeedEntry}
+import no.gdl.bookapi.service.{ConverterService, FeedService, ReadService}
+import org.scalatra.NotFound
+
+import scala.xml.Elem
 
 trait OPDSController {
-  this: ReadService with ConverterService =>
+  this: ReadService with ConverterService with FeedService =>
   val opdsController: OPDSController
-  val sdf: SimpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX")
+  val dtf: DateTimeFormatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME
+  implicit val localDateOrdering: Ordering[LocalDate] = Ordering.by(_.toEpochDay)
 
   class OPDSController extends GdlController {
-
-    val page = 1
-    val pageSize = 10000 //TODO: Create partial opds feed entries, to solve paging
-
     before() {
       contentType = formats("xml")
     }
 
-    get("/:lang/catalog.atom") {
-      showOpdsForLanguage(params("lang"))
+    get(BookApiProperties.OpdsNavUrl.url) {
+      val navFeeds = feedService.feedsForNavigation(language("lang"))
+      val navLastUpdated = navFeeds.map(_.updated).sorted.reverse.headOption
+      navigationFeed(feedUpdated = navLastUpdated, feeds = navFeeds)
     }
 
-    get("/catalog.atom") {
-      showOpdsForLanguage(DefaultLanguage)
+    get(BookApiProperties.OpdsRootUrl.url) {
+      acquisitionFeed(books = feedService.allEntries(language("lang")))
     }
 
-    private def showOpdsForLanguage(language: String) = {
-      <feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/terms/" xmlns:opds="http://opds-spec.org/2010/catalog">
-        <id>http://api.digitallibrary.io/book-api/opds/catalog.atom</id>
-        <title>Global Digital Library - Open Access</title>
-        <updated>2017-04-28T12:54:15Z</updated>
-        <link href="http://api.digitallibrary.io/book-api/opds/catalog.atom" rel="self"/>
-        {readService.withLanguage(language, pageSize, page).results.map(x =>
-        <entry>
-          <id>urn:uuid:{x.uuid}</id>
-          <title>{x.title}</title>
-          {x.contributors.map(contrib => <author><name>{contrib.name}</name></author>)}
-          <updated>{sdf.format(new Date())}</updated>
-          <summary>{x.description}</summary>
-          {if(x.coverPhoto.isDefined) {
-            <link href={x.coverPhoto.get.large} type="image/jpeg" rel="http://opds-spec.org/image"/>
-            <link href={x.coverPhoto.get.small} type="image/png" rel="http://opds-spec.org/image/thumbnail"/>
-          }}
-          <link href={x.downloads.epub} type="application/epub+zip" rel="http://opds-spec.org/acquisition/open-access"/>
-          <link href={x.downloads.pdf} type="application/pdf" rel="http://opds-spec.org/acquisition/open-access"/>
-        </entry>
-      )}
+    get(BookApiProperties.OpdsNewUrl.url) {
+      acquisitionFeed(books = feedService.newEntries(language("lang")))
+    }
+
+    get(BookApiProperties.OpdsFeaturedUrl.url) {
+      val lang = language("lang")
+      acquisitionFeed(
+        feedUpdated = feedService.editorsPickLastUpdated(lang),
+        books = feedService.editorsPicks(lang))
+    }
+
+    get(BookApiProperties.OpdsLevelUrl.url) {
+      acquisitionFeed(
+        titleArgs = Seq(params("lev")),
+        books = feedService.entriesForLanguageAndLevel(language("lang"), params("lev")))
+    }
+
+    private def navigationFeed(feedUpdated: Option[LocalDate], feeds: => Seq[Feed])(implicit request: HttpServletRequest) = {
+      val lang = language("lang")
+      val selfOpt = feedService.feedForUrl(request.getRequestURI, lang, feedUpdated, Seq(), Seq())
+      selfOpt match {
+        case Some(self) => render(self, feeds)
+        case None =>
+          contentType = "text/plain"
+          NotFound(body = s"No books available for language $lang.")
+      }
+    }
+
+    private def acquisitionFeed(feedUpdated: Option[LocalDate] = None, titleArgs: Seq[String] = Seq(), books: => Seq[FeedEntry])(implicit request: HttpServletRequest) = {
+      val lang = language("lang")
+      feedService.feedForUrl(request.getRequestURI, lang, feedUpdated, titleArgs, books) match {
+        case Some(feed) => render(feed)
+        case None =>
+          contentType = "text/plain"
+          NotFound(body = s"No books available for language $lang.")
+      }
+    }
+
+    private[controller] def render(self: Feed, feeds: Seq[Feed]): Elem = {
+      <feed xmlns="http://www.w3.org/2005/Atom">
+        <id>{self.feedDefinition.uuid}</id>
+        <link rel="self"
+              href={self.feedDefinition.url}
+              type="application/atom+xml;profile=opds-catalog;kind=navigation"/>
+        <link rel="start"
+              href={self.feedDefinition.url}
+              type="application/atom+xml;profile=opds-catalog;kind=navigation"/>
+        <title>{self.title}</title>
+        <updated>{self.updated.atStartOfDay(ZoneId.systemDefault()).format(dtf)}</updated>
+        {feeds.map(feed =>
+          <entry>
+            <title>{feed.title}</title>
+            <link rel={feed.rel.getOrElse("subsection")}
+                  href={feed.feedDefinition.url}
+                  type="application/atom+xml;profile=opds-catalog;kind=acquisition"/>
+            <updated>{feed.updated.atStartOfDay(ZoneId.systemDefault()).format(dtf)}</updated>
+            <id>{feed.feedDefinition.uuid}</id>
+            {if (feed.description.isDefined) {
+              <content type="text">{feed.description.get}</content>
+            }}
+          </entry>
+        )}
       </feed>
     }
 
+    private[controller] def render(feed: Feed): Elem = {
+      <feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/terms/" xmlns:opds="http://opds-spec.org/2010/catalog" xmlns:lrmi="http://purl.org/dcx/lrmi-terms/">
+        <id>{feed.feedDefinition.uuid}</id>
+        <title>{feed.title}</title>
+        <updated>{feed.updated.atStartOfDay(ZoneId.systemDefault()).format(dtf)}</updated>
+        <link href={feed.feedDefinition.url} rel="self"/>
+        {feed.content.map(feedEntry =>
+          <entry>
+            <id>urn:uuid:{feedEntry.book.uuid}</id>
+            <title>{feedEntry.book.title}</title>
+            {feedEntry.book.contributors.map(contrib =>
+              <author>
+                <name>{contrib.name}</name>
+              </author>
+            )}
+            <updated>{feedEntry.book.dateArrived.atStartOfDay(ZoneId.systemDefault()).format(dtf)}</updated>
+            <lrmi:educationalAlignment alignmentType="readingLevel" targetName={feedEntry.book.readingLevel.getOrElse("1")} />
+            <summary>{feedEntry.book.description}</summary>
+            {if (feedEntry.book.coverPhoto.isDefined) {
+              <link href={feedEntry.book.coverPhoto.get.large} type="image/jpeg" rel="http://opds-spec.org/image"/>
+              <link href={feedEntry.book.coverPhoto.get.small} type="image/png" rel="http://opds-spec.org/image/thumbnail"/>
+            }}
+            <link href={feedEntry.book.downloads.epub} type="application/epub+zip" rel="http://opds-spec.org/acquisition/open-access"/>
+            <link href={feedEntry.book.downloads.pdf} type="application/pdf" rel="http://opds-spec.org/acquisition/open-access"/>
+            {feedEntry.categories.sortBy(_.sortOrder).map(category =>
+              <link href={category.url} rel="collection" title={category.title}/>
+            )}
+          </entry>
+        )}
+      </feed>
+    }
   }
 }

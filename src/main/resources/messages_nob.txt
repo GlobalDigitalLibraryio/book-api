@@ -1,0 +1,13 @@
+opds_nav_title=Global Digital Library - Bokkatalog
+opds_root_title=Global Digital Library - Bokkatalog
+
+new_entries_feed_title=Nyeste bøker
+new_entries_feed_description=De sist ankomne bøkene i Global Digital Library
+
+level_feed_title=Nivå {0}
+level_feed_description=Bøker med angitt lesenivå
+
+featured_feed_title=Redaktørens anbefalinger
+featured_feed_description=Redaktørens anbefalinger
+
+default_feed_title=Bøker fra Global Digital Library

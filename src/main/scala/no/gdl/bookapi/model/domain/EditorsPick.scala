@@ -6,13 +6,16 @@
  */
 
 package no.gdl.bookapi.model.domain
+import java.time.LocalDate
+
 import no.gdl.bookapi.BookApiProperties
 import scalikejdbc._
 
 case class EditorsPick (id: Option[Long],
                         revision: Option[Int],
                         language: String,
-                        translationIds: Seq[Long])
+                        translationIds: Seq[Long],
+                        dateChanged: LocalDate)
 
 object EditorsPick extends SQLSyntaxSupport[EditorsPick] {
   implicit val formats = org.json4s.DefaultFormats
@@ -24,6 +27,7 @@ object EditorsPick extends SQLSyntaxSupport[EditorsPick] {
     id = rs.longOpt(ep.id),
     revision = rs.intOpt(ep.revision),
     language = rs.string(ep.language),
-    translationIds = rs.array(ep.translationIds).getArray().asInstanceOf[Array[java.lang.Long]].toSeq.map(_.toLong)
+    translationIds = rs.array(ep.translationIds).getArray().asInstanceOf[Array[java.lang.Long]].toSeq.map(_.toLong),
+    dateChanged = rs.localDate(ep.dateChanged)
   )
 }

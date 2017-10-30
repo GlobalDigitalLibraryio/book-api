@@ -52,7 +52,7 @@ class TranslationRepositoryTest extends IntegrationSuite with TestEnvironment wi
       addTranslationDef("ext6", "Title 3 - nob", book3.id.get, "nob")
       addTranslationDef("ext8", "Title 4 - nob", book4.id.get, "nob")
 
-      val searchResult = translationRepository.bookIdsWithLanguage("eng", 10, 1)
+      val searchResult = translationRepository.bookIdsWithLanguage("eng", 10, 1, Sort.ByIdAsc)
       searchResult.language should equal("eng")
       searchResult.results.length should be(2)
       searchResult.results.sorted should equal(Seq(book1.id.get, book2.id.get))
