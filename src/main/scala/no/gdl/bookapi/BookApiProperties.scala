@@ -105,7 +105,7 @@ object BookApiProperties extends LazyLogging {
     // Other envs:  https://books.<env>.api.digitallibrary.io
     env match {
       case "prod" => "TODO"
-      case "staging" => "TODO"
+      case "staging" => "https://d3gyxwpgvifulp.cloudfront.net"
       case "test" => "https://dzoxgfkzkvnkl.cloudfront.net"
       case "local" => Domain + DownloadPath
       case _ => throw new IllegalArgumentException(s"$env is not a valid env")
