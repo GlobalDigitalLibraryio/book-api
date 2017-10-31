@@ -104,7 +104,7 @@ object BookApiProperties extends LazyLogging {
     // Prod:        https://books.api.digitallibrary.io
     // Other envs:  https://books.<env>.api.digitallibrary.io
     env match {
-      case "prod" => "TODO"
+      case "prod" => "https://d1h2g5hflcvsc2.cloudfront.net"
       case "staging" => "https://d3gyxwpgvifulp.cloudfront.net"
       case "test" => "https://dzoxgfkzkvnkl.cloudfront.net"
       case "local" => Domain + DownloadPath
