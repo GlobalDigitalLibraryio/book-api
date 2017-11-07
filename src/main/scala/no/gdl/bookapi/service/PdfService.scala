@@ -7,14 +7,13 @@
 
 package no.gdl.bookapi.service
 
-import com.lowagie.text.pdf.BaseFont
+import java.io.InputStream
+
+import com.openhtmltopdf.extend.FSSupplier
+import com.openhtmltopdf.pdfboxout.PdfRendererBuilder
 import com.typesafe.scalalogging.LazyLogging
-import no.gdl.bookapi.repository.{ChapterRepository, TranslationRepository}
-import org.xhtmlrenderer.pdf.ITextRenderer
-
-import scala.util.Try
-
-
+import no.gdl.bookapi.model.domain.PdfCss
+import no.gdl.bookapi.repository.TranslationRepository
 
 
 trait PdfService {
@@ -22,57 +21,46 @@ trait PdfService {
   val pdfService: PdfService
 
   class PdfService extends LazyLogging {
+    case class FontDefinition(fontFile: String, fontName: String)
+    class NotoFontSupplier(stream: InputStream) extends FSSupplier[InputStream] {
+      override def supply(): InputStream = stream
+    }
 
+    val DefaultFont = FontDefinition("/NotoSans-Regular.ttf", "Noto Sans")
     val fontDefinitions = Map(
-      "amh" -> FontDefinition("NotoSansEthiopic.ttf", "Noto Sans Ethiopic"),
-      "mar" -> FontDefinition("NotoSansDevanagari-Regular.ttf", "Noto Sans Devanagari"),
-      "hin" -> FontDefinition("NotoSansDevanagari-Regular.ttf", "Noto Sans Devanagari"),
-      "ben" -> FontDefinition("NotoSansBengali-Regular.ttf", "Noto Sans Bengali"),
-      "nep" -> FontDefinition("NotoSansDevanagari-Regular.ttf", "Noto Sans Devanagari")
+      "amh" -> FontDefinition("/NotoSansEthiopic.ttf", "Noto Sans Ethiopic"),
+      "mar" -> FontDefinition("/NotoSansDevanagari-Regular.ttf", "Noto Sans Devanagari"),
+      "hin" -> FontDefinition("/NotoSansDevanagari-Regular.ttf", "Noto Sans Devanagari"),
+      "ben" -> FontDefinition("/NotoSansBengali-Regular.ttf", "Noto Sans Bengali"),
+      "nep" -> FontDefinition("/NotoSansDevanagari-Regular.ttf", "Noto Sans Devanagari")
     )
 
-    val pdfCss =
-      """
-        |div.page {
-        | page-break-after: always;
-        |}
-        |
-        |body {
-        |    margin: 0;
-        |    text-align: center;
-        |    font-family: '{FONT-NAME}';
-        |}
-        |
-        |img {
-        |    max-width: 100%;
-        |    max-height: 50vh;
-        |}
-      """.stripMargin
-
-
-    def createPdf(language: String, uuid: String): Option[Try[ITextRenderer]] = {
+    def createPdf(language: String, uuid: String): Option[PdfRendererBuilder] = {
       translationRepository.withUuId(uuid).map(translation => {
-          Try {
-            val chapters = readService.chaptersForIdAndLanguage(translation.bookId, language).flatMap(ch => readService.chapterForBookWithLanguageAndId(translation.bookId, language, ch.id))
+        val chapters = readService.chaptersForIdAndLanguage(translation.bookId, language).flatMap(ch => readService.chapterForBookWithLanguageAndId(translation.bookId, language, ch.id))
+        val fonts = fontDefinitions.get(language).toSeq :+ DefaultFont
 
-            val renderer = new ITextRenderer
+        val bookAsHtml =
+          s"""
+             |<html>
+             |  <head>
+             |    <style language='text/css'>${PdfCss(fonts.map(_.fontName)).asString}</style>
+             |  </head>
+             |  <body>
+             |    <div class='page'>
+             |      ${chapters.map(_.content).mkString("</div><div class='page'>")}
+             |    </div>
+             |  </body>
+             |</html>
+           """.stripMargin
 
-            val css = fontDefinitions.get(language) match {
-              case None => pdfCss
-              case Some(font) =>
-                renderer.getFontResolver.addFont(font.fontFile, BaseFont.IDENTITY_H, true)
-                pdfCss.replace("{FONT-NAME}", font.fontName)
-            }
-
-            val bookAsHtml = s"<html><head><style language='text/css'>$css</style></head><body><div class='page'>${chapters.map(_.content).mkString("</div><div class='page'>")}</div></body></html>"
-
-            renderer.setDocumentFromString(bookAsHtml)
-            renderer.layout()
-            renderer
-          }
-        })
-      }
+        val rendererBuilder = new PdfRendererBuilder().withHtmlContent(bookAsHtml, "/")
+        fonts.foldLeft(rendererBuilder) {(builder, font) =>
+          builder.useFont(new NotoFontSupplier(getClass.getResourceAsStream(font.fontFile)), font.fontName)
+        }
+      })
     }
+  }
 }
 
-case class FontDefinition(fontFile: String, fontName: String)
+

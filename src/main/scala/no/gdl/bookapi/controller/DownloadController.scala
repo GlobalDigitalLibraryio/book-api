@@ -49,14 +49,10 @@ trait DownloadController {
         case pdfPattern(uuid) =>
           pdfService.createPdf(language, uuid) match {
             case None => NotFound(body = Error(Error.NOT_FOUND, s"No book with filename $filename found."))
-            case Some(Success(pdf)) =>
+            case Some(pdfBuilder) =>
               contentType = "application/octet-stream"
-              pdf.createPDF(response.getOutputStream)
-            case Some(Failure(ex)) =>
-              logger.error("Could not generate epub", ex)
-              InternalServerError(body=Error.GenericError)
+              pdfBuilder.toStream(response.getOutputStream).run()
           }
-
         case _ => NotFound(body = Error(Error.NOT_FOUND, s"No book with filename $filename found."))
       }
     }

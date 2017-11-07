@@ -7,16 +7,17 @@
 
 package no.gdl.bookapi.controller
 
+import java.io.OutputStream
 import java.text.SimpleDateFormat
 
+import com.openhtmltopdf.pdfboxout.PdfRendererBuilder
 import coza.opencollab.epub.creator.model.EpubBook
 import no.gdl.bookapi.model.api.LocalDateSerializer
 import no.gdl.bookapi.{TestEnvironment, UnitSuite}
 import org.json4s.{DefaultFormats, Formats}
-import org.scalatra.test.scalatest.ScalatraFunSuite
 import org.mockito.Mockito._
-import org.mockito.Matchers._
-import org.xhtmlrenderer.pdf.ITextRenderer
+import org.mockito.Matchers.{any, eq => eqTo}
+import org.scalatra.test.scalatest.ScalatraFunSuite
 
 import scala.util.{Failure, Success}
 
@@ -65,18 +66,20 @@ class DownloadControllerTest extends UnitSuite with TestEnvironment with Scalatr
   }
 
   test("that get /pdf/nob/123.pdf returns 200 ok") {
-    val renderer = mock[ITextRenderer]
-    when(pdfService.createPdf("nob", "123")).thenReturn(Some(Success(renderer)))
+    val renderer = mock[PdfRendererBuilder]
+    when(renderer.toStream(any[OutputStream])).thenReturn(renderer)
+
+    when(pdfService.createPdf("nob", "123")).thenReturn(Some(renderer))
     get("/pdf/nob/123.pdf") {
       status should equal (200)
       header.get("Content-Type") should equal (Some("application/octet-stream; charset=UTF-8"))
     }
   }
 
-  test("that get /pdf/nob/123.pdf returns 500 internal server error when pdf-generating fails") {
-    when(pdfService.createPdf("nob", "123")).thenReturn(Some(Failure(new RuntimeException("Something went wrong"))))
+  test("that get /pdf/nob/123.pdf returns 404 when no content found") {
+    when(pdfService.createPdf("nob", "123")).thenReturn(None)
     get("/pdf/nob/123.pdf") {
-      status should equal (500)
+      status should equal (404)
     }
   }
 }
