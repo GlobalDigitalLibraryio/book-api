@@ -13,11 +13,11 @@ import com.openhtmltopdf.extend.FSSupplier
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder
 import com.typesafe.scalalogging.LazyLogging
 import no.gdl.bookapi.model.domain.PdfCss
-import no.gdl.bookapi.repository.TranslationRepository
+import no.gdl.bookapi.repository.{BookRepository, TranslationRepository}
 
 
 trait PdfService {
-  this: TranslationRepository with ReadService =>
+  this: TranslationRepository with BookRepository with ReadService =>
   val pdfService: PdfService
 
   class PdfService extends LazyLogging {
@@ -37,6 +37,8 @@ trait PdfService {
 
     def createPdf(language: String, uuid: String): Option[PdfRendererBuilder] = {
       translationRepository.withUuId(uuid).map(translation => {
+        val publisher = bookRepository.withId(translation.bookId).map(_.publisher.name)
+
         val chapters = readService.chaptersForIdAndLanguage(translation.bookId, language).flatMap(ch => readService.chapterForBookWithLanguageAndId(translation.bookId, language, ch.id))
         val fonts = fontDefinitions.get(language).toSeq :+ DefaultFont
 
@@ -44,7 +46,7 @@ trait PdfService {
           s"""
              |<html>
              |  <head>
-             |    <style language='text/css'>${PdfCss(fonts.map(_.fontName)).asString}</style>
+             |    <style language='text/css'>${PdfCss(publisher, fonts.map(_.fontName)).asString}</style>
              |  </head>
              |  <body>
              |    <div class='page'>
