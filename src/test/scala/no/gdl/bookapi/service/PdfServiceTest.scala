@@ -23,6 +23,7 @@ class PdfServiceTest extends UnitSuite with TestEnvironment {
 
   test("that a renderer is returned when book is found") {
     when(translationRepository.withUuId(any[String])(any[DBSession])).thenReturn(Some(TestData.Domain.DefaultTranslation))
+    when(bookRepository.withId(any[Long])(any[DBSession])).thenReturn(Some(TestData.Domain.DefaultBook))
     when(readService.chaptersForIdAndLanguage(any[Long], any[String])).thenReturn(Seq(TestData.Api.ChapterSummary1))
     when(readService.chapterForBookWithLanguageAndId(any[Long], any[String], any[Long])).thenReturn(Some(TestData.Api.Chapter1))
 
