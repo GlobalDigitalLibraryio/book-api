@@ -48,6 +48,7 @@ object ComponentRegistry
   with PersonRepository
   with PublisherRepository
   with EPubService
+  with PdfService
   with FeedRepository
   with FeedService
 {
@@ -95,6 +96,7 @@ object ComponentRegistry
   lazy val publisherRepository = new PublisherRepository
 
   lazy val ePubService = new EPubService
+  lazy val pdfService = new PdfService
   lazy val feedRepository = new FeedRepository
   lazy val feedService = new FeedService
 }

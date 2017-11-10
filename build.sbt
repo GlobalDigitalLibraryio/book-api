@@ -12,6 +12,7 @@ val Elastic4sVersion = "5.2.8"
 val ElasticsearchVersion = "5.1.1"
 val JacksonVersion = "2.7.4"
 val JsoupVersion =  "1.10.2"
+val OpenHtmlPdfVersion = "0.0.1-RC11"
 
 val appProperties = settingKey[Properties]("The application properties")
 
@@ -62,7 +63,10 @@ lazy val book_api = (project in file(".")).
       "vc.inreach.aws" % "aws-signing-request-interceptor" % "0.0.16",
       "org.jsoup" % "jsoup" % JsoupVersion,
       "coza.opencollab" % "epub-creator" % "1.0.0",
-      "com.osinka.i18n" %% "scala-i18n" % "1.0.2"
+      "com.osinka.i18n" %% "scala-i18n" % "1.0.2",
+      "com.openhtmltopdf" % "openhtmltopdf-core" % OpenHtmlPdfVersion,
+      "com.openhtmltopdf" % "openhtmltopdf-pdfbox" % OpenHtmlPdfVersion,
+      "com.openhtmltopdf" % "openhtmltopdf-jsoup-dom-converter" % OpenHtmlPdfVersion
     )
   ).enablePlugins(DockerPlugin).enablePlugins(GitVersioning).enablePlugins(JettyPlugin)
 

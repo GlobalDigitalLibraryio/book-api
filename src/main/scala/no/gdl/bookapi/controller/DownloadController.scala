@@ -8,13 +8,13 @@
 package no.gdl.bookapi.controller
 
 import no.gdl.bookapi.model.api.Error
-import no.gdl.bookapi.service.{EPubService, ReadService}
+import no.gdl.bookapi.service.{EPubService, PdfService, ReadService}
 import org.scalatra.{InternalServerError, NotFound, Ok}
 
 import scala.util.{Failure, Success}
 
 trait DownloadController {
-  this: ReadService with EPubService =>
+  this: ReadService with EPubService with PdfService =>
   val downloadController: DownloadController
 
   class DownloadController extends GdlController {
@@ -46,7 +46,13 @@ trait DownloadController {
       val filename = params("filename")
 
       filename match {
-        case pdfPattern(uuid) => Ok(body = s"Here you soon will find $uuid.pdf in $language")
+        case pdfPattern(uuid) =>
+          pdfService.createPdf(language, uuid) match {
+            case None => NotFound(body = Error(Error.NOT_FOUND, s"No book with filename $filename found."))
+            case Some(pdfBuilder) =>
+              contentType = "application/octet-stream"
+              pdfBuilder.toStream(response.getOutputStream).run()
+          }
         case _ => NotFound(body = Error(Error.NOT_FOUND, s"No book with filename $filename found."))
       }
     }
