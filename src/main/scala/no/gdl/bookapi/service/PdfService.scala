@@ -49,9 +49,7 @@ trait PdfService {
              |    <style language='text/css'>${PdfCss(publisher, fonts.map(_.fontName)).asString}</style>
              |  </head>
              |  <body>
-             |    <div class='page'>
-             |      ${chapters.map(_.content).mkString("</div><div class='page'>")}
-             |    </div>
+             |    ${chapters.map(c => s"<div class='page'>${c.content}</div>").mkString("\n")}
              |  </body>
              |</html>
            """.stripMargin
