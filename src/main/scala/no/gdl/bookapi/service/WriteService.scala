@@ -109,8 +109,8 @@ trait WriteService {
               id = None,
               revision = None,
               publisherId = p.id.get,
-              licenseId = p.id.get,
               publisher = p,
+              licenseId = validLicense.id.get,
               license = validLicense)
 
             Try(bookRepository.add(newBook))
