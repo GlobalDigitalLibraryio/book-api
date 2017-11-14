@@ -72,6 +72,7 @@ class OPDSControllerTest extends UnitSuite with TestEnvironment {
             <name>{entry1.book.contributors.head.name}</name>
           </author>
           <updated>{entry1.book.dateArrived.atStartOfDay(ZoneId.systemDefault()).format(formatter)}</updated>
+          <dc:publisher>{entry1.book.publisher.name}</dc:publisher>
           <lrmi:educationalAlignment alignmentType="readingLevel" targetName={entry1.book.readingLevel.get}/>
           <summary>{entry1.book.description}</summary>
           <link href={entry1.book.downloads.epub} type="application/epub+zip" rel="http://opds-spec.org/acquisition/open-access"/>
@@ -84,6 +85,7 @@ class OPDSControllerTest extends UnitSuite with TestEnvironment {
             <name>{entry2.book.contributors.head.name}</name>
           </author>
           <updated>{entry2.book.dateArrived.atStartOfDay(ZoneId.systemDefault()).format(formatter)}</updated>
+          <dc:publisher>{entry2.book.publisher.name}</dc:publisher>
           <lrmi:educationalAlignment alignmentType="readingLevel" targetName={entry2.book.readingLevel.get}/>
           <summary>{entry2.book.description}</summary>
           <link href={entry2.book.downloads.epub} type="application/epub+zip" rel="http://opds-spec.org/acquisition/open-access"/>

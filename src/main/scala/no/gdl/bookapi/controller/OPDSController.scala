@@ -122,6 +122,7 @@ trait OPDSController {
               </author>
             )}
             <updated>{feedEntry.book.dateArrived.atStartOfDay(ZoneId.systemDefault()).format(dtf)}</updated>
+            <dc:publisher>{feedEntry.book.publisher.name}</dc:publisher>
             <lrmi:educationalAlignment alignmentType="readingLevel" targetName={feedEntry.book.readingLevel.getOrElse("1")} />
             <summary>{feedEntry.book.description}</summary>
             {if (feedEntry.book.coverPhoto.isDefined) {
