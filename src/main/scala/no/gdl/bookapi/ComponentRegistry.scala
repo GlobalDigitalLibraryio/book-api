@@ -8,6 +8,7 @@
 
 package no.gdl.bookapi
 
+import io.digitallibrary.language.service._
 import io.digitallibrary.network.GdlClient
 import no.gdl.bookapi.controller._
 import no.gdl.bookapi.integration.{DataSource, ElasticClient, ImageApiClient, JestClientFactory}
@@ -15,8 +16,6 @@ import no.gdl.bookapi.repository._
 import no.gdl.bookapi.service._
 import org.postgresql.ds.PGPoolingDataSource
 import scalikejdbc.{ConnectionPool, DataSourceConnectionPool}
-
-import scala.io.Source
 
 object ComponentRegistry
   extends DataSource
@@ -51,6 +50,7 @@ object ComponentRegistry
   with PdfService
   with FeedRepository
   with FeedService
+  with LanguageSupport
 {
   implicit val swagger = new BookSwagger
 
@@ -99,4 +99,5 @@ object ComponentRegistry
   lazy val pdfService = new PdfService
   lazy val feedRepository = new FeedRepository
   lazy val feedService = new FeedService
+  implicit lazy val languageProvider: LanguageProvider = new LanguageProvider(new Iso639, new Iso3166, new Iso15924)
 }

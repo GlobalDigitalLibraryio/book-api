@@ -7,6 +7,7 @@
 
 package no.gdl.bookapi.service
 
+import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.integration.{DownloadedImage, ImageMetaInformation}
 import no.gdl.bookapi.{TestData, TestEnvironment, UnitSuite}
 import org.mockito.Mockito._
@@ -22,7 +23,7 @@ class EPubServiceTest extends UnitSuite with TestEnvironment {
 
   test("that createEPub returns None when uuid not found") {
     when(translationRepository.withUuId("123")).thenReturn(None)
-    ePubService.createEPub("nob", "123") should equal (None)
+    ePubService.createEPub(LanguageTag("nob"), "123") should equal (None)
   }
 
 
@@ -31,15 +32,15 @@ class EPubServiceTest extends UnitSuite with TestEnvironment {
     val language = TestData.Domain.DefaultTranslation.language
 
     when(translationRepository.withUuId(any[String])(any[DBSession])).thenReturn(Some(TestData.Domain.DefaultTranslation))
-    when(chapterRepository.chaptersForBookIdAndLanguage(any[Long], any[String])(any[DBSession])).thenReturn(Seq())
+    when(chapterRepository.chaptersForBookIdAndLanguage(any[Long], any[LanguageTag])(any[DBSession])).thenReturn(Seq())
 
-    ePubService.createEPub(uuid, language) match {
+    ePubService.createEPub(language, uuid) match {
       case None => fail("epub should be defined")
       case Some(Failure(ex)) => fail("epub should be a success")
       case Some(Success(book)) => {
         book.getTitle should equal (TestData.Domain.DefaultTranslation.title)
         book.getId should equal (uuid)
-        book.getLanguage should equal (language)
+        book.getLanguage should equal (language.toString())
         book.getAuthor should equal (TestData.Domain.DefaultTranslation.contributors.map(_.person.name).mkString(","))
       }
     }
@@ -50,10 +51,10 @@ class EPubServiceTest extends UnitSuite with TestEnvironment {
     val image = DownloadedImage(ImageMetaInformation("1", "meta-url", "image-url", 1, "image/png"), "bytes".getBytes)
 
     when(translationRepository.withUuId(any[String])(any[DBSession])).thenReturn(Some(translation))
-    when(chapterRepository.chaptersForBookIdAndLanguage(any[Long], any[String])(any[DBSession])).thenReturn(Seq())
+    when(chapterRepository.chaptersForBookIdAndLanguage(any[Long], any[LanguageTag])(any[DBSession])).thenReturn(Seq())
     when(imageApiClient.downloadImage(translation.coverphoto.get)).thenReturn(Success(image))
 
-    ePubService.createEPub(translation.uuid, translation.language) match {
+    ePubService.createEPub(translation.language, translation.uuid) match {
       case None => fail("epub should be defined")
       case Some(Failure(ex)) => fail("epub should be a success")
       case Some(Success(book)) => {
@@ -68,10 +69,10 @@ class EPubServiceTest extends UnitSuite with TestEnvironment {
     val translation = TestData.Domain.DefaultTranslation.copy(coverphoto = Some(1))
 
     when(translationRepository.withUuId(any[String])(any[DBSession])).thenReturn(Some(translation))
-    when(chapterRepository.chaptersForBookIdAndLanguage(any[Long], any[String])(any[DBSession])).thenReturn(Seq())
+    when(chapterRepository.chaptersForBookIdAndLanguage(any[Long], any[LanguageTag])(any[DBSession])).thenReturn(Seq())
     when(imageApiClient.downloadImage(translation.coverphoto.get)).thenReturn(Failure(new RuntimeException("error")))
 
-    ePubService.createEPub(translation.uuid, translation.language) match {
+    ePubService.createEPub(translation.language, translation.uuid) match {
       case None => fail("epub should be defined")
       case Some(Success(book)) => fail("should be a failure")
       case Some(Failure(ex)) => {
@@ -83,11 +84,11 @@ class EPubServiceTest extends UnitSuite with TestEnvironment {
   test("that createEpub creates a book with expected chapter") {
     val translation = TestData.Domain.DefaultTranslation
     when(translationRepository.withUuId(any[String])(any[DBSession])).thenReturn(Some(translation))
-    when(chapterRepository.chaptersForBookIdAndLanguage(any[Long], any[String])(any[DBSession])).thenReturn(translation.chapters)
+    when(chapterRepository.chaptersForBookIdAndLanguage(any[Long], any[LanguageTag])(any[DBSession])).thenReturn(translation.chapters)
 
     when(contentConverter.toEPubContent(any[String], any[Seq[DownloadedImage]])).thenReturn("Content-of-chapter")
 
-    ePubService.createEPub(translation.uuid, translation.language) match {
+    ePubService.createEPub(translation.language, translation.uuid) match {
       case None => fail("epub should be defined")
       case Some(Failure(ex)) => fail("epub should be a success")
       case Some(Success(book)) => {
@@ -105,12 +106,12 @@ class EPubServiceTest extends UnitSuite with TestEnvironment {
     val image = DownloadedImage(ImageMetaInformation("1", "meta-url", "image-url", 1, "image/png"), "bytes".getBytes)
 
     when(translationRepository.withUuId(any[String])(any[DBSession])).thenReturn(Some(translation))
-    when(chapterRepository.chaptersForBookIdAndLanguage(any[Long], any[String])(any[DBSession])).thenReturn(Seq(chapter))
+    when(chapterRepository.chaptersForBookIdAndLanguage(any[Long], any[LanguageTag])(any[DBSession])).thenReturn(Seq(chapter))
 
     when(contentConverter.toEPubContent(any[String], any[Seq[DownloadedImage]])).thenReturn("Content-of-chapter")
     when(imageApiClient.downloadImage(1)).thenReturn(Success(image))
 
-    ePubService.createEPub(translation.uuid, translation.language) match {
+    ePubService.createEPub(translation.language, translation.uuid) match {
       case None => fail("epub should be defined")
       case Some(Failure(ex)) => fail("epub should be a success")
       case Some(Success(book)) => {
@@ -127,10 +128,10 @@ class EPubServiceTest extends UnitSuite with TestEnvironment {
     val chapter = TestData.Domain.DefaultChapter.copy(content = """<p><embed data-resource="image" data-resource_id="1"/></p>""")
 
     when(translationRepository.withUuId(any[String])(any[DBSession])).thenReturn(Some(translation))
-    when(chapterRepository.chaptersForBookIdAndLanguage(any[Long], any[String])(any[DBSession])).thenReturn(Seq(chapter))
+    when(chapterRepository.chaptersForBookIdAndLanguage(any[Long], any[LanguageTag])(any[DBSession])).thenReturn(Seq(chapter))
     when(imageApiClient.downloadImage(1)).thenReturn(Failure(new RuntimeException("image-download-error")))
 
-    ePubService.createEPub(translation.uuid, translation.language) match {
+    ePubService.createEPub(translation.language, translation.uuid) match {
       case None => fail("epub should be defined")
       case Some(Success(book)) => fail("epub should be a failure")
       case Some(Failure(ex)) => ex.getMessage should equal ("image-download-error")

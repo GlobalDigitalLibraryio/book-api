@@ -10,6 +10,7 @@ package no.gdl.bookapi
 import java.time.LocalDate
 import java.util.UUID
 
+import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.model._
 import no.gdl.bookapi.model.api.FeedCategory
 import no.gdl.bookapi.model.domain.{Category, Chapter, Contributor, EducationalAlignment}
@@ -85,7 +86,7 @@ object TestData {
       title = "Default translation title",
       about = "Default translation description",
       numPages = Some(10),
-      language = DefaultLanguage,
+      language = LanguageTag(DefaultLanguage),
       datePublished = Some(today),
       dateCreated = Some(yesterday),
       dateArrived = today,

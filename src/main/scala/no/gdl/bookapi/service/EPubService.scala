@@ -10,6 +10,7 @@ package no.gdl.bookapi.service
 import com.netaporter.uri.dsl._
 import com.typesafe.scalalogging.LazyLogging
 import coza.opencollab.epub.creator.model.{Content, EpubBook, TocLink}
+import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.integration.ImageApiClient
 import no.gdl.bookapi.model._
 import no.gdl.bookapi.model.domain.{EPubChapter, EPubCss}
@@ -22,7 +23,7 @@ trait EPubService {
   val ePubService: EPubService
 
   class EPubService() extends LazyLogging {
-    def createEPub(language: String, uuid: String): Option[Try[EpubBook]] = {
+    def createEPub(language: LanguageTag, uuid: String): Option[Try[EpubBook]] = {
       translationRepository.withUuId(uuid).map(translation =>
         buildEPubFor(translation, chapterRepository.chaptersForBookIdAndLanguage(translation.bookId, language)))
     }
@@ -30,7 +31,7 @@ trait EPubService {
     private def buildEPubFor(translation: domain.Translation, chapters: Seq[domain.Chapter]): Try[EpubBook] = {
       Try {
         val authors = translation.contributors.filter(_.`type` == "Author").map(_.person.name).mkString(", ")
-        val book = new EpubBook(translation.language, translation.uuid, translation.title, authors)
+        val book = new EpubBook(translation.language.toString(), translation.uuid, translation.title, authors)
 
         // Add CSS to ePub
         val ePubCss = EPubCss()

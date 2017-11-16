@@ -7,14 +7,16 @@
 
 package no.gdl.bookapi.controller
 
+import io.digitallibrary.language.model.LanguageTag
+import io.digitallibrary.language.service.LanguageSupport
 import no.gdl.bookapi.model.api.Error
 import no.gdl.bookapi.service.{EPubService, PdfService, ReadService}
-import org.scalatra.{InternalServerError, NotFound, Ok}
+import org.scalatra.{InternalServerError, NotFound}
 
 import scala.util.{Failure, Success}
 
 trait DownloadController {
-  this: ReadService with EPubService with PdfService =>
+  this: ReadService with EPubService with PdfService with LanguageSupport =>
   val downloadController: DownloadController
 
   class DownloadController extends GdlController {
@@ -23,7 +25,7 @@ trait DownloadController {
     private val epubPattern = "(.+).epub".r
 
     get("/epub/:lang/:filename") {
-      val language = params("lang")
+      val language = LanguageTag.fromString(params("lang"))
       val filename = params("filename")
 
       filename match {
@@ -42,7 +44,7 @@ trait DownloadController {
     }
 
     get("/pdf/:lang/:filename") {
-      val language = params("lang")
+      val language = LanguageTag.fromString(params("lang"))
       val filename = params("filename")
 
       filename match {

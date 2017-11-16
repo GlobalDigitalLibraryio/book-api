@@ -8,15 +8,17 @@
 
 package no.gdl.bookapi.controller
 
+import io.digitallibrary.language.model.LanguageTag
+import io.digitallibrary.language.service.LanguageSupport
 import no.gdl.bookapi.model.api.Error
-import no.gdl.bookapi.model.api.internal.{NewBook, NewChapter, NewTranslation, TranslationId}
+import no.gdl.bookapi.model.api.internal.{NewBook, NewChapter, NewTranslation}
 import no.gdl.bookapi.service._
-import org.scalatra.{Conflict, NotFound, Ok}
+import org.scalatra.{Conflict, NotFound}
 
 import scala.util.{Failure, Success}
 
 trait InternController {
-  this: WriteService with ReadService with ConverterService with ValidationService with FeedService =>
+  this: WriteService with ReadService with ConverterService with ValidationService with FeedService with LanguageSupport =>
   val internController: InternController
 
   class InternController extends GdlController {
@@ -42,8 +44,9 @@ trait InternController {
     post("/book/:id/translation") {
       val bookId = long("id")
       val newTranslation = extract[NewTranslation](request.body)
+      val language = LanguageTag.fromString(newTranslation.language)
 
-      readService.withIdAndLanguage(bookId, newTranslation.language) match {
+      readService.withIdAndLanguage(bookId, language) match {
         case Some(_) => Conflict(body = Error(Error.ALREADY_EXISTS, s"A translation with language '${newTranslation.language}' already exists for book with id '$bookId'. Updating is not supported yet"))
         case None => writeService.newTranslationForBook(bookId, newTranslation) match {
           case Success(x) => x

@@ -8,6 +8,7 @@
 package no.gdl.bookapi.controller
 import java.text.SimpleDateFormat
 
+import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi._
 import no.gdl.bookapi.model.api._
 import no.gdl.bookapi.model.domain.Sort
@@ -27,11 +28,14 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
   implicit val swagger = new BookSwagger
 
   lazy val controller = new BooksController
+
   addServlet(controller, "/*")
 
   test("that GET / will get books with default language") {
-    val result = SearchResult(0, 1, 10, Language("eng", "Englist"), Seq(TestData.Api.DefaultBook))
-    when(readService.withLanguageAndLevel(BookApiProperties.DefaultLanguage, Some("1"), 10, 1, Sort.ByIdAsc)).thenReturn(result)
+    val result = SearchResult(0, 1, 10, Language("eng", "English"), Seq(TestData.Api.DefaultBook))
+    when(languageProvider.validate(any[LanguageTag])).thenReturn(LanguageTag("eng"))
+    when(languageProvider.withIso639_3(any[LanguageTag])).thenReturn(LanguageTag("eng"))
+    when(readService.withLanguageAndLevel(LanguageTag(BookApiProperties.DefaultLanguage), Some("1"), 10, 1, Sort.ByIdAsc)).thenReturn(result)
 
     get("/?reading-level=1&page-size=10&page=1") {
       status should equal (200)
@@ -45,7 +49,9 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
     val language = TestData.Api.norwegian_bokmal
 
     val result = SearchResult(0, 1, 10, language, Seq(TestData.Api.DefaultBook))
-    when(readService.withLanguageAndLevel(language.code, Some("2"), 10, 1, Sort.ByIdAsc)).thenReturn(result)
+    when(languageProvider.validate(any[LanguageTag])).thenReturn(LanguageTag(language.code))
+    when(languageProvider.withIso639_3(any[LanguageTag])).thenReturn(LanguageTag(language.code))
+    when(readService.withLanguageAndLevel(LanguageTag(language.code), Some("2"), 10, 1, Sort.ByIdAsc)).thenReturn(result)
 
     get("/nob?reading-level=2&page-size=10&page=1") {
       status should equal (200)
@@ -62,8 +68,9 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
     val secondBook = TestData.Api.DefaultBook.copy(id = 1, title = "This should be last")
 
     val result = SearchResult(2, 1, 10, language, Seq(firstBook, secondBook))
-
-    when(readService.withLanguageAndLevel(language.code, Some("2"), 10, 1, Sort.ByTitleDesc)).thenReturn(result)
+    when(languageProvider.validate(any[LanguageTag])).thenReturn(LanguageTag(language.code))
+    when(languageProvider.withIso639_3(any[LanguageTag])).thenReturn(LanguageTag(language.code))
+    when(readService.withLanguageAndLevel(LanguageTag(language.code), Some("2"), 10, 1, Sort.ByTitleDesc)).thenReturn(result)
 
     get("/nob?reading-level=2&page-size=10&page=1&sort=-title") {
       status should equal (200)
@@ -80,7 +87,7 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
   }
 
   test("that GET /:lang/:id returns 404 when not found") {
-    when(readService.withIdAndLanguage(any[Long], any[String])).thenReturn(None)
+    when(readService.withIdAndLanguage(any[Long], any[LanguageTag])).thenReturn(None)
 
     get("/eng/1") {
       status should equal (404)
@@ -88,7 +95,7 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
   }
 
   test("that GET /:lang/:id returns book when found") {
-    when(readService.withIdAndLanguage(any[Long], any[String])).thenReturn(Some(TestData.Api.DefaultBook))
+    when(readService.withIdAndLanguage(any[Long], any[LanguageTag])).thenReturn(Some(TestData.Api.DefaultBook))
 
     get("/eng/1") {
       status should equal (200)
@@ -98,14 +105,14 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
   }
 
   test("that GET /:lang/:bookid/chapters/:chapterid returns 404 when not found") {
-    when(readService.chapterForBookWithLanguageAndId(any[Long], any[String], any[Long])).thenReturn(None)
+    when(readService.chapterForBookWithLanguageAndId(any[Long], any[LanguageTag], any[Long])).thenReturn(None)
     get("/eng/1/chapters/1") {
       status should equal (404)
     }
   }
 
   test("that GET /:lang/:bookid/chapters/:chapterid returns chapter when found") {
-    when(readService.chapterForBookWithLanguageAndId(any[Long], any[String], any[Long])).thenReturn(Some(TestData.Api.Chapter1))
+    when(readService.chapterForBookWithLanguageAndId(any[Long], any[LanguageTag], any[Long])).thenReturn(Some(TestData.Api.Chapter1))
     get("/eng/1/chapters/1") {
       status should equal (200)
       val chapter = read[Chapter](body)

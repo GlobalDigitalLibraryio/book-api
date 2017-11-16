@@ -8,8 +8,8 @@
 package no.gdl.bookapi.service
 
 import com.typesafe.scalalogging.LazyLogging
-import no.gdl.bookapi.model.api.{ValidationException, ValidationMessage}
 import no.gdl.bookapi.model._
+import no.gdl.bookapi.model.api.{ValidationException, ValidationMessage}
 import org.jsoup.Jsoup
 import org.jsoup.safety.Whitelist
 

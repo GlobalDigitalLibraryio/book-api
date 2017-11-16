@@ -7,6 +7,7 @@
 
 package no.gdl.bookapi.repository
 
+import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.model.api.OptimisticLockException
 import no.gdl.bookapi.model.domain.{Chapter, Translation}
 import scalikejdbc._
@@ -58,24 +59,24 @@ trait ChapterRepository {
         .map(Chapter(ch)).single().apply()
     }
 
-    def chaptersForBookIdAndLanguage(bookId: Long, language: String)(implicit session: DBSession = ReadOnlyAutoSession): Seq[Chapter] = {
+    def chaptersForBookIdAndLanguage(bookId: Long, language: LanguageTag)(implicit session: DBSession = ReadOnlyAutoSession): Seq[Chapter] = {
       select
         .from(Chapter as ch)
         .leftJoin(Translation as t).on(ch.translationId, t.id)
-        .where.eq(t.bookId, bookId).and.eq(t.language, language)
+        .where.eq(t.bookId, bookId).and.eq(t.language, language.toString)
         .orderBy(ch.seqNo).asc
         .toSQL
         .map(Chapter(ch)).list().apply()
 
     }
 
-    def chapterForBookWithLanguageAndId(bookId: Long, language: String, chapterId: Long)(implicit session: DBSession = ReadOnlyAutoSession): Option[Chapter] = {
+    def chapterForBookWithLanguageAndId(bookId: Long, language: LanguageTag, chapterId: Long)(implicit session: DBSession = ReadOnlyAutoSession): Option[Chapter] = {
       select
         .from(Chapter as ch)
         .rightJoin(Translation as t).on(ch.translationId, t.id)
         .where
         .eq(t.bookId, bookId).and
-        .eq(t.language, language).and
+        .eq(t.language, language.toString).and
         .eq(ch.id, chapterId).toSQL
         .map(Chapter(ch)).single().apply()
     }

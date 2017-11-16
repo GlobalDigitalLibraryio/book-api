@@ -12,6 +12,7 @@ import java.util.UUID
 
 import com.osinka.i18n.{Lang, Messages}
 import com.typesafe.scalalogging.LazyLogging
+import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.BookApiProperties
 import no.gdl.bookapi.BookApiProperties.{OpdsLanguageParam, OpdsLevelParam}
 import no.gdl.bookapi.model._
@@ -29,7 +30,7 @@ trait FeedService {
     val page = 1
     val pageSize = 10000 //TODO in #94: Create partial opds feed entries, to solve paging
 
-    def feedForUrl(url: String, language: String, feedUpdated: Option[LocalDate], titleArgs: Seq[String], books: => Seq[FeedEntry]): Option[api.Feed] = {
+    def feedForUrl(url: String, language: LanguageTag, feedUpdated: Option[LocalDate], titleArgs: Seq[String], books: => Seq[FeedEntry]): Option[api.Feed] = {
       val updated = feedUpdated match {
         case Some(x) => x
         case None => books.sortBy(_.book.dateArrived).reverse.headOption.map(_.book.dateArrived).getOrElse(LocalDate.now())
@@ -42,16 +43,16 @@ trait FeedService {
             feedDefinition.revision.get,
             s"${BookApiProperties.Domain}${feedDefinition.url}",
             feedDefinition.uuid),
-          Messages(feedDefinition.titleKey, titleArgs:_*)(Lang(language)),
-          feedDefinition.descriptionKey.map(Messages(_)(Lang(language))),
+          Messages(feedDefinition.titleKey, titleArgs:_*)(Lang(language.toString())),
+          feedDefinition.descriptionKey.map(Messages(_)(Lang(language.toString()))),
           Some("self"),
           updated,
           books)
       })
     }
 
-    def feedsForNavigation(language: String): Seq[api.Feed] = {
-      implicit val lang: Lang = Lang(language)
+    def feedsForNavigation(language: LanguageTag): Seq[api.Feed] = {
+      implicit val lang: Lang = Lang(language.toString)
 
       val justArrivedUpdated = translationRepository.latestArrivalDateFor(language)
       val justArrived = feedRepository.forUrl(justArrivedPath(language)).map(definition =>
@@ -101,7 +102,7 @@ trait FeedService {
       Seq(featured, justArrived).flatten ++ levels
     }
 
-    def allEntries(language: String): Seq[FeedEntry] = {
+    def allEntries(language: LanguageTag): Seq[FeedEntry] = {
       val featuredBooks = editorsPicks(language).map(addFeaturedCategory(_, language))
       val justArrived = newEntries(language).map(addJustArrivedCategory(_, language))
 
@@ -115,14 +116,14 @@ trait FeedService {
       featuredBooks ++ justArrived ++ allBooks
     }
 
-    def newEntries(lang: String): Seq[FeedEntry] = readService.withLanguage(
+    def newEntries(lang: LanguageTag): Seq[FeedEntry] = readService.withLanguage(
       lang, BookApiProperties.OpdsJustArrivedLimit, 1, Sort.ByArrivalDateDesc).results.map(FeedEntry(_))
 
-    def editorsPickLastUpdated(language: String): Option[LocalDate] = editorsPickRepository.lastUpdatedEditorsPick(language)
-    def editorsPicks(lang: String): Seq[FeedEntry] = readService.editorsPickForLanguage(lang)
+    def editorsPickLastUpdated(language: LanguageTag): Option[LocalDate] = editorsPickRepository.lastUpdatedEditorsPick(language)
+    def editorsPicks(lang: LanguageTag): Seq[FeedEntry] = readService.editorsPickForLanguage(lang)
       .map(_.books).getOrElse(Seq()).map(FeedEntry(_))
 
-    def entriesForLanguageAndLevel(language: String, level: String): Seq[FeedEntry] = {
+    def entriesForLanguageAndLevel(language: LanguageTag, level: String): Seq[FeedEntry] = {
       readService.withLanguageAndLevel(
         language = language,
         readingLevel = Some(level),
@@ -132,36 +133,36 @@ trait FeedService {
       ).results.map(book => api.FeedEntry(book))
     }
 
-    def addFeaturedCategory(feedEntry: FeedEntry, language: String): FeedEntry = {
-      val title = Messages("featured_feed_title")(Lang(language))
+    def addFeaturedCategory(feedEntry: FeedEntry, language: LanguageTag): FeedEntry = {
+      val title = Messages("featured_feed_title")(Lang(language.toString()))
       val url = s"${BookApiProperties.Domain}${featuredPath(language)}"
       feedEntry.copy(
         categories = feedEntry.categories :+ FeedCategory(url, title, sortOrder = 1))
     }
 
-    def addJustArrivedCategory(feedEntry: FeedEntry, language: String): FeedEntry = {
-      val title = Messages("new_entries_feed_title")(Lang(language))
+    def addJustArrivedCategory(feedEntry: FeedEntry, language: LanguageTag): FeedEntry = {
+      val title = Messages("new_entries_feed_title")(Lang(language.toString()))
       val url = s"${BookApiProperties.Domain}${justArrivedPath(language)}"
       feedEntry.copy(
         categories = feedEntry.categories :+ FeedCategory(url, title, sortOrder = 2))
     }
 
-    def addLevelCategory(feedEntry: FeedEntry, language: String): FeedEntry = {
+    def addLevelCategory(feedEntry: FeedEntry, language: LanguageTag): FeedEntry = {
       val level = feedEntry.book.readingLevel.getOrElse(BookApiProperties.DefaultReadingLevel)
-      val readingLevelCategoryTitle = Messages("level_feed_title", level)(Lang(language))
+      val readingLevelCategoryTitle = Messages("level_feed_title", level)(Lang(language.toString()))
       val readingLevelUrl = s"${BookApiProperties.Domain}${levelPath(language, level)}"
       feedEntry.copy(
         categories = feedEntry.categories :+ FeedCategory(readingLevelUrl, readingLevelCategoryTitle, sortOrder = level.toInt + 2))
     }
 
-    def featuredPath(language: String): String = s"${BookApiProperties.OpdsPath}${BookApiProperties.OpdsFeaturedUrl.url}"
-      .replace(BookApiProperties.OpdsLanguageParam, language)
+    def featuredPath(language: LanguageTag): String = s"${BookApiProperties.OpdsPath}${BookApiProperties.OpdsFeaturedUrl.url}"
+      .replace(BookApiProperties.OpdsLanguageParam, language.toString())
 
-    def justArrivedPath(language: String): String = s"${BookApiProperties.OpdsPath}${BookApiProperties.OpdsNewUrl.url}"
-      .replace(BookApiProperties.OpdsLanguageParam, language)
+    def justArrivedPath(language: LanguageTag): String = s"${BookApiProperties.OpdsPath}${BookApiProperties.OpdsNewUrl.url}"
+      .replace(BookApiProperties.OpdsLanguageParam, language.toString)
 
-    def levelPath(language: String, level: String): String = s"${BookApiProperties.OpdsPath}${BookApiProperties.OpdsLevelUrl.url}"
-      .replace(BookApiProperties.OpdsLanguageParam, language)
+    def levelPath(language: LanguageTag, level: String): String = s"${BookApiProperties.OpdsPath}${BookApiProperties.OpdsLevelUrl.url}"
+      .replace(BookApiProperties.OpdsLanguageParam, language.toString())
       .replace(BookApiProperties.OpdsLevelParam, level)
 
     def generateFeeds(): Seq[api.FeedDefinition] = {
@@ -185,8 +186,8 @@ trait FeedService {
         val containsLevel = url.contains(OpdsLevelParam)
 
         val urls = (containsLanguage, containsLevel) match {
-          case (true, true) => languageAndLevel.map(langLevel => url.replace(OpdsLanguageParam, langLevel._1).replace(OpdsLevelParam, langLevel._2))
-          case (true, _) => languages.map(lang => url.replace(OpdsLanguageParam, lang))
+          case (true, true) => languageAndLevel.map(langLevel => url.replace(OpdsLanguageParam, langLevel._1.toString()).replace(OpdsLevelParam, langLevel._2))
+          case (true, _) => languages.map(lang => url.replace(OpdsLanguageParam, lang.toString()))
           case (_, _) => Seq(url)
         }
 

@@ -9,6 +9,7 @@ package no.gdl.bookapi.repository
 
 import java.time.LocalDate
 
+import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.model.domain.Sort
 import no.gdl.bookapi.{IntegrationSuite, TestEnvironment}
 
@@ -25,12 +26,12 @@ class TranslationRepositoryTest extends IntegrationSuite with TestEnvironment wi
     withRollback { implicit session =>
       val language = "eng"
       val book = addBookDef()
-      val addedTranslation = addTranslationDef("external-id", "Some title", book.id.get, language)
+      val addedTranslation = addTranslationDef("external-id", "Some title", book.id.get, LanguageTag(language))
 
       addedTranslation.id.isDefined should be(true)
       addedTranslation.revision.isDefined should be(true)
 
-      val readTranslation = translationRepository.forBookIdAndLanguage(book.id.get, language)
+      val readTranslation = translationRepository.forBookIdAndLanguage(book.id.get, LanguageTag(language))
       readTranslation.isDefined should be(true)
       readTranslation.head.id should equal(addedTranslation.id)
       readTranslation.head.title should equal("Some title")
@@ -45,15 +46,15 @@ class TranslationRepositoryTest extends IntegrationSuite with TestEnvironment wi
       val book3 = addBookDef()
       val book4 = addBookDef()
 
-      addTranslationDef("ext1", "Title 1 - eng", book1.id.get, "eng")
-      addTranslationDef("ext2", "Title 1 - nob", book1.id.get, "nob")
-      addTranslationDef("ext3", "Title 2 - eng", book2.id.get, "eng")
-      addTranslationDef("ext4", "Title 2 - nob", book2.id.get, "nob")
-      addTranslationDef("ext6", "Title 3 - nob", book3.id.get, "nob")
-      addTranslationDef("ext8", "Title 4 - nob", book4.id.get, "nob")
+      addTranslationDef("ext1", "Title 1 - eng", book1.id.get, LanguageTag("eng"))
+      addTranslationDef("ext2", "Title 1 - nob", book1.id.get, LanguageTag("nob"))
+      addTranslationDef("ext3", "Title 2 - eng", book2.id.get, LanguageTag("eng"))
+      addTranslationDef("ext4", "Title 2 - nob", book2.id.get, LanguageTag("nob"))
+      addTranslationDef("ext6", "Title 3 - nob", book3.id.get, LanguageTag("nob"))
+      addTranslationDef("ext8", "Title 4 - nob", book4.id.get, LanguageTag("nob"))
 
-      val searchResult = translationRepository.bookIdsWithLanguage("eng", 10, 1, Sort.ByIdAsc)
-      searchResult.language should equal("eng")
+      val searchResult = translationRepository.bookIdsWithLanguage(LanguageTag("eng"), 10, 1, Sort.ByIdAsc)
+      searchResult.language.toString() should equal("eng")
       searchResult.results.length should be(2)
       searchResult.results.sorted should equal(Seq(book1.id.get, book2.id.get))
     }
@@ -62,12 +63,12 @@ class TranslationRepositoryTest extends IntegrationSuite with TestEnvironment wi
   test("that languagesFor returns all languages for the given book") {
     withRollback { implicit session =>
       val book1 = addBookDef()
-      addTranslationDef("ext1", "title 1", book1.id.get, "eng")
-      addTranslationDef("ext1", "title 1", book1.id.get, "nob")
-      addTranslationDef("ext1", "title 1", book1.id.get, "amh")
-      addTranslationDef("ext1", "title 1", book1.id.get, "swa")
+      addTranslationDef("ext1", "title 1", book1.id.get, LanguageTag("eng"))
+      addTranslationDef("ext1", "title 1", book1.id.get, LanguageTag("nob"))
+      addTranslationDef("ext1", "title 1", book1.id.get, LanguageTag("amh"))
+      addTranslationDef("ext1", "title 1", book1.id.get, LanguageTag("swa"))
 
-      translationRepository.languagesFor(book1.id.get).sorted should equal(Seq("amh", "eng", "nob", "swa"))
+      translationRepository.languagesFor(book1.id.get).map(_.toString()).sorted should equal(Seq("amh", "eng", "nob", "swa"))
     }
   }
 
@@ -78,12 +79,12 @@ class TranslationRepositoryTest extends IntegrationSuite with TestEnvironment wi
       val book3 = addBookDef()
       val book4 = addBookDef()
 
-      addTranslationDef("ext1", "title 1", book1.id.get, "xho")
-      addTranslationDef("ext2", "title 2", book2.id.get, "amh")
-      addTranslationDef("ext3", "title 3", book3.id.get, "xho")
-      addTranslationDef("ext4", "title 4", book4.id.get, "xho")
+      addTranslationDef("ext1", "title 1", book1.id.get, LanguageTag("xho"))
+      addTranslationDef("ext2", "title 2", book2.id.get, LanguageTag("amh"))
+      addTranslationDef("ext3", "title 3", book3.id.get, LanguageTag("xho"))
+      addTranslationDef("ext4", "title 4", book4.id.get, LanguageTag("xho"))
 
-      val ids = translationRepository.bookIdsWithLanguageAndLevel("xho", None, 10, 1, Sort.ByIdAsc)
+      val ids = translationRepository.bookIdsWithLanguageAndLevel(LanguageTag("xho"), None, 10, 1, Sort.ByIdAsc)
 
       ids.results should equal (Seq(book1.id.get, book3.id.get, book4.id.get))
     }
@@ -95,11 +96,11 @@ class TranslationRepositoryTest extends IntegrationSuite with TestEnvironment wi
       val book2 = addBookDef()
       val book3 = addBookDef()
 
-      addTranslationDef("ext1", "title 1", book1.id.get, "xho", Some("2"))
-      addTranslationDef("ext2", "title 2", book2.id.get, "xho", Some("2"))
-      addTranslationDef("ext3", "title 3", book3.id.get, "xho", Some("1"))
+      addTranslationDef("ext1", "title 1", book1.id.get, LanguageTag("xho"), Some("2"))
+      addTranslationDef("ext2", "title 2", book2.id.get, LanguageTag("xho"), Some("2"))
+      addTranslationDef("ext3", "title 3", book3.id.get, LanguageTag("xho"), Some("1"))
 
-      val ids = translationRepository.bookIdsWithLanguageAndLevel("xho", Some("2"), 10, 1, Sort.ByIdAsc)
+      val ids = translationRepository.bookIdsWithLanguageAndLevel(LanguageTag("xho"), Some("2"), 10, 1, Sort.ByIdAsc)
       ids.results should equal (Seq(book1.id.get, book2.id.get))
     }
   }
@@ -111,21 +112,21 @@ class TranslationRepositoryTest extends IntegrationSuite with TestEnvironment wi
       val book3 = addBookDef()
       val book4 = addBookDef()
 
-      addTranslationDef("ext1", "title 1", book1.id.get, "xho", None)
-      addTranslationDef("ext2", "title 2", book2.id.get, "xho", None)
-      addTranslationDef("ext3", "title 3", book3.id.get, "xho", None)
-      addTranslationDef("ext4", "title 4", book4.id.get, "xho", None)
+      addTranslationDef("ext1", "title 1", book1.id.get, LanguageTag("xho"), None)
+      addTranslationDef("ext2", "title 2", book2.id.get, LanguageTag("xho"), None)
+      addTranslationDef("ext3", "title 3", book3.id.get, LanguageTag("xho"), None)
+      addTranslationDef("ext4", "title 4", book4.id.get, LanguageTag("xho"), None)
 
-      val page1 = translationRepository.bookIdsWithLanguageAndLevel("xho", None, 1, 1, Sort.ByIdAsc)
+      val page1 = translationRepository.bookIdsWithLanguageAndLevel(LanguageTag("xho"), None, 1, 1, Sort.ByIdAsc)
       page1.results should equal (Seq(book1.id.get))
 
-      val page2 = translationRepository.bookIdsWithLanguageAndLevel("xho", None, 1, 2, Sort.ByIdAsc)
+      val page2 = translationRepository.bookIdsWithLanguageAndLevel(LanguageTag("xho"), None, 1, 2, Sort.ByIdAsc)
       page2.results should equal (Seq(book2.id.get))
 
-      val page3 = translationRepository.bookIdsWithLanguageAndLevel("xho", None, 1, 3, Sort.ByIdAsc)
+      val page3 = translationRepository.bookIdsWithLanguageAndLevel(LanguageTag("xho"), None, 1, 3, Sort.ByIdAsc)
       page3.results should equal (Seq(book3.id.get))
 
-      val doublePage = translationRepository.bookIdsWithLanguageAndLevel("xho", None, 2, 2, Sort.ByIdAsc)
+      val doublePage = translationRepository.bookIdsWithLanguageAndLevel(LanguageTag("xho"), None, 2, 2, Sort.ByIdAsc)
       doublePage.results should equal(Seq(book3.id.get, book4.id.get))
     }
   }
@@ -137,27 +138,27 @@ class TranslationRepositoryTest extends IntegrationSuite with TestEnvironment wi
       val book3 = addBookDef()
       val book4 = addBookDef()
 
-      addTranslationDef("ext1", "b", book1.id.get, "xho", None, Some(LocalDate.now().minusDays(1)))
-      addTranslationDef("ext2", "a", book2.id.get, "xho", None, Some(LocalDate.now().minusDays(3)))
-      addTranslationDef("ext3", "d", book3.id.get, "xho", None, Some(LocalDate.now().minusDays(2)))
-      addTranslationDef("ext4", "c", book4.id.get, "xho", None, Some(LocalDate.now().minusDays(4)))
+      addTranslationDef("ext1", "b", book1.id.get, LanguageTag("xho"), None, Some(LocalDate.now().minusDays(1)))
+      addTranslationDef("ext2", "a", book2.id.get, LanguageTag("xho"), None, Some(LocalDate.now().minusDays(3)))
+      addTranslationDef("ext3", "d", book3.id.get, LanguageTag("xho"), None, Some(LocalDate.now().minusDays(2)))
+      addTranslationDef("ext4", "c", book4.id.get, LanguageTag("xho"), None, Some(LocalDate.now().minusDays(4)))
 
-      val byIdAsc = translationRepository.bookIdsWithLanguageAndLevel("xho", None, 10, 1, Sort.ByIdAsc)
+      val byIdAsc = translationRepository.bookIdsWithLanguageAndLevel(LanguageTag("xho"), None, 10, 1, Sort.ByIdAsc)
       byIdAsc.results should equal (Seq(book1.id.get, book2.id.get, book3.id.get, book4.id.get))
 
-      val byIdDesc = translationRepository.bookIdsWithLanguageAndLevel("xho", None, 10, 1, Sort.ByIdDesc)
+      val byIdDesc = translationRepository.bookIdsWithLanguageAndLevel(LanguageTag("xho"), None, 10, 1, Sort.ByIdDesc)
       byIdDesc.results should equal (Seq(book4.id.get, book3.id.get, book2.id.get, book1.id.get))
 
-      val byTitleAsc = translationRepository.bookIdsWithLanguageAndLevel("xho", None, 10, 1, Sort.ByTitleAsc)
+      val byTitleAsc = translationRepository.bookIdsWithLanguageAndLevel(LanguageTag("xho"), None, 10, 1, Sort.ByTitleAsc)
       byTitleAsc.results should equal (Seq(book2.id.get, book1.id.get, book4.id.get, book3.id.get))
 
-      val byTitleDesc = translationRepository.bookIdsWithLanguageAndLevel("xho", None, 10, 1, Sort.ByTitleDesc)
+      val byTitleDesc = translationRepository.bookIdsWithLanguageAndLevel(LanguageTag("xho"), None, 10, 1, Sort.ByTitleDesc)
       byTitleDesc.results should equal (Seq(book3.id.get, book4.id.get, book1.id.get, book2.id.get))
 
-      val byArrivalDateAsc = translationRepository.bookIdsWithLanguageAndLevel("xho", None, 10, 1, Sort.ByArrivalDateAsc)
+      val byArrivalDateAsc = translationRepository.bookIdsWithLanguageAndLevel(LanguageTag("xho"), None, 10, 1, Sort.ByArrivalDateAsc)
       byArrivalDateAsc.results should equal (Seq(book4.id.get, book2.id.get, book3.id.get, book1.id.get))
 
-      val byArrivalDateDesc = translationRepository.bookIdsWithLanguageAndLevel("xho", None, 10, 1, Sort.ByArrivalDateDesc)
+      val byArrivalDateDesc = translationRepository.bookIdsWithLanguageAndLevel(LanguageTag("xho"), None, 10, 1, Sort.ByArrivalDateDesc)
       byArrivalDateDesc.results should equal (Seq(book1.id.get, book3.id.get, book2.id.get, book4.id.get))
     }
   }

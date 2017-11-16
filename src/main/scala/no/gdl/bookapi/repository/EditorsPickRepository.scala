@@ -10,6 +10,7 @@ package no.gdl.bookapi.repository
 import java.sql.PreparedStatement
 import java.time.LocalDate
 
+import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.model.domain.EditorsPick
 import scalikejdbc._
 
@@ -38,24 +39,24 @@ trait EditorsPickRepository {
           ${ep.dateChanged})
         values (
          ${startRevision},
-         ${editorsPick.language},
+         ${editorsPick.language.toString()},
          ${translationBinder},
          ${editorsPick.dateChanged})""".updateAndReturnGeneratedKey().apply()
 
       editorsPick.copy(id = Some(id), revision = Some(startRevision))
     }
 
-    def lastUpdatedEditorsPick(language: String)(implicit session: DBSession = ReadOnlyAutoSession): Option[LocalDate] = {
+    def lastUpdatedEditorsPick(language: LanguageTag)(implicit session: DBSession = ReadOnlyAutoSession): Option[LocalDate] = {
       select(ep.dateChanged)
         .from(EditorsPick as ep)
-        .where.eq(ep.language, language).toSQL
+        .where.eq(ep.language, language.toString).toSQL
         .map(_.localDate(1)).single.apply()
     }
 
-    def forLanguage(language: String)(implicit session: DBSession = ReadOnlyAutoSession): Option[EditorsPick] = {
+    def forLanguage(language: LanguageTag)(implicit session: DBSession = ReadOnlyAutoSession): Option[EditorsPick] = {
       select
         .from(EditorsPick as ep)
-        .where.eq(ep.language, language).toSQL
+        .where.eq(ep.language, language.toString).toSQL
         .map(EditorsPick(ep))
         .single().apply()
     }

@@ -7,6 +7,7 @@
 
 package no.gdl.bookapi.repository
 
+import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.model.domain._
 import no.gdl.bookapi.{IntegrationSuite, TestEnvironment}
 
@@ -24,7 +25,7 @@ class ContributorRepositoryTest extends IntegrationSuite with TestEnvironment wi
   test("that Contributor.add returns a Contributor with id") {
     withRollback { implicit session =>
       val book = addBookDef()
-      val translation = addTranslationDef("external-id", "Some title", book.id.get, "eng")
+      val translation = addTranslationDef("external-id", "Some title", book.id.get, LanguageTag("eng"))
       val person = personRepository.add(Person(None, None, "Some person"))
 
       val contributor = Contributor(None, None, person.id.get, translation.id.get, "Author", person)
@@ -39,7 +40,7 @@ class ContributorRepositoryTest extends IntegrationSuite with TestEnvironment wi
   test("that Contributor.forTranslationId returns all contributors for translation") {
     withRollback { implicit session =>
       val book = addBookDef()
-      val translation = addTranslationDef("external-id", "Some title", book.id.get, "eng")
+      val translation = addTranslationDef("external-id", "Some title", book.id.get, LanguageTag("eng"))
       val person1 = personRepository.add(Person(None, None, "Some person"))
       val person2 = personRepository.add(Person(None, None, "Some other person"))
 

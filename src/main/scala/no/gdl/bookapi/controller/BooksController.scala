@@ -8,6 +8,8 @@
 
 package no.gdl.bookapi.controller
 
+import io.digitallibrary.language.model.LanguageTag
+import io.digitallibrary.language.service.LanguageSupport
 import io.digitallibrary.network.AuthUser
 import no.gdl.bookapi.BookApiProperties.DefaultLanguage
 import no.gdl.bookapi.model.api
@@ -18,7 +20,7 @@ import org.scalatra._
 import org.scalatra.swagger.{ResponseMessage, Swagger, SwaggerSupport}
 
 trait BooksController {
-  this: ReadService with ConverterService =>
+  this: ReadService with ConverterService with LanguageSupport =>
   val booksController: BooksController
 
   class BooksController(implicit val swagger: Swagger) extends GdlController with SwaggerSupport {
@@ -101,8 +103,9 @@ trait BooksController {
       val page = intOrDefault("page", 1).max(1)
       val readingLevel = params.get("reading-level")
       val sort = Sort.valueOf(paramOrNone("sort")).getOrElse(Sort.ByIdAsc)
+      val language = LanguageTag.fromString(DefaultLanguage)
 
-      readService.withLanguageAndLevel(DefaultLanguage, readingLevel, pageSize, page, sort)
+      readService.withLanguageAndLevel(language, readingLevel, pageSize, page, sort)
     }
 
     get("/:lang/?", operation(getAllBooksInLang)) {
@@ -111,12 +114,13 @@ trait BooksController {
       val readingLevel = params.get("reading-level")
       val sort = Sort.valueOf(paramOrNone("sort")).getOrElse(Sort.ByIdAsc)
 
-      readService.withLanguageAndLevel(language("lang"), readingLevel, pageSize, page, sort)
+      readService.withLanguageAndLevel(LanguageTag.fromString(params("lang")), readingLevel, pageSize, page, sort)
+
     }
 
     get("/:lang/:id/?", operation(getBook)) {
       val id = long("id")
-      val lang = language("lang")
+      val lang = LanguageTag.fromString(params("lang"))
 
       readService.withIdAndLanguage(id, lang) match {
         case Some(x) => x
@@ -125,11 +129,11 @@ trait BooksController {
     }
 
     get("/:lang/:id/chapters/?", operation(getChapters)) {
-      readService.chaptersForIdAndLanguage(long("id"), language("lang"))
+      readService.chaptersForIdAndLanguage(long("id"), LanguageTag.fromString(params("lang")))
     }
 
     get("/:lang/:bookid/chapters/:chapterid/?", operation(getChapter)) {
-      val lang = language("lang")
+      val lang = LanguageTag.fromString(params("lang"))
       val bookId = long("bookid")
       val chapterId = long("chapterid")
 
@@ -142,7 +146,7 @@ trait BooksController {
     get("/:lang/similar/:id/?", operation(getSimilar)) {
       readService.similarTo(
         long("id"),
-        language("lang"),
+        LanguageTag.fromString(params("lang")),
         intOrDefault("page-size", 10).min(100).max(1),
         intOrDefault("page", 1).max(1),
         Sort.valueOf(paramOrNone("sort")).getOrElse(Sort.ByIdAsc))
@@ -153,4 +157,5 @@ trait BooksController {
         throw new AccessDeniedException("User is missing required role to perform this operation")
     }
   }
+
 }

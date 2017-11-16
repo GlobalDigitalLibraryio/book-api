@@ -7,6 +7,7 @@
 
 package no.gdl.bookapi.service
 
+import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.model.domain.Translation
 import no.gdl.bookapi.{TestEnvironment, UnitSuite}
 import org.mockito.Mockito.when
@@ -16,7 +17,7 @@ class ConverterServiceTest extends UnitSuite with TestEnvironment {
 
   test("that toApiDownloads creates URLs as expected") {
     val translation = mock[Translation]
-    when(translation.language).thenReturn("eng")
+    when(translation.language).thenReturn(LanguageTag("eng"))
     when(translation.uuid).thenReturn("12345")
 
     val downloads = service.toApiDownloads(translation)
