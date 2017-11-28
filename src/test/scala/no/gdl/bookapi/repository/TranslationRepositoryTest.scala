@@ -162,7 +162,7 @@ class TranslationRepositoryTest extends IntegrationSuite with TestEnvironment wi
     }
   }
 
-  test("that that different pages does not overlap in results") {
+  test("that that ByArrivalDate also sorts on id on same date") {
     withRollback { implicit session =>
       val book1 = addBookDef()
       val book2 = addBookDef()
@@ -185,13 +185,8 @@ class TranslationRepositoryTest extends IntegrationSuite with TestEnvironment wi
       val page1 = translationRepository.bookIdsWithLanguageAndLevel("xho", None, 3, 1, Sort.ByArrivalDateDesc)
       val page2 = translationRepository.bookIdsWithLanguageAndLevel("xho", None, 3, 2, Sort.ByArrivalDateDesc)
 
-      page1.results.contains(book6.id.get) should be (true)
-      page1.results.contains(book5.id.get) should be (true)
-      page1.results.contains(book4.id.get) should be (true)
-
-      page2.results.contains(book3.id.get) should be (true)
-      page2.results.contains(book2.id.get) should be (true)
-      page2.results.contains(book1.id.get) should be (true)
+      page1.results should equal (Seq(book6.id.get, book5.id.get, book4.id.get))
+      page2.results should equal (Seq(book3.id.get, book2.id.get, book1.id.get))
     }
   }
 }
