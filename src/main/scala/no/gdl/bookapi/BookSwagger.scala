@@ -27,5 +27,5 @@ object BookApiInfo {
 }
 
 class BookSwagger extends Swagger("2.0", "0.8", BookApiInfo.apiInfo) {
-  addAuthorization(OAuth(List("books:all"), List(ApplicationGrant(TokenEndpoint("/auth/tokens", "access_token")))))
+//  addAuthorization(OAuth(List("books:all"), List(ImplicitGrant(LoginEndpoint(BookApiProperties.LoginEndpoint), "access_token"))))
 }
