@@ -40,7 +40,7 @@ trait FeedService {
           api.FeedDefinition(
             feedDefinition.id.get,
             feedDefinition.revision.get,
-            s"${BookApiProperties.CloudFrontOpds}${feedDefinition.url}",
+            s"${BookApiProperties.CloudFrontOpds}${feedDefinition.url.replace(BookApiProperties.OpdsPath,"")}",
             feedDefinition.uuid),
           Messages(feedDefinition.titleKey, titleArgs:_*)(Lang(language)),
           feedDefinition.descriptionKey.map(Messages(_)(Lang(language))),
