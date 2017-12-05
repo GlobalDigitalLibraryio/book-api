@@ -32,17 +32,12 @@ class DownloadControllerTest extends UnitSuite with TestEnvironment with Scalatr
   addServlet(controller, "/*")
 
   test("that get /epub/nob/123.txt returns 404 not found") {
-    when(languageProvider.validate(any[LanguageTag])).thenReturn(LanguageTag("nob"))
-    when(languageProvider.withIso639_3(any[LanguageTag])).thenReturn(LanguageTag("nob"))
-
     get("/epub/nob/123.txt") {
       status should equal (404)
     }
   }
 
   test("that get /epub/nob/123.epub returns 404 not found, when 123.epub does not exist") {
-    when(languageProvider.validate(any[LanguageTag])).thenReturn(LanguageTag("nob"))
-    when(languageProvider.withIso639_3(any[LanguageTag])).thenReturn(LanguageTag("nob"))
     when(ePubService.createEPub(LanguageTag("nob"), "123")).thenReturn(None)
     get("/epub/nob/123.epub") {
       status should equal (404)
@@ -50,8 +45,6 @@ class DownloadControllerTest extends UnitSuite with TestEnvironment with Scalatr
   }
 
   test("that get /epub/nob/123.epub returns 500 internal server error when epub generating fails") {
-    when(languageProvider.validate(any[LanguageTag])).thenReturn(LanguageTag("nob"))
-    when(languageProvider.withIso639_3(any[LanguageTag])).thenReturn(LanguageTag("nob"))
     when(ePubService.createEPub(LanguageTag("nob"), "123")).thenReturn(Some(Failure(new RuntimeException("Something went wrong"))))
     get("/epub/nob/123.epub") {
       status should equal (500)
@@ -68,8 +61,6 @@ class DownloadControllerTest extends UnitSuite with TestEnvironment with Scalatr
   }
 
   test("that get /pdf/nob/123.txt returns 404 not found") {
-    when(languageProvider.validate(any[LanguageTag])).thenReturn(LanguageTag("nob"))
-    when(languageProvider.withIso639_3(any[LanguageTag])).thenReturn(LanguageTag("nob"))
     get("/pdf/nob/123.txt") {
       status should equal (404)
     }
@@ -78,8 +69,6 @@ class DownloadControllerTest extends UnitSuite with TestEnvironment with Scalatr
   test("that get /pdf/nob/123.pdf returns 200 ok") {
     val renderer = mock[PdfRendererBuilder]
     when(renderer.toStream(any[OutputStream])).thenReturn(renderer)
-    when(languageProvider.validate(any[LanguageTag])).thenReturn(LanguageTag("nob"))
-    when(languageProvider.withIso639_3(any[LanguageTag])).thenReturn(LanguageTag("nob"))
     when(pdfService.createPdf(LanguageTag("nob"), "123")).thenReturn(Some(renderer))
     get("/pdf/nob/123.pdf") {
       status should equal (200)

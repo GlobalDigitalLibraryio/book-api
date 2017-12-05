@@ -8,7 +8,6 @@
 package no.gdl.bookapi.controller
 
 import io.digitallibrary.language.model.LanguageTag
-import io.digitallibrary.language.service.LanguageSupport
 import no.gdl.bookapi.BookApiProperties.DefaultLanguage
 import no.gdl.bookapi.model.api
 import no.gdl.bookapi.service.ReadService
@@ -16,7 +15,7 @@ import org.scalatra.swagger.{ResponseMessage, Swagger, SwaggerSupport}
 
 
 trait EditorsPickController {
-  this: ReadService with LanguageSupport =>
+  this: ReadService =>
   val editorsPickController: EditorsPickController
 
   class EditorsPickController(implicit val swagger: Swagger) extends GdlController with SwaggerSupport {
@@ -41,13 +40,13 @@ trait EditorsPickController {
       responseMessages response500)
 
     get("/", operation(getAllPicks)) {
-      readService.editorsPickForLanguage(LanguageTag.fromString(DefaultLanguage))
+      readService.editorsPickForLanguage(LanguageTag(DefaultLanguage))
         .map(_.books)
         .getOrElse(Seq())
     }
 
     get("/:lang", operation(getAllPicksInLang)) {
-      readService.editorsPickForLanguage(LanguageTag.fromString(params("lang")))
+      readService.editorsPickForLanguage(LanguageTag(params("lang")))
         .map(_.books)
         .getOrElse(Seq())
     }

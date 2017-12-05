@@ -8,14 +8,13 @@
 package no.gdl.bookapi.controller
 
 import io.digitallibrary.language.model.LanguageTag
-import io.digitallibrary.language.service.LanguageSupport
 import no.gdl.bookapi.model.api
 import no.gdl.bookapi.service.ReadService
 import org.scalatra.swagger.{ResponseMessage, Swagger, SwaggerSupport}
 
 
 trait LevelController {
-  this: ReadService with LanguageSupport =>
+  this: ReadService =>
   val levelController: LevelController
 
   class LevelController (implicit val swagger: Swagger) extends GdlController with SwaggerSupport {
@@ -45,7 +44,7 @@ trait LevelController {
     }
 
     get("/:lang", operation(getAllLevelsForLanguage)) {
-      readService.listAvailableLevelsForLanguage(Some(LanguageTag.fromString(params("lang"))))
+      readService.listAvailableLevelsForLanguage(Some(LanguageTag(params("lang"))))
     }
   }
 }

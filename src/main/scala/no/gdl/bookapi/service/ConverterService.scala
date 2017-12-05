@@ -12,7 +12,6 @@ import java.util.UUID
 
 import com.typesafe.scalalogging.LazyLogging
 import io.digitallibrary.language.model.LanguageTag
-import io.digitallibrary.language.service.LanguageSupport
 import no.gdl.bookapi.BookApiProperties.Domain
 import no.gdl.bookapi.integration.ImageApiClient
 import no.gdl.bookapi.model._
@@ -21,7 +20,7 @@ import no.gdl.bookapi.{BookApiProperties, model}
 
 
 trait ConverterService {
-  this: ImageApiClient with ContentConverter with LanguageSupport =>
+  this: ImageApiClient with ContentConverter =>
   val converterService: ConverterService
 
   class ConverterService extends LazyLogging {
@@ -44,7 +43,7 @@ trait ConverterService {
         newTranslation.title,
         newTranslation.about,
         newTranslation.numPages.map(_.toInt),
-        LanguageTag.fromString(newTranslation.language),
+        LanguageTag(newTranslation.language),
         newTranslation.datePublished,
         newTranslation.dateCreated,
         categoryIds = Seq(),

@@ -9,7 +9,6 @@ package no.gdl.bookapi
 
 import javax.sql
 
-import io.digitallibrary.language.service._
 import io.digitallibrary.network.GdlClient
 import no.gdl.bookapi.controller._
 import no.gdl.bookapi.integration.{DataSource, ElasticClient, ImageApiClient, NdlaJestClient}
@@ -49,7 +48,6 @@ trait TestEnvironment
   with FeedRepository
   with FeedService
   with OPDSController
-  with LanguageSupport
 {
   val dataSource = mock[sql.DataSource]
   val readService = mock[ReadService]
@@ -85,5 +83,4 @@ trait TestEnvironment
   val feedRepository = mock[FeedRepository]
   val feedService = mock[FeedService]
   val opdsController = mock[OPDSController]
-  implicit val languageProvider = mock[LanguageProvider]
 }
