@@ -52,7 +52,10 @@ object BookApiProperties extends LazyLogging {
   val OpdsJustArrivedLimit = 15
 
   val DownloadPath = "/book-api/download"
-  val CloudFrontUrl = getCloudFrontUrl(Environment)
+  val Books = "books"
+  val Opds = "opds"
+  val CloudFrontBooks = getCloudFrontUrl(Environment, Books)
+  val CloudFrontOpds = getCloudFrontUrl(Environment, Opds)
   val LanguagesPath = "/book-api/v1/languages"
   val LevelsPath = "/book-api/v1/levels"
   val EditorPicksPath = "/book-api/v1/editorpicks"
@@ -101,12 +104,16 @@ object BookApiProperties extends LazyLogging {
     }
   }
 
-  def getCloudFrontUrl(env: String): String = {
+  def getCloudFrontUrl(env: String, typ: String): String = {
     env match {
-      case "prod" => "https://books.digitallibrary.io"
-      case "staging" => "https://books.staging.digitallibrary.io"
-      case "test" => "https://books.test.digitallibrary.io"
-      case "local" => Domain + DownloadPath
+      case "local" => {
+        typ match {
+          case Books => Domain + DownloadPath
+          case Opds => Domain + OpdsPath
+        }
+      }
+      case "prod" => s"https://$typ.digitallibrary.io"
+      case "staging" | "test" => s"https://$typ.$env.digitallibrary.io"
       case _ => throw new IllegalArgumentException(s"$env is not a valid env")
     }
   }

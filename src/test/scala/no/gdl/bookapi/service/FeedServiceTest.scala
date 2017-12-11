@@ -50,15 +50,15 @@ class FeedServiceTest extends UnitSuite with TestEnvironment {
   }
 
   test("that featuredPath returns expected path for language"){
-    feedService.featuredPath(LanguageTag("amh")) should equal ("/book-api/opds/amh/featured.xml")
+    feedService.featuredPath(LanguageTag("amh")) should equal ("/amh/featured.xml")
   }
 
   test("that levelPath returns expected path for language and level") {
-    feedService.levelPath(LanguageTag("amh"), "1") should equal ("/book-api/opds/amh/level1.xml")
+    feedService.levelPath(LanguageTag("amh"), "1") should equal ("/amh/level1.xml")
   }
 
   test("that justArrivedPath returns expected path for language") {
-    feedService.justArrivedPath(LanguageTag("amh")) should equal ("/book-api/opds/amh/new.xml")
+    feedService.justArrivedPath(LanguageTag("amh")) should equal ("/amh/new.xml")
   }
 
   test("that addFeaturedCategory adds category with correct url") {
@@ -66,7 +66,7 @@ class FeedServiceTest extends UnitSuite with TestEnvironment {
     val withCategory = feedService.addFeaturedCategory(feedEntry, LanguageTag("amh"))
 
     withCategory.categories.size should be (1)
-    withCategory.categories.head.url should equal (s"${BookApiProperties.Domain}/book-api/opds/amh/featured.xml")
+    withCategory.categories.head.url should equal (s"${BookApiProperties.CloudFrontOpds}/amh/featured.xml")
   }
 
   test("that addJustArrivedCategory adds category with correct url") {
@@ -74,7 +74,7 @@ class FeedServiceTest extends UnitSuite with TestEnvironment {
     val withCategory = feedService.addJustArrivedCategory(feedEntry, LanguageTag("amh"))
 
     withCategory.categories.size should be (1)
-    withCategory.categories.head.url should equal (s"${BookApiProperties.Domain}/book-api/opds/amh/new.xml")
+    withCategory.categories.head.url should equal (s"${BookApiProperties.CloudFrontOpds}/amh/new.xml")
   }
 
   test("that addLevelCategory adds category with correct url") {
@@ -82,6 +82,6 @@ class FeedServiceTest extends UnitSuite with TestEnvironment {
     val withCategory = feedService.addLevelCategory(feedEntry, LanguageTag("amh"))
 
     withCategory.categories.size should be (1)
-    withCategory.categories.head.url should equal (s"${BookApiProperties.Domain}/book-api/opds/amh/level${feedEntry.book.readingLevel.get}.xml")
+    withCategory.categories.head.url should equal (s"${BookApiProperties.CloudFrontOpds}/amh/level${feedEntry.book.readingLevel.get}.xml")
   }
 }
