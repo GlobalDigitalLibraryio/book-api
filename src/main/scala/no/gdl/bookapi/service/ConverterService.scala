@@ -155,8 +155,8 @@ trait ConverterService {
 
     def toApiDownloads(translation: domain.Translation): api.Downloads = {
       api.Downloads(
-        epub = s"${BookApiProperties.CloudFrontUrl}/epub/${translation.language}/${translation.uuid}.epub", // TODO: #17 - Download EPub
-        pdf = s"${BookApiProperties.CloudFrontUrl}/pdf/${translation.language}/${translation.uuid}.pdf") // TODO: #17 - Download PDF
+        epub = s"${BookApiProperties.CloudFrontBooks}/epub/${translation.language}/${translation.uuid}.epub", // TODO: #17 - Download EPub
+        pdf = s"${BookApiProperties.CloudFrontBooks}/pdf/${translation.language}/${translation.uuid}.pdf") // TODO: #17 - Download PDF
     }
 
     def toApiCoverPhoto(imageIdOpt: Option[Long]): Option[api.CoverPhoto] = {

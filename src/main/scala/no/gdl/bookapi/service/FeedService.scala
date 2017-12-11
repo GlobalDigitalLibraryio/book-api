@@ -40,7 +40,7 @@ trait FeedService {
           api.FeedDefinition(
             feedDefinition.id.get,
             feedDefinition.revision.get,
-            s"${BookApiProperties.Domain}${feedDefinition.url}",
+            s"${BookApiProperties.CloudFrontOpds}${feedDefinition.url.replace(BookApiProperties.OpdsPath,"")}",
             feedDefinition.uuid),
           Messages(feedDefinition.titleKey, titleArgs:_*)(Lang(language)),
           feedDefinition.descriptionKey.map(Messages(_)(Lang(language))),
@@ -59,7 +59,7 @@ trait FeedService {
           api.FeedDefinition(
             definition.id.get,
             definition.revision.get,
-            s"${BookApiProperties.Domain}${definition.url}",
+            s"${BookApiProperties.CloudFrontOpds}${definition.url}",
             definition.uuid),
           Messages(definition.titleKey),
           definition.descriptionKey.map(Messages(_)),
@@ -72,7 +72,7 @@ trait FeedService {
           api.FeedDefinition(
             definition.id.get,
             definition.revision.get,
-            s"${BookApiProperties.Domain}${definition.url}",
+            s"${BookApiProperties.CloudFrontOpds}${definition.url}",
             definition.uuid),
           Messages(definition.titleKey),
           definition.descriptionKey.map(Messages(_)),
@@ -90,7 +90,7 @@ trait FeedService {
               api.FeedDefinition(
                 definition.id.get,
                 definition.revision.get,
-                s"${BookApiProperties.Domain}${definition.url}",
+                s"${BookApiProperties.CloudFrontOpds}${definition.url}",
                 definition.uuid),
               Messages(definition.titleKey, level),
               definition.descriptionKey.map(Messages(_)),
@@ -134,14 +134,14 @@ trait FeedService {
 
     def addFeaturedCategory(feedEntry: FeedEntry, language: String): FeedEntry = {
       val title = Messages("featured_feed_title")(Lang(language))
-      val url = s"${BookApiProperties.Domain}${featuredPath(language)}"
+      val url = s"${BookApiProperties.CloudFrontOpds}${featuredPath(language)}"
       feedEntry.copy(
         categories = feedEntry.categories :+ FeedCategory(url, title, sortOrder = 1))
     }
 
     def addJustArrivedCategory(feedEntry: FeedEntry, language: String): FeedEntry = {
       val title = Messages("new_entries_feed_title")(Lang(language))
-      val url = s"${BookApiProperties.Domain}${justArrivedPath(language)}"
+      val url = s"${BookApiProperties.CloudFrontOpds}${justArrivedPath(language)}"
       feedEntry.copy(
         categories = feedEntry.categories :+ FeedCategory(url, title, sortOrder = 2))
     }
@@ -149,18 +149,18 @@ trait FeedService {
     def addLevelCategory(feedEntry: FeedEntry, language: String): FeedEntry = {
       val level = feedEntry.book.readingLevel.getOrElse(BookApiProperties.DefaultReadingLevel)
       val readingLevelCategoryTitle = Messages("level_feed_title", level)(Lang(language))
-      val readingLevelUrl = s"${BookApiProperties.Domain}${levelPath(language, level)}"
+      val readingLevelUrl = s"${BookApiProperties.CloudFrontOpds}${levelPath(language, level)}"
       feedEntry.copy(
         categories = feedEntry.categories :+ FeedCategory(readingLevelUrl, readingLevelCategoryTitle, sortOrder = level.toInt + 2))
     }
 
-    def featuredPath(language: String): String = s"${BookApiProperties.OpdsPath}${BookApiProperties.OpdsFeaturedUrl.url}"
+    def featuredPath(language: String): String = s"${BookApiProperties.OpdsFeaturedUrl.url}"
       .replace(BookApiProperties.OpdsLanguageParam, language)
 
-    def justArrivedPath(language: String): String = s"${BookApiProperties.OpdsPath}${BookApiProperties.OpdsNewUrl.url}"
+    def justArrivedPath(language: String): String = s"${BookApiProperties.OpdsNewUrl.url}"
       .replace(BookApiProperties.OpdsLanguageParam, language)
 
-    def levelPath(language: String, level: String): String = s"${BookApiProperties.OpdsPath}${BookApiProperties.OpdsLevelUrl.url}"
+    def levelPath(language: String, level: String): String = s"${BookApiProperties.OpdsLevelUrl.url}"
       .replace(BookApiProperties.OpdsLanguageParam, language)
       .replace(BookApiProperties.OpdsLevelParam, level)
 
