@@ -162,4 +162,32 @@ class TranslationRepositoryTest extends IntegrationSuite with TestEnvironment wi
       byArrivalDateDesc.results should equal (Seq(book1.id.get, book3.id.get, book2.id.get, book4.id.get))
     }
   }
+
+  test("that that ByArrivalDate also sorts on id on same date") {
+    withRollback { implicit session =>
+      val book1 = addBookDef()
+      val book2 = addBookDef()
+      val book3 = addBookDef()
+      val book4 = addBookDef()
+      val book5 = addBookDef()
+      val book6 = addBookDef()
+
+      val firstDate = LocalDate.now().minusDays(3)
+      val secondDate = LocalDate.now().minusDays(2)
+      val thirdDate = LocalDate.now().minusDays(1)
+
+      addTranslationDef("ext1", "b", book1.id.get, "xho", None, Some(firstDate))
+      addTranslationDef("ext2", "a", book2.id.get, "xho", None, Some(secondDate))
+      addTranslationDef("ext3", "d", book3.id.get, "xho", None, Some(secondDate))
+      addTranslationDef("ext4", "c", book4.id.get, "xho", None, Some(secondDate))
+      addTranslationDef("ext5", "d", book5.id.get, "xho", None, Some(secondDate))
+      addTranslationDef("ext6", "c", book6.id.get, "xho", None, Some(thirdDate))
+
+      val page1 = translationRepository.bookIdsWithLanguageAndLevel("xho", None, 3, 1, Sort.ByArrivalDateDesc)
+      val page2 = translationRepository.bookIdsWithLanguageAndLevel("xho", None, 3, 2, Sort.ByArrivalDateDesc)
+
+      page1.results should equal (Seq(book6.id.get, book5.id.get, book4.id.get))
+      page2.results should equal (Seq(book3.id.get, book2.id.get, book1.id.get))
+    }
+  }
 }

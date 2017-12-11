@@ -120,7 +120,13 @@ trait OPDSController {
                 <name>{contrib.name}</name>
               </author>
             )}
+            <dc:license>{feedEntry.book.license.description.getOrElse(feedEntry.book.license.name)}</dc:license>
+            <dc:publisher>{feedEntry.book.publisher.name}</dc:publisher>
             <updated>{feedEntry.book.dateArrived.atStartOfDay(ZoneId.systemDefault()).format(dtf)}</updated>
+            {if(feedEntry.book.dateCreated.isDefined) {
+              <dc:created>{feedEntry.book.dateCreated.get.atStartOfDay(ZoneId.systemDefault()).format(dtf)}</dc:created>
+            }}
+            <published>{feedEntry.book.dateArrived.atStartOfDay(ZoneId.systemDefault()).format(dtf)}</published>
             <lrmi:educationalAlignment alignmentType="readingLevel" targetName={feedEntry.book.readingLevel.getOrElse("1")} />
             <summary>{feedEntry.book.description}</summary>
             {if (feedEntry.book.coverPhoto.isDefined) {

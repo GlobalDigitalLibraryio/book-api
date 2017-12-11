@@ -367,8 +367,8 @@ trait TranslationRepository {
       case (Sort.ByIdDesc) => sqls.orderBy(t.id).desc
       case (Sort.ByTitleAsc) => sqls.orderBy(t.title).asc
       case (Sort.ByTitleDesc) => sqls.orderBy(t.title).desc
-      case (Sort.ByArrivalDateAsc) => sqls.orderBy(t.dateArrived).asc
-      case (Sort.ByArrivalDateDesc) => sqls.orderBy(t.dateArrived).desc
+      case (Sort.ByArrivalDateAsc) => sqls.orderBy(t.dateArrived.asc, t.bookId.asc)
+      case (Sort.ByArrivalDateDesc) => sqls.orderBy(t.dateArrived.desc, t.bookId.desc)
     }
   }
 

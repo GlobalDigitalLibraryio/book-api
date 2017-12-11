@@ -41,7 +41,6 @@ trait BooksController {
       queryParam[Option[Int]]("page-size").description("Return this many results per page."),
       queryParam[Option[Int]]("page").description("Return results for this page."),
       queryParam[Option[Int]]("reading-level").description("Return only books matching this reading level."))
-      authorizations "oauth2"
       responseMessages response500)
 
     private val getAllBooksInLang = (apiOperation[api.SearchResult]("getAllBooksInLangDoc")
@@ -53,7 +52,6 @@ trait BooksController {
       queryParam[Option[Int]]("page-size").description("Return this many results per page."),
       queryParam[Option[Int]]("page").description("Return results for this page."),
       queryParam[Option[Int]]("reading-level").description("Return only books matching this reading level."))
-      authorizations "oauth2"
       responseMessages response500)
 
     private val getBook = (apiOperation[Option[api.Book]]("getBookInLanguageDoc")
@@ -63,7 +61,6 @@ trait BooksController {
       headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
       pathParam[String]("lang").description("Desired language for books specified in ISO 639-2 format"),
       pathParam[Long]("id").description("Id of the book that is to be returned."))
-      authorizations "oauth2"
       responseMessages(response400, response404, response500))
 
     private val getChapters = (apiOperation[Seq[api.ChapterSummary]]("getChapters")
@@ -73,7 +70,6 @@ trait BooksController {
       headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
       pathParam[String]("lang").description("Desired language for books specified in ISO 639-2 format"),
       pathParam[Long]("id").description("Id of the book that is to be returned."))
-      authorizations "oauth2"
       responseMessages(response400, response404, response500))
 
     private val getChapter = (apiOperation[Option[api.Chapter]]("getChapter")
@@ -84,7 +80,6 @@ trait BooksController {
       pathParam[String]("lang").description("Desired language for books specified in ISO 639-2 format"),
       pathParam[Long]("bookid").description("Id of the book that is to be returned."),
       pathParam[Long]("chapterid").description("Id of the chapter that is to be returned."))
-      authorizations "oauth2"
       responseMessages(response400, response404, response500))
 
     private val getSimilar = (apiOperation[api.SearchResult]("getSimilar")
@@ -94,7 +89,6 @@ trait BooksController {
       headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
       pathParam[String]("lang").description("Desired language for books specified in ISO 639-2 format"),
       pathParam[Long]("id").description("Id of the book to find similar for."))
-      authorizations "oauth2"
       responseMessages(response400, response404, response500))
 
     get("/", operation(getAllBooks)) {

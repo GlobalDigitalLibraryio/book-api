@@ -28,7 +28,6 @@ trait EditorsPickController {
       summary s"Returns all editors picks in $DefaultLanguage"
       notes s"Returns all editors picks in $DefaultLanguage"
       parameters headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted.")
-      authorizations "oauth2"
       responseMessages response500)
 
     private val getAllPicksInLang = (apiOperation[Seq[api.Book]]("getAllPicksInLang")
@@ -36,7 +35,6 @@ trait EditorsPickController {
       notes s"Returns all editors picks in given language"
       parameters (headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
       pathParam[String]("lang").description("Desired language for books specified in ISO 639-1/2 format."))
-      authorizations "oauth2"
       responseMessages response500)
 
     get("/", operation(getAllPicks)) {

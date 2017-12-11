@@ -60,6 +60,8 @@ object BookApiProperties extends LazyLogging {
   val ApiDocPath = "/book-api/api-docs"
   val ImagePath = "/image-api/v1/raw"
 
+  val LoginEndpoint = "https://digitallibrary.eu.auth0.com/authorize"
+
   val ImageApiHost = "image-api.gdl-local"
   val InternalImageApiUrl = s"$ImageApiHost/image-api/v1/images"
 
@@ -100,13 +102,10 @@ object BookApiProperties extends LazyLogging {
   }
 
   def getCloudFrontUrl(env: String): String = {
-    // TODO Replace explicit CloudFront URLs with sub-domains created in Route 53:
-    // Prod:        https://books.api.digitallibrary.io
-    // Other envs:  https://books.<env>.api.digitallibrary.io
     env match {
-      case "prod" => "https://d1h2g5hflcvsc2.cloudfront.net"
-      case "staging" => "https://d3gyxwpgvifulp.cloudfront.net"
-      case "test" => "https://dzoxgfkzkvnkl.cloudfront.net"
+      case "prod" => "https://books.digitallibrary.io"
+      case "staging" => "https://books.staging.digitallibrary.io"
+      case "test" => "https://books.test.digitallibrary.io"
       case "local" => Domain + DownloadPath
       case _ => throw new IllegalArgumentException(s"$env is not a valid env")
     }
