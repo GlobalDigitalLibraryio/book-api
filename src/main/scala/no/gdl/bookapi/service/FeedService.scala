@@ -43,8 +43,8 @@ trait FeedService {
             feedDefinition.revision.get,
             s"${BookApiProperties.CloudFrontOpds}${feedDefinition.url.replace(BookApiProperties.OpdsPath,"")}",
             feedDefinition.uuid),
-          Messages(feedDefinition.titleKey, titleArgs:_*)(Lang(language.toString())),
-          feedDefinition.descriptionKey.map(Messages(_)(Lang(language.toString()))),
+          Messages(feedDefinition.titleKey, titleArgs:_*)(Lang(language.toString)),
+          feedDefinition.descriptionKey.map(Messages(_)(Lang(language.toString))),
           Some("self"),
           updated,
           books)
@@ -134,14 +134,14 @@ trait FeedService {
     }
 
     def addFeaturedCategory(feedEntry: FeedEntry, language: LanguageTag): FeedEntry = {
-      val title = Messages("featured_feed_title")(Lang(language.toString()))
+      val title = Messages("featured_feed_title")(Lang(language.toString))
       val url = s"${BookApiProperties.CloudFrontOpds}${featuredPath(language)}"
       feedEntry.copy(
         categories = feedEntry.categories :+ FeedCategory(url, title, sortOrder = 1))
     }
 
     def addJustArrivedCategory(feedEntry: FeedEntry, language: LanguageTag): FeedEntry = {
-      val title = Messages("new_entries_feed_title")(Lang(language.toString()))
+      val title = Messages("new_entries_feed_title")(Lang(language.toString))
       val url = s"${BookApiProperties.CloudFrontOpds}${justArrivedPath(language)}"
       feedEntry.copy(
         categories = feedEntry.categories :+ FeedCategory(url, title, sortOrder = 2))
@@ -149,20 +149,20 @@ trait FeedService {
 
     def addLevelCategory(feedEntry: FeedEntry, language: LanguageTag): FeedEntry = {
       val level = feedEntry.book.readingLevel.getOrElse(BookApiProperties.DefaultReadingLevel)
-      val readingLevelCategoryTitle = Messages("level_feed_title", level)(Lang(language.toString()))
+      val readingLevelCategoryTitle = Messages("level_feed_title", level)(Lang(language.toString))
       val readingLevelUrl = s"${BookApiProperties.CloudFrontOpds}${levelPath(language, level)}"
       feedEntry.copy(
         categories = feedEntry.categories :+ FeedCategory(readingLevelUrl, readingLevelCategoryTitle, sortOrder = level.toInt + 2))
     }
 
     def featuredPath(language: LanguageTag): String = s"${BookApiProperties.OpdsFeaturedUrl.url}"
-      .replace(BookApiProperties.OpdsLanguageParam, language.toString())
+      .replace(BookApiProperties.OpdsLanguageParam, language.toString)
 
     def justArrivedPath(language: LanguageTag): String = s"${BookApiProperties.OpdsNewUrl.url}"
       .replace(BookApiProperties.OpdsLanguageParam, language.toString)
 
     def levelPath(language: LanguageTag, level: String): String = s"${BookApiProperties.OpdsLevelUrl.url}"
-      .replace(BookApiProperties.OpdsLanguageParam, language.toString())
+      .replace(BookApiProperties.OpdsLanguageParam, language.toString)
       .replace(BookApiProperties.OpdsLevelParam, level)
 
     def generateFeeds(): Seq[api.FeedDefinition] = {
@@ -186,8 +186,8 @@ trait FeedService {
         val containsLevel = url.contains(OpdsLevelParam)
 
         val urls = (containsLanguage, containsLevel) match {
-          case (true, true) => languageAndLevel.map(langLevel => url.replace(OpdsLanguageParam, langLevel._1.toString()).replace(OpdsLevelParam, langLevel._2))
-          case (true, _) => languages.map(lang => url.replace(OpdsLanguageParam, lang.toString()))
+          case (true, true) => languageAndLevel.map(langLevel => url.replace(OpdsLanguageParam, langLevel._1.toString).replace(OpdsLevelParam, langLevel._2))
+          case (true, _) => languages.map(lang => url.replace(OpdsLanguageParam, lang.toString))
           case (_, _) => Seq(url)
         }
 

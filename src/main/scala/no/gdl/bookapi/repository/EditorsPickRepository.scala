@@ -39,7 +39,7 @@ trait EditorsPickRepository {
           ${ep.dateChanged})
         values (
          ${startRevision},
-         ${editorsPick.language.toString()},
+         ${editorsPick.language.toString},
          ${translationBinder},
          ${editorsPick.dateChanged})""".updateAndReturnGeneratedKey().apply()
 

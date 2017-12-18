@@ -53,7 +53,7 @@ trait TranslationRepository {
 
       val results = select(t.result.bookId)
         .from(Translation as t)
-        .where.eq(t.language, language.toString())
+        .where.eq(t.language, language.toString)
         .append(getSorting(sortDef))
         .limit(limit).offset(offset)
         .toSQL
@@ -284,7 +284,7 @@ trait TranslationRepository {
                ${translation.title},
                ${translation.about},
                ${translation.numPages},
-               ${translation.language.toString()},
+               ${translation.language.toString},
                ${translation.datePublished},
                ${translation.dateCreated},
                ${translation.dateArrived},
@@ -331,7 +331,7 @@ trait TranslationRepository {
         ${t.title} = ${replacement.title},
         ${t.about} = ${replacement.about},
         ${t.numPages} = ${replacement.numPages},
-        ${t.language} = ${replacement.language.toString()},
+        ${t.language} = ${replacement.language.toString},
         ${t.datePublished} = ${replacement.datePublished},
         ${t.dateCreated} = ${replacement.dateCreated},
         ${t.dateArrived} = ${replacement.dateArrived},

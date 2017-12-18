@@ -40,7 +40,7 @@ class EPubServiceTest extends UnitSuite with TestEnvironment {
       case Some(Success(book)) => {
         book.getTitle should equal (TestData.Domain.DefaultTranslation.title)
         book.getId should equal (uuid)
-        book.getLanguage should equal (language.toString())
+        book.getLanguage should equal (language.toString)
         book.getAuthor should equal (TestData.Domain.DefaultTranslation.contributors.map(_.person.name).mkString(","))
       }
     }

@@ -31,7 +31,7 @@ trait EPubService {
     private def buildEPubFor(translation: domain.Translation, chapters: Seq[domain.Chapter]): Try[EpubBook] = {
       Try {
         val authors = translation.contributors.filter(_.`type` == "Author").map(_.person.name).mkString(", ")
-        val book = new EpubBook(translation.language.toString(), translation.uuid, translation.title, authors)
+        val book = new EpubBook(translation.language.toString, translation.uuid, translation.title, authors)
 
         // Add CSS to ePub
         val ePubCss = EPubCss()
