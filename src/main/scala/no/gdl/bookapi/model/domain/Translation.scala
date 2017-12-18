@@ -9,6 +9,7 @@ package no.gdl.bookapi.model.domain
 
 import java.time.LocalDate
 
+import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.BookApiProperties
 import scalikejdbc._
 
@@ -20,7 +21,7 @@ case class Translation(id: Option[Long],
                        title: String,
                        about: String,
                        numPages: Option[Int],
-                       language: String,
+                       language: LanguageTag,
                        datePublished: Option[LocalDate],
                        dateCreated: Option[LocalDate],
                        categoryIds: Seq[Long],
@@ -61,7 +62,7 @@ object Translation extends SQLSyntaxSupport[Translation] {
     title = rs.string(t.title),
     about = rs.string(t.about),
     numPages = rs.intOpt(t.numPages),
-    language = rs.string(t.language),
+    language = LanguageTag(rs.string(t.language)),
     datePublished = rs.localDateOpt(t.datePublished),
     dateCreated = rs.localDateOpt(t.dateCreated),
     categoryIds = rs.array(t.categoryIds).getArray().asInstanceOf[Array[java.lang.Long]].toSeq.map(_.toLong),

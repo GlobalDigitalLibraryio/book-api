@@ -10,6 +10,7 @@ package no.gdl.bookapi.repository
 import java.sql.PreparedStatement
 import java.time.LocalDate
 
+import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.model.api.OptimisticLockException
 import no.gdl.bookapi.model.domain._
 import scalikejdbc._
@@ -27,11 +28,11 @@ trait TranslationRepository {
       Person.syntax,
       Category.syntax)
 
-    def latestArrivalDateFor(language: String, readingLevel: String = null)(implicit session: DBSession = ReadOnlyAutoSession): LocalDate = {
+    def latestArrivalDateFor(language: LanguageTag, readingLevel: String = null)(implicit session: DBSession = ReadOnlyAutoSession): LocalDate = {
       val levelOpt = Option(readingLevel)
       select(sqls.max(t.dateArrived))
         .from(Translation as t)
-        .where.eq(t.language, language)
+        .where.eq(t.language, language.toString)
         .and(
           sqls.toAndConditionOpt(levelOpt.map(l => sqls.eq(t.readingLevel, l))))
         .toSQL
@@ -39,20 +40,20 @@ trait TranslationRepository {
         .single().apply().get
     }
 
-    def languagesFor(id: Long)(implicit session: DBSession = ReadOnlyAutoSession): Seq[String] = {
+    def languagesFor(id: Long)(implicit session: DBSession = ReadOnlyAutoSession): Seq[LanguageTag] = {
       select(t.result.language)
         .from(Translation as t)
         .where.eq(t.bookId, id).toSQL
-        .map(_.string(1)).list().apply()
+        .map(rs => LanguageTag(rs.string(1))).list().apply()
     }
 
-    def bookIdsWithLanguage(language: String, pageSize: Int, page: Int, sortDef: Sort.Value)(implicit session: DBSession = ReadOnlyAutoSession): SearchResult[Long] = {
+    def bookIdsWithLanguage(language: LanguageTag, pageSize: Int, page: Int, sortDef: Sort.Value)(implicit session: DBSession = ReadOnlyAutoSession): SearchResult[Long] = {
       val limit = pageSize.max(1)
       val offset = (page.max(1) - 1) * pageSize
 
       val results = select(t.result.bookId)
         .from(Translation as t)
-        .where.eq(t.language, language)
+        .where.eq(t.language, language.toString)
         .append(getSorting(sortDef))
         .limit(limit).offset(offset)
         .toSQL
@@ -61,14 +62,14 @@ trait TranslationRepository {
       SearchResult[Long](results.length, page, pageSize, language, results)
     }
 
-    def bookIdsWithLanguageAndLevel(language: String, readingLevel: Option[String], pageSize: Int, page: Int, sortDef: Sort.Value)(implicit session: DBSession = ReadOnlyAutoSession): SearchResult[Long] = {
+    def bookIdsWithLanguageAndLevel(language: LanguageTag, readingLevel: Option[String], pageSize: Int, page: Int, sortDef: Sort.Value)(implicit session: DBSession = ReadOnlyAutoSession): SearchResult[Long] = {
       val limit = pageSize.max(1)
       val offset = (page.max(1) - 1) * pageSize
 
       val num_matching = select(sqls.count)
         .from(Translation as t)
         .where
-        .eq(t.language, language)
+        .eq(t.language, language.toString)
         .and(
           sqls.toAndConditionOpt(readingLevel.map(l => sqls.eq(t.readingLevel, l))))
         .toSQL.map(_.long(1)).single().apply()
@@ -76,7 +77,7 @@ trait TranslationRepository {
       val results = select(t.result.bookId)
         .from(Translation as t)
         .where
-        .eq(t.language, language)
+        .eq(t.language, language.toString)
         .and(
           sqls.toAndConditionOpt(readingLevel.map(l => sqls.eq(t.readingLevel, l))))
         .append(getSorting(sortDef))
@@ -86,13 +87,13 @@ trait TranslationRepository {
       SearchResult[Long](num_matching.getOrElse(0), page, pageSize, language, results)
     }
 
-    def forBookIdAndLanguage(bookId: Long, language: String)(implicit session: DBSession = ReadOnlyAutoSession): Option[Translation] = {
+    def forBookIdAndLanguage(bookId: Long, language: LanguageTag)(implicit session: DBSession = ReadOnlyAutoSession): Option[Translation] = {
       val translationWithChapters = select
         .from(Translation as t)
         .leftJoin(EducationalAlignment as ea).on(t.eaId, t.id)
         .leftJoin(Chapter as ch).on(t.id, ch.translationId)
         .where.eq(t.bookId, bookId)
-        .and.eq(t.language, language).toSQL
+        .and.eq(t.language, language.toString).toSQL
         .one(Translation(t))
         .toManies(
           rs => EducationalAlignment.opt(ea)(rs),
@@ -215,17 +216,17 @@ trait TranslationRepository {
       translationWithCategories
     }
 
-    def allAvailableLanguages()(implicit session: DBSession = ReadOnlyAutoSession): Seq[String] = {
+    def allAvailableLanguages()(implicit session: DBSession = ReadOnlyAutoSession): Seq[LanguageTag] = {
       select(sqls.distinct(t.result.language))
         .from(Translation as t).toSQL
-        .map(_.string(1)).list().apply()
+        .map(rs => LanguageTag(rs.string(1))).list().apply()
     }
 
-    def allAvailableLevels(language: Option[String])(implicit session: DBSession = ReadOnlyAutoSession): Seq[String] = {
+    def allAvailableLevels(language: Option[LanguageTag])(implicit session: DBSession = ReadOnlyAutoSession): Seq[String] = {
       select(sqls.distinct(t.result.readingLevel))
         .from(Translation as t)
         .where(sqls.toAndConditionOpt(
-          language.map(lang => sqls.eq(t.language, lang))
+          language.map(lang => sqls.eq(t.language, lang.toString))
         )).orderBy(t.readingLevel).toSQL.map(_.string(1)).list().apply()
     }
 
@@ -283,7 +284,7 @@ trait TranslationRepository {
                ${translation.title},
                ${translation.about},
                ${translation.numPages},
-               ${translation.language},
+               ${translation.language.toString},
                ${translation.datePublished},
                ${translation.dateCreated},
                ${translation.dateArrived},
@@ -330,7 +331,7 @@ trait TranslationRepository {
         ${t.title} = ${replacement.title},
         ${t.about} = ${replacement.about},
         ${t.numPages} = ${replacement.numPages},
-        ${t.language} = ${replacement.language},
+        ${t.language} = ${replacement.language.toString},
         ${t.datePublished} = ${replacement.datePublished},
         ${t.dateCreated} = ${replacement.dateCreated},
         ${t.dateArrived} = ${replacement.dateArrived},

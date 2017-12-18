@@ -16,8 +16,6 @@ import no.gdl.bookapi.service._
 import org.postgresql.ds.PGPoolingDataSource
 import scalikejdbc.{ConnectionPool, DataSourceConnectionPool}
 
-import scala.io.Source
-
 object ComponentRegistry
   extends DataSource
   with TransactionHandler

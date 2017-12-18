@@ -12,6 +12,7 @@ import java.text.SimpleDateFormat
 import javax.servlet.http.HttpServletRequest
 
 import com.typesafe.scalalogging.LazyLogging
+import io.digitallibrary.language.model.LanguageNotSupportedException
 import io.digitallibrary.network.{ApplicationUrl, AuthUser, CorrelationID}
 import no.gdl.bookapi.BookApiProperties.{CorrelationIdHeader, CorrelationIdKey}
 import no.gdl.bookapi.model.api.{AccessDeniedException, Error, LocalDateSerializer, NotFoundException, OptimisticLockException, ValidationError, ValidationException, ValidationMessage}
@@ -52,6 +53,7 @@ abstract class GdlController extends ScalatraServlet with NativeJsonSupport with
     case n: NotFoundException => NotFound(body=Error(Error.NOT_FOUND, n.getMessage))
     case e: IndexNotFoundException => InternalServerError(body=Error.IndexMissingError)
     case o: OptimisticLockException => Conflict(body=Error(Error.RESOURCE_OUTDATED, o.getMessage))
+    case l: LanguageNotSupportedException => BadRequest(body=ValidationError(messages=Seq(ValidationMessage("lang", l.getMessage))))
     case t: Throwable => {
       logger.error(Error.GenericError.toString, t)
       InternalServerError(body=Error.GenericError)
@@ -85,14 +87,6 @@ abstract class GdlController extends ScalatraServlet with NativeJsonSupport with
 
   def optLong(paramName: String)(implicit request: HttpServletRequest): Option[Long] = {
     params.get(paramName).filter(_.forall(_.isDigit)).map(_.toLong)
-  }
-
-  def language(paramName: String)(implicit request: HttpServletRequest): String = {
-    val paramValue = params(paramName)
-    Try(new java.util.Locale(paramValue).getISO3Language) match {
-      case Success(x) => x
-      case Failure(_) => paramValue
-    }
   }
 
   def paramAsListOfString(paramName: String)(implicit request: HttpServletRequest): List[String] = {

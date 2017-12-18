@@ -7,11 +7,13 @@
 
 package no.gdl.bookapi.model.domain
 
+import io.digitallibrary.language.model.LanguageTag
+
 
 case class SearchResult[T] (totalCount: Long,
                             page: Int,
                             pageSize: Int,
-                            language: String,
+                            language: LanguageTag,
                             results: Seq[T])
 
 
