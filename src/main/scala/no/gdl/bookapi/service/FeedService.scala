@@ -54,7 +54,7 @@ trait FeedService {
       implicit val lang: Lang = Lang(language)
 
       val justArrivedUpdated = translationRepository.latestArrivalDateFor(language)
-      val justArrived = feedRepository.forUrl(s"${justArrivedPath(language)}").map(definition =>
+      val justArrived = feedRepository.forUrl(justArrivedPath(language)).map(definition =>
         api.Feed(
           api.FeedDefinition(
             definition.id.get,
@@ -67,7 +67,7 @@ trait FeedService {
           justArrivedUpdated, Seq()))
 
 
-      val featured = feedRepository.forUrl(s"${featuredPath(language)}").map(definition =>
+      val featured = feedRepository.forUrl(featuredPath(language)).map(definition =>
         api.Feed(
           api.FeedDefinition(
             definition.id.get,
