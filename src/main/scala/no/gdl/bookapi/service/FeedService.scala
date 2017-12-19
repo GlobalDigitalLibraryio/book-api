@@ -36,12 +36,12 @@ trait FeedService {
         case None => books.sortBy(_.book.dateArrived).reverse.headOption.map(_.book.dateArrived).getOrElse(LocalDate.now())
       }
 
-      feedRepository.forUrl(url).map(feedDefinition => {
+      feedRepository.forUrl(url.replace(BookApiProperties.OpdsPath,"")).map(feedDefinition => {
         api.Feed(
           api.FeedDefinition(
             feedDefinition.id.get,
             feedDefinition.revision.get,
-            s"${BookApiProperties.CloudFrontOpds}${feedDefinition.url.replace(BookApiProperties.OpdsPath,"")}",
+            s"${BookApiProperties.CloudFrontOpds}${feedDefinition.url}",
             feedDefinition.uuid),
           Messages(feedDefinition.titleKey, titleArgs:_*)(Lang(language.toString)),
           feedDefinition.descriptionKey.map(Messages(_)(Lang(language.toString))),
@@ -180,7 +180,7 @@ trait FeedService {
       })
 
       BookApiProperties.OpdsFeeds.flatMap { feedDefinition =>
-        val url = s"${BookApiProperties.OpdsPath}${feedDefinition.url}"
+        val url = feedDefinition.url
 
         val containsLanguage = url.contains(OpdsLanguageParam)
         val containsLevel = url.contains(OpdsLevelParam)
