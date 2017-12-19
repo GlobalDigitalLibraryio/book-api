@@ -35,12 +35,12 @@ trait FeedService {
         case None => books.sortBy(_.book.dateArrived).reverse.headOption.map(_.book.dateArrived).getOrElse(LocalDate.now())
       }
 
-      feedRepository.forUrl(url).map(feedDefinition => {
+      feedRepository.forUrl(url.replace(BookApiProperties.OpdsPath,"")).map(feedDefinition => {
         api.Feed(
           api.FeedDefinition(
             feedDefinition.id.get,
             feedDefinition.revision.get,
-            s"${BookApiProperties.CloudFrontOpds}${feedDefinition.url.replace(BookApiProperties.OpdsPath,"")}",
+            s"${BookApiProperties.CloudFrontOpds}${feedDefinition.url}",
             feedDefinition.uuid),
           Messages(feedDefinition.titleKey, titleArgs:_*)(Lang(language)),
           feedDefinition.descriptionKey.map(Messages(_)(Lang(language))),
@@ -54,12 +54,12 @@ trait FeedService {
       implicit val lang: Lang = Lang(language)
 
       val justArrivedUpdated = translationRepository.latestArrivalDateFor(language)
-      val justArrived = feedRepository.forUrl(s"${BookApiProperties.OpdsPath}${justArrivedPath(language)}").map(definition =>
+      val justArrived = feedRepository.forUrl(s"${justArrivedPath(language)}").map(definition =>
         api.Feed(
           api.FeedDefinition(
             definition.id.get,
             definition.revision.get,
-            s"${BookApiProperties.CloudFrontOpds}${definition.url.replace(BookApiProperties.OpdsPath,"")}",
+            s"${BookApiProperties.CloudFrontOpds}${definition.url}",
             definition.uuid),
           Messages(definition.titleKey),
           definition.descriptionKey.map(Messages(_)),
@@ -67,12 +67,12 @@ trait FeedService {
           justArrivedUpdated, Seq()))
 
 
-      val featured = feedRepository.forUrl(s"${BookApiProperties.OpdsPath}${featuredPath(language)}").map(definition =>
+      val featured = feedRepository.forUrl(s"${featuredPath(language)}").map(definition =>
         api.Feed(
           api.FeedDefinition(
             definition.id.get,
             definition.revision.get,
-            s"${BookApiProperties.CloudFrontOpds}${definition.url.replace(BookApiProperties.OpdsPath,"")}",
+            s"${BookApiProperties.CloudFrontOpds}${definition.url}",
             definition.uuid),
           Messages(definition.titleKey),
           definition.descriptionKey.map(Messages(_)),
@@ -82,7 +82,7 @@ trait FeedService {
 
       val levels: Seq[api.Feed] = readService.listAvailableLevelsForLanguage(Some(language))
         .flatMap(level => {
-          val url = s"${BookApiProperties.OpdsPath}${levelPath(language, level)}"
+          val url = levelPath(language, level)
           val levelUpdated = translationRepository.latestArrivalDateFor(language, level)
 
           feedRepository.forUrl(url).map(definition =>
@@ -90,7 +90,7 @@ trait FeedService {
               api.FeedDefinition(
                 definition.id.get,
                 definition.revision.get,
-                s"${BookApiProperties.CloudFrontOpds}${definition.url.replace(BookApiProperties.OpdsPath,"")}",
+                s"${BookApiProperties.CloudFrontOpds}${definition.url}",
                 definition.uuid),
               Messages(definition.titleKey, level),
               definition.descriptionKey.map(Messages(_)),
@@ -179,7 +179,7 @@ trait FeedService {
       })
 
       BookApiProperties.OpdsFeeds.flatMap { feedDefinition =>
-        val url = s"${BookApiProperties.OpdsPath}${feedDefinition.url}"
+        val url = feedDefinition.url
 
         val containsLanguage = url.contains(OpdsLanguageParam)
         val containsLevel = url.contains(OpdsLevelParam)

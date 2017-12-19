@@ -7,7 +7,7 @@
 
 package no.gdl.bookapi.service
 
-import no.gdl.bookapi.BookApiProperties.{OpdsLanguageParam, OpdsLevelParam, OpdsPath}
+import no.gdl.bookapi.BookApiProperties.{OpdsLanguageParam, OpdsLevelParam}
 import no.gdl.bookapi.TestData.{LanguageCodeAmharic, LanguageCodeEnglish, LanguageCodeNorwegian}
 import no.gdl.bookapi.model.api.FeedEntry
 import no.gdl.bookapi.{BookApiProperties, TestData, TestEnvironment, UnitSuite}
@@ -30,7 +30,7 @@ class FeedServiceTest extends UnitSuite with TestEnvironment {
     calculatedFeedUrls.size should be (5)
 
     val expectedFeedUrls = BookApiProperties.OpdsFeeds.map(feed =>
-      s"$OpdsPath${feed.url.replace(OpdsLevelParam, "1").replace(OpdsLanguageParam, LanguageCodeEnglish)}")
+      s"${feed.url.replace(OpdsLevelParam, "1").replace(OpdsLanguageParam, LanguageCodeEnglish)}")
 
     expectedFeedUrls.sorted should equal (calculatedFeedUrls.map(_.url).sorted)
   }
