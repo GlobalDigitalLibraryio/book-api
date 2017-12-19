@@ -12,6 +12,7 @@ import java.io.InputStream
 import com.openhtmltopdf.extend.FSSupplier
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder
 import com.typesafe.scalalogging.LazyLogging
+import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.model.domain.PdfCss
 import no.gdl.bookapi.repository.{BookRepository, TranslationRepository}
 
@@ -35,12 +36,12 @@ trait PdfService {
       "nep" -> FontDefinition("/NotoSansDevanagari-Regular.ttf", "Noto Sans Devanagari")
     )
 
-    def createPdf(language: String, uuid: String): Option[PdfRendererBuilder] = {
+    def createPdf(language: LanguageTag, uuid: String): Option[PdfRendererBuilder] = {
       translationRepository.withUuId(uuid).map(translation => {
         val publisher = bookRepository.withId(translation.bookId).map(_.publisher.name)
 
         val chapters = readService.chaptersForIdAndLanguage(translation.bookId, language).flatMap(ch => readService.chapterForBookWithLanguageAndId(translation.bookId, language, ch.id))
-        val fonts = fontDefinitions.get(language).toSeq :+ DefaultFont
+        val fonts = fontDefinitions.get(language.toString).toSeq :+ DefaultFont
 
         val bookAsHtml =
           s"""

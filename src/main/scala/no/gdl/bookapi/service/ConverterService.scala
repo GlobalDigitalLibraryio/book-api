@@ -8,9 +8,10 @@
 package no.gdl.bookapi.service
 
 import java.time.LocalDate
-import java.util.{Locale, UUID}
+import java.util.UUID
 
 import com.typesafe.scalalogging.LazyLogging
+import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.BookApiProperties.Domain
 import no.gdl.bookapi.integration.ImageApiClient
 import no.gdl.bookapi.model._
@@ -42,7 +43,7 @@ trait ConverterService {
         newTranslation.title,
         newTranslation.about,
         newTranslation.numPages.map(_.toInt),
-        newTranslation.language,
+        LanguageTag(newTranslation.language),
         newTranslation.datePublished,
         newTranslation.dateCreated,
         categoryIds = Seq(),
@@ -101,13 +102,13 @@ trait ConverterService {
     def toApiContributors(contributors: Seq[domain.Contributor]): Seq[api.Contributor] =
       contributors.map(c => api.Contributor(c.id.get, c.revision.get, c.`type`, c.person.name))
 
-    def toApiChapterSummary(chapters: Seq[domain.Chapter], bookId: Long, language: String): Seq[api.ChapterSummary] = chapters.map(c => toApiChapterSummary(c, bookId, language))
+    def toApiChapterSummary(chapters: Seq[domain.Chapter], bookId: Long, language: LanguageTag): Seq[api.ChapterSummary] = chapters.map(c => toApiChapterSummary(c, bookId, language))
 
-    def toApiChapterSummary(chapter: domain.Chapter, bookId: Long, language: String): api.ChapterSummary = api.ChapterSummary(
+    def toApiChapterSummary(chapter: domain.Chapter, bookId: Long, language: LanguageTag): api.ChapterSummary = api.ChapterSummary(
       chapter.id.get,
       chapter.seqNo,
       chapter.title,
-      s"${Domain}${BookApiProperties.ApiPath}/${language}/${bookId}/chapters/${chapter.id.get}")
+      s"${Domain}${BookApiProperties.ApiPath}/${language.toString}/${bookId}/chapters/${chapter.id.get}")
 
     def toApiChapter(chapter: domain.Chapter): api.Chapter = api.Chapter(
       chapter.id.get,
@@ -116,8 +117,8 @@ trait ConverterService {
       chapter.title,
       contentConverter.toApiContent(chapter.content))
 
-    def toApiBook(translation: Option[domain.Translation], availableLanguages: Seq[String], book: Option[domain.Book]): Option[api.Book] = {
-      def toApiBookInternal(translation: domain.Translation, book: domain.Book, availableLanguages: Seq[String]): api.Book = {
+    def toApiBook(translation: Option[domain.Translation], availableLanguages: Seq[LanguageTag], book: Option[domain.Book]): Option[api.Book] = {
+      def toApiBookInternal(translation: domain.Translation, book: domain.Book, availableLanguages: Seq[LanguageTag]): api.Book = {
         model.api.Book(
           book.id.get,
           book.revision.get,
@@ -169,14 +170,8 @@ trait ConverterService {
         })
     }
 
-    def toApiLanguage(languageCode: String): api.Language = {
-      val locale = new Locale(languageCode)
-      val displayLanguage = Option(locale.getDisplayLanguage(locale))
-      displayLanguage match {
-        case Some(x) => api.Language(languageCode, x)
-        case None => api.Language(languageCode, languageCode)
-      }
+    def toApiLanguage(languageTag: LanguageTag): api.Language = {
+      api.Language(languageTag.toString, languageTag.displayName)
     }
   }
-
 }

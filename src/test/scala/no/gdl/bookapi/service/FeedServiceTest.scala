@@ -20,11 +20,11 @@ class FeedServiceTest extends UnitSuite with TestEnvironment {
   override val feedService = new FeedService
 
   test("that calculateFeeds returns correct urls for one language and one level") {
-    val languages = Seq(LanguageCodeEnglish)
+    val languages = Seq(LanguageTag(LanguageCodeEnglish))
     val levels = Seq("1")
 
     when(translationRepository.allAvailableLanguages()).thenReturn(languages)
-    when(translationRepository.allAvailableLevels(any[Option[String]])(any[DBSession])).thenReturn(levels)
+    when(translationRepository.allAvailableLevels(any[Option[LanguageTag]])(any[DBSession])).thenReturn(levels)
 
     val calculatedFeedUrls = feedService.calculateFeeds
     calculatedFeedUrls.size should be (5)
@@ -36,33 +36,33 @@ class FeedServiceTest extends UnitSuite with TestEnvironment {
   }
 
   test("that calculateFeedUrls calculates correct number of feeds for multiple languages and levels") {
-    val languages = Seq(LanguageCodeEnglish, LanguageCodeNorwegian, LanguageCodeAmharic)
+    val languages = Seq(LanguageTag(LanguageCodeEnglish), LanguageTag(LanguageCodeNorwegian), LanguageTag(LanguageCodeAmharic))
     val levels = Seq("1", "2", "3", "4", "5")
 
     val expectedNumberOfFeeds = (4 * languages.size) + (languages.size * levels.size)
 
     when(translationRepository.allAvailableLanguages()).thenReturn(languages)
-    when(translationRepository.allAvailableLevels(any[Option[String]])(any[DBSession])).thenReturn(levels)
+    when(translationRepository.allAvailableLevels(any[Option[LanguageTag]])(any[DBSession])).thenReturn(levels)
 
     val calculatedFeedUrls = feedService.calculateFeeds
     calculatedFeedUrls.size should be (expectedNumberOfFeeds)
   }
 
   test("that featuredPath returns expected path for language"){
-    feedService.featuredPath("amh") should equal ("/amh/featured.xml")
+    feedService.featuredPath(LanguageTag("amh")) should equal ("/amh/featured.xml")
   }
 
   test("that levelPath returns expected path for language and level") {
-    feedService.levelPath("amh", "1") should equal ("/amh/level1.xml")
+    feedService.levelPath(LanguageTag("amh"), "1") should equal ("/amh/level1.xml")
   }
 
   test("that justArrivedPath returns expected path for language") {
-    feedService.justArrivedPath("amh") should equal ("/amh/new.xml")
+    feedService.justArrivedPath(LanguageTag("amh")) should equal ("/amh/new.xml")
   }
 
   test("that addFeaturedCategory adds category with correct url") {
     val feedEntry = FeedEntry(TestData.Api.DefaultBook, Seq())
-    val withCategory = feedService.addFeaturedCategory(feedEntry, "amh")
+    val withCategory = feedService.addFeaturedCategory(feedEntry, LanguageTag("amh"))
 
     withCategory.categories.size should be (1)
     withCategory.categories.head.url should equal (s"${BookApiProperties.CloudFrontOpds}/amh/featured.xml")
@@ -70,7 +70,7 @@ class FeedServiceTest extends UnitSuite with TestEnvironment {
 
   test("that addJustArrivedCategory adds category with correct url") {
     val feedEntry = FeedEntry(TestData.Api.DefaultBook, Seq())
-    val withCategory = feedService.addJustArrivedCategory(feedEntry, "amh")
+    val withCategory = feedService.addJustArrivedCategory(feedEntry, LanguageTag("amh"))
 
     withCategory.categories.size should be (1)
     withCategory.categories.head.url should equal (s"${BookApiProperties.CloudFrontOpds}/amh/new.xml")
@@ -78,7 +78,7 @@ class FeedServiceTest extends UnitSuite with TestEnvironment {
 
   test("that addLevelCategory adds category with correct url") {
     val feedEntry = FeedEntry(TestData.Api.DefaultBook, Seq())
-    val withCategory = feedService.addLevelCategory(feedEntry, "amh")
+    val withCategory = feedService.addLevelCategory(feedEntry, LanguageTag("amh"))
 
     withCategory.categories.size should be (1)
     withCategory.categories.head.url should equal (s"${BookApiProperties.CloudFrontOpds}/amh/level${feedEntry.book.readingLevel.get}.xml")

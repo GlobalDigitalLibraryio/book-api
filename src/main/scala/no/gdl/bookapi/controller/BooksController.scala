@@ -8,6 +8,7 @@
 
 package no.gdl.bookapi.controller
 
+import io.digitallibrary.language.model.LanguageTag
 import io.digitallibrary.network.AuthUser
 import no.gdl.bookapi.BookApiProperties.DefaultLanguage
 import no.gdl.bookapi.model.api
@@ -95,8 +96,9 @@ trait BooksController {
       val page = intOrDefault("page", 1).max(1)
       val readingLevel = params.get("reading-level")
       val sort = Sort.valueOf(paramOrNone("sort")).getOrElse(Sort.ByIdAsc)
+      val language = LanguageTag(DefaultLanguage)
 
-      readService.withLanguageAndLevel(DefaultLanguage, readingLevel, pageSize, page, sort)
+      readService.withLanguageAndLevel(language, readingLevel, pageSize, page, sort)
     }
 
     get("/:lang/?", operation(getAllBooksInLang)) {
@@ -105,12 +107,13 @@ trait BooksController {
       val readingLevel = params.get("reading-level")
       val sort = Sort.valueOf(paramOrNone("sort")).getOrElse(Sort.ByIdAsc)
 
-      readService.withLanguageAndLevel(language("lang"), readingLevel, pageSize, page, sort)
+      readService.withLanguageAndLevel(LanguageTag(params("lang")), readingLevel, pageSize, page, sort)
+
     }
 
     get("/:lang/:id/?", operation(getBook)) {
       val id = long("id")
-      val lang = language("lang")
+      val lang = LanguageTag(params("lang"))
 
       readService.withIdAndLanguage(id, lang) match {
         case Some(x) => x
@@ -119,11 +122,11 @@ trait BooksController {
     }
 
     get("/:lang/:id/chapters/?", operation(getChapters)) {
-      readService.chaptersForIdAndLanguage(long("id"), language("lang"))
+      readService.chaptersForIdAndLanguage(long("id"), LanguageTag(params("lang")))
     }
 
     get("/:lang/:bookid/chapters/:chapterid/?", operation(getChapter)) {
-      val lang = language("lang")
+      val lang = LanguageTag(params("lang"))
       val bookId = long("bookid")
       val chapterId = long("chapterid")
 
@@ -136,7 +139,7 @@ trait BooksController {
     get("/:lang/similar/:id/?", operation(getSimilar)) {
       readService.similarTo(
         long("id"),
-        language("lang"),
+        LanguageTag(params("lang")),
         intOrDefault("page-size", 10).min(100).max(1),
         intOrDefault("page", 1).max(1),
         Sort.valueOf(paramOrNone("sort")).getOrElse(Sort.ByIdAsc))
@@ -147,4 +150,5 @@ trait BooksController {
         throw new AccessDeniedException("User is missing required role to perform this operation")
     }
   }
+
 }

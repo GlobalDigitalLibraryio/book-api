@@ -10,6 +10,7 @@ package no.gdl.bookapi.repository
 import java.time.LocalDate
 import java.util.UUID
 
+import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.model.domain._
 import scalikejdbc.{AutoSession, DBSession}
 
@@ -24,7 +25,7 @@ trait RepositoryTestHelpers {
     bookRepository.add(Book(None, None, publisher.id.get, license.id.get, publisher, license))
   }
 
-  def addTranslationDef(externalId: String, title: String, bookId: Long, language: String, readingLevel: Option[String] = None, dateArrived: Option[LocalDate] = None)(implicit session: DBSession = AutoSession): Translation = {
+  def addTranslationDef(externalId: String, title: String, bookId: Long, language: LanguageTag, readingLevel: Option[String] = None, dateArrived: Option[LocalDate] = None)(implicit session: DBSession = AutoSession): Translation = {
     val cat1 = categoryRepository.add(Category(None, None, "some-category"))
 
     val translationDef = Translation(
