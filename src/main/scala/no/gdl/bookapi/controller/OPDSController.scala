@@ -7,12 +7,11 @@
 
 package no.gdl.bookapi.controller
 
-import java.text.SimpleDateFormat
-import java.time.{LocalDate, ZoneId}
 import java.time.format.DateTimeFormatter
-import java.util.Date
+import java.time.{LocalDate, ZoneId}
 import javax.servlet.http.HttpServletRequest
 
+import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.BookApiProperties
 import no.gdl.bookapi.model.api.{Feed, FeedEntry}
 import no.gdl.bookapi.service.{ConverterService, FeedService, ReadService}
@@ -32,21 +31,21 @@ trait OPDSController {
     }
 
     get(BookApiProperties.OpdsNavUrl.url) {
-      val navFeeds = feedService.feedsForNavigation(language("lang"))
+      val navFeeds = feedService.feedsForNavigation(LanguageTag(params("lang")))
       val navLastUpdated = navFeeds.map(_.updated).sorted.reverse.headOption
       navigationFeed(feedUpdated = navLastUpdated, feeds = navFeeds)
     }
 
     get(BookApiProperties.OpdsRootUrl.url) {
-      acquisitionFeed(books = feedService.allEntries(language("lang")))
+      acquisitionFeed(books = feedService.allEntries(LanguageTag(params("lang"))))
     }
 
     get(BookApiProperties.OpdsNewUrl.url) {
-      acquisitionFeed(books = feedService.newEntries(language("lang")))
+      acquisitionFeed(books = feedService.newEntries(LanguageTag(params("lang"))))
     }
 
     get(BookApiProperties.OpdsFeaturedUrl.url) {
-      val lang = language("lang")
+      val lang = LanguageTag(params("lang"))
       acquisitionFeed(
         feedUpdated = feedService.editorsPickLastUpdated(lang),
         books = feedService.editorsPicks(lang))
@@ -55,11 +54,11 @@ trait OPDSController {
     get(BookApiProperties.OpdsLevelUrl.url) {
       acquisitionFeed(
         titleArgs = Seq(params("lev")),
-        books = feedService.entriesForLanguageAndLevel(language("lang"), params("lev")))
+        books = feedService.entriesForLanguageAndLevel(LanguageTag(params("lang")), params("lev")))
     }
 
     private def navigationFeed(feedUpdated: Option[LocalDate], feeds: => Seq[Feed])(implicit request: HttpServletRequest) = {
-      val lang = language("lang")
+      val lang = LanguageTag(params("lang"))
       val selfOpt = feedService.feedForUrl(request.getRequestURI, lang, feedUpdated, Seq(), Seq())
       selfOpt match {
         case Some(self) => render(self, feeds)
@@ -70,7 +69,7 @@ trait OPDSController {
     }
 
     private def acquisitionFeed(feedUpdated: Option[LocalDate] = None, titleArgs: Seq[String] = Seq(), books: => Seq[FeedEntry])(implicit request: HttpServletRequest) = {
-      val lang = language("lang")
+      val lang = LanguageTag(params("lang"))
       feedService.feedForUrl(request.getRequestURI, lang, feedUpdated, titleArgs, books) match {
         case Some(feed) => render(feed)
         case None =>

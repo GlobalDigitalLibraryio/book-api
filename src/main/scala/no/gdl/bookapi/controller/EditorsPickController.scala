@@ -7,6 +7,7 @@
 
 package no.gdl.bookapi.controller
 
+import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.BookApiProperties.DefaultLanguage
 import no.gdl.bookapi.model.api
 import no.gdl.bookapi.service.ReadService
@@ -37,13 +38,13 @@ trait EditorsPickController {
       responseMessages response500)
 
     get("/", operation(getAllPicks)) {
-      readService.editorsPickForLanguage(DefaultLanguage)
+      readService.editorsPickForLanguage(LanguageTag(DefaultLanguage))
         .map(_.books)
         .getOrElse(Seq())
     }
 
     get("/:lang", operation(getAllPicksInLang)) {
-      readService.editorsPickForLanguage(language("lang"))
+      readService.editorsPickForLanguage(LanguageTag(params("lang")))
         .map(_.books)
         .getOrElse(Seq())
     }

@@ -9,6 +9,7 @@ package no.gdl.bookapi.service
 
 import java.time.LocalDate
 
+import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.model.domain.{EditorsPick, SearchResult, Sort}
 import org.mockito.Mockito._
 import org.mockito.Matchers._
@@ -19,58 +20,60 @@ class ReadServiceTest extends UnitSuite with TestEnvironment {
   override val readService = new ReadService
 
   test("that editorsPickForLanguage returns Seq() when no editorspick defined for language") {
-    when(editorsPickRepository.forLanguage("nob")).thenReturn(None)
-    readService.editorsPickForLanguage("nob") should be(None)
+    val languageTag = LanguageTag("nob")
+
+    when(editorsPickRepository.forLanguage(languageTag)).thenReturn(None)
+    readService.editorsPickForLanguage(languageTag) should be(None)
   }
 
   test("that editorsPickForLanguage returns list of books for correct language") {
-    val editorsPick = EditorsPick(Some(1), Some(1), "nob", Seq(1, 2), LocalDate.now())
+    val editorsPick = EditorsPick(Some(1), Some(1), LanguageTag("nob"), Seq(1, 2), LocalDate.now())
 
-    when(editorsPickRepository.forLanguage("nob")).thenReturn(Some(editorsPick))
+    when(editorsPickRepository.forLanguage(LanguageTag("nob"))).thenReturn(Some(editorsPick))
     when(translationRepository.withId(1)).thenReturn(Some(TestData.Domain.DefaultTranslation))
     when(translationRepository.withId(2)).thenReturn(Some(TestData.Domain.DefaultTranslation))
-    when(converterService.toApiBook(any[Option[domain.Translation]], any[Seq[String]], any[Option[domain.Book]])).thenReturn(Some(TestData.Api.DefaultBook))
+    when(converterService.toApiBook(any[Option[domain.Translation]], any[Seq[LanguageTag]], any[Option[domain.Book]])).thenReturn(Some(TestData.Api.DefaultBook))
 
-    val editorsPickForNob = readService.editorsPickForLanguage("nob")
+    val editorsPickForNob = readService.editorsPickForLanguage(LanguageTag("nob"))
     editorsPickForNob.get.books should equal(Seq(TestData.Api.DefaultBook, TestData.Api.DefaultBook))
   }
 
   test("that editorsPickForLanguage only returns existing translations even if definition is incorrect") {
-    val editorsPick = EditorsPick(Some(1), Some(1), "nob", Seq(1, 2), LocalDate.now())
+    val editorsPick = EditorsPick(Some(1), Some(1), LanguageTag("nob"), Seq(1, 2), LocalDate.now())
 
-    when(editorsPickRepository.forLanguage("nob")).thenReturn(Some(editorsPick))
+    when(editorsPickRepository.forLanguage(LanguageTag("nob"))).thenReturn(Some(editorsPick))
     when(translationRepository.withId(1)).thenReturn(Some(TestData.Domain.DefaultTranslation))
     when(translationRepository.withId(2)).thenReturn(None)
-    when(converterService.toApiBook(any[Option[domain.Translation]], any[Seq[String]], any[Option[domain.Book]])).thenReturn(Some(TestData.Api.DefaultBook))
+    when(converterService.toApiBook(any[Option[domain.Translation]], any[Seq[LanguageTag]], any[Option[domain.Book]])).thenReturn(Some(TestData.Api.DefaultBook))
 
-    val editorsPickForNob = readService.editorsPickForLanguage("nob")
+    val editorsPickForNob = readService.editorsPickForLanguage(LanguageTag("nob"))
      editorsPickForNob.get.books should equal(Seq(TestData.Api.DefaultBook))
   }
 
   test("that editorsPickForLanguage returns empty list if no ids defined in editorspick") {
-    val editorsPick = EditorsPick(Some(1), Some(1), "nob", Seq(), LocalDate.now())
+    val editorsPick = EditorsPick(Some(1), Some(1), LanguageTag("nob"), Seq(), LocalDate.now())
 
-    when(editorsPickRepository.forLanguage("nob")).thenReturn(Some(editorsPick))
+    when(editorsPickRepository.forLanguage(LanguageTag("nob"))).thenReturn(Some(editorsPick))
 
-    readService.editorsPickForLanguage("nob").get.books should equal(Seq())
+    readService.editorsPickForLanguage(LanguageTag("nob")).get.books should equal(Seq())
   }
 
   test("that listAvailableLanguages returns languages sorted by name") {
-    when(translationRepository.allAvailableLanguages()).thenReturn(Seq(TestData.LanguageCodeEnglish, TestData.LanguageCodeAmharic))
-    when(converterService.toApiLanguage(TestData.LanguageCodeAmharic)).thenReturn(TestData.Api.amharic)
-    when(converterService.toApiLanguage(TestData.LanguageCodeEnglish)).thenReturn(TestData.Api.english)
+    when(translationRepository.allAvailableLanguages()).thenReturn(Seq(LanguageTag(TestData.LanguageCodeEnglish), LanguageTag(TestData.LanguageCodeAmharic)))
+    when(converterService.toApiLanguage(LanguageTag(TestData.LanguageCodeAmharic))).thenReturn(TestData.Api.amharic)
+    when(converterService.toApiLanguage(LanguageTag(TestData.LanguageCodeEnglish))).thenReturn(TestData.Api.english)
 
     readService.listAvailableLanguages should equal(Seq(TestData.Api.amharic, TestData.Api.english))
   }
 
   test("that similarTo returns empty searchresult when given id does not exist") {
-    when(translationRepository.forBookIdAndLanguage(1, "nob")).thenReturn(None)
+    when(translationRepository.forBookIdAndLanguage(1, LanguageTag("nob"))).thenReturn(None)
     when(translationRepository.languagesFor(1)).thenReturn(Seq())
     when(bookRepository.withId(1)).thenReturn(None)
     when(converterService.toApiBook(None, Seq(), None)).thenReturn(None)
-    when(converterService.toApiLanguage("nob")).thenReturn(TestData.Api.norwegian_bokmal)
+    when(converterService.toApiLanguage(LanguageTag("nob"))).thenReturn(TestData.Api.norwegian_bokmal)
 
-    val searchResult = readService.similarTo(1, "nob", 10, 1, Sort.ByIdAsc)
+    val searchResult = readService.similarTo(1, LanguageTag("nob"), 10, 1, Sort.ByIdAsc)
     searchResult.results should equal(Seq())
     searchResult.language should equal(TestData.Api.norwegian_bokmal)
     searchResult.page should equal(1)
@@ -83,10 +86,10 @@ class ReadServiceTest extends UnitSuite with TestEnvironment {
     val pageSize = 10
 
     // For getting the book to find similar for
-    when(translationRepository.forBookIdAndLanguage(1, "nob")).thenReturn(None)
+    when(translationRepository.forBookIdAndLanguage(1, LanguageTag("nob"))).thenReturn(None)
     when(translationRepository.languagesFor(1)).thenReturn(Seq())
     when(bookRepository.withId(1)).thenReturn(None)
-    when(converterService.toApiLanguage("nob")).thenReturn(TestData.Api.norwegian_bokmal)
+    when(converterService.toApiLanguage(LanguageTag("nob"))).thenReturn(TestData.Api.norwegian_bokmal)
     when(converterService.toApiBook(None, Seq(), None)).thenReturn(Some(TestData.Api.DefaultBook))
 
     // For getting book with id 2
@@ -94,15 +97,15 @@ class ReadServiceTest extends UnitSuite with TestEnvironment {
     val translation2 = TestData.Domain.DefaultTranslation.copy(id = Some(2))
     val similarBook = TestData.Api.DefaultBook.copy(id = 2)
 
-    when(translationRepository.forBookIdAndLanguage(2, "nob")).thenReturn(Some(translation2))
-    when(translationRepository.languagesFor(2)).thenReturn(Seq("nob"))
+    when(translationRepository.forBookIdAndLanguage(2, LanguageTag("nob"))).thenReturn(Some(translation2))
+    when(translationRepository.languagesFor(2)).thenReturn(Seq(LanguageTag("nob")))
     when(bookRepository.withId(2)).thenReturn(Some(book2))
-    when(converterService.toApiLanguage("nob")).thenReturn(TestData.Api.norwegian_bokmal)
-    when(converterService.toApiBook(Some(translation2), Seq("nob"), Some(book2))).thenReturn(Some(similarBook))
+    when(converterService.toApiLanguage(LanguageTag("nob"))).thenReturn(TestData.Api.norwegian_bokmal)
+    when(converterService.toApiBook(Some(translation2), Seq(LanguageTag("nob")), Some(book2))).thenReturn(Some(similarBook))
 
-    val searchResult = SearchResult[Long](2, page, pageSize, "nob", Seq(TestData.Api.DefaultBook.id, 2))
-    when(translationRepository.bookIdsWithLanguageAndLevel("nob", TestData.Api.DefaultBook.readingLevel, pageSize, page, Sort.ByIdAsc)).thenReturn(searchResult)
+    val searchResult = SearchResult[Long](2, page, pageSize, LanguageTag("nob"), Seq(TestData.Api.DefaultBook.id, 2))
+    when(translationRepository.bookIdsWithLanguageAndLevel(LanguageTag("nob"), TestData.Api.DefaultBook.readingLevel, pageSize, page, Sort.ByIdAsc)).thenReturn(searchResult)
 
-    readService.similarTo(TestData.Api.DefaultBook.id, "nob", pageSize, page, Sort.ByIdAsc).results should equal(Seq(similarBook))
+    readService.similarTo(TestData.Api.DefaultBook.id, LanguageTag("nob"), pageSize, page, Sort.ByIdAsc).results should equal(Seq(similarBook))
   }
 }

@@ -7,6 +7,7 @@
 
 package no.gdl.bookapi.repository
 
+import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.model.domain._
 import no.gdl.bookapi.{IntegrationSuite, TestEnvironment}
 
@@ -23,7 +24,7 @@ class ChapterRepositoryTest extends IntegrationSuite with TestEnvironment with R
   test("that Chapter.add returns a Chapter with id") {
     withRollback { implicit session =>
       val book = addBookDef()
-      val translation = addTranslationDef("external-id", "Some title", book.id.get, "eng")
+      val translation = addTranslationDef("external-id", "Some title", book.id.get, LanguageTag("eng"))
 
       val chapter = Chapter(None, None, translation.id.get, 1, Some("Chaptertitle"), "Chaptercontent")
 
@@ -36,12 +37,12 @@ class ChapterRepositoryTest extends IntegrationSuite with TestEnvironment with R
   test("that Chapter.chaptersForBookIdAndLanguage returns all chapters for a translation") {
     withRollback { implicit session =>
       val book = addBookDef()
-      val translation = addTranslationDef("external-id", "Some title", book.id.get, "eng")
+      val translation = addTranslationDef("external-id", "Some title", book.id.get, LanguageTag("eng"))
 
       val chapter1 = chapterRepository.add(Chapter(None, None, translation.id.get, 1, Some("Chaptertitle1"), "Chaptercontent1"))
       val chapter2 = chapterRepository.add(Chapter(None, None, translation.id.get, 2, Some("Chaptertitle2"), "Chaptercontent2"))
 
-      val chapters = chapterRepository.chaptersForBookIdAndLanguage(book.id.get, "eng")
+      val chapters = chapterRepository.chaptersForBookIdAndLanguage(book.id.get, LanguageTag("eng"))
       chapters.length should be(2)
       chapters.minBy(_.id).id should equal(chapter1.id)
       chapters.maxBy(_.id).id should equal(chapter2.id)
@@ -51,11 +52,11 @@ class ChapterRepositoryTest extends IntegrationSuite with TestEnvironment with R
   test("that Chapter.chapterForBookWithLanguageAndId returns chapter with given id") {
     withRollback { implicit session =>
       val book = addBookDef()
-      val translation = addTranslationDef("external-id", "Some title", book.id.get, "eng")
+      val translation = addTranslationDef("external-id", "Some title", book.id.get, LanguageTag("eng"))
 
       val chapter1 = chapterRepository.add(Chapter(None, None, translation.id.get, 1, Some("Chaptertitle1"), "Chaptercontent1"))
 
-      val chapter = chapterRepository.chapterForBookWithLanguageAndId(book.id.get, "eng", chapter1.id.get)
+      val chapter = chapterRepository.chapterForBookWithLanguageAndId(book.id.get, LanguageTag("eng"), chapter1.id.get)
       chapter.isDefined should be(true)
       chapter.head.id should equal(chapter1.id)
       chapter.head.content should equal(chapter1.content)

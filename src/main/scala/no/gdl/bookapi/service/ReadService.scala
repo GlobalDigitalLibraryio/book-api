@@ -8,17 +8,17 @@
 package no.gdl.bookapi.service
 
 
+import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.model._
 import no.gdl.bookapi.model.domain.Sort
-import no.gdl.bookapi.repository.{BookRepository, ChapterRepository, TranslationRepository}
-import no.gdl.bookapi.repository.EditorsPickRepository
+import no.gdl.bookapi.repository.{BookRepository, ChapterRepository, EditorsPickRepository, TranslationRepository}
 
 trait ReadService {
   this: ConverterService with BookRepository with ChapterRepository with TranslationRepository with EditorsPickRepository =>
   val readService: ReadService
 
   class ReadService {
-    def editorsPickForLanguage(language: String): Option[api.EditorsPick] = {
+    def editorsPickForLanguage(language: LanguageTag): Option[api.EditorsPick] = {
       editorsPickRepository.forLanguage(language).map(editorsPick => {
           val books = editorsPick.translationIds.flatMap(trId =>
             translationRepository.withId(trId).flatMap(tr =>
@@ -38,11 +38,11 @@ trait ReadService {
       translationRepository.allAvailableLanguages().map(converterService.toApiLanguage).sortBy(_.name)
     }
 
-    def listAvailableLevelsForLanguage(lang: Option[String] = None): Seq[String] =
+    def listAvailableLevelsForLanguage(lang: Option[LanguageTag] = None): Seq[String] =
       translationRepository.allAvailableLevels(lang)
 
 
-    def withLanguageAndLevel(language: String, readingLevel: Option[String], pageSize: Int, page: Int, sort: Sort.Value): api.SearchResult = {
+    def withLanguageAndLevel(language: LanguageTag, readingLevel: Option[String], pageSize: Int, page: Int, sort: Sort.Value): api.SearchResult = {
       val searchResult = translationRepository
         .bookIdsWithLanguageAndLevel(language, readingLevel, pageSize, page, sort)
 
@@ -56,7 +56,7 @@ trait ReadService {
         books)
     }
 
-    def withLanguage(language: String, pageSize: Int, page: Int, sort: Sort.Value): api.SearchResult = {
+    def withLanguage(language: LanguageTag, pageSize: Int, page: Int, sort: Sort.Value): api.SearchResult = {
       val searchResult = translationRepository.bookIdsWithLanguage(language, pageSize, page, sort)
       val books = searchResult.results.flatMap(id => withIdAndLanguage(id, language))
 
@@ -68,15 +68,15 @@ trait ReadService {
         books)
     }
 
-    def withIdAndLanguage(bookId: Long, language: String): Option[api.Book] = {
+    def withIdAndLanguage(bookId: Long, language: LanguageTag): Option[api.Book] = {
       val translation = translationRepository.forBookIdAndLanguage(bookId, language)
-      val availableLanguages: Seq[String] = translationRepository.languagesFor(bookId)
+      val availableLanguages: Seq[LanguageTag] = translationRepository.languagesFor(bookId)
       val book: Option[domain.Book] = bookRepository.withId(bookId)
 
       converterService.toApiBook(translation, availableLanguages, book)
     }
 
-    def similarTo(bookId: Long, language: String, pageSize: Int, page: Int, sort: Sort.Value): api.SearchResult = {
+    def similarTo(bookId: Long, language: LanguageTag, pageSize: Int, page: Int, sort: Sort.Value): api.SearchResult = {
       withIdAndLanguage(bookId, language) match {
         case None => api.SearchResult(0, page, pageSize, converterService.toApiLanguage(language), Seq())
         case Some(book) =>
@@ -96,11 +96,11 @@ trait ReadService {
       }
     }
 
-    def chaptersForIdAndLanguage(bookId: Long, language: String): Seq[api.ChapterSummary] = {
+    def chaptersForIdAndLanguage(bookId: Long, language: LanguageTag): Seq[api.ChapterSummary] = {
       chapterRepository.chaptersForBookIdAndLanguage(bookId, language).map(c => converterService.toApiChapterSummary(c, bookId, language))
     }
 
-    def chapterForBookWithLanguageAndId(bookId: Long, language: String, chapterId: Long): Option[api.Chapter] = {
+    def chapterForBookWithLanguageAndId(bookId: Long, language: LanguageTag, chapterId: Long): Option[api.Chapter] = {
       chapterRepository.chapterForBookWithLanguageAndId(bookId, language, chapterId).map(converterService.toApiChapter)
     }
 
