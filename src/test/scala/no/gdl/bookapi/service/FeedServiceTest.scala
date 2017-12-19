@@ -7,6 +7,7 @@
 
 package no.gdl.bookapi.service
 
+import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.BookApiProperties.{OpdsLanguageParam, OpdsLevelParam}
 import no.gdl.bookapi.TestData.{LanguageCodeAmharic, LanguageCodeEnglish, LanguageCodeNorwegian}
 import no.gdl.bookapi.model.api.FeedEntry
