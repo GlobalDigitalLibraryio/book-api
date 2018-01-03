@@ -26,7 +26,6 @@ trait LanguageController {
       summary s"Returns all languages with content in GDL"
       notes s"Returns all languages with content in GDL"
       parameters headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted.")
-      authorizations "oauth2"
       responseMessages response500)
 
     get("/", operation(getAllLanguages)) {

@@ -113,4 +113,32 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
       chapter.title should equal (TestData.Api.Chapter1.title)
     }
   }
+
+  test("that GET /mine returns AccessDenied for an invalid user") {
+    get("/mine") {
+      status should equal (403)
+    }
+  }
+
+  test("that GET /mine returns 200 ok for a valid user") {
+    val testToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwczovL2RpZ2l0YWxsaWJyYXJ5LmlvL2dkbF9pZCI6IjEyMyIsInN1YiI6IjEyMzQ1Njc4OTAiLCJuYW1lIjoiSm9obiBEb2UifQ.e3BKK_gLxWQwJhFX6SppNchM_eSwu82yKghVx2P3yMY"
+    get("/mine", headers = Seq(("Authorization", s"Bearer $testToken"))) {
+      status should equal (200)
+    }
+  }
+
+  test("that GET /mine/1 returns AccessDenied for an invalid user") {
+    get("/mine/123") {
+      status should equal (403)
+    }
+  }
+
+  test("that GET /mine/1 returns 200 ok for a valid user") {
+    val testToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwczovL2RpZ2l0YWxsaWJyYXJ5LmlvL2dkbF9pZCI6IjEyMyIsInN1YiI6IjEyMzQ1Njc4OTAiLCJuYW1lIjoiSm9obiBEb2UifQ.e3BKK_gLxWQwJhFX6SppNchM_eSwu82yKghVx2P3yMY"
+    when(readService.withIdAndLanguage(any[Long], any[LanguageTag])).thenReturn(Some(TestData.Api.DefaultBook))
+
+    get("/mine/123", headers = Seq(("Authorization", s"Bearer $testToken"))) {
+      status should equal (200)
+    }
+  }
 }
