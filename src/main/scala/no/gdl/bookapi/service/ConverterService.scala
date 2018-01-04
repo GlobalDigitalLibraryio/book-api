@@ -126,6 +126,7 @@ trait ConverterService {
           translation.uuid,
           translation.title,
           translation.about,
+          None, // TODO in #155: Add from language if this is a translation
           toApiLanguage(translation.language),
           availableLanguages.map(toApiLanguage).sortBy(_.name),
           toApiLicense(book.license),
@@ -143,7 +144,8 @@ trait ConverterService {
           toApiDownloads(translation),
           translation.tags,
           toApiContributors(translation.contributors),
-          toApiChapterSummary(translation.chapters, translation.bookId, translation.language)
+          toApiChapterSummary(translation.chapters, translation.bookId, translation.language),
+          supportsTranslation = true // TODO in #155: Only set this to true if we support it
         )
       }
 

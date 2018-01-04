@@ -126,5 +126,14 @@ abstract class GdlController extends ScalatraServlet with NativeJsonSupport with
     }
   }
 
+  def requireUser(implicit request: HttpServletRequest): String = {
+    AuthUser.get match {
+      case Some(user) => user
+      case None =>
+        logger.warn(s"Request made to ${request.getRequestURI} without authorization")
+        throw new AccessDeniedException("You do not have access to the requested resource.")
+    }
+  }
+
 }
 

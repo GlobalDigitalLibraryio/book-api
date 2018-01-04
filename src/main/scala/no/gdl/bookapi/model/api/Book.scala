@@ -72,6 +72,7 @@ case class Book(@(ApiModelProperty@field)(description = "The id of the book") id
                 @(ApiModelProperty@field)(description = "A UUID for this book") uuid: String,
                 @(ApiModelProperty@field)(description = "The title of the book") title: String,
                 @(ApiModelProperty@field)(description = "Description of the book") description: String,
+                @(ApiModelProperty@field)(description = "Indicates the language this book has been translated from") translatedFrom: Option[Language],
                 @(ApiModelProperty@field)(description = "Current language") language: Language,
                 @(ApiModelProperty@field)(description = "Languages available") availableLanguages: Seq[Language],
                 @(ApiModelProperty@field)(description = "Licensing information") license: License,
@@ -89,7 +90,8 @@ case class Book(@(ApiModelProperty@field)(description = "The id of the book") id
                 @(ApiModelProperty@field)(description = "Information about downloads") downloads: Downloads,
                 @(ApiModelProperty@field)(description = "Keywords for the book") tags: Seq[String],
                 @(ApiModelProperty@field)(description = "Information about the contributors of this book") contributors: Seq[Contributor],
-                @(ApiModelProperty@field)(description = "Information about the chapters in the book") chapters: Seq[ChapterSummary])
+                @(ApiModelProperty@field)(description = "Information about the chapters in the book") chapters: Seq[ChapterSummary],
+                @(ApiModelProperty@field)(description = "Indicates if this book can be translated or not") supportsTranslation: Boolean)
 
 @ApiModel(description = "Information about search results")
 case class SearchResult(@(ApiModelProperty@field)(description = "The total number of books matching this query") totalCount: Long,

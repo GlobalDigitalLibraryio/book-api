@@ -31,6 +31,9 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
 
   addServlet(controller, "/*")
 
+  val validTestToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwczovL2RpZ2l0YWxsaWJyYXJ5LmlvL2dkbF9pZCI6IjEyMyIsInN1YiI6IjEyMzQ1Njc4OTAiLCJuYW1lIjoiSm9obiBEb2UifQ.e3BKK_gLxWQwJhFX6SppNchM_eSwu82yKghVx2P3yMY"
+  val invalidTestToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwczovL2RpZ2l0YWxsaWJyYXJ5LmlvL2dkbF9hYmMiOiIxMjMiLCJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIn0.5rtcIdtPmH3AF1pwNbNvBMKmulyiEoWZfn1ip9aMzv4"
+
   test("that GET / will get books with default language") {
     val result = SearchResult(0, 1, 10, Language("eng", "English"), Seq(TestData.Api.DefaultBook))
     when(readService.withLanguageAndLevel(LanguageTag(BookApiProperties.DefaultLanguage), Some("1"), 10, 1, Sort.ByIdAsc)).thenReturn(result)
@@ -111,6 +114,52 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
       status should equal (200)
       val chapter = read[Chapter](body)
       chapter.title should equal (TestData.Api.Chapter1.title)
+    }
+  }
+
+  test("that GET /mine returns AccessDenied for no user") {
+    get("/mine") {
+      status should equal (403)
+    }
+  }
+
+  test("that GET /mine returns AccessDenied for an invalid token") {
+    get("/mine", headers = Seq(("Authorization", s"Bearer $invalidTestToken"))) {
+      status should equal (403)
+      val error = read[Error](body)
+      error.code should equal ("ACCESS DENIED")
+    }
+  }
+
+  test("that GET /mine returns 200 ok for a valid user") {
+    get("/mine", headers = Seq(("Authorization", s"Bearer $validTestToken"))) {
+      status should equal (200)
+    }
+  }
+
+  test("that GET /mine/1 returns AccessDenied for no user") {
+    get("/mine/123") {
+      status should equal (403)
+      val error = read[Error](body)
+      error.code should equal ("ACCESS DENIED")
+    }
+  }
+
+  test("that GET /mine/1 returns AccessDenied for invalid user") {
+    get("/mine/123", headers = Seq(("Authorization", s"Bearer $invalidTestToken"))) {
+      status should equal (403)
+      val error = read[Error](body)
+      error.code should equal ("ACCESS DENIED")
+    }
+  }
+
+  test("that GET /mine/1 returns 200 ok for a valid user") {
+    when(readService.withIdAndLanguage(any[Long], any[LanguageTag])).thenReturn(Some(TestData.Api.DefaultBook))
+
+    get("/mine/123", headers = Seq(("Authorization", s"Bearer $validTestToken"))) {
+      status should equal (200)
+      val book = read[Book](body)
+      book.uuid should equal (TestData.Api.DefaultBook.uuid)
     }
   }
 }
