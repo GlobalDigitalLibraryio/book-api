@@ -167,6 +167,7 @@ trait BooksController {
     get("/mine/?", operation(getMyBooks)) {
       requireUser
 
+      // TODO: #155 - change to lookup the actual users books
       val pageSize = intOrDefault("page-size", 10).min(100).max(1)
       val page = intOrDefault("page", 1).max(1)
       val sort = Sort.valueOf(paramOrNone("sort")).getOrElse(Sort.ByIdAsc)
@@ -178,12 +179,13 @@ trait BooksController {
     get("/mine/:id/?", operation(getMyBook)) {
       requireUser
 
+      // TODO: #155 - change to lookup book for an actual user
       val id = long("id")
       val lang = LanguageTag(DefaultLanguage)
 
       readService.withIdAndLanguage(id, lang) match {
         case Some(x) => x
-        case None => NotFound(body = Error(Error.NOT_FOUND, s"No book with id $id and language $lang found"))
+        case None => NotFound(body = Error(Error.NOT_FOUND, s"No book with id $id found"))
       }
     }
 
