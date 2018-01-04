@@ -62,6 +62,7 @@ object BookApiProperties extends LazyLogging {
   val ApiPath = "/book-api/v1/books"
   val ApiDocPath = "/book-api/api-docs"
   val ImagePath = "/image-api/v1/raw"
+  val TranslationsPath = "/book-api/v1/translations"
 
   val LoginEndpoint = "https://digitallibrary.eu.auth0.com/authorize"
 

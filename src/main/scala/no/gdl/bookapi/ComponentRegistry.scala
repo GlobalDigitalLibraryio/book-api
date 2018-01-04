@@ -10,9 +10,11 @@ package no.gdl.bookapi
 
 import io.digitallibrary.network.GdlClient
 import no.gdl.bookapi.controller._
+import no.gdl.bookapi.integration.crowdin.CrowdinClientBuilder
 import no.gdl.bookapi.integration.{DataSource, ElasticClient, ImageApiClient, JestClientFactory}
 import no.gdl.bookapi.repository._
 import no.gdl.bookapi.service._
+import no.gdl.bookapi.service.translation.SupportedLanguageService
 import org.postgresql.ds.PGPoolingDataSource
 import scalikejdbc.{ConnectionPool, DataSourceConnectionPool}
 
@@ -49,6 +51,9 @@ object ComponentRegistry
   with PdfService
   with FeedRepository
   with FeedService
+  with TranslationsController
+  with SupportedLanguageService
+  with CrowdinClientBuilder
 {
   implicit val swagger = new BookSwagger
 
@@ -97,4 +102,7 @@ object ComponentRegistry
   lazy val pdfService = new PdfService
   lazy val feedRepository = new FeedRepository
   lazy val feedService = new FeedService
+  lazy val translationsController = new TranslationsController
+  lazy val supportedLanguageService = new SupportedLanguageService
+  lazy val crowdinClientBuilder = new CrowdinClientBuilder
 }

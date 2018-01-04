@@ -67,7 +67,8 @@ lazy val book_api = (project in file(".")).
       "com.osinka.i18n" %% "scala-i18n" % "1.0.2",
       "com.openhtmltopdf" % "openhtmltopdf-core" % OpenHtmlPdfVersion,
       "com.openhtmltopdf" % "openhtmltopdf-pdfbox" % OpenHtmlPdfVersion,
-      "com.openhtmltopdf" % "openhtmltopdf-jsoup-dom-converter" % OpenHtmlPdfVersion
+      "com.openhtmltopdf" % "openhtmltopdf-jsoup-dom-converter" % OpenHtmlPdfVersion,
+      "com.github.blemale" %% "scaffeine" % "2.3.0"
     )
   ).enablePlugins(DockerPlugin).enablePlugins(GitVersioning).enablePlugins(JettyPlugin)
 
