@@ -11,9 +11,11 @@ import javax.sql
 
 import io.digitallibrary.network.GdlClient
 import no.gdl.bookapi.controller._
+import no.gdl.bookapi.integration.crowdin.CrowdinClientBuilder
 import no.gdl.bookapi.integration.{DataSource, ElasticClient, ImageApiClient, NdlaJestClient}
 import no.gdl.bookapi.repository._
 import no.gdl.bookapi.service._
+import no.gdl.bookapi.service.translation.SupportedLanguageService
 import org.scalatest.mockito.MockitoSugar._
 
 trait TestEnvironment
@@ -48,6 +50,9 @@ trait TestEnvironment
   with FeedRepository
   with FeedService
   with OPDSController
+  with TranslationsController
+  with SupportedLanguageService
+  with CrowdinClientBuilder
 {
   val dataSource = mock[sql.DataSource]
   val readService = mock[ReadService]
@@ -83,4 +88,7 @@ trait TestEnvironment
   val feedRepository = mock[FeedRepository]
   val feedService = mock[FeedService]
   val opdsController = mock[OPDSController]
+  val translationsController = mock[TranslationsController]
+  val supportedLanguageService = mock[SupportedLanguageService]
+  val crowdinClientBuilder = mock[CrowdinClientBuilder]
 }
