@@ -9,8 +9,9 @@ package no.gdl.bookapi.service
 
 
 import com.typesafe.scalalogging.LazyLogging
+import no.gdl.bookapi.controller.NewFeaturedContent
 import no.gdl.bookapi.model._
-import no.gdl.bookapi.model.api.NotFoundException
+import no.gdl.bookapi.model.api.{FeaturedContentId, NotFoundException}
 import no.gdl.bookapi.model.api.internal.{NewChapter, NewTranslation}
 import no.gdl.bookapi.model.domain._
 import no.gdl.bookapi.repository._
@@ -31,11 +32,31 @@ trait WriteService {
     with EducationalAlignmentRepository
     with LicenseRepository
     with PersonRepository
-    with PublisherRepository =>
+    with PublisherRepository
+    with FeaturedContentRepository
+  =>
 
   val writeService: WriteService
 
   class WriteService extends LazyLogging {
+    def newFeaturedContent(newFeaturedContent: NewFeaturedContent): Try[FeaturedContentId] = {
+      for {
+        valid <- validationService.validateFeaturedContent(converterService.toFeaturedContent(newFeaturedContent))
+        persisted <- Try(featuredContentRepository.addContent(valid))
+      } yield FeaturedContentId(persisted.id.get)
+    }
+
+    def updateFeaturedContent(content: api.FeaturedContent): Try[FeaturedContentId] = {
+      for {
+        valid <- validationService.validateUpdatedFeaturedContent(content)
+        persistedId <- featuredContentRepository.updateContent(valid)
+      } yield persistedId
+    }
+
+    def deleteFeaturedContent(id: Long): Try[Unit] = {
+      featuredContentRepository.deleteContent(id)
+    }
+
     def updateChapter(chapterid: Long, replacementChapter: NewChapter): Option[api.internal.ChapterId] = {
       chapterRepository.withId(chapterid).map(existing => {
         val updated = chapterRepository.updateChapter(existing.copy(

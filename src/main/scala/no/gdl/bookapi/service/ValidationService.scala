@@ -20,6 +20,17 @@ trait ValidationService {
   val validationService: ValidationService
 
   class ValidationService extends LazyLogging {
+
+    def validateUpdatedFeaturedContent(content: api.FeaturedContent): Try[api.FeaturedContent] = {
+      // TODO Check stuff
+      Success(content)
+    }
+
+    def validateFeaturedContent(content: domain.FeaturedContent): Try[domain.FeaturedContent] = {
+      // TODO Check stuff
+      Success(content)
+    }
+
     def validateLicense(license: Option[domain.License]): Try[domain.License] = {
       license match {
         case None => Failure(new ValidationException(errors = Seq(ValidationMessage("license", "Invalid license"))))

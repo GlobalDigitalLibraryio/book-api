@@ -21,6 +21,8 @@ object BookApiProperties extends LazyLogging {
   val RoleWithWriteAccess = "books:write"
   val SecretsFile = "book-api.secrets"
 
+  // TODO Consider more generic role name
+  val FeaturedContentAdminRole = "book-api:featuredContentAdmin"
   val ApplicationPort = propOrElse("APPLICATION_PORT", "80").toInt
   val ContactEmail = "christergundersen@ndla.no"
   val Environment = propOrElse("GDL_ENVIRONMENT", "local")
@@ -59,6 +61,7 @@ object BookApiProperties extends LazyLogging {
   val LanguagesPath = "/book-api/v1/languages"
   val LevelsPath = "/book-api/v1/levels"
   val EditorPicksPath = "/book-api/v1/editorpicks"
+  val FeaturedContentPath = "/book-api/v1/featured"
   val ApiPath = "/book-api/v1/books"
   val ApiDocPath = "/book-api/api-docs"
   val ImagePath = "/image-api/v1/raw"
