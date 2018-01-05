@@ -21,36 +21,37 @@ trait FeaturedContentRepository {
 
   class FeaturedContentRepository {
 
-    def updateContent(featuredContent: api.FeaturedContent)(implicit session: DBSession = AutoSession): Try[FeaturedContentId] = {
+    def updateContent(fc: api.FeaturedContent)(implicit session: DBSession = AutoSession): Try[FeaturedContentId] = {
       val f = FeaturedContent.column
-      val newRevision = featuredContent.revision + 1
+      val newRevision = fc.revision + 1
+
       Try {
         val affectedRows = update(FeaturedContent).set(
           f.revision -> newRevision,
-          f.language -> featuredContent.language.code,
-          f.title -> featuredContent.title,
-          f.description -> featuredContent.description,
-          f.link -> featuredContent.link,
-          f.imageUrl -> featuredContent.imageUrl)
-          .where.eq(f.id, featuredContent.id)
+          f.language -> fc.language.code,
+          f.title -> fc.title,
+          f.description -> fc.description,
+          f.link -> fc.link,
+          f.imageUrl -> fc.imageUrl)
+          .where.eq(f.id, fc.id)
           .toSQL.update().apply()
 
         if (affectedRows != 1) {
           throw new OptimisticLockException()
         } else {
-          FeaturedContentId(featuredContent.id)
+          FeaturedContentId(fc.id)
         }
       }
     }
 
     def deleteContent(id: Long)(implicit session: DBSession = AutoSession): Try[Unit] = {
-      val affectedRows = withSQL {
-        delete
-          .from(FeaturedContent as f)
-          .where.eq(f.id, id)
-      }
+      val affectedRows = delete
+        .from(FeaturedContent as f)
+        .where.eq(f.id, id)
+        .toSQL
         .update()
         .apply()
+
       if (affectedRows != 1) {
         throw new OptimisticLockException()
       } else {
@@ -60,24 +61,23 @@ trait FeaturedContentRepository {
 
     private val f = FeaturedContent.syntax
 
-    def addContent(featuredContent: FeaturedContent)(implicit session: DBSession = AutoSession): FeaturedContent = {
+    def addContent(fc: FeaturedContent)(implicit session: DBSession = AutoSession): FeaturedContent = {
 
       val f = FeaturedContent.column
       val startRevision = 1
 
-      val id =
-        insert
+      val id = insert
         .into(FeaturedContent)
         .namedValues(
           f.revision -> startRevision,
-          f.language -> featuredContent.language.toString,
-          f.title -> featuredContent.title,
-          f.description -> featuredContent.description,
-          f.link -> featuredContent.link,
-          f.imageUrl -> featuredContent.imageUrl
+          f.language -> fc.language.toString,
+          f.title -> fc.title,
+          f.description -> fc.description,
+          f.link -> fc.link,
+          f.imageUrl -> fc.imageUrl
         ).toSQL.updateAndReturnGeneratedKey().apply()
 
-      featuredContent.copy(id = Some(id), revision = Some(startRevision))
+      fc.copy(id = Some(id), revision = Some(startRevision))
     }
 
     def forLanguage(language: LanguageTag)(implicit session: DBSession = ReadOnlyAutoSession): Seq[FeaturedContent] = {
