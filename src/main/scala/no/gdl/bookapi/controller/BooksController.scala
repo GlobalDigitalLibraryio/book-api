@@ -9,10 +9,9 @@
 package no.gdl.bookapi.controller
 
 import io.digitallibrary.language.model.LanguageTag
-import io.digitallibrary.network.AuthUser
 import no.gdl.bookapi.BookApiProperties.DefaultLanguage
 import no.gdl.bookapi.model.api
-import no.gdl.bookapi.model.api.{AccessDeniedException, Error, ValidationError}
+import no.gdl.bookapi.model.api.{Error, ValidationError}
 import no.gdl.bookapi.model.domain.Sort
 import no.gdl.bookapi.service.{ConverterService, ReadService}
 import org.scalatra._
@@ -187,11 +186,6 @@ trait BooksController {
         case Some(x) => x
         case None => NotFound(body = Error(Error.NOT_FOUND, s"No book with id $id found"))
       }
-    }
-
-    def assertHasRole(role: String): Unit = {
-      if (!AuthUser.hasRole(role))
-        throw new AccessDeniedException("User is missing required role to perform this operation")
     }
   }
 

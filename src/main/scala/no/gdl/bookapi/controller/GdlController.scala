@@ -135,5 +135,10 @@ abstract class GdlController extends ScalatraServlet with NativeJsonSupport with
     }
   }
 
+  def assertHasRole(role: String): Unit = {
+    if (!AuthUser.hasRole(role))
+      throw new AccessDeniedException("User is missing required role to perform this operation")
+  }
+
 }
 
