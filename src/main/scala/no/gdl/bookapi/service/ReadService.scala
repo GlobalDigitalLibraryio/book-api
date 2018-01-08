@@ -11,13 +11,28 @@ package no.gdl.bookapi.service
 import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.model._
 import no.gdl.bookapi.model.domain.Sort
-import no.gdl.bookapi.repository.{BookRepository, ChapterRepository, EditorsPickRepository, TranslationRepository}
+import no.gdl.bookapi.repository._
 
 trait ReadService {
-  this: ConverterService with BookRepository with ChapterRepository with TranslationRepository with EditorsPickRepository =>
+  this: ConverterService with BookRepository with ChapterRepository with TranslationRepository with EditorsPickRepository
+  with FeaturedContentRepository =>
   val readService: ReadService
 
   class ReadService {
+
+    def featuredContentForLanguage(tag: LanguageTag): Seq[api.FeaturedContent] = {
+      featuredContentRepository.forLanguage(tag).map(fc => {
+        api.FeaturedContent(
+          fc.id.get,
+          fc.revision.get,
+          converterService.toApiLanguage(fc.language),
+          fc.title,
+          fc.description,
+          fc.link,
+          fc.imageUrl)
+      })
+    }
+
     def editorsPickForLanguage(language: LanguageTag): Option[api.EditorsPick] = {
       editorsPickRepository.forLanguage(language).map(editorsPick => {
           val books = editorsPick.translationIds.flatMap(trId =>
