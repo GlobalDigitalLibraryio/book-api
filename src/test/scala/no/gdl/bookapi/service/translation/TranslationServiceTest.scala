@@ -20,14 +20,18 @@ import scala.util.{Failure, Success}
 
 class TranslationServiceTest extends UnitSuite with TestEnvironment {
 
-  override val translationService = new TranslationService
+  val service = new TranslationService
+
+  override def beforeEach = {
+    resetMocks()
+  }
 
   test("that addTranslation returns a failure if from-language is not supported") {
     when(readService.withIdAndLanguage(any[Long], any[LanguageTag])).thenReturn(Some(TestData.Api.DefaultBook))
     when(supportedLanguageService.getSupportedLanguages).thenReturn(Seq(Language("eng", "English")))
     when(crowdinClientBuilder.forSourceLanguage(any[LanguageTag])).thenReturn(Failure(new RuntimeException("Not supported fromLanguage")))
 
-    val translateResponse = translationService.addTranslation(TranslateRequest(1, "nob", "eng"))
+    val translateResponse = service.addTranslation(TranslateRequest(1, "nob", "eng"))
     translateResponse should be a 'Failure
     translateResponse.failed.get.getMessage should equal ("Not supported fromLanguage")
   }
@@ -35,7 +39,7 @@ class TranslationServiceTest extends UnitSuite with TestEnvironment {
   test("that addTranslation returns a failure if toLanguage is not supported") {
     when(supportedLanguageService.getSupportedLanguages).thenReturn(Seq(Language("eng", "English")))
 
-    val translateResponse = translationService.addTranslation(TranslateRequest(1, "nob", "fra"))
+    val translateResponse = service.addTranslation(TranslateRequest(1, "nob", "fra"))
     translateResponse should be a 'Failure
     translateResponse.failed.get.asInstanceOf[ValidationException].errors.head.message should equal ("The language 'fra' is not a supported language to translate to.")
   }
@@ -56,7 +60,7 @@ class TranslationServiceTest extends UnitSuite with TestEnvironment {
     when(writeTranslationService.translationsForOriginalId(any[Long])).thenReturn(existingInTranslations)
     when(writeTranslationService.addUserToTranslation(any[InTranslation])).thenReturn(Success(inTranslationToUpdate))
 
-    val response = translationService.addTranslation(TranslateRequest(1, "eng", "nob"))
+    val response = service.addTranslation(TranslateRequest(1, "eng", "nob"))
     response should be a 'Success
 
     verify(writeTranslationService, times(1)).addUserToTranslation(any[InTranslation])
@@ -79,7 +83,7 @@ class TranslationServiceTest extends UnitSuite with TestEnvironment {
     when(crowdinClientMock.addTargetLanguage(any[String])).thenReturn(Success())
     when(writeTranslationService.addTranslationWithFiles(any[InTranslation], any[Seq[InTranslationFile]], any[TranslateRequest])).thenReturn(Success(inTranslationToUpdate))
 
-    val response = translationService.addTranslation(TranslateRequest(1, "eng", "nob"))
+    val response = service.addTranslation(TranslateRequest(1, "eng", "nob"))
     response should be a 'Success
 
     verify(writeTranslationService, times(1)).translationsForOriginalId(any[Long])
@@ -107,7 +111,7 @@ class TranslationServiceTest extends UnitSuite with TestEnvironment {
 
     when(writeTranslationService.newInTranslation(any[TranslateRequest], any[CrowdinFile], any[Seq[CrowdinFile]], any[String])).thenReturn(Success(TestData.Domain.DefaultinTranslation))
 
-    val response = translationService.addTranslation(TranslateRequest(1, "eng", "nob"))
+    val response = service.addTranslation(TranslateRequest(1, "eng", "nob"))
     response should be a 'Success
   }
 
@@ -132,7 +136,7 @@ class TranslationServiceTest extends UnitSuite with TestEnvironment {
     when(writeTranslationService.newInTranslation(any[TranslateRequest], any[CrowdinFile], any[Seq[CrowdinFile]], any[String])).thenReturn(Failure(new DBException(new RuntimeException("Some message"))))
 
 
-    val response = translationService.addTranslation(TranslateRequest(1, "eng", "nob"))
+    val response = service.addTranslation(TranslateRequest(1, "eng", "nob"))
     response should be a 'Failure
 
     verify(crowdinClientMock, times(1)).deleteDirectoryFor(any[Book])
