@@ -7,56 +7,13 @@
 
 package no.gdl.bookapi.service
 
-import java.time.LocalDate
-
 import io.digitallibrary.language.model.LanguageTag
-import no.gdl.bookapi.model.domain.{EditorsPick, SearchResult, Sort}
-import org.mockito.Mockito._
-import org.mockito.Matchers._
+import no.gdl.bookapi.model.domain.{SearchResult, Sort}
 import no.gdl.bookapi.{TestData, TestEnvironment, UnitSuite}
-import no.gdl.bookapi.model._
+import org.mockito.Mockito._
 
 class ReadServiceTest extends UnitSuite with TestEnvironment {
   override val readService = new ReadService
-
-  test("that editorsPickForLanguage returns Seq() when no editorspick defined for language") {
-    val languageTag = LanguageTag("nob")
-
-    when(editorsPickRepository.forLanguage(languageTag)).thenReturn(None)
-    readService.editorsPickForLanguage(languageTag) should be(None)
-  }
-
-  test("that editorsPickForLanguage returns list of books for correct language") {
-    val editorsPick = EditorsPick(Some(1), Some(1), LanguageTag("nob"), Seq(1, 2), LocalDate.now())
-
-    when(editorsPickRepository.forLanguage(LanguageTag("nob"))).thenReturn(Some(editorsPick))
-    when(translationRepository.withId(1)).thenReturn(Some(TestData.Domain.DefaultTranslation))
-    when(translationRepository.withId(2)).thenReturn(Some(TestData.Domain.DefaultTranslation))
-    when(converterService.toApiBook(any[Option[domain.Translation]], any[Seq[LanguageTag]], any[Option[domain.Book]])).thenReturn(Some(TestData.Api.DefaultBook))
-
-    val editorsPickForNob = readService.editorsPickForLanguage(LanguageTag("nob"))
-    editorsPickForNob.get.books should equal(Seq(TestData.Api.DefaultBook, TestData.Api.DefaultBook))
-  }
-
-  test("that editorsPickForLanguage only returns existing translations even if definition is incorrect") {
-    val editorsPick = EditorsPick(Some(1), Some(1), LanguageTag("nob"), Seq(1, 2), LocalDate.now())
-
-    when(editorsPickRepository.forLanguage(LanguageTag("nob"))).thenReturn(Some(editorsPick))
-    when(translationRepository.withId(1)).thenReturn(Some(TestData.Domain.DefaultTranslation))
-    when(translationRepository.withId(2)).thenReturn(None)
-    when(converterService.toApiBook(any[Option[domain.Translation]], any[Seq[LanguageTag]], any[Option[domain.Book]])).thenReturn(Some(TestData.Api.DefaultBook))
-
-    val editorsPickForNob = readService.editorsPickForLanguage(LanguageTag("nob"))
-     editorsPickForNob.get.books should equal(Seq(TestData.Api.DefaultBook))
-  }
-
-  test("that editorsPickForLanguage returns empty list if no ids defined in editorspick") {
-    val editorsPick = EditorsPick(Some(1), Some(1), LanguageTag("nob"), Seq(), LocalDate.now())
-
-    when(editorsPickRepository.forLanguage(LanguageTag("nob"))).thenReturn(Some(editorsPick))
-
-    readService.editorsPickForLanguage(LanguageTag("nob")).get.books should equal(Seq())
-  }
 
   test("that listAvailableLanguages returns languages sorted by name") {
     when(translationRepository.allAvailableLanguages()).thenReturn(Seq(LanguageTag(TestData.LanguageCodeEnglish), LanguageTag(TestData.LanguageCodeAmharic)))

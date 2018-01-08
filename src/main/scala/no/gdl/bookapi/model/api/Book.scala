@@ -100,13 +100,6 @@ case class SearchResult(@(ApiModelProperty@field)(description = "The total numbe
                         @(ApiModelProperty@field)(description = "The chosen language") language: Language,
                         @(ApiModelProperty@field)(description = "The results") results: Seq[Book])
 
-@ApiModel(description = "Information about the editor's picks")
-case class EditorsPick(@(ApiModelProperty@field)(description = "The id of the editor's pick") id: Long,
-                       @(ApiModelProperty@field)(description = "The revision of the editor's pick") revision: Long,
-                       @(ApiModelProperty@field)(description = "Language for the editor's pick") language: Language,
-                       @(ApiModelProperty@field)(description = "The list of books") books: Seq[Book],
-                       @(ApiModelProperty@field)(description = "The date when the editor's picks last changed") dateChanged: LocalDate)
-
 @ApiModel(description = "Information about the featured content")
 case class FeaturedContent(@(ApiModelProperty@field)(description = "The id of the featured content") id: Long,
                            @(ApiModelProperty@field)(description = "The revision of the featured content") revision: Long,
