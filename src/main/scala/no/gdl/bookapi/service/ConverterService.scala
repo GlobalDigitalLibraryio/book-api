@@ -14,6 +14,7 @@ import com.typesafe.scalalogging.LazyLogging
 import io.digitallibrary.language.model.LanguageTag
 import io.digitallibrary.network.AuthUser
 import no.gdl.bookapi.BookApiProperties.Domain
+import no.gdl.bookapi.controller.NewFeaturedContent
 import no.gdl.bookapi.integration.ImageApiClient
 import no.gdl.bookapi.model._
 import no.gdl.bookapi.model.api.internal.{NewChapter, NewEducationalAlignment, NewTranslation}
@@ -27,6 +28,18 @@ trait ConverterService {
   val converterService: ConverterService
 
   class ConverterService extends LazyLogging {
+
+    def toFeaturedContent(newFeaturedContent: NewFeaturedContent): domain.FeaturedContent = {
+      domain.FeaturedContent(
+        id = None,
+        revision = None,
+        language = LanguageTag(newFeaturedContent.language),
+        title = newFeaturedContent.title,
+        description = newFeaturedContent.description,
+        imageUrl = newFeaturedContent.imageUrl,
+        link = newFeaturedContent.link)
+    }
+
     def toDomainChapter(newChapter: NewChapter, translationId: Long): domain.Chapter = domain.Chapter(
       id = None,
       revision = None,

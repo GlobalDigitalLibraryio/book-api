@@ -11,7 +11,7 @@ package no.gdl.bookapi
 import io.digitallibrary.network.GdlClient
 import no.gdl.bookapi.controller._
 import no.gdl.bookapi.integration.crowdin.CrowdinClientBuilder
-import no.gdl.bookapi.integration.{DataSource, ElasticClient, ImageApiClient, JestClientFactory}
+import no.gdl.bookapi.integration._
 import no.gdl.bookapi.repository._
 import no.gdl.bookapi.service._
 import no.gdl.bookapi.service.translation.{SupportedLanguageService, TranslationService, WriteTranslationService}
@@ -51,9 +51,11 @@ object ComponentRegistry
   with PdfService
   with FeedRepository
   with FeedService
+  with FeaturedContentRepository
+  with FeaturedContentController
   with TranslationsController
   with SupportedLanguageService
-  with CrowdinClientBuilder
+  with CrowdinClientBuilder 
   with TranslationService
   with WriteTranslationService
   with InTranslationRepository
@@ -77,12 +79,13 @@ object ComponentRegistry
   lazy val resourcesApp = new ResourcesApp
   lazy val internController = new InternController
   lazy val opdsController = new OPDSController
+  lazy val featuredContentController = new FeaturedContentController
 
   lazy val readService = new ReadService
   lazy val writeService = new WriteService
   lazy val converterService = new ConverterService
 
-  lazy val jestClient = JestClientFactory.getClient()
+  lazy val jestClient: NdlaJestClient = JestClientFactory.getClient()
   lazy val gdlClient = new GdlClient
   lazy val imageApiClient = new ImageApiClient
   lazy val downloadController = new DownloadController
@@ -101,6 +104,7 @@ object ComponentRegistry
   lazy val licenseRepository = new LicenseRepository
   lazy val personRepository = new PersonRepository
   lazy val publisherRepository = new PublisherRepository
+  lazy val featuredContentRepository = new FeaturedContentRepository
 
   lazy val ePubService = new EPubService
   lazy val pdfService = new PdfService

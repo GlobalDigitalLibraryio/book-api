@@ -107,6 +107,14 @@ case class EditorsPick(@(ApiModelProperty@field)(description = "The id of the ed
                        @(ApiModelProperty@field)(description = "The list of books") books: Seq[Book],
                        @(ApiModelProperty@field)(description = "The date when the editor's picks last changed") dateChanged: LocalDate)
 
+@ApiModel(description = "Information about the featured content")
+case class FeaturedContent(@(ApiModelProperty@field)(description = "The id of the featured content") id: Long,
+                           @(ApiModelProperty@field)(description = "The revision of the featured content") revision: Long,
+                           @(ApiModelProperty@field)(description = "Language of the featured content") language: Language,
+                           @(ApiModelProperty@field)(description = "Title of the featured content") title: String,
+                           @(ApiModelProperty@field)(description = "Description of the featured content") description: String,
+                           @(ApiModelProperty@field)(description = "Link to the featured content") link: String,
+                           @(ApiModelProperty@field)(description = "Image URL to the featured content") imageUrl: String)
 
 case class FeedDefinition(@(ApiModelProperty@field)(description = "The internal id of the opds feed") id: Long,
                           @(ApiModelProperty@field)(description = "The revision of the feed") revision: Int,
@@ -124,6 +132,9 @@ case class FeedEntry (@(ApiModelProperty@field)(description = "The book associat
 case class FeedCategory(@(ApiModelProperty@field)(description = "The url to the category feed") url: String,
                         @(ApiModelProperty@field)(description = "The title for this cateogry feed") title: String,
                         @(ApiModelProperty@field)(description = "The sort order for this category") sortOrder: Int = 100)
+
+@ApiModel(description = "Id of featured content")
+case class FeaturedContentId(id: Long)
 
 @ApiModel(description = "Information about a request to translate a book")
 case class TranslateRequest(@(ApiModelProperty@field)(description = "The id of the book that is to be translated") bookId: Long,

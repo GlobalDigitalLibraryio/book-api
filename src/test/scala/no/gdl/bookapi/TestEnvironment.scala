@@ -53,7 +53,9 @@ trait TestEnvironment
   with TranslationsController
   with SupportedLanguageService
   with CrowdinClientBuilder
+  with FeaturedContentRepository
   with TranslationService
+  with FeaturedContentController
   with WriteTranslationService
   with InTranslationRepository
   with InTranslationFileRepository
@@ -69,6 +71,7 @@ trait TestEnvironment
   val languageController = mock[LanguageController]
   val levelController = mock[LevelController]
   val editorsPickController = mock[EditorsPickController]
+  val featuredContentController = mock[FeaturedContentController]
 
   val jestClient = mock[NdlaJestClient]
 
@@ -95,6 +98,7 @@ trait TestEnvironment
   val translationsController = mock[TranslationsController]
   val supportedLanguageService = mock[SupportedLanguageService]
   val crowdinClientBuilder = mock[CrowdinClientBuilder]
+  val featuredContentRepository = mock[FeaturedContentRepository]
   val translationService = mock[TranslationService]
   val writeTranslationService = mock[WriteTranslationService]
   val inTranslationRepository = mock[InTranslationRepository]

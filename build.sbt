@@ -68,7 +68,8 @@ lazy val book_api = (project in file(".")).
       "com.openhtmltopdf" % "openhtmltopdf-core" % OpenHtmlPdfVersion,
       "com.openhtmltopdf" % "openhtmltopdf-pdfbox" % OpenHtmlPdfVersion,
       "com.openhtmltopdf" % "openhtmltopdf-jsoup-dom-converter" % OpenHtmlPdfVersion,
-      "com.github.blemale" %% "scaffeine" % "2.3.0"
+      "com.github.blemale" %% "scaffeine" % "2.3.0",
+      "commons-validator" % "commons-validator" % "1.6"
     )
   ).enablePlugins(DockerPlugin).enablePlugins(GitVersioning).enablePlugins(JettyPlugin)
 

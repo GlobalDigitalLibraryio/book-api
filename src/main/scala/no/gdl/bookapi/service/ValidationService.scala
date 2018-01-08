@@ -10,6 +10,7 @@ package no.gdl.bookapi.service
 import com.typesafe.scalalogging.LazyLogging
 import no.gdl.bookapi.model._
 import no.gdl.bookapi.model.api.{ValidationException, ValidationMessage}
+import org.apache.commons.validator.routines.UrlValidator
 import org.jsoup.Jsoup
 import org.jsoup.safety.Whitelist
 
@@ -20,6 +21,37 @@ trait ValidationService {
   val validationService: ValidationService
 
   class ValidationService extends LazyLogging {
+
+    def validateFeaturedContent(content: domain.FeaturedContent): Try[domain.FeaturedContent] = {
+      collectValidations(content, Seq(
+        nonEmpty("title", content.title),
+        nonEmpty("description", content.description),
+        nonEmpty("link", content.link),
+        nonEmpty("imageUrl", content.imageUrl),
+        containsNoHtml("title", content.title),
+        containsNoHtml("description", content.description),
+        containsNoHtml("link", content.link),
+        containsNoHtml("imageUrl", content.imageUrl),
+        validUrl("link", content.link),
+        validUrl("imageUrl", content.imageUrl)
+      ))
+    }
+
+    def validateUpdatedFeaturedContent(content: api.FeaturedContent): Try[api.FeaturedContent] = {
+      collectValidations(content, Seq(
+        nonEmpty("title", content.title),
+        nonEmpty("description", content.description),
+        nonEmpty("link", content.link),
+        nonEmpty("imageUrl", content.imageUrl),
+        containsNoHtml("title", content.title),
+        containsNoHtml("description", content.description),
+        containsNoHtml("link", content.link),
+        containsNoHtml("imageUrl", content.imageUrl),
+        validUrl("link", content.link),
+        validUrl("imageUrl", content.imageUrl)
+      ))
+    }
+
     def validateLicense(license: Option[domain.License]): Try[domain.License] = {
       license match {
         case None => Failure(new ValidationException(errors = Seq(ValidationMessage("license", "Invalid license"))))
@@ -46,12 +78,33 @@ trait ValidationService {
       }
     }
 
+    private def nonEmpty(fieldPath: String, text: String): Option[ValidationMessage] = {
+      asValidation(fieldPath, "The content must be non-empty", text.nonEmpty)
+    }
+
+    private def validUrl(fieldPath: String, url: String): Option[ValidationMessage] = {
+      asValidation(fieldPath, "The content is not a valid URL", new UrlValidator().isValid(url))
+    }
+
     private def containsNoHtml(fieldPath: String, text: String): Option[ValidationMessage] = {
-      if (Jsoup.isValid(text, Whitelist.none())) {
+      asValidation(fieldPath, "The content contains illegal html-characters. No HTML is allowed",
+        Jsoup.isValid(text, Whitelist.none()))
+    }
+
+    private def asValidation(fieldPath: String, errorMessage: String, result: Boolean): Option[ValidationMessage] = {
+      if (result) {
         None
       } else {
-        Some(ValidationMessage(fieldPath, "The content contains illegal html-characters. No HTML is allowed"))
+        Some(ValidationMessage(fieldPath, errorMessage))
+      }
+    }
+
+    private def collectValidations[A](input: A, validations: Seq[Option[ValidationMessage]]): Try[A] = {
+      validations.flatten match {
+        case Nil => Success(input)
+        case errors => Failure(new ValidationException(errors = errors))
       }
     }
   }
+
 }
