@@ -15,7 +15,7 @@ import no.gdl.bookapi.integration.crowdin.CrowdinClientBuilder
 import no.gdl.bookapi.integration.{DataSource, ElasticClient, ImageApiClient, NdlaJestClient}
 import no.gdl.bookapi.repository._
 import no.gdl.bookapi.service._
-import no.gdl.bookapi.service.translation.SupportedLanguageService
+import no.gdl.bookapi.service.translation.{SupportedLanguageService, TranslationService}
 import org.scalatest.mockito.MockitoSugar._
 
 trait TestEnvironment
@@ -54,6 +54,7 @@ trait TestEnvironment
   with SupportedLanguageService
   with CrowdinClientBuilder
   with FeaturedContentRepository
+  with TranslationService
   with FeaturedContentController
 {
   val dataSource = mock[sql.DataSource]
@@ -95,4 +96,5 @@ trait TestEnvironment
   val supportedLanguageService = mock[SupportedLanguageService]
   val crowdinClientBuilder = mock[CrowdinClientBuilder]
   val featuredContentRepository = mock[FeaturedContentRepository]
+  val translationService = mock[TranslationService]
 }

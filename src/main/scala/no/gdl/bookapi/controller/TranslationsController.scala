@@ -8,12 +8,12 @@
 package no.gdl.bookapi.controller
 
 import no.gdl.bookapi.model._
-import no.gdl.bookapi.model.api.Language
-import no.gdl.bookapi.service.translation.SupportedLanguageService
+import no.gdl.bookapi.model.api.{Language, TranslateRequest, TranslateResponse}
+import no.gdl.bookapi.service.translation.{SupportedLanguageService, TranslationService}
 import org.scalatra.swagger.{ResponseMessage, Swagger, SwaggerSupport}
 
 trait TranslationsController {
-  this: SupportedLanguageService =>
+  this: SupportedLanguageService with TranslationService =>
   val translationsController: TranslationsController
 
   class TranslationsController (implicit val swagger: Swagger) extends GdlController with SwaggerSupport {
@@ -31,8 +31,21 @@ trait TranslationsController {
       headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted.")
       responseMessages(response400, response500))
 
+    private val sendResourceToTranslation = (apiOperation[TranslateResponse]("Send book to translation")
+      summary "Sends a book to translation system"
+      parameters (
+      headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
+      bodyParam[TranslateRequest])
+      responseMessages(response400, response500)
+      authorizations "oauth2")
+
     get("/supported-languages", operation(getSupportedLanguages)) {
       supportedLanguageService.getSupportedLanguages
+    }
+
+    post("/", operation(sendResourceToTranslation)) {
+      requireUser
+      translationService.addTranslation(extract[TranslateRequest](request.body))
     }
   }
 }

@@ -136,6 +136,15 @@ case class FeedCategory(@(ApiModelProperty@field)(description = "The url to the 
 @ApiModel(description = "Id of featured content")
 case class FeaturedContentId(id: Long)
 
+@ApiModel(description = "Information about a request to translate a book")
+case class TranslateRequest(@(ApiModelProperty@field)(description = "The id of the book that is to be translated") bookId: Long,
+                            @(ApiModelProperty@field)(description = "The language to translate from") fromLanguage: String,
+                            @(ApiModelProperty@field)(description = "The language to translate to") toLanguage: String)
+
+@ApiModel(description = "Information about the response from a translation request")
+case class TranslateResponse(@(ApiModelProperty@field)(description = "The id of the book that has been sent to translation") bookId: Long,
+                             @(ApiModelProperty@field)(description = "The url of where the book can be translated") crowdinUrl: String)
+
 case object LocalDateSerializer extends CustomSerializer[LocalDate](format => ( {
   case JString(p) => LocalDate.parse(p)
   case JNull => null
