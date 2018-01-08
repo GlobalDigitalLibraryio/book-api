@@ -12,10 +12,13 @@ import java.util.UUID
 
 import com.typesafe.scalalogging.LazyLogging
 import io.digitallibrary.language.model.LanguageTag
+import io.digitallibrary.network.AuthUser
 import no.gdl.bookapi.BookApiProperties.Domain
 import no.gdl.bookapi.integration.ImageApiClient
 import no.gdl.bookapi.model._
 import no.gdl.bookapi.model.api.internal.{NewChapter, NewEducationalAlignment, NewTranslation}
+import no.gdl.bookapi.model.crowdin.CrowdinFile
+import no.gdl.bookapi.model.domain.InTranslation
 import no.gdl.bookapi.{BookApiProperties, model}
 
 
@@ -175,5 +178,27 @@ trait ConverterService {
     def toApiLanguage(languageTag: LanguageTag): api.Language = {
       api.Language(languageTag.toString, languageTag.displayName)
     }
+
+    def asDomainInTranslation(translationRequest: api.TranslateRequest, crowdinProjectId: String) = domain.InTranslation(
+      id = None,
+      revision = None,
+      userIds = Seq(AuthUser.get.get),
+      originalId = translationRequest.bookId,
+      newId = None,
+      fromLanguage = LanguageTag(translationRequest.fromLanguage),
+      toLanguage = LanguageTag(translationRequest.toLanguage),
+      crowdinProjectId = crowdinProjectId)
+
+    def asDomainInTranslationFile(file: CrowdinFile, inTranslation: InTranslation) = domain.InTranslationFile(
+        id = None,
+        revision = None,
+        inTranslationId = inTranslation.id.get,
+        fileType = file.fileType,
+        originalId = file.sourceId,
+        filename = file.addedFile.name,
+        crowdinFileId = file.addedFile.fileId.toString,
+        translationStatus = "in_progress",
+        etag = None)
+
   }
 }

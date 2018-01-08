@@ -10,6 +10,7 @@ package no.gdl.bookapi.model.api
 
 import java.util.Date
 
+import io.digitallibrary.language.model.LanguageTag
 import io.searchbox.client.JestResult
 import no.gdl.bookapi.BookApiProperties
 import org.scalatra.swagger.annotations.{ApiModel, ApiModelProperty}
@@ -51,4 +52,20 @@ class AccessDeniedException(message: String) extends RuntimeException(message)
 class OptimisticLockException(message: String = Error.RESOURCE_OUTDATED_DESCRIPTION) extends RuntimeException(message)
 class GdlSearchException(jestResponse: JestResult) extends RuntimeException(jestResponse.getErrorMessage) {
   def getResponse: JestResult = jestResponse
+}
+class SourceLanguageNotSupportedException(sourceLanguage: LanguageTag) extends RuntimeException(s"The source language '${sourceLanguage.toString}' is not currently supported.")
+class CrowdinException(message: String, cause: Throwable) extends RuntimeException(message, cause) {
+  def this(code: Long, message: String, cause: Throwable = null) = {
+    this(s"Crowdin Error - Code: $code, Message: $message", cause)
+  }
+
+  def this(cause: Throwable) = {
+    this(cause.toString, cause)
+  }
+}
+
+class DBException(message: String, cause: Throwable) extends RuntimeException(message, cause) {
+  def this(cause: Throwable) = {
+    this(cause.toString, cause)
+  }
 }
