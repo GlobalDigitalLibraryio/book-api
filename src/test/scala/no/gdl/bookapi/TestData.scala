@@ -13,7 +13,8 @@ import java.util.UUID
 import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.model._
 import no.gdl.bookapi.model.api.FeedCategory
-import no.gdl.bookapi.model.domain.{Category, Chapter, Contributor, EducationalAlignment}
+import no.gdl.bookapi.model.crowdin.{AddedFile, CrowdinFile}
+import no.gdl.bookapi.model.domain._
 
 object TestData {
   val LanguageCodeNorwegian = "nob"
@@ -112,6 +113,13 @@ object TestData {
       categories = Seq(DefaultCategory)
     )
 
+    val DefaultinTranslation = InTranslation(Some(1), Some(1), Seq("123"), 1, Some(2), LanguageTag("nob"), LanguageTag("eng"), "abc")
+    val DefaultInTranslationFile = InTranslationFile(Some(1), Some(1), 1, "content", Some(3), "filename", "fileId", "in_progress", Some("asdfa342"))
+  }
+
+  object Crowdin {
+    val DefaultContentCrowdinFile = CrowdinFile(Some(1), "content", AddedFile(1, "filename", 1, 1))
+    val DefaultMetadataCrowdinFile = CrowdinFile(Some(2), "metadata", AddedFile(1, "filename", 1, 1))
   }
 
 }

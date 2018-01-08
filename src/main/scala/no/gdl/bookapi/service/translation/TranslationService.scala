@@ -24,41 +24,37 @@ trait TranslationService {
 
   class TranslationService extends LazyLogging {
     def addTranslation(translateRequest: api.TranslateRequest): Try[api.TranslateResponse] = {
-      val fromLanguage = LanguageTag(translateRequest.fromLanguage)
-      val toLanguage = validateToLanguage(translateRequest.toLanguage)
+      Try(LanguageTag(translateRequest.fromLanguage)).flatMap(fromLanguage => {
+        validateToLanguage(translateRequest.toLanguage).flatMap(toLanguage => {
+          readService.withIdAndLanguage(translateRequest.bookId, fromLanguage) match {
+            case None => Failure(new NotFoundException())
+            case Some(originalBook) => {
+              crowdinClientBuilder.forSourceLanguage(fromLanguage).flatMap(crowdinClient => {
+                val existingTranslations = writeTranslationService.translationsForOriginalId(translateRequest.bookId)
+                val toAddUser = existingTranslations.find(tr => tr.fromLanguage == fromLanguage && tr.toLanguage == LanguageTag(toLanguage))
+                val toAddLanguage = existingTranslations.find(tr => tr.fromLanguage == fromLanguage)
 
-      readService.withIdAndLanguage(translateRequest.bookId, fromLanguage) match {
-        case None => Failure(new NotFoundException())
-        case Some(originalBook) => {
-          crowdinClientBuilder.forSourceLanguage(fromLanguage).flatMap(crowdinClient => {
-            val existingTranslations = writeTranslationService.translationsForOriginalId(translateRequest.bookId)
-            val toAddUser = existingTranslations.find(tr => tr.fromLanguage == fromLanguage && tr.toLanguage == LanguageTag(toLanguage))
-            val toAddLanguage = existingTranslations.find(tr => tr.fromLanguage == fromLanguage)
+                val inTranslation = if (toAddUser.isDefined) {
+                  addUserToTranslation(toAddUser.get)
+                } else if (toAddLanguage.isDefined) {
+                  addTargetLanguageForTranslation(toAddLanguage.get, translateRequest, crowdinClient)
+                } else {
+                  createTranslation(translateRequest, originalBook, fromLanguage, toLanguage, crowdinClient)
+                }
 
-            val inTranslation = if (toAddUser.isDefined) {
-              addUserToTranslation(toAddUser.get)
-            } else if (toAddLanguage.isDefined) {
-              addTargetLanguageForTranslation(toAddLanguage.get, translateRequest, crowdinClient)
-            } else {
-              createTranslation(translateRequest, originalBook, fromLanguage, toLanguage, crowdinClient)
+                inTranslation.map(x => api.TranslateResponse(x.id.get, CrowdinUtils.crowdinUrlToBook(originalBook, x.crowdinProjectId, toLanguage)))
+              })
             }
-
-            inTranslation match {
-              case Success(x) => Success(api.TranslateResponse(x.id.get, CrowdinUtils.crowdinUrlToBook(originalBook, x.crowdinProjectId, toLanguage)))
-              case Failure(err) =>
-                err.printStackTrace()
-                Failure(err)
-            }
-          })
-        }
-      }
+          }
+        })
+      })
     }
 
-    def addUserToTranslation(inTranslation: InTranslation): Try[InTranslation] = {
+    private def addUserToTranslation(inTranslation: InTranslation): Try[InTranslation] = {
       writeTranslationService.addUserToTranslation(inTranslation)
     }
 
-    def addTargetLanguageForTranslation(inTranslation: InTranslation, translateRequest: TranslateRequest, crowdinClient: CrowdinClient): Try[InTranslation] = {
+    private def addTargetLanguageForTranslation(inTranslation: InTranslation, translateRequest: TranslateRequest, crowdinClient: CrowdinClient): Try[InTranslation] = {
       for {
         files <- Try(writeTranslationService.filesForTranslation(inTranslation))
         _ <- crowdinClient.addTargetLanguage(translateRequest.toLanguage)
@@ -66,7 +62,7 @@ trait TranslationService {
       } yield persistedTranslation
     }
 
-    def createTranslation(translateRequest: TranslateRequest, originalBook: Book, fromLanguage: LanguageTag, toLanguage: String, crowdinClient: CrowdinClient): Try[InTranslation] = {
+    private def createTranslation(translateRequest: TranslateRequest, originalBook: Book, fromLanguage: LanguageTag, toLanguage: String, crowdinClient: CrowdinClient): Try[InTranslation] = {
       val chapters: Seq[Chapter] = originalBook.chapters.flatMap(ch => readService.chapterForBookWithLanguageAndId(originalBook.id, fromLanguage, ch.id))
 
       val inTranslation = for {
@@ -87,15 +83,14 @@ trait TranslationService {
       }
     }
 
-    def validateToLanguage(toLanguage: String): String = {
-      LanguageTag(toLanguage)
-      val isSupported = supportedLanguageService.getSupportedLanguages.exists(_.code == toLanguage)
+    private def validateToLanguage(toLanguage: String): Try[String] = {
+      Try(LanguageTag(toLanguage)).flatMap(_ => {
+        if (supportedLanguageService.getSupportedLanguages.exists(_.code == toLanguage))
+          Success(toLanguage)
+        else
+          Failure(new ValidationException(errors = Seq(ValidationMessage("toLanguage", s"The language '$toLanguage' is not a supported language to translate to."))))
 
-      if (isSupported)
-        toLanguage
-      else
-        throw new ValidationException(errors = Seq(ValidationMessage("toLanguage", s"The language '$toLanguage' is not a supported language to translate to.")))
-
+      })
     }
   }
 

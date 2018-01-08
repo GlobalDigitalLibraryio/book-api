@@ -7,15 +7,12 @@
 
 package no.gdl.bookapi.repository
 
-import io.digitallibrary.language.model.LanguageTag
-import no.gdl.bookapi.model.domain.InTranslation
+import no.gdl.bookapi.TestData.Domain.DefaultinTranslation
 import no.gdl.bookapi.{IntegrationSuite, TestEnvironment}
 
 class InTranslationRepositoryTest extends IntegrationSuite with TestEnvironment with RepositoryTestHelpers {
 
   override val inTranslationRepository = new InTranslationRepository
-
-  val DefaultinTranslation = InTranslation(None, None, Seq("123"), 1, None, LanguageTag("nob"), LanguageTag("eng"), "abc")
 
   test("that inTranslation is added and retrieved") {
     withRollback { implicit session =>
