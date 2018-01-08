@@ -14,7 +14,7 @@ import no.gdl.bookapi.model.domain.Sort
 import no.gdl.bookapi.repository._
 
 trait ReadService {
-  this: ConverterService with BookRepository with ChapterRepository with TranslationRepository with EditorsPickRepository
+  this: ConverterService with BookRepository with ChapterRepository with TranslationRepository
   with FeaturedContentRepository =>
   val readService: ReadService
 
@@ -30,22 +30,6 @@ trait ReadService {
           fc.description,
           fc.link,
           fc.imageUrl)
-      })
-    }
-
-    def editorsPickForLanguage(language: LanguageTag): Option[api.EditorsPick] = {
-      editorsPickRepository.forLanguage(language).map(editorsPick => {
-          val books = editorsPick.translationIds.flatMap(trId =>
-            translationRepository.withId(trId).flatMap(tr =>
-              converterService.toApiBook(Some(tr), translationRepository.languagesFor(tr.bookId), bookRepository.withId(tr.bookId))))
-
-        api.EditorsPick(
-          editorsPick.id.get,
-          editorsPick.revision.get,
-          converterService.toApiLanguage(editorsPick.language),
-          books,
-          editorsPick.dateChanged)
-
       })
     }
 

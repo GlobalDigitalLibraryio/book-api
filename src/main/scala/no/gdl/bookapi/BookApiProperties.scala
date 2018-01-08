@@ -61,7 +61,6 @@ object BookApiProperties extends LazyLogging {
   val CloudFrontOpds = getCloudFrontUrl(Environment, Opds)
   val LanguagesPath = "/book-api/v1/languages"
   val LevelsPath = "/book-api/v1/levels"
-  val EditorPicksPath = "/book-api/v1/editorpicks"
   val FeaturedContentPath = "/book-api/v1/featured"
   val ApiPath = "/book-api/v1/books"
   val ApiDocPath = "/book-api/api-docs"
