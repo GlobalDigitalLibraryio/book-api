@@ -44,13 +44,6 @@ trait OPDSController {
       acquisitionFeed(books = feedService.newEntries(LanguageTag(params("lang"))))
     }
 
-    get(BookApiProperties.OpdsFeaturedUrl.url) {
-      val lang = LanguageTag(params("lang"))
-      acquisitionFeed(
-        feedUpdated = feedService.editorsPickLastUpdated(lang),
-        books = feedService.editorsPicks(lang))
-    }
-
     get(BookApiProperties.OpdsLevelUrl.url) {
       acquisitionFeed(
         titleArgs = Seq(params("lev")),

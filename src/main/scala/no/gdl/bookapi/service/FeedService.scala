@@ -18,10 +18,10 @@ import no.gdl.bookapi.BookApiProperties.{OpdsLanguageParam, OpdsLevelParam}
 import no.gdl.bookapi.model._
 import no.gdl.bookapi.model.api.{FeedCategory, FeedEntry}
 import no.gdl.bookapi.model.domain.Sort
-import no.gdl.bookapi.repository.{EditorsPickRepository, FeedRepository, TranslationRepository}
+import no.gdl.bookapi.repository.{FeedRepository, TranslationRepository}
 
 trait FeedService {
-  this: FeedRepository with TranslationRepository with EditorsPickRepository with ReadService with ConverterService =>
+  this: FeedRepository with TranslationRepository with ReadService with ConverterService =>
   val feedService: FeedService
 
   class FeedService extends LazyLogging {
@@ -68,19 +68,6 @@ trait FeedService {
           justArrivedUpdated, Seq()))
 
 
-      val featured = feedRepository.forUrl(featuredPath(language)).map(definition =>
-        api.Feed(
-          api.FeedDefinition(
-            definition.id.get,
-            definition.revision.get,
-            s"${BookApiProperties.CloudFrontOpds}${definition.url}",
-            definition.uuid),
-          Messages(definition.titleKey),
-          definition.descriptionKey.map(Messages(_)),
-          Some("http://opds-spec.org/featured"),
-          editorsPickLastUpdated(language).getOrElse(LocalDate.now()),
-          Seq()))
-
       val levels: Seq[api.Feed] = readService.listAvailableLevelsForLanguage(Some(language))
         .flatMap(level => {
           val url = levelPath(language, level)
@@ -99,11 +86,10 @@ trait FeedService {
               levelUpdated, Seq()))
         })
 
-      Seq(featured, justArrived).flatten ++ levels
+      Seq(justArrived).flatten ++ levels
     }
 
     def allEntries(language: LanguageTag): Seq[FeedEntry] = {
-      val featuredBooks = editorsPicks(language).map(addFeaturedCategory(_, language))
       val justArrived = newEntries(language).map(addJustArrivedCategory(_, language))
 
       val allBooks = readService.withLanguage(
@@ -113,15 +99,11 @@ trait FeedService {
         sort = Sort.ByArrivalDateDesc
       ).results.map(book => FeedEntry(book)).map(addLevelCategory(_, language)).sortBy(_.book.readingLevel)
 
-      featuredBooks ++ justArrived ++ allBooks
+      justArrived ++ allBooks
     }
 
     def newEntries(lang: LanguageTag): Seq[FeedEntry] = readService.withLanguage(
       lang, BookApiProperties.OpdsJustArrivedLimit, 1, Sort.ByArrivalDateDesc).results.map(FeedEntry(_))
-
-    def editorsPickLastUpdated(language: LanguageTag): Option[LocalDate] = editorsPickRepository.lastUpdatedEditorsPick(language)
-    def editorsPicks(lang: LanguageTag): Seq[FeedEntry] = readService.editorsPickForLanguage(lang)
-      .map(_.books).getOrElse(Seq()).map(FeedEntry(_))
 
     def entriesForLanguageAndLevel(language: LanguageTag, level: String): Seq[FeedEntry] = {
       readService.withLanguageAndLevel(
