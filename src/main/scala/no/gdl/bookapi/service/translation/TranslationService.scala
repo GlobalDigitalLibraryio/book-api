@@ -12,17 +12,34 @@ import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.integration.crowdin.{CrowdinClient, CrowdinClientBuilder, CrowdinUtils}
 import no.gdl.bookapi.model._
 import no.gdl.bookapi.model.api._
-import no.gdl.bookapi.model.domain.InTranslation
+import no.gdl.bookapi.model.domain.{InTranslation, InTranslationFile, TranslationStatus}
 import no.gdl.bookapi.service.ReadService
 
 import scala.util.{Failure, Success, Try}
 
 trait TranslationService {
-  this: CrowdinClientBuilder with ReadService with SupportedLanguageService with WriteTranslationService =>
+  this: CrowdinClientBuilder with ReadService with SupportedLanguageService with TranslationDbService  =>
   val translationService: TranslationService
 
 
   class TranslationService extends LazyLogging {
+    def fetchTranslationsIfAllTranslated(projectIdentifier: String, language: LanguageTag): Try[Unit] = {
+      Success()
+      // TODO in #138: Implement fetch translations
+    }
+
+    def updateTranslationStatus(projectIdentifier: String, language: LanguageTag, fileId: String, status: TranslationStatus.Value): Try[InTranslationFile] = {
+      translationDbService.inTranslationForProjectIdentifierAndLanguage(projectIdentifier, language) match {
+        case None => Failure(new NotFoundException())
+        case Some(inTranslation) =>
+          translationDbService.fileForInTranslationWithFileId(inTranslation, fileId) match {
+            case None => Failure(new NotFoundException())
+            case Some(file) =>
+              translationDbService.updateTranslationStatus(file, status)
+          }
+      }
+    }
+
     def addTranslation(translateRequest: api.TranslateRequest): Try[api.TranslateResponse] = {
       Try(LanguageTag(translateRequest.fromLanguage)).flatMap(fromLanguage => {
         validateToLanguage(translateRequest.toLanguage).flatMap(toLanguage => {
@@ -30,7 +47,7 @@ trait TranslationService {
             case None => Failure(new NotFoundException())
             case Some(originalBook) => {
               crowdinClientBuilder.forSourceLanguage(fromLanguage).flatMap(crowdinClient => {
-                val existingTranslations = writeTranslationService.translationsForOriginalId(translateRequest.bookId)
+                val existingTranslations = translationDbService.translationsForOriginalId(translateRequest.bookId)
                 val toAddUser = existingTranslations.find(tr => tr.fromLanguage == fromLanguage && tr.toLanguage == LanguageTag(toLanguage))
                 val toAddLanguage = existingTranslations.find(tr => tr.fromLanguage == fromLanguage)
 
@@ -51,14 +68,14 @@ trait TranslationService {
     }
 
     private def addUserToTranslation(inTranslation: InTranslation): Try[InTranslation] = {
-      writeTranslationService.addUserToTranslation(inTranslation)
+      translationDbService.addUserToTranslation(inTranslation)
     }
 
     private def addTargetLanguageForTranslation(inTranslation: InTranslation, translateRequest: TranslateRequest, crowdinClient: CrowdinClient): Try[InTranslation] = {
       for {
-        files <- Try(writeTranslationService.filesForTranslation(inTranslation))
+        files <- Try(translationDbService.filesForTranslation(inTranslation))
         _ <- crowdinClient.addTargetLanguage(translateRequest.toLanguage)
-        persistedTranslation <- writeTranslationService.addTranslationWithFiles(inTranslation, files, translateRequest)
+        persistedTranslation <- translationDbService.addTranslationWithFiles(inTranslation, files, translateRequest)
       } yield persistedTranslation
     }
 
@@ -70,7 +87,7 @@ trait TranslationService {
         directory <- crowdinClient.addDirectoryFor(originalBook)
         crowdinMeta <- crowdinClient.addBookMetadata(originalBook)
         crowdinChapters <- crowdinClient.addChaptersFor(originalBook, chapters)
-        persistedTranslation <- writeTranslationService.newInTranslation(translateRequest, crowdinMeta, crowdinChapters, crowdinClient.getProjectIdentifier)
+        persistedTranslation <- translationDbService.newTranslation(translateRequest, crowdinMeta, crowdinChapters, crowdinClient.getProjectIdentifier)
       } yield persistedTranslation
 
       inTranslation match {

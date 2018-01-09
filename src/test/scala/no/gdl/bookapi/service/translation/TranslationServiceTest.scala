@@ -57,16 +57,16 @@ class TranslationServiceTest extends UnitSuite with TestEnvironment {
     when(supportedLanguageService.getSupportedLanguages).thenReturn(Seq(Language("nob", "Norwegian Bokmål")))
     when(crowdinClientBuilder.forSourceLanguage(any[LanguageTag])).thenReturn(Success(crowdinClientMock))
 
-    when(writeTranslationService.translationsForOriginalId(any[Long])).thenReturn(existingInTranslations)
-    when(writeTranslationService.addUserToTranslation(any[InTranslation])).thenReturn(Success(inTranslationToUpdate))
+    when(translationDbService.translationsForOriginalId(any[Long])).thenReturn(existingInTranslations)
+    when(translationDbService.addUserToTranslation(any[InTranslation])).thenReturn(Success(inTranslationToUpdate))
 
     val response = service.addTranslation(TranslateRequest(1, "eng", "nob"))
     response should be a 'Success
 
-    verify(writeTranslationService, times(1)).addUserToTranslation(any[InTranslation])
-    verify(writeTranslationService, times(1)).translationsForOriginalId(any[Long])
+    verify(translationDbService, times(1)).addUserToTranslation(any[InTranslation])
+    verify(translationDbService, times(1)).translationsForOriginalId(any[Long])
     verifyNoMoreInteractions(crowdinClientMock)
-    verifyNoMoreInteractions(writeTranslationService)
+    verifyNoMoreInteractions(translationDbService)
   }
 
   test("that addTranslation adds a new target language when fromLanguage exists") {
@@ -78,20 +78,20 @@ class TranslationServiceTest extends UnitSuite with TestEnvironment {
     when(supportedLanguageService.getSupportedLanguages).thenReturn(Seq(Language("nob", "Norwegian Bokmål")))
     when(crowdinClientBuilder.forSourceLanguage(any[LanguageTag])).thenReturn(Success(crowdinClientMock))
 
-    when(writeTranslationService.translationsForOriginalId(any[Long])).thenReturn(Seq(inTranslationToUpdate))
-    when(writeTranslationService.filesForTranslation(any[InTranslation])).thenReturn(Seq(TestData.Domain.DefaultInTranslationFile))
+    when(translationDbService.translationsForOriginalId(any[Long])).thenReturn(Seq(inTranslationToUpdate))
+    when(translationDbService.filesForTranslation(any[InTranslation])).thenReturn(Seq(TestData.Domain.DefaultInTranslationFile))
     when(crowdinClientMock.addTargetLanguage(any[String])).thenReturn(Success())
-    when(writeTranslationService.addTranslationWithFiles(any[InTranslation], any[Seq[InTranslationFile]], any[TranslateRequest])).thenReturn(Success(inTranslationToUpdate))
+    when(translationDbService.addTranslationWithFiles(any[InTranslation], any[Seq[InTranslationFile]], any[TranslateRequest])).thenReturn(Success(inTranslationToUpdate))
 
     val response = service.addTranslation(TranslateRequest(1, "eng", "nob"))
     response should be a 'Success
 
-    verify(writeTranslationService, times(1)).translationsForOriginalId(any[Long])
-    verify(writeTranslationService, times(1)).filesForTranslation(any[InTranslation])
+    verify(translationDbService, times(1)).translationsForOriginalId(any[Long])
+    verify(translationDbService, times(1)).filesForTranslation(any[InTranslation])
     verify(crowdinClientMock, times(1)).addTargetLanguage(any[String])
-    verify(writeTranslationService, times(1)).addTranslationWithFiles(any[InTranslation], any[Seq[InTranslationFile]], any[TranslateRequest])
+    verify(translationDbService, times(1)).addTranslationWithFiles(any[InTranslation], any[Seq[InTranslationFile]], any[TranslateRequest])
     verifyNoMoreInteractions(crowdinClientMock)
-    verifyNoMoreInteractions(writeTranslationService)
+    verifyNoMoreInteractions(translationDbService)
   }
 
   test("that addTranslation creates a new translation") {
@@ -100,7 +100,7 @@ class TranslationServiceTest extends UnitSuite with TestEnvironment {
     when(readService.withIdAndLanguage(any[Long], any[LanguageTag])).thenReturn(Some(TestData.Api.DefaultBook))
     when(supportedLanguageService.getSupportedLanguages).thenReturn(Seq(Language("nob", "Norwegian Bokmål")))
     when(crowdinClientBuilder.forSourceLanguage(any[LanguageTag])).thenReturn(Success(crowdinClientMock))
-    when(writeTranslationService.translationsForOriginalId(any[Long])).thenReturn(Seq())
+    when(translationDbService.translationsForOriginalId(any[Long])).thenReturn(Seq())
 
     when(readService.chapterForBookWithLanguageAndId(any[Long], any[LanguageTag], any[Long])).thenReturn(Some(TestData.Api.Chapter1))
 
@@ -109,7 +109,7 @@ class TranslationServiceTest extends UnitSuite with TestEnvironment {
     when(crowdinClientMock.addBookMetadata(any[Book])).thenReturn(Success(TestData.Crowdin.DefaultMetadataCrowdinFile))
     when(crowdinClientMock.addChaptersFor(any[Book], any[Seq[Chapter]])).thenReturn(Success(Seq(TestData.Crowdin.DefaultContentCrowdinFile)))
 
-    when(writeTranslationService.newInTranslation(any[TranslateRequest], any[CrowdinFile], any[Seq[CrowdinFile]], any[String])).thenReturn(Success(TestData.Domain.DefaultinTranslation))
+    when(translationDbService.newTranslation(any[TranslateRequest], any[CrowdinFile], any[Seq[CrowdinFile]], any[String])).thenReturn(Success(TestData.Domain.DefaultinTranslation))
 
     val response = service.addTranslation(TranslateRequest(1, "eng", "nob"))
     response should be a 'Success
@@ -122,7 +122,7 @@ class TranslationServiceTest extends UnitSuite with TestEnvironment {
     when(readService.withIdAndLanguage(any[Long], any[LanguageTag])).thenReturn(Some(TestData.Api.DefaultBook))
     when(supportedLanguageService.getSupportedLanguages).thenReturn(Seq(Language("nob", "Norwegian Bokmål")))
     when(crowdinClientBuilder.forSourceLanguage(any[LanguageTag])).thenReturn(Success(crowdinClientMock))
-    when(writeTranslationService.translationsForOriginalId(any[Long])).thenReturn(Seq())
+    when(translationDbService.translationsForOriginalId(any[Long])).thenReturn(Seq())
 
     when(readService.chapterForBookWithLanguageAndId(any[Long], any[LanguageTag], any[Long])).thenReturn(Some(TestData.Api.Chapter1))
 
@@ -133,7 +133,7 @@ class TranslationServiceTest extends UnitSuite with TestEnvironment {
 
     when(crowdinClientMock.deleteDirectoryFor(any[Book])).thenReturn(Success())
 
-    when(writeTranslationService.newInTranslation(any[TranslateRequest], any[CrowdinFile], any[Seq[CrowdinFile]], any[String])).thenReturn(Failure(new DBException(new RuntimeException("Some message"))))
+    when(translationDbService.newTranslation(any[TranslateRequest], any[CrowdinFile], any[Seq[CrowdinFile]], any[String])).thenReturn(Failure(new DBException(new RuntimeException("Some message"))))
 
 
     val response = service.addTranslation(TranslateRequest(1, "eng", "nob"))

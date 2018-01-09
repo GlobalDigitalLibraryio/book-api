@@ -11,6 +11,7 @@ import com.typesafe.scalalogging.LazyLogging
 import io.digitallibrary.network.GdlClient
 import no.gdl.bookapi.model.api.{Book, Chapter, CrowdinException}
 import no.gdl.bookapi.model.crowdin._
+import no.gdl.bookapi.model.domain.FileType
 import org.json4s.DefaultFormats
 import org.json4s.jackson.Serialization.write
 
@@ -43,7 +44,7 @@ class CrowdinClient(fromLanguage: String, projectIdentifier: String, projectKey:
       .fetch[AddFilesResponse](Http(AddFileUrl)
       .postMulti(MultiPart(s"files[$filename]", filename, "application/json", write(metadata).getBytes)))
 
-    response.map(res => CrowdinFile(None, "metadata", res.stats.get.files.head)) match {
+    response.map(res => CrowdinFile(None, FileType.METADATA, res.stats.get.files.head)) match {
       case Success(x) => Success(x)
       case Failure(ex) => Failure(new CrowdinException(ex))
     }
@@ -72,7 +73,7 @@ class CrowdinClient(fromLanguage: String, projectIdentifier: String, projectKey:
           .find(chapter => CrowdinUtils.filenameFor(book, chapter) == fil.name)
           .getOrElse(throw new RuntimeException("Inconsistent file-result"))
 
-        CrowdinFile(Some(chapterForFile.id), "content", fil)
+        CrowdinFile(Some(chapterForFile.id), FileType.CONTENT, fil)
       })
       Success(result)
     }

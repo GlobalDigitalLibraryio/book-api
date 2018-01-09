@@ -7,6 +7,8 @@
 
 package no.gdl.bookapi.model.crowdin
 
+import no.gdl.bookapi.model.domain.FileType
+
 case class SupportedLanguage (name: String, crowdinCode: String, editorCode: String, iso6391: String, iso6393: String, locale: String, androidCode: String, osxCode: String, osxLocale: String)
 case class CrowdinProject (sourceLanguage: String, projectIdentifier: String, projectKey: String)
 
@@ -31,4 +33,4 @@ case class DeleteDirectoryResponse(success: Boolean, error: Option[Error]) {
   }
 }
 
-case class CrowdinFile (sourceId: Option[Long], fileType: String, addedFile: AddedFile)
+case class CrowdinFile (sourceId: Option[Long], fileType: FileType.Value, addedFile: AddedFile)

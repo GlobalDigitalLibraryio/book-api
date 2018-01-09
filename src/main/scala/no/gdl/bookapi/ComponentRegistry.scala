@@ -14,7 +14,7 @@ import no.gdl.bookapi.integration.crowdin.CrowdinClientBuilder
 import no.gdl.bookapi.integration._
 import no.gdl.bookapi.repository._
 import no.gdl.bookapi.service._
-import no.gdl.bookapi.service.translation.{SupportedLanguageService, TranslationService, WriteTranslationService}
+import no.gdl.bookapi.service.translation.{SupportedLanguageService, TranslationService, TranslationDbService}
 import org.postgresql.ds.PGPoolingDataSource
 import scalikejdbc.{ConnectionPool, DataSourceConnectionPool}
 
@@ -55,7 +55,7 @@ object ComponentRegistry
   with SupportedLanguageService
   with CrowdinClientBuilder 
   with TranslationService
-  with WriteTranslationService
+  with TranslationDbService
   with InTranslationRepository
   with InTranslationFileRepository
 {
@@ -110,7 +110,7 @@ object ComponentRegistry
   lazy val supportedLanguageService = new SupportedLanguageService
   lazy val crowdinClientBuilder = new CrowdinClientBuilder
   lazy val translationService = new TranslationService
-  lazy val writeTranslationService = new WriteTranslationService
+  lazy val translationDbService = new TranslationDbService
   lazy val inTranslationRepository = new InTranslationRepository
   lazy val inTranslationFileRepository = new InTranslationFileRepository
 }

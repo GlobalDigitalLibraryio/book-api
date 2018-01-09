@@ -9,6 +9,7 @@ package no.gdl.bookapi.repository
 
 import java.sql.PreparedStatement
 
+import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.model.api.OptimisticLockException
 import no.gdl.bookapi.model.domain.InTranslation
 import scalikejdbc.{AutoSession, DBSession, ParameterBinder, ReadOnlyAutoSession, insert, select, update}
@@ -17,6 +18,7 @@ trait InTranslationRepository {
   val inTranslationRepository: InTranslationRepository
 
   class InTranslationRepository {
+
 
     private val tr = InTranslation.syntax
 
@@ -92,6 +94,17 @@ trait InTranslationRepository {
         .toSQL
         .map(InTranslation(tr))
         .list().apply()
+    }
+
+    def withProjectIdentifierAndToLanguage(projectIdentifier: String, language: LanguageTag)(implicit session: DBSession = ReadOnlyAutoSession): Option[InTranslation] = {
+      select
+        .from(InTranslation as tr)
+        .where
+          .eq(tr.crowdinProjectId, projectIdentifier).and
+          .eq(tr.toLanguage, language.toString)
+        .toSQL
+        .map(InTranslation(tr))
+        .single().apply()
     }
   }
 }

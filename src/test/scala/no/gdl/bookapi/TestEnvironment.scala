@@ -15,7 +15,7 @@ import no.gdl.bookapi.integration.crowdin.CrowdinClientBuilder
 import no.gdl.bookapi.integration.{DataSource, ElasticClient, ImageApiClient, NdlaJestClient}
 import no.gdl.bookapi.repository._
 import no.gdl.bookapi.service._
-import no.gdl.bookapi.service.translation.{SupportedLanguageService, TranslationService, WriteTranslationService}
+import no.gdl.bookapi.service.translation.{SupportedLanguageService, TranslationService, TranslationDbService}
 import org.mockito.Mockito
 import org.scalatest.mockito.MockitoSugar._
 
@@ -55,7 +55,7 @@ trait TestEnvironment
     with FeaturedContentRepository
     with TranslationService
     with FeaturedContentController
-    with WriteTranslationService
+    with TranslationDbService
     with InTranslationRepository
     with InTranslationFileRepository {
   val dataSource = mock[sql.DataSource]
@@ -96,7 +96,7 @@ trait TestEnvironment
   val crowdinClientBuilder = mock[CrowdinClientBuilder]
   val featuredContentRepository = mock[FeaturedContentRepository]
   val translationService = mock[TranslationService]
-  val writeTranslationService = mock[WriteTranslationService]
+  val translationDbService = mock[TranslationDbService]
   val inTranslationRepository = mock[InTranslationRepository]
   val inTranslationFileRepository = mock[InTranslationFileRepository]
 
@@ -137,7 +137,7 @@ trait TestEnvironment
       crowdinClientBuilder,
       featuredContentRepository,
       translationService,
-      writeTranslationService,
+      translationDbService,
       inTranslationRepository,
       inTranslationFileRepository
     )

@@ -16,9 +16,9 @@ import no.gdl.bookapi.{TestEnvironment, UnitSuite}
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 
-class WriteTranslationServiceTest extends UnitSuite with TestEnvironment {
+class TranslationDbServiceTest extends UnitSuite with TestEnvironment {
 
-  override val writeTranslationService = new WriteTranslationService
+  override val translationDbService = new TranslationDbService
 
   test("that addUserToTranslation does not add the same user id twice") {
     val inTranslation = InTranslation(Some(1), Some(1), Seq("abc123"), 1, None, LanguageTag("eng"), LanguageTag("nob"), "123")
@@ -28,7 +28,7 @@ class WriteTranslationServiceTest extends UnitSuite with TestEnvironment {
     when(request.getHeader("Authorization")).thenReturn(s"Bearer $token")
     AuthUser.set(request)
 
-    val addUserToTranslation = writeTranslationService.addUserToTranslation(inTranslation)
+    val addUserToTranslation = translationDbService.addUserToTranslation(inTranslation)
     addUserToTranslation.isSuccess should be (true)
 
     verify(inTranslationRepository, never()).updateTranslation(any[InTranslation])

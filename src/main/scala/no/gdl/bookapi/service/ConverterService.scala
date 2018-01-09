@@ -19,7 +19,7 @@ import no.gdl.bookapi.integration.ImageApiClient
 import no.gdl.bookapi.model._
 import no.gdl.bookapi.model.api.internal.{NewChapter, NewEducationalAlignment, NewTranslation}
 import no.gdl.bookapi.model.crowdin.CrowdinFile
-import no.gdl.bookapi.model.domain.InTranslation
+import no.gdl.bookapi.model.domain.{FileType, InTranslation, TranslationStatus}
 import no.gdl.bookapi.{BookApiProperties, model}
 
 
@@ -210,7 +210,7 @@ trait ConverterService {
         originalId = file.sourceId,
         filename = file.addedFile.name,
         crowdinFileId = file.addedFile.fileId.toString,
-        translationStatus = "in_progress",
+        translationStatus = TranslationStatus.IN_PROGRESS,
         etag = None)
 
   }

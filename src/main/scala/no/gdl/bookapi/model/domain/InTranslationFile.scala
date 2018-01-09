@@ -14,11 +14,11 @@ import scalikejdbc._
 case class InTranslationFile(id: Option[Long],
                              revision: Option[Int],
                              inTranslationId: Long,
-                             fileType: String,
+                             fileType: FileType.Value,
                              originalId: Option[Long],
                              filename: String,
                              crowdinFileId: String,
-                             translationStatus: String,
+                             translationStatus: TranslationStatus.Value,
                              etag: Option[String])
 
 object InTranslationFile extends SQLSyntaxSupport[InTranslationFile] {
@@ -34,10 +34,26 @@ object InTranslationFile extends SQLSyntaxSupport[InTranslationFile] {
     id = rs.longOpt(f.id),
     revision = rs.intOpt(f.revision),
     inTranslationId = rs.long(f.inTranslationId),
-    fileType = rs.string(f.fileType),
+    fileType = FileType.valueOf(rs.string(f.fileType)).get,
     originalId = rs.longOpt(f.originalId),
     filename = rs.string(f.filename),
     crowdinFileId = rs.string(f.crowdinFileId),
-    translationStatus = rs.string(f.translationStatus),
+    translationStatus = TranslationStatus.valueOf(rs.string(f.translationStatus)).get,
     etag = rs.stringOpt(f.etag))
+}
+
+object TranslationStatus extends Enumeration {
+  val IN_PROGRESS, TRANSLATED = Value
+
+  def valueOf(s: String): Option[TranslationStatus.Value] = {
+    TranslationStatus.values.find(_.toString == s.toUpperCase)
+  }
+}
+
+object FileType extends Enumeration {
+  val METADATA, CONTENT = Value
+
+  def valueOf(s: String): Option[FileType.Value] = {
+    FileType.values.find(_.toString == s.toUpperCase)
+  }
 }
