@@ -95,16 +95,5 @@ trait InTranslationRepository {
         .map(InTranslation(tr))
         .list().apply()
     }
-
-    def withProjectIdentifierAndToLanguage(projectIdentifier: String, language: LanguageTag)(implicit session: DBSession = ReadOnlyAutoSession): Option[InTranslation] = {
-      select
-        .from(InTranslation as tr)
-        .where
-          .eq(tr.crowdinProjectId, projectIdentifier).and
-          .eq(tr.toLanguage, language.toString)
-        .toSQL
-        .map(InTranslation(tr))
-        .single().apply()
-    }
   }
 }

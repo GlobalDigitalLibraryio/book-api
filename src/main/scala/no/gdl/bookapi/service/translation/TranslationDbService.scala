@@ -23,17 +23,14 @@ trait TranslationDbService {
   val translationDbService: TranslationDbService
 
   class TranslationDbService extends LazyLogging {
-    def fileForInTranslationWithFileId(inTranslation: InTranslation, fileId: String): Option[InTranslationFile] =
-      inTranslationFileRepository.forTranslationWithCrowdinFileId(inTranslation.id, fileId)
+    def fileForCrowdinProjectWithFileIdAndLanguage(crowdinProjectId: String, fileId: String, language: LanguageTag): Option[InTranslationFile] =
+      inTranslationFileRepository.forCrowdinProjectWithFileIdAndLanguage(crowdinProjectId, fileId, language)
 
     def filesForTranslation(inTranslation: InTranslation): Seq[InTranslationFile] =
       inTranslationFileRepository.withTranslationId(inTranslation.id)
 
     def translationsForOriginalId(originalId: Long): Seq[InTranslation] =
       inTranslationRepository.forOriginalId(originalId)
-
-    def inTranslationForProjectIdentifierAndLanguage(projectIdentifier: String, language: LanguageTag): Option[InTranslation] =
-      inTranslationRepository.withProjectIdentifierAndToLanguage(projectIdentifier, language)
 
     def newTranslation(translateRequest: TranslateRequest, crowdinMeta: CrowdinFile, crowdinChapters: Seq[CrowdinFile], crowdinProject: String): Try[InTranslation] = {
       val persisted = for {

@@ -7,6 +7,7 @@
 
 package no.gdl.bookapi.repository
 
+import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.TestData.Domain.DefaultinTranslation
 import no.gdl.bookapi.{IntegrationSuite, TestEnvironment}
 
@@ -30,12 +31,12 @@ class InTranslationRepositoryTest extends IntegrationSuite with TestEnvironment 
 
   test("that forOriginalId retrieves list of books matching given id") {
     withRollback { implicit session =>
-      val inTranslation1 = inTranslationRepository.add(DefaultinTranslation.copy(originalId = 1))
-      val inTranslation2 = inTranslationRepository.add(DefaultinTranslation.copy(originalId = 1))
-      val inTranslation3 = inTranslationRepository.add(DefaultinTranslation.copy(originalId = 1))
-      val inTranslation4 = inTranslationRepository.add(DefaultinTranslation.copy(originalId = 2))
-      val inTranslation5 = inTranslationRepository.add(DefaultinTranslation.copy(originalId = 2))
-      val inTranslation6 = inTranslationRepository.add(DefaultinTranslation.copy(originalId = 2))
+      val inTranslation1 = inTranslationRepository.add(DefaultinTranslation.copy(originalId = 1, crowdinProjectId = "abc", toLanguage = LanguageTag("nob")))
+      val inTranslation2 = inTranslationRepository.add(DefaultinTranslation.copy(originalId = 1, crowdinProjectId = "def", toLanguage = LanguageTag("eng")))
+      val inTranslation3 = inTranslationRepository.add(DefaultinTranslation.copy(originalId = 1, crowdinProjectId = "ghi", toLanguage = LanguageTag("fra")))
+      val inTranslation4 = inTranslationRepository.add(DefaultinTranslation.copy(originalId = 2, crowdinProjectId = "abc", toLanguage = LanguageTag("nob")))
+      val inTranslation5 = inTranslationRepository.add(DefaultinTranslation.copy(originalId = 2, crowdinProjectId = "def", toLanguage = LanguageTag("eng")))
+      val inTranslation6 = inTranslationRepository.add(DefaultinTranslation.copy(originalId = 2, crowdinProjectId = "ghi", toLanguage = LanguageTag("fra")))
 
       val withOriginalId1 = inTranslationRepository.forOriginalId(1)
       withOriginalId1.length should be(3)
@@ -45,8 +46,8 @@ class InTranslationRepositoryTest extends IntegrationSuite with TestEnvironment 
 
   test("that update updates correct record") {
     withRollback { implicit session =>
-      val inTranslation1 = inTranslationRepository.add(DefaultinTranslation)
-      val inTranslation2 = inTranslationRepository.add(DefaultinTranslation)
+      val inTranslation1 = inTranslationRepository.add(DefaultinTranslation.copy(originalId = 1, crowdinProjectId = "abc", toLanguage = LanguageTag("nob")))
+      val inTranslation2 = inTranslationRepository.add(DefaultinTranslation.copy(originalId = 1, crowdinProjectId = "def", toLanguage = LanguageTag("nob")))
 
       val updated = inTranslationRepository.updateTranslation(inTranslation1.copy(userIds = Seq("this has changed")))
 

@@ -7,8 +7,9 @@
 
 package no.gdl.bookapi.repository
 
+import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.model.api.OptimisticLockException
-import no.gdl.bookapi.model.domain.InTranslationFile
+import no.gdl.bookapi.model.domain.{InTranslation, InTranslationFile}
 import scalikejdbc.{AutoSession, DBSession, ReadOnlyAutoSession, insert, select, update}
 
 trait InTranslationFileRepository {
@@ -17,6 +18,7 @@ trait InTranslationFileRepository {
   class InTranslationFileRepository {
 
     private val f = InTranslationFile.syntax
+    private val tr = InTranslation.syntax
 
     def add(file: InTranslationFile)(implicit session: DBSession = AutoSession): InTranslationFile = {
       val f = InTranslationFile.column
@@ -80,15 +82,19 @@ trait InTranslationFileRepository {
         .list().apply()
     }
 
-    def forTranslationWithCrowdinFileId(inTranslationId: Option[Long], crowdinFileId: String)(implicit session: DBSession = ReadOnlyAutoSession): Option[InTranslationFile] = {
+    def forCrowdinProjectWithFileIdAndLanguage(crowdinProjectId: String, crowdinFileId: String, language: LanguageTag)(implicit session: DBSession = ReadOnlyAutoSession): Option[InTranslationFile] = {
       select
         .from(InTranslationFile as f)
+        .leftJoin(InTranslation as tr)
+          .on(tr.id, f.inTranslationId)
         .where
           .eq(f.crowdinFileId, crowdinFileId).and
-          .eq(f.inTranslationId, inTranslationId)
+          .eq(tr.toLanguage, language.toString).and
+          .eq(tr.crowdinProjectId, crowdinProjectId)
         .toSQL
         .map(InTranslationFile(f))
         .single().apply()
+
     }
   }
 

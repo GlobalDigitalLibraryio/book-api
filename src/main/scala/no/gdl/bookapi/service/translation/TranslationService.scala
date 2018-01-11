@@ -18,7 +18,7 @@ import no.gdl.bookapi.service.ReadService
 import scala.util.{Failure, Success, Try}
 
 trait TranslationService {
-  this: CrowdinClientBuilder with ReadService with SupportedLanguageService with TranslationDbService  =>
+  this: CrowdinClientBuilder with ReadService with SupportedLanguageService with TranslationDbService =>
   val translationService: TranslationService
 
 
@@ -29,14 +29,10 @@ trait TranslationService {
     }
 
     def updateTranslationStatus(projectIdentifier: String, language: LanguageTag, fileId: String, status: TranslationStatus.Value): Try[InTranslationFile] = {
-      translationDbService.inTranslationForProjectIdentifierAndLanguage(projectIdentifier, language) match {
-        case None => Failure(new NotFoundException())
-        case Some(inTranslation) =>
-          translationDbService.fileForInTranslationWithFileId(inTranslation, fileId) match {
-            case None => Failure(new NotFoundException())
-            case Some(file) =>
-              translationDbService.updateTranslationStatus(file, status)
-          }
+      translationDbService.fileForCrowdinProjectWithFileIdAndLanguage(projectIdentifier, fileId, language) match {
+        case None => Failure(new NotFoundException(s"No translation for project $projectIdentifier, language $language and file_id $fileId"))
+        case Some(file) =>
+          translationDbService.updateTranslationStatus(file, status)
       }
     }
 

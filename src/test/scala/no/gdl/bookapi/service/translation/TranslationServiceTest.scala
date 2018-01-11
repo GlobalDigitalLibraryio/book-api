@@ -11,7 +11,7 @@ import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.integration.crowdin.CrowdinClient
 import no.gdl.bookapi.model.api._
 import no.gdl.bookapi.model.crowdin.CrowdinFile
-import no.gdl.bookapi.model.domain.{InTranslation, InTranslationFile}
+import no.gdl.bookapi.model.domain.{InTranslation, InTranslationFile, TranslationStatus}
 import no.gdl.bookapi.{TestData, TestEnvironment, UnitSuite}
 import org.mockito.Mockito._
 import org.mockito.Matchers._
@@ -33,7 +33,7 @@ class TranslationServiceTest extends UnitSuite with TestEnvironment {
 
     val translateResponse = service.addTranslation(TranslateRequest(1, "nob", "eng"))
     translateResponse should be a 'Failure
-    translateResponse.failed.get.getMessage should equal ("Not supported fromLanguage")
+    translateResponse.failed.get.getMessage should equal("Not supported fromLanguage")
   }
 
   test("that addTranslation returns a failure if toLanguage is not supported") {
@@ -41,7 +41,7 @@ class TranslationServiceTest extends UnitSuite with TestEnvironment {
 
     val translateResponse = service.addTranslation(TranslateRequest(1, "nob", "fra"))
     translateResponse should be a 'Failure
-    translateResponse.failed.get.asInstanceOf[ValidationException].errors.head.message should equal ("The language 'fra' is not a supported language to translate to.")
+    translateResponse.failed.get.asInstanceOf[ValidationException].errors.head.message should equal("The language 'fra' is not a supported language to translate to.")
   }
 
   test("that addTranslation only adds a new user when the translation exist") {
@@ -135,11 +135,23 @@ class TranslationServiceTest extends UnitSuite with TestEnvironment {
 
     when(translationDbService.newTranslation(any[TranslateRequest], any[CrowdinFile], any[Seq[CrowdinFile]], any[String])).thenReturn(Failure(new DBException(new RuntimeException("Some message"))))
 
-
     val response = service.addTranslation(TranslateRequest(1, "eng", "nob"))
     response should be a 'Failure
 
     verify(crowdinClientMock, times(1)).deleteDirectoryFor(any[Book])
   }
 
+  test("that updateTranslationStatus returns a Failure when file not found") {
+    when(translationDbService.fileForCrowdinProjectWithFileIdAndLanguage(any[String], any[String], any[LanguageTag])).thenReturn(None)
+    val result = service.updateTranslationStatus("abc", LanguageTag("nob"), "123", TranslationStatus.TRANSLATED)
+    result should be a 'Failure
+    result.failed.get.getMessage should equal (s"No translation for project abc, language nob and file_id 123")
+  }
+
+  test("that updateTranslationStatus returns a Success when update ok") {
+    when(translationDbService.fileForCrowdinProjectWithFileIdAndLanguage(any[String], any[String], any[LanguageTag])).thenReturn(Some(TestData.Domain.DefaultInTranslationFile))
+    when(translationDbService.updateTranslationStatus(any[InTranslationFile], any[TranslationStatus.Value])).thenReturn(Success(TestData.Domain.DefaultInTranslationFile))
+    val result = service.updateTranslationStatus("abc", LanguageTag("nob"), "123", TranslationStatus.TRANSLATED)
+    result should be a 'Success
+  }
 }
