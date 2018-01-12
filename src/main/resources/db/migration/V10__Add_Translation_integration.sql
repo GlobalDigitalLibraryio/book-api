@@ -6,6 +6,7 @@ CREATE TABLE in_translation (
   new_id bigint,
   from_language text not null,
   to_language text not null,
+  crowdin_to_language text not null,
   crowdin_project_id text not null,
   unique(original_id, to_language, crowdin_project_id)
 );

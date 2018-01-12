@@ -200,6 +200,7 @@ trait ConverterService {
       newId = None,
       fromLanguage = LanguageTag(translationRequest.fromLanguage),
       toLanguage = LanguageTag(translationRequest.toLanguage),
+      crowdinToLanguage = translationRequest.toLanguage,
       crowdinProjectId = crowdinProjectId)
 
     def asDomainInTranslationFile(file: CrowdinFile, inTranslation: InTranslation) = domain.InTranslationFile(

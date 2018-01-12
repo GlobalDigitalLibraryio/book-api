@@ -19,6 +19,7 @@ case class InTranslation (id: Option[Long],
                           newId: Option[Long],
                           fromLanguage: LanguageTag,
                           toLanguage: LanguageTag,
+                          crowdinToLanguage: String,
                           crowdinProjectId: String)
 
 object InTranslation extends SQLSyntaxSupport[InTranslation] {
@@ -38,5 +39,6 @@ object InTranslation extends SQLSyntaxSupport[InTranslation] {
     newId = rs.longOpt(t.newId),
     fromLanguage = LanguageTag(rs.string(t.fromLanguage)),
     toLanguage = LanguageTag(rs.string(t.toLanguage)),
+    crowdinToLanguage = rs.string(t.crowdinToLanguage),
     crowdinProjectId = rs.string(t.crowdinProjectId))
 }

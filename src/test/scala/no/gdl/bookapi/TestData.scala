@@ -113,7 +113,7 @@ object TestData {
       categories = Seq(DefaultCategory)
     )
 
-    val DefaultinTranslation = InTranslation(Some(1), Some(1), Seq("123"), 1, Some(2), LanguageTag("nob"), LanguageTag("eng"), "abc")
+    val DefaultinTranslation = InTranslation(Some(1), Some(1), Seq("123"), 1, Some(2), LanguageTag("nob"), LanguageTag("eng"), "en", "abc")
     val DefaultInTranslationFile = InTranslationFile(Some(1), Some(1), 1, FileType.CONTENT, Some(3), "filename", "fileId", TranslationStatus.IN_PROGRESS, Some("asdfa342"))
   }
 

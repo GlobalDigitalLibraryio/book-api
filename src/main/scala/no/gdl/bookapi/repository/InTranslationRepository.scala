@@ -40,6 +40,7 @@ trait InTranslationRepository {
         t.newId -> inTranslation.newId,
         t.fromLanguage -> inTranslation.fromLanguage.toString,
         t.toLanguage -> inTranslation.toLanguage.toString,
+        t.crowdinToLanguage -> inTranslation.crowdinToLanguage,
         t.crowdinProjectId -> inTranslation.crowdinProjectId
       ).toSQL
         .updateAndReturnGeneratedKey()
@@ -65,6 +66,7 @@ trait InTranslationRepository {
         t.newId -> toUpdate.newId,
         t.fromLanguage -> toUpdate.fromLanguage.toString,
         t.toLanguage -> toUpdate.toLanguage.toString,
+        t.crowdinToLanguage -> toUpdate.crowdinToLanguage,
         t.crowdinProjectId -> toUpdate.crowdinProjectId
       ).where
         .eq(t.id, toUpdate.id).and

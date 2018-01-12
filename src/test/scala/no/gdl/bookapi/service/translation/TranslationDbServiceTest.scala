@@ -21,7 +21,7 @@ class TranslationDbServiceTest extends UnitSuite with TestEnvironment {
   override val translationDbService = new TranslationDbService
 
   test("that addUserToTranslation does not add the same user id twice") {
-    val inTranslation = InTranslation(Some(1), Some(1), Seq("abc123"), 1, None, LanguageTag("eng"), LanguageTag("nob"), "123")
+    val inTranslation = InTranslation(Some(1), Some(1), Seq("abc123"), 1, None, LanguageTag("eng"), LanguageTag("nob"), "nb", "123")
 
     val token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzY29wZSI6InJvbGUxIHJvbGUyIHJvbGUzIiwiaHR0cHM6Ly9kaWdpdGFsbGlicmFyeS5pby9nZGxfaWQiOiJhYmMxMjMiLCJodHRwczovL2RpZ2l0YWxsaWJyYXJ5LmlvL3VzZXJfbmFtZSI6IkRvbmFsZCBEdWNrIiwiaXNzIjoiaHR0cHM6Ly9zb21lLWRvbWFpbi8iLCJzdWIiOiJnb29nbGUtb2F1dGgyfDEyMyIsImF1ZCI6ImFiYyIsImV4cCI6MTQ4NjA3MDA2MywiaWF0IjoxNDg2MDM0MDYzfQ.gbMF8F1LLMUVroXbmStL02R6EPZjeZkbowseE5SAN9U"
     val request = mock[HttpServletRequest]
