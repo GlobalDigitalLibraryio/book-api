@@ -12,12 +12,13 @@ import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.model.api.Error
 import no.gdl.bookapi.model.api.internal.{NewBook, NewChapter, NewTranslation}
 import no.gdl.bookapi.service._
-import org.scalatra.{Conflict, NotFound}
+import no.gdl.bookapi.service.search.IndexBuilderService
+import org.scalatra.{Conflict, InternalServerError, NotFound, Ok}
 
 import scala.util.{Failure, Success}
 
 trait InternController {
-  this: WriteService with ReadService with ConverterService with ValidationService with FeedService =>
+  this: WriteService with ReadService with ConverterService with ValidationService with FeedService with IndexBuilderService =>
   val internController: InternController
 
   class InternController extends GdlController {
@@ -121,6 +122,20 @@ trait InternController {
 
     get("/feeds/") {
       feedService.generateFeeds()
+    }
+
+    post("/index") {
+      indexBuilderService.indexDocuments match {
+        case Success(reindexResult) => {
+          val result = s"Completed indexing of ${reindexResult.totalIndexed} documents in ${reindexResult.millisUsed} ms."
+          logger.info(result)
+          Ok(result)
+        }
+        case Failure(f) => {
+          logger.warn(f.getMessage, f)
+          InternalServerError(f.getMessage)
+        }
+      }
     }
 
   }

@@ -33,6 +33,7 @@ object BookApiProperties extends LazyLogging {
   val RunWithSignedSearchRequests = propOrElse("RUN_WITH_SIGNED_SEARCH_REQUESTS", "true").toBoolean
   val SearchIndex = propOrElse("SEARCH_INDEX_NAME", "books")
   val SearchDocument = "book"
+  val ElasticSearchIndexMaxResultWindow = 10000
   val DefaultPageSize = 10
   val MaxPageSize = 100
   val IndexBulkSize = 200
