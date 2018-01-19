@@ -371,11 +371,12 @@ trait TranslationRepository {
       case (Sort.ByArrivalDateDesc) => sqls.orderBy(t.dateArrived.desc, t.bookId.desc)
     }
 
-    def translationsWithLanguage(language: LanguageTag): List[Translation] = translationsWhere(sqls"t.language = ${language.language.id}")
+    def translationsWithLanguage(language: LanguageTag): List[Translation] =
+      translationsWhere(sqls"t.language = ${language.language.id}").map(id => withId(id).get)
 
-    private def translationsWhere(whereClause: SQLSyntax)(implicit session: DBSession = ReadOnlyAutoSession): List[Translation] = {
+    private def translationsWhere(whereClause: SQLSyntax)(implicit session: DBSession = ReadOnlyAutoSession): List[Long] = {
       val t = Translation.syntax("t")
-      sql"select ${t.result.*} from ${Translation.as(t)} where $whereClause".map(Translation(t)).list.apply()
+      sql"select ${t.result.id} from ${Translation.as(t)} where $whereClause".map(_.long(1)).list.apply()
     }
   }
 

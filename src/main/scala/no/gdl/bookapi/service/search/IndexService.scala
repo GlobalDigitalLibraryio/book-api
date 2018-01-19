@@ -44,8 +44,8 @@ trait IndexService {
     def indexDocument(translation: Translation): Try[Translation] = {
       val availableLanguages: Seq[LanguageTag] = translationRepository.languagesFor(translation.bookId)
       val book: Option[domain.Book] = bookRepository.withId(translation.bookId)
-      val source = write(converterService.toApiBook(Some(translation), availableLanguages, book))
-      val indexRequest = new Index.Builder(source).index(BookApiProperties.SearchIndex + "-" + translation.language.language.id).`type`(BookApiProperties.SearchDocument).id(translation.id.get.toString).build
+      val source = write(converterService.toSearchBook(Some(translation), availableLanguages, book))
+      val indexRequest = new Index.Builder(source).index(BookApiProperties.searchIndex(translation.language)).`type`(BookApiProperties.SearchDocument).id(translation.id.get.toString).build
 
       jestClient.execute(indexRequest).map(_ => translation)
     }
@@ -55,7 +55,7 @@ trait IndexService {
       translationList.foreach(translation => {
         val availableLanguages: Seq[LanguageTag] = translationRepository.languagesFor(translation.bookId)
         val book: Option[domain.Book] = bookRepository.withId(translation.bookId)
-        val source = write(converterService.toApiBook(Some(translation), availableLanguages, book))
+        val source = write(converterService.toSearchBook(Some(translation), availableLanguages, book))
         bulkBuilder.addAction(new Index.Builder(source).index(indexName).`type`(BookApiProperties.SearchDocument).id(translation.id.get.toString).build)
       })
 
@@ -68,7 +68,7 @@ trait IndexService {
 
     def createIndex(language: LanguageTag): Try[String] = {
       logger.info(s"Create index for language: ${language.language.id}")
-      createIndexWithName(BookApiProperties.SearchIndex + "-" + language.language.id + "_" + getTimestamp + "_" + UUID.randomUUID().toString, language)
+      createIndexWithName(BookApiProperties.searchIndex(language) + "_" + getTimestamp + "_" + UUID.randomUUID().toString, language)
     }
 
     def createIndexWithName(indexName: String, language: LanguageTag): Try[String] = {
@@ -169,12 +169,12 @@ trait IndexService {
       if (!indexExists(newIndexName).getOrElse(false)) {
         Failure(new IllegalArgumentException(s"No such index: $newIndexName"))
       } else {
-        val addAliasDefinition = new AddAliasMapping.Builder(newIndexName, BookApiProperties.SearchIndex + "-" + language.language.id).build()
+        val addAliasDefinition = new AddAliasMapping.Builder(newIndexName, BookApiProperties.searchIndex(language)).build()
         val modifyAliasRequest = oldIndexName match {
           case None => new ModifyAliases.Builder(addAliasDefinition).build()
           case Some(oldIndex) => {
             new ModifyAliases.Builder(
-              new RemoveAliasMapping.Builder(oldIndex, BookApiProperties.SearchIndex + "-" + language.language.id).build()
+              new RemoveAliasMapping.Builder(oldIndex, BookApiProperties.searchIndex(language)).build()
             ).addAlias(addAliasDefinition).build()
           }
         }
@@ -197,7 +197,7 @@ trait IndexService {
     }
 
     def aliasTarget(language: LanguageTag): Try[Option[String]] = {
-      val getAliasRequest = new GetAliases.Builder().addIndex(s"${BookApiProperties.SearchIndex}-${language.language.id}").build()
+      val getAliasRequest = new GetAliases.Builder().addIndex(s"${BookApiProperties.searchIndex(language)}}").build()
       jestClient.execute(getAliasRequest) match {
         case Success(result) => {
           val aliasIterator = result.getJsonObject.entrySet().iterator()

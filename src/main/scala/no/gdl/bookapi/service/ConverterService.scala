@@ -17,6 +17,7 @@ import no.gdl.bookapi.controller.NewFeaturedContent
 import no.gdl.bookapi.integration.ImageApiClient
 import no.gdl.bookapi.model._
 import no.gdl.bookapi.model.api.internal.{NewChapter, NewEducationalAlignment, NewTranslation}
+import no.gdl.bookapi.service.search.Book
 import no.gdl.bookapi.{BookApiProperties, model}
 
 
@@ -123,6 +124,8 @@ trait ConverterService {
       chapter.title,
       s"${Domain}${BookApiProperties.ApiPath}/${language.toString}/${bookId}/chapters/${chapter.id.get}")
 
+    def toApiChapter(chapters: Seq[domain.Chapter], bookId: Long, language: LanguageTag): Seq[api.Chapter] = chapters.map(c => toApiChapter(c))
+
     def toApiChapter(chapter: domain.Chapter): api.Chapter = api.Chapter(
       chapter.id.get,
       chapter.revision.get,
@@ -166,6 +169,45 @@ trait ConverterService {
         b <- book
         t <- translation
         api <- Some(toApiBookInternal(t, b, availableLanguages))
+      } yield api
+    }
+
+    def toSearchBook(translation: Option[domain.Translation], availableLanguages: Seq[LanguageTag], book: Option[domain.Book]): Option[search.Book] = {
+      def toSearchBookInternal(translation: domain.Translation, book: domain.Book, availableLanguages: Seq[LanguageTag]): search.Book = {
+        Book(
+          book.id.get,
+          book.revision.get,
+          translation.externalId,
+          translation.uuid,
+          translation.title,
+          translation.about,
+          None, // TODO in #155: Add from language if this is a translation
+          toApiLanguage(translation.language),
+          availableLanguages.map(toApiLanguage).sortBy(_.name),
+          toApiLicense(book.license),
+          toApiPublisher(book.publisher),
+          translation.readingLevel,
+          translation.typicalAgeRange,
+          translation.educationalUse,
+          translation.educationalRole,
+          translation.timeRequired,
+          translation.datePublished,
+          translation.dateCreated,
+          translation.dateArrived,
+          toApiCategories(translation.categories),
+          toApiCoverPhoto(translation.coverphoto),
+          toApiDownloads(translation),
+          translation.tags,
+          toApiContributors(translation.contributors),
+          toApiChapter(translation.chapters, translation.bookId, translation.language),
+          supportsTranslation = true // TODO in #155: Only set this to true if we support it
+        )
+      }
+
+      for {
+        b <- book
+        t <- translation
+        api <- Some(toSearchBookInternal(t, b, availableLanguages))
       } yield api
     }
 

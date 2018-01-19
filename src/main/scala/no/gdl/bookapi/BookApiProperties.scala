@@ -9,6 +9,7 @@
 package no.gdl.bookapi
 
 import com.typesafe.scalalogging.LazyLogging
+import io.digitallibrary.language.model.LanguageTag
 import io.digitallibrary.network.Domains
 import io.digitallibrary.network.secrets.PropertyKeys
 import io.digitallibrary.network.secrets.Secrets.readSecrets
@@ -106,6 +107,10 @@ object BookApiProperties extends LazyLogging {
           case None => default
         }
     }
+  }
+
+  def searchIndex(language: LanguageTag): String = {
+    SearchIndex + "-" + language.language.id
   }
 
   def getCloudFrontUrl(env: String, typ: String): String = {
