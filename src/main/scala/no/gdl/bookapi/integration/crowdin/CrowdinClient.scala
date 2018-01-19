@@ -9,11 +9,12 @@ package no.gdl.bookapi.integration.crowdin
 
 import com.typesafe.scalalogging.LazyLogging
 import io.digitallibrary.network.GdlClient
+import no.gdl.bookapi.model.api.internal.ChapterId
 import no.gdl.bookapi.model.api.{Book, Chapter, CrowdinException}
 import no.gdl.bookapi.model.crowdin._
-import no.gdl.bookapi.model.domain.FileType
+import no.gdl.bookapi.model.domain.{FileType, InTranslation}
 import org.json4s.DefaultFormats
-import org.json4s.jackson.Serialization.write
+import org.json4s.jackson.Serialization.{read, write}
 
 import scala.util.{Failure, Success, Try}
 import scalaj.http.{Http, MultiPart}
@@ -29,8 +30,18 @@ class LimitedCrowdinClient extends GdlClient with LazyLogging {
     gdlClient.fetch[Seq[SupportedLanguage]](Http(SupportedLanguagesUrl))
 }
 
+
+
 class CrowdinClient(fromLanguage: String, projectIdentifier: String, projectKey: String) extends LimitedCrowdinClient {
-  case class BookMetaData(title: String, description: String)
+
+
+  private val ProjectDetailsUrl = s"$CrowdinBaseUrl/project/$projectIdentifier/info?key=$projectKey&json"
+  private val EditProjectUrl = s"$CrowdinBaseUrl/project/$projectIdentifier/edit-project?key=$projectKey&json"
+  private val AddDirectoryUrl = s"$CrowdinBaseUrl/project/$projectIdentifier/add-directory?key=$projectKey&json"
+  private val DeleteDirectoryUrl = s"$CrowdinBaseUrl/project/$projectIdentifier/delete-directory?key=$projectKey&json"
+  private val AddFileUrl = s"$CrowdinBaseUrl/project/$projectIdentifier/add-file?key=$projectKey&json"
+  private val ExportFileUrl = s"$CrowdinBaseUrl/project/$projectIdentifier/export-file?key=$projectKey&file={FILEPATH}&language={LANGUAGE}"
+
 
   def getProjectIdentifier: String = projectIdentifier
 
@@ -49,6 +60,20 @@ class CrowdinClient(fromLanguage: String, projectIdentifier: String, projectKey:
       case Failure(ex) => Failure(new CrowdinException(ex))
     }
   }
+
+
+  def fetchTranslatedMetaData(originalBook: Book, inTranslation: InTranslation): Try[BookMetaData] = {
+    val url = ExportFileUrl
+      .replace("{FILEPATH}", CrowdinUtils.metadataFilenameFor(originalBook))
+      .replace("{LANGUAGE}", inTranslation.crowdinToLanguage)
+
+    gdlClient.doRequestAsString(Http(url).copy(compress = false)).flatMap(response => {
+      gdlClient.parseResponse[BookMetaData](response).map(bookMetaData =>  {
+        bookMetaData.copy(etag = response.header("ETag"))
+      })
+    })
+  }
+
 
   def addChaptersFor(book: Book, chapters: Seq[Chapter]): Try[Seq[CrowdinFile]] = {
     val uploadTries: Seq[Try[AddFilesResponse]] = chapters.sliding(20,20).toList.map(window => {
@@ -79,6 +104,16 @@ class CrowdinClient(fromLanguage: String, projectIdentifier: String, projectKey:
     }
   }
 
+  def fetchTranslatedChapter(originalBook: Book, chapterId: Long, inTranslation: InTranslation): Try[TranslatedChapter] = {
+    val url = ExportFileUrl
+      .replace("{FILEPATH}", CrowdinUtils.filenameFor(originalBook, chapterId))
+      .replace("{LANGUAGE}", inTranslation.crowdinToLanguage)
+
+    gdlClient.doRequestAsString(Http(url).copy(compress = false)).map(response => {
+      TranslatedChapter(chapterId, response.body, response.header("ETag"))
+    })
+  }
+
   def addDirectoryFor(book: Book): Try[String] = {
     val directoryName = CrowdinUtils.directoryNameFor(book)
 
@@ -98,13 +133,6 @@ class CrowdinClient(fromLanguage: String, projectIdentifier: String, projectKey:
       case Failure(err) => Failure(new CrowdinException(err))
     }
   }
-
-  private val ProjectDetailsUrl = s"$CrowdinBaseUrl/project/$projectIdentifier/info?key=$projectKey&json"
-  private val EditProjectUrl = s"$CrowdinBaseUrl/project/$projectIdentifier/edit-project?key=$projectKey&json"
-  private val AddDirectoryUrl = s"$CrowdinBaseUrl/project/$projectIdentifier/add-directory?key=$projectKey&json"
-  private val DeleteDirectoryUrl = s"$CrowdinBaseUrl/project/$projectIdentifier/delete-directory?key=$projectKey&json"
-  private val AddFileUrl = s"$CrowdinBaseUrl/project/$projectIdentifier/add-file?key=$projectKey&json"
-
 
   def addTargetLanguage(toLanguage: String): Try[Unit] = {
     getTargetLanguages.flatMap(languages => {
@@ -148,5 +176,8 @@ object CrowdinUtils {
   def directoryNameFor(book: Book) = s"${book.id}-${book.title.replace(" ", "-")}"
   def metadataFilenameFor(book: Book) = s"${directoryNameFor(book)}/metadata.json"
   def filenameFor(book: Book, chapter: Chapter) = s"${directoryNameFor(book)}/${chapter.id}.xhtml"
+  def filenameFor(book: Book, chapterId: Long) = s"${directoryNameFor(book)}/$chapterId.xhtml"
 }
 
+case class BookMetaData(title: String, description: String, etag: Option[String] = None)
+case class TranslatedChapter(id: Long, content: String, etag: Option[String] = None)

@@ -26,11 +26,13 @@ trait TranslationDbService {
     def fileForCrowdinProjectWithFileIdAndLanguage(crowdinProjectId: String, fileId: String, language: LanguageTag): Option[InTranslationFile] =
       inTranslationFileRepository.forCrowdinProjectWithFileIdAndLanguage(crowdinProjectId, fileId, language)
 
-    def filesForTranslation(inTranslation: InTranslation): Seq[InTranslationFile] =
-      inTranslationFileRepository.withTranslationId(inTranslation.id)
+    def filesForTranslation(inTranslationId: Long): Seq[InTranslationFile] =
+      inTranslationFileRepository.withTranslationId(inTranslationId)
 
     def translationsForOriginalId(originalId: Long): Seq[InTranslation] =
       inTranslationRepository.forOriginalId(originalId)
+
+    def translationWithId(translationId: Long): Option[InTranslation] = inTranslationRepository.withId(translationId)
 
     def newTranslation(translateRequest: TranslateRequest, crowdinMeta: CrowdinFile, crowdinChapters: Seq[CrowdinFile], crowdinProject: String): Try[InTranslation] = {
       val persisted = for {

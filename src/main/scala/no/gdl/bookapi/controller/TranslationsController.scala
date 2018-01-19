@@ -66,11 +66,12 @@ trait TranslationsController {
 
     get("/file-translated", operation(projectFileTranslated)) {
       val projectIdentifier = params("project")
-      val language = LanguageTag(params("language"))
+      val crowdinLanguage = params("language")
+      val language = LanguageTag(crowdinLanguage)
       val fileId = params("file_id")
 
-      translationService.updateTranslationStatus(projectIdentifier, language, fileId, TranslationStatus.TRANSLATED).flatMap(_ =>
-        translationService.fetchTranslationsIfAllTranslated(projectIdentifier, language)) match {
+      translationService.updateTranslationStatus(projectIdentifier, language, fileId, TranslationStatus.TRANSLATED).flatMap(inTranslationFile =>
+        translationService.fetchTranslationsIfAllTranslated(inTranslationFile)) match {
         case Success(_) => NoContent()
         case Failure(err) => errorHandler(err)
       }

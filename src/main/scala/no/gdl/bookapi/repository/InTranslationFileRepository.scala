@@ -74,7 +74,7 @@ trait InTranslationFileRepository {
         .single().apply()
     }
 
-    def withTranslationId(id: Option[Long])(implicit session: DBSession = ReadOnlyAutoSession): Seq[InTranslationFile] = {
+    def withTranslationId(id: Long)(implicit session: DBSession = ReadOnlyAutoSession): Seq[InTranslationFile] = {
       select
         .from(InTranslationFile as f)
         .where.eq(f.inTranslationId, id)

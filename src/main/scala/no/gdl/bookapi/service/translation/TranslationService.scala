@@ -12,20 +12,55 @@ import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.integration.crowdin.{CrowdinClient, CrowdinClientBuilder, CrowdinUtils}
 import no.gdl.bookapi.model._
 import no.gdl.bookapi.model.api._
+import no.gdl.bookapi.model.api.internal.NewChapter
 import no.gdl.bookapi.model.domain.{InTranslation, InTranslationFile, TranslationStatus}
-import no.gdl.bookapi.service.ReadService
+import no.gdl.bookapi.service.{ReadService, WriteService}
 
 import scala.util.{Failure, Success, Try}
 
 trait TranslationService {
-  this: CrowdinClientBuilder with ReadService with SupportedLanguageService with TranslationDbService =>
+  this: CrowdinClientBuilder with ReadService with WriteService with SupportedLanguageService with TranslationDbService with MergeService =>
   val translationService: TranslationService
 
 
   class TranslationService extends LazyLogging {
-    def fetchTranslationsIfAllTranslated(projectIdentifier: String, language: LanguageTag): Try[Unit] = {
-      Success()
-      // TODO in #138: Implement fetch translations
+    def fetchTranslationsIfAllTranslated(inTranslationFile: InTranslationFile): Try[Unit] = {
+      val translationFiles = translationDbService.filesForTranslation(inTranslationFile.inTranslationId)
+      if (translationFiles.forall(_.translationStatus == TranslationStatus.TRANSLATED)) {
+        translationDbService.translationWithId(inTranslationFile.inTranslationId) match {
+          case None => Failure(new NotFoundException("TODO"))
+          case Some(inTranslation) => {
+            readService.withIdAndLanguage(inTranslation.originalId, inTranslation.fromLanguage) match {
+              case None => Failure(new NotFoundException("TODO"))
+              case Some(originalBook) => {
+                crowdinClientBuilder.forSourceLanguage(inTranslation.fromLanguage).flatMap(crowdinClient => {
+                  crowdinClient.fetchTranslatedMetaData(originalBook, inTranslation).flatMap(metadata => {
+                    val translatedChapters = originalBook.chapters.map(chapter => crowdinClient.fetchTranslatedChapter(originalBook, chapter.id, inTranslation))
+                    if (!translatedChapters.forall(_.isSuccess)) {
+                      Failure(new RuntimeException("Could not fetch all translations....TODO"))
+                    } else {
+                      writeService.newTranslationForBook(originalBook, inTranslation, metadata).flatMap(translationId => {
+                        val chaptersToAdd: Seq[NewChapter] = mergeService.mergeChapters(originalBook, translatedChapters.map(_.get))
+
+                        val persistedChapters = chaptersToAdd.map(newChapter => writeService.newChapter(translationId.id, newChapter))
+                        val persistErrors = persistedChapters.filter(_.isFailure).map(_.failed.get)
+                        if(persistErrors.nonEmpty) {
+                          Failure(new RuntimeException(persistErrors.head))
+                        } else {
+                          Success()
+                        }
+                      })
+                    }
+
+                  })
+                })
+              }
+            }
+          }
+        }
+      } else {
+        Success()
+      }
     }
 
     def updateTranslationStatus(projectIdentifier: String, language: LanguageTag, fileId: String, status: TranslationStatus.Value): Try[InTranslationFile] = {
@@ -42,6 +77,8 @@ trait TranslationService {
           readService.withIdAndLanguage(translateRequest.bookId, fromLanguage) match {
             case None => Failure(new NotFoundException())
             case Some(originalBook) => {
+              writeService.addPersonFromAuthUser()
+
               crowdinClientBuilder.forSourceLanguage(fromLanguage).flatMap(crowdinClient => {
                 val existingTranslations = translationDbService.translationsForOriginalId(translateRequest.bookId)
                 val toAddUser = existingTranslations.find(tr => tr.fromLanguage == fromLanguage && tr.toLanguage == LanguageTag(toLanguage))
@@ -69,7 +106,7 @@ trait TranslationService {
 
     private def addTargetLanguageForTranslation(inTranslation: InTranslation, translateRequest: TranslateRequest, crowdinClient: CrowdinClient): Try[InTranslation] = {
       for {
-        files <- Try(translationDbService.filesForTranslation(inTranslation))
+        files <- Try(translationDbService.filesForTranslation(inTranslation.id.get))
         _ <- crowdinClient.addTargetLanguage(translateRequest.toLanguage)
         persistedTranslation <- translationDbService.addTranslationWithFiles(inTranslation, files, translateRequest)
       } yield persistedTranslation

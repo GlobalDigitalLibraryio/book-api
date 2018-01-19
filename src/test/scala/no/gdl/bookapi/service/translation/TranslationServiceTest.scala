@@ -79,7 +79,7 @@ class TranslationServiceTest extends UnitSuite with TestEnvironment {
     when(crowdinClientBuilder.forSourceLanguage(any[LanguageTag])).thenReturn(Success(crowdinClientMock))
 
     when(translationDbService.translationsForOriginalId(any[Long])).thenReturn(Seq(inTranslationToUpdate))
-    when(translationDbService.filesForTranslation(any[InTranslation])).thenReturn(Seq(TestData.Domain.DefaultInTranslationFile))
+    when(translationDbService.filesForTranslation(any[Long])).thenReturn(Seq(TestData.Domain.DefaultInTranslationFile))
     when(crowdinClientMock.addTargetLanguage(any[String])).thenReturn(Success())
     when(translationDbService.addTranslationWithFiles(any[InTranslation], any[Seq[InTranslationFile]], any[TranslateRequest])).thenReturn(Success(inTranslationToUpdate))
 
@@ -87,7 +87,7 @@ class TranslationServiceTest extends UnitSuite with TestEnvironment {
     response should be a 'Success
 
     verify(translationDbService, times(1)).translationsForOriginalId(any[Long])
-    verify(translationDbService, times(1)).filesForTranslation(any[InTranslation])
+    verify(translationDbService, times(1)).filesForTranslation(any[Long])
     verify(crowdinClientMock, times(1)).addTargetLanguage(any[String])
     verify(translationDbService, times(1)).addTranslationWithFiles(any[InTranslation], any[Seq[InTranslationFile]], any[TranslateRequest])
     verifyNoMoreInteractions(crowdinClientMock)

@@ -15,7 +15,7 @@ import no.gdl.bookapi.integration.crowdin.CrowdinClientBuilder
 import no.gdl.bookapi.integration.{DataSource, ElasticClient, ImageApiClient, NdlaJestClient}
 import no.gdl.bookapi.repository._
 import no.gdl.bookapi.service._
-import no.gdl.bookapi.service.translation.{SupportedLanguageService, TranslationService, TranslationDbService}
+import no.gdl.bookapi.service.translation.{MergeService, SupportedLanguageService, TranslationDbService, TranslationService}
 import org.mockito.Mockito
 import org.scalatest.mockito.MockitoSugar._
 
@@ -57,7 +57,9 @@ trait TestEnvironment
     with FeaturedContentController
     with TranslationDbService
     with InTranslationRepository
-    with InTranslationFileRepository {
+    with InTranslationFileRepository
+    with MergeService
+{
   val dataSource = mock[sql.DataSource]
   val readService = mock[ReadService]
   val writeService = mock[WriteService]
@@ -99,6 +101,7 @@ trait TestEnvironment
   val translationDbService = mock[TranslationDbService]
   val inTranslationRepository = mock[InTranslationRepository]
   val inTranslationFileRepository = mock[InTranslationFileRepository]
+  val mergeService = mock[MergeService]
 
   def resetMocks() = {
     Mockito.reset(
@@ -139,7 +142,8 @@ trait TestEnvironment
       translationService,
       translationDbService,
       inTranslationRepository,
-      inTranslationFileRepository
+      inTranslationFileRepository,
+      mergeService
     )
   }
 }

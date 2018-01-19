@@ -75,7 +75,7 @@ object TestData {
     val DefaultTranslationId = 1
     val DefaultChapter = domain.Chapter(Some(1), Some(1), DefaultTranslationId, 1, Some("Default chapter title"), "Chapter-content")
 
-    val DefaultPerson = domain.Person(Some(1), Some(1), "Default person name")
+    val DefaultPerson = domain.Person(Some(1), Some(1), "Default person name", None)
     val DefaultContributor = domain.Contributor(Some(1), Some(1), DefaultPerson.id.get, DefaultTranslationId, "Author", DefaultPerson)
 
     val DefaultTranslation: domain.Translation = domain.Translation(

@@ -19,7 +19,7 @@ class PersonRepositoryTest extends IntegrationSuite with TestEnvironment {
     withRollback { implicit session =>
       val testName = "some-name"
 
-      personRepository.add(Person(None, None, testName))
+      personRepository.add(Person(None, None, testName, None))
 
       val withName = personRepository.withName(testName)
       withName.isDefined should be(true)
@@ -37,7 +37,7 @@ class PersonRepositoryTest extends IntegrationSuite with TestEnvironment {
   test("That withName returns the first occurence of person with that name") {
     withRollback { implicit session =>
       val testName = s"Some-person-${System.currentTimeMillis()}"
-      val personDef = Person(None, None, testName)
+      val personDef = Person(None, None, testName, None)
 
       val person1 = personRepository.add(personDef)
       val person2 = personRepository.add(personDef)
