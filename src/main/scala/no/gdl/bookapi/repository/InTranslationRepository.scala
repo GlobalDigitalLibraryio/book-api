@@ -36,8 +36,8 @@ trait InTranslationRepository {
       val id = insert.into(InTranslation).namedValues(
         t.revision -> startRevision,
         t.userIds -> userBinder,
-        t.originalId -> inTranslation.originalId,
-        t.newId -> inTranslation.newId,
+        t.originalTranslationId -> inTranslation.originalTranslationId,
+        t.newTranslationId -> inTranslation.newTranslationId,
         t.fromLanguage -> inTranslation.fromLanguage.toString,
         t.toLanguage -> inTranslation.toLanguage.toString,
         t.crowdinToLanguage -> inTranslation.crowdinToLanguage,
@@ -62,8 +62,8 @@ trait InTranslationRepository {
       val count = update(InTranslation).set(
         t.revision -> nextRevision,
         t.userIds -> userBinder,
-        t.originalId -> toUpdate.originalId,
-        t.newId -> toUpdate.newId,
+        t.originalTranslationId -> toUpdate.originalTranslationId,
+        t.newTranslationId -> toUpdate.newTranslationId,
         t.fromLanguage -> toUpdate.fromLanguage.toString,
         t.toLanguage -> toUpdate.toLanguage.toString,
         t.crowdinToLanguage -> toUpdate.crowdinToLanguage,
@@ -89,10 +89,10 @@ trait InTranslationRepository {
         .single().apply()
     }
 
-    def forOriginalId(originalId: Long)(implicit session: DBSession = ReadOnlyAutoSession): Seq[InTranslation] = {
+    def forOriginalId(originalTranslationId: Long)(implicit session: DBSession = ReadOnlyAutoSession): Seq[InTranslation] = {
       select
         .from(InTranslation as tr)
-        .where.eq(tr.originalId, originalId)
+        .where.eq(tr.originalTranslationId, originalTranslationId)
         .toSQL
         .map(InTranslation(tr))
         .list().apply()
