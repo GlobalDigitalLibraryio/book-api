@@ -23,7 +23,7 @@ class InTranslationFileRepositoryTest extends IntegrationSuite with TestEnvironm
       val added = inTranslationFileRepository.add(DefaultInTranslationFile.copy(inTranslationId = inTranslation.id.get))
       val retrieved = inTranslationFileRepository.withId(added.id.get)
 
-      retrieved.head.id should equal(added.id)
+      retrieved should equal(Some(added))
     }
   }
 

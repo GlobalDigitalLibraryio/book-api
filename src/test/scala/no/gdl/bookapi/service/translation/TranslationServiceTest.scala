@@ -31,7 +31,7 @@ class TranslationServiceTest extends UnitSuite with TestEnvironment {
     when(supportedLanguageService.getSupportedLanguages).thenReturn(Seq(Language("eng", "English")))
     when(crowdinClientBuilder.forSourceLanguage(any[LanguageTag])).thenReturn(Failure(new RuntimeException("Not supported fromLanguage")))
 
-    val translateResponse = service.addTranslation(TranslateRequest(1, "nob", "eng"))
+    val translateResponse = service.addTranslation(TranslateRequest(bookId = 1, fromLanguage = "nob", toLanguage = "eng"))
     translateResponse should be a 'Failure
     translateResponse.failed.get.getMessage should equal("Not supported fromLanguage")
   }
@@ -63,8 +63,8 @@ class TranslationServiceTest extends UnitSuite with TestEnvironment {
     val response = service.addTranslation(TranslateRequest(1, "eng", "nob"))
     response should be a 'Success
 
-    verify(translationDbService, times(1)).addUserToTranslation(any[InTranslation])
-    verify(translationDbService, times(1)).translationsForOriginalId(any[Long])
+    verify(translationDbService).addUserToTranslation(any[InTranslation])
+    verify(translationDbService).translationsForOriginalId(any[Long])
     verifyNoMoreInteractions(crowdinClientMock)
     verifyNoMoreInteractions(translationDbService)
   }

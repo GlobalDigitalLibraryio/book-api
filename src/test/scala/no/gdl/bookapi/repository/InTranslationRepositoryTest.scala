@@ -17,15 +17,10 @@ class InTranslationRepositoryTest extends IntegrationSuite with TestEnvironment 
 
   test("that inTranslation is added and retrieved") {
     withRollback { implicit session =>
-
       val added = inTranslationRepository.add(DefaultinTranslation)
       val retrieved = inTranslationRepository.withId(added.id.get)
 
-      retrieved.head.id should equal(added.id)
-      retrieved.head.userIds should equal(added.userIds)
-      retrieved.head.fromLanguage should equal(added.fromLanguage)
-      retrieved.head.toLanguage should equal(added.toLanguage)
-      retrieved.head.crowdinProjectId should equal(added.crowdinProjectId)
+      retrieved should equal(Some(added))
     }
   }
 

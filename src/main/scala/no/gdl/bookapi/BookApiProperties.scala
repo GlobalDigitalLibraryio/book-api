@@ -93,7 +93,7 @@ object BookApiProperties extends LazyLogging {
     propOrElse("CROWDIN_PROJECTS", "")
       .split(",")
       .map(projectString => {
-        val Array(lang, projectId, projectKey) = projectString.split(";", 3)
+        val Array(lang, projectId, projectKey) = projectString.split(";", 3).map(_.trim)
         CrowdinProject(lang, projectId, projectKey)
       })
   }

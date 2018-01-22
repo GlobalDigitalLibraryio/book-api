@@ -30,6 +30,7 @@ class LimitedCrowdinClient extends GdlClient with LazyLogging {
 }
 
 class CrowdinClient(fromLanguage: String, projectIdentifier: String, projectKey: String) extends LimitedCrowdinClient {
+
   case class BookMetaData(title: String, description: String)
 
   def getProjectIdentifier: String = projectIdentifier
@@ -46,36 +47,38 @@ class CrowdinClient(fromLanguage: String, projectIdentifier: String, projectKey:
 
     response.map(res => CrowdinFile(None, FileType.METADATA, res.stats.get.files.head)) match {
       case Success(x) => Success(x)
-      case Failure(ex) => Failure(new CrowdinException(ex))
+      case Failure(ex) => Failure(CrowdinException(ex))
     }
   }
 
   def addChaptersFor(book: Book, chapters: Seq[Chapter]): Try[Seq[CrowdinFile]] = {
-    val uploadTries: Seq[Try[AddFilesResponse]] = chapters.sliding(20,20).toList.map(window => {
+    val uploadTries: Seq[Try[AddFilesResponse]] = chapters.sliding(20, 20).toList.map(window => {
       val multiParts = window.map(chapter => {
         val filename = CrowdinUtils.filenameFor(book, chapter)
         MultiPart(s"files[$filename]", filename, "application/xhtml+xml", chapter.content.getBytes)
       })
 
-      gdlClient.fetch[AddFilesResponse](Http(AddFileUrl).postMulti(multiParts:_*))
+      gdlClient.fetch[AddFilesResponse](Http(AddFileUrl).postMulti(multiParts:_*).timeout(1000, 10000))
     })
 
     val httpExceptions = uploadTries.filter(_.isFailure).map(_.failed.get)
     val crowdinExceptions = uploadTries.filter(req => req.isSuccess && !req.get.success).map(_.get.error.get)
 
-    if(httpExceptions.nonEmpty) {
-      Failure(new CrowdinException(httpExceptions.head))
-    } else if (crowdinExceptions.nonEmpty) {
-      Failure(new CrowdinException(crowdinExceptions.head.code, crowdinExceptions.head.message))
+    if(httpExceptions.nonEmpty || crowdinExceptions.nonEmpty) {
+      Failure(CrowdinException(crowdinExceptions, httpExceptions))
     } else {
-      val result = uploadTries.flatMap(_.get.stats.get.files).map(fil => {
-        val chapterForFile = chapters
-          .find(chapter => CrowdinUtils.filenameFor(book, chapter) == fil.name)
-          .getOrElse(throw new RuntimeException("Inconsistent file-result"))
-
-        CrowdinFile(Some(chapterForFile.id), FileType.CONTENT, fil)
+      val addedFiles = uploadTries.flatMap(_.get.stats.get.files)
+      val result = addedFiles.flatMap(file => {
+        chapters.find(chapter => CrowdinUtils.filenameFor(book, chapter) == file.name).map(chapterForFile => {
+          CrowdinFile(Some(chapterForFile.id), FileType.CONTENT, file)
+        })
       })
-      Success(result)
+
+      if (result.length == addedFiles.length) {
+        Success(result)
+      } else {
+        Failure(CrowdinException("Inconsistent file-result"))
+      }
     }
   }
 
@@ -84,27 +87,29 @@ class CrowdinClient(fromLanguage: String, projectIdentifier: String, projectKey:
 
     gdlClient.fetch[AddDirectoryResponse](Http(AddDirectoryUrl).postForm(Seq("name" -> directoryName)))
       .map(_ => directoryName) match {
-        case Success(x) => Success(x)
-        case Failure(ex) => Failure(new CrowdinException(ex))
+      case Success(x) => Success(x)
+      case Failure(ex) => Failure(CrowdinException(ex))
     }
   }
 
   def deleteDirectoryFor(book: Book): Try[Unit] = {
     val result = gdlClient.fetch[DeleteDirectoryResponse](Http(DeleteDirectoryUrl).postForm(Seq("name" -> CrowdinUtils.directoryNameFor(book))))
     result match {
-      case Success(x) if x.success => Success()
-      case Success(y) if y.dirNotFoundError => Success()
-      case Success(z) if !z.success => Failure(new CrowdinException(z.error.get.code, z.error.get.message))
-      case Failure(err) => Failure(new CrowdinException(err))
+      case Success(deleteDirectoryResponse) if deleteDirectoryResponse.success => Success()
+      case Success(deleteDirectoryResponse) if deleteDirectoryResponse.dirNotFoundError => Success()
+      case Success(deleteDirectoryResponse) if !deleteDirectoryResponse.success =>
+        Failure(CrowdinException(deleteDirectoryResponse.error.get))
+
+      case Failure(err) => Failure(CrowdinException(err))
     }
   }
 
-  private val ProjectDetailsUrl = s"$CrowdinBaseUrl/project/$projectIdentifier/info?key=$projectKey&json"
-  private val EditProjectUrl = s"$CrowdinBaseUrl/project/$projectIdentifier/edit-project?key=$projectKey&json"
-  private val AddDirectoryUrl = s"$CrowdinBaseUrl/project/$projectIdentifier/add-directory?key=$projectKey&json"
-  private val DeleteDirectoryUrl = s"$CrowdinBaseUrl/project/$projectIdentifier/delete-directory?key=$projectKey&json"
-  private val AddFileUrl = s"$CrowdinBaseUrl/project/$projectIdentifier/add-file?key=$projectKey&json"
-
+  private def urlFor(action: String) = s"$CrowdinBaseUrl/project/$projectIdentifier/$action?key=$projectKey&json"
+  private val ProjectDetailsUrl = urlFor("info")
+  private val EditProjectUrl = urlFor("edit-project")
+  private val AddDirectoryUrl = urlFor("add-directory")
+  private val DeleteDirectoryUrl = urlFor("delete-directory")
+  private val AddFileUrl = urlFor("add-file")
 
   def addTargetLanguage(toLanguage: String): Try[Unit] = {
     getTargetLanguages.flatMap(languages => {
@@ -113,9 +118,10 @@ class CrowdinClient(fromLanguage: String, projectIdentifier: String, projectKey:
         val postParams = newCodeList.zipWithIndex.map(x => (s"languages[${x._2}]", x._1.toString))
 
         gdlClient.fetch[EditProjectResponse](Http(EditProjectUrl).postForm(postParams)) match {
-          case Success(x) if x.project.isDefined && x.project.get.success => Success()
-          case Success(y) if y.error.isDefined => Failure(new CrowdinException(y.error.get.code, y.error.get.message))
-          case Failure(ex) => Failure(new CrowdinException(ex))
+          case Success(EditProjectResponse(Some(Project(true)), _)) => Success()
+          case Success(EditProjectResponse(_, Some(error))) => Failure(CrowdinException(error))
+          case Success(_) => Failure(CrowdinException(s"Unknown error when adding $toLanguage to Crowdin"))
+          case Failure(ex) => Failure(CrowdinException(ex))
         }
       } else {
         Success()
@@ -130,7 +136,7 @@ class CrowdinClient(fromLanguage: String, projectIdentifier: String, projectKey:
   def getProjectDetails: Try[ProjectDetails] = {
     gdlClient.fetch[ProjectDetails](Http(ProjectDetailsUrl)) match {
       case Success(x) => Success(x)
-      case Failure(ex) => Failure(new CrowdinException(ex))
+      case Failure(ex) => Failure(CrowdinException(ex))
     }
   }
 
@@ -140,13 +146,11 @@ object CrowdinUtils {
   private val CrowdinDirectoryUrl = "https://crowdin.com/project/{PROJECT_IDENTIFIER}/{LANGUAGE_CODE}#/{DIRECTORY_NAME}"
 
   def crowdinUrlToBook(book: Book, crowdinProjectId: String, toLanguage: String): String =
-    CrowdinDirectoryUrl
-      .replace("{PROJECT_IDENTIFIER}", crowdinProjectId)
-      .replace("{LANGUAGE_CODE}", toLanguage)
-      .replace("{DIRECTORY_NAME}", directoryNameFor(book))
+    s"https://crowdin.com/project/$crowdinProjectId/$toLanguage#/${directoryNameFor(book)}"
 
   def directoryNameFor(book: Book) = s"${book.id}-${book.title.replace(" ", "-")}"
+
   def metadataFilenameFor(book: Book) = s"${directoryNameFor(book)}/metadata.json"
+
   def filenameFor(book: Book, chapter: Chapter) = s"${directoryNameFor(book)}/${chapter.id}.xhtml"
 }
-

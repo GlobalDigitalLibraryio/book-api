@@ -17,22 +17,22 @@ trait InTranslationFileRepository {
 
   class InTranslationFileRepository {
 
-    private val f = InTranslationFile.syntax
-    private val tr = InTranslation.syntax
+    private val itf = InTranslationFile.syntax
+    private val it = InTranslation.syntax
 
     def add(file: InTranslationFile)(implicit session: DBSession = AutoSession): InTranslationFile = {
-      val f = InTranslationFile.column
+      val col = InTranslationFile.column
 
       val startRevision = 1
       val id = insert.into(InTranslationFile).namedValues(
-        f.revision -> startRevision,
-        f.inTranslationId -> file.inTranslationId,
-        f.fileType -> file.fileType.toString,
-        f.originalId -> file.originalId,
-        f.filename -> file.filename,
-        f.crowdinFileId -> file.crowdinFileId,
-        f.translationStatus -> file.translationStatus.toString,
-        f.etag -> file.etag
+        col.revision -> startRevision,
+        col.inTranslationId -> file.inTranslationId,
+        col.fileType -> file.fileType.toString,
+        col.originalId -> file.originalId,
+        col.filename -> file.filename,
+        col.crowdinFileId -> file.crowdinFileId,
+        col.translationStatus -> file.translationStatus.toString,
+        col.etag -> file.etag
       ).toSQL
         .updateAndReturnGeneratedKey()
         .apply()
@@ -41,21 +41,21 @@ trait InTranslationFileRepository {
     }
 
     def updateInTranslationFile(toUpdate: InTranslationFile)(implicit session: DBSession = AutoSession): InTranslationFile = {
-      val f = InTranslationFile.column
+      val col = InTranslationFile.column
 
       val nextRevision = toUpdate.revision.getOrElse(0) + 1
       val count = update(InTranslationFile).set(
-        f.revision -> nextRevision,
-        f.inTranslationId -> toUpdate.inTranslationId,
-        f.fileType -> toUpdate.fileType.toString,
-        f.originalId -> toUpdate.originalId,
-        f.filename -> toUpdate.filename,
-        f.crowdinFileId -> toUpdate.crowdinFileId,
-        f.translationStatus -> toUpdate.translationStatus.toString,
-        f.etag -> toUpdate.etag
+        col.revision -> nextRevision,
+        col.inTranslationId -> toUpdate.inTranslationId,
+        col.fileType -> toUpdate.fileType.toString,
+        col.originalId -> toUpdate.originalId,
+        col.filename -> toUpdate.filename,
+        col.crowdinFileId -> toUpdate.crowdinFileId,
+        col.translationStatus -> toUpdate.translationStatus.toString,
+        col.etag -> toUpdate.etag
       ).where
-        .eq(f.id, toUpdate.id).and
-        .eq(f.revision, toUpdate.revision)
+        .eq(col.id, toUpdate.id).and
+        .eq(col.revision, toUpdate.revision)
         .toSQL.update().apply()
 
       if (count != 1) {
@@ -67,32 +67,32 @@ trait InTranslationFileRepository {
 
     def withId(id: Long)(implicit session: DBSession = ReadOnlyAutoSession): Option[InTranslationFile] = {
       select
-        .from(InTranslationFile as f)
-        .where.eq(f.id, id)
+        .from(InTranslationFile as itf)
+        .where.eq(itf.id, id)
         .toSQL
-        .map(InTranslationFile(f))
+        .map(InTranslationFile(itf))
         .single().apply()
     }
 
     def withTranslationId(id: Option[Long])(implicit session: DBSession = ReadOnlyAutoSession): Seq[InTranslationFile] = {
       select
-        .from(InTranslationFile as f)
-        .where.eq(f.inTranslationId, id)
-        .toSQL.map(InTranslationFile(f))
+        .from(InTranslationFile as itf)
+        .where.eq(itf.inTranslationId, id)
+        .toSQL.map(InTranslationFile(itf))
         .list().apply()
     }
 
     def forCrowdinProjectWithFileIdAndLanguage(crowdinProjectId: String, crowdinFileId: String, language: LanguageTag)(implicit session: DBSession = ReadOnlyAutoSession): Option[InTranslationFile] = {
       select
-        .from(InTranslationFile as f)
-        .leftJoin(InTranslation as tr)
-          .on(tr.id, f.inTranslationId)
+        .from(InTranslationFile as itf)
+        .leftJoin(InTranslation as it)
+          .on(it.id, itf.inTranslationId)
         .where
-          .eq(f.crowdinFileId, crowdinFileId).and
-          .eq(tr.toLanguage, language.toString).and
-          .eq(tr.crowdinProjectId, crowdinProjectId)
+          .eq(itf.crowdinFileId, crowdinFileId).and
+          .eq(it.toLanguage, language.toString).and
+          .eq(it.crowdinProjectId, crowdinProjectId)
         .toSQL
-        .map(InTranslationFile(f))
+        .map(InTranslationFile(itf))
         .single().apply()
 
     }
