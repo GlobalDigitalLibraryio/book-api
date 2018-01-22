@@ -23,14 +23,14 @@ class InTranslationFileRepositoryTest extends IntegrationSuite with TestEnvironm
       val added = inTranslationFileRepository.add(DefaultInTranslationFile.copy(inTranslationId = inTranslation.id.get))
       val retrieved = inTranslationFileRepository.withId(added.id.get)
 
-      retrieved.head.id should equal(added.id)
+      retrieved should equal(Some(added))
     }
   }
 
   test("that withTranslationId retrieves all files belonging to the given translationId") {
     withRollback { implicit session =>
-      val inTranslation1 = inTranslationRepository.add(DefaultinTranslation.copy(originalId = 1, crowdinProjectId = "abc", toLanguage = LanguageTag("nob")))
-      val inTranslation2 = inTranslationRepository.add(DefaultinTranslation.copy(originalId = 2, crowdinProjectId = "abc", toLanguage = LanguageTag("nob")))
+      val inTranslation1 = inTranslationRepository.add(DefaultinTranslation.copy(originalTranslationId = 1, crowdinProjectId = "abc", toLanguage = LanguageTag("nob")))
+      val inTranslation2 = inTranslationRepository.add(DefaultinTranslation.copy(originalTranslationId = 2, crowdinProjectId = "abc", toLanguage = LanguageTag("nob")))
 
       val addedFile1 = inTranslationFileRepository.add(DefaultInTranslationFile.copy(inTranslationId = inTranslation1.id.get))
       val addedFile2 = inTranslationFileRepository.add(DefaultInTranslationFile.copy(inTranslationId = inTranslation1.id.get))
@@ -45,8 +45,8 @@ class InTranslationFileRepositoryTest extends IntegrationSuite with TestEnvironm
 
   test("that forCrowdinProjectWithFileIdAndLanguage retrieves the correct file id") {
     withRollback { implicit session =>
-      val inTranslation1 = inTranslationRepository.add(DefaultinTranslation.copy(originalId = 1, crowdinProjectId = "this", toLanguage = LanguageTag("nob")))
-      val inTranslation2 = inTranslationRepository.add(DefaultinTranslation.copy(originalId = 1, crowdinProjectId = "notthis", toLanguage = LanguageTag("nob")))
+      val inTranslation1 = inTranslationRepository.add(DefaultinTranslation.copy(originalTranslationId = 1, crowdinProjectId = "this", toLanguage = LanguageTag("nob")))
+      val inTranslation2 = inTranslationRepository.add(DefaultinTranslation.copy(originalTranslationId = 1, crowdinProjectId = "notthis", toLanguage = LanguageTag("nob")))
 
       val addedFile1 = inTranslationFileRepository.add(DefaultInTranslationFile.copy(crowdinFileId = "1", inTranslationId = inTranslation1.id.get))
       val addedFile2 = inTranslationFileRepository.add(DefaultInTranslationFile.copy(crowdinFileId = "2", inTranslationId = inTranslation1.id.get))

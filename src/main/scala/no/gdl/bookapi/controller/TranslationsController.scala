@@ -44,13 +44,13 @@ trait TranslationsController {
       responseMessages(response400, response500)
       authorizations "oauth2")
 
-    private val projectFileTranslated = (apiOperation[Unit]("Notify about a file that has been translated fully.")
+    private val projectFileTranslated = (apiOperation[Unit]("Notify about a file that has been fully translated.")
       summary "Notifies about a file that has been translated fully"
       parameters (
         headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
         queryParam[String]("project").description("Project descriptor for translation system."),
         queryParam[String]("language").description("The language the file has been translated to."),
-        queryParam[Long]("file_id").description("The id of the file in translation system."),
+        queryParam[Long]("file_id").description("The id of the file in the translation system."),
         queryParam[String]("file").description("The name of the file in the translation system.")
       )
       responseMessages(response400, response500))

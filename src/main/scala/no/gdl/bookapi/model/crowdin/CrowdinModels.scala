@@ -16,7 +16,7 @@ case class ProjectDetails(languages: Seq[TargetLanguage], files: Seq[File], deta
 case class Details (name: String)
 case class File (id: String)
 case class TargetLanguage(name: String, code: String, canTranslate: Long, canApprove: Long)
-case class EditProjectResponse(project: Option[Project], success: Option[Boolean], error: Option[Error])
+case class EditProjectResponse(project: Option[Project], error: Option[Error])
 case class Project(success: Boolean)
 case class AddDirectoryResponse(success: Boolean)
 case class AddFilesResponse(success: Boolean, stats: Option[Stats], error: Option[Error])
@@ -26,8 +26,8 @@ case class Error(code: Long, message: String)
 
 case class DeleteDirectoryResponse(success: Boolean, error: Option[Error]) {
   def dirNotFoundError: Boolean = {
-    error.map(_.code == 17) match {
-      case Some(true) => true
+    error match {
+      case Some(Error(17, _)) => true
       case _ => false
     }
   }

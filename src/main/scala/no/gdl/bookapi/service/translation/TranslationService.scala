@@ -81,15 +81,14 @@ trait TranslationService {
 
               crowdinClientBuilder.forSourceLanguage(fromLanguage).flatMap(crowdinClient => {
                 val existingTranslations = translationDbService.translationsForOriginalId(translateRequest.bookId)
+
                 val toAddUser = existingTranslations.find(tr => tr.fromLanguage == fromLanguage && tr.toLanguage == LanguageTag(toLanguage))
                 val toAddLanguage = existingTranslations.find(tr => tr.fromLanguage == fromLanguage)
 
-                val inTranslation = if (toAddUser.isDefined) {
-                  addUserToTranslation(toAddUser.get)
-                } else if (toAddLanguage.isDefined) {
-                  addTargetLanguageForTranslation(toAddLanguage.get, translateRequest, crowdinClient)
-                } else {
-                  createTranslation(translateRequest, originalBook, fromLanguage, toLanguage, crowdinClient)
+                val inTranslation = (toAddUser, toAddLanguage) match {
+                  case (Some(addUser), _) => addUserToTranslation(addUser)
+                  case (None, Some(addLanguage)) => addTargetLanguageForTranslation(addLanguage, translateRequest, crowdinClient)
+                  case _ => createTranslation(translateRequest, originalBook, fromLanguage, toLanguage, crowdinClient)
                 }
 
                 inTranslation.map(x => api.TranslateResponse(x.id.get, CrowdinUtils.crowdinUrlToBook(originalBook, x.crowdinProjectId, toLanguage)))
