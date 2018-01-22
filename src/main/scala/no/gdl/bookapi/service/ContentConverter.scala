@@ -37,9 +37,9 @@ trait ContentConverter {
             image.tagName("p")
             image.html("Image not found")
           }
-          image.removeAttr("data-resource")
-          image.removeAttr("data-resource_id")
         }
+        image.removeAttr("data-resource")
+        image.removeAttr("data-resource_id")
 
       }
 
