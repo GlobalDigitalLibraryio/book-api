@@ -178,7 +178,7 @@ trait WriteService {
               val newPersons = inTranslation.userIds.flatMap(gdlId => personRepository.withGdlId(gdlId))
               val newTranslators = newPersons.map(person => Contributor(None, None, person.id.get, persistedTranslation.id.get, "Translator", person))
               val persistedContributors = newTranslators.map(translator => contributorRepository.add(translator))
-              inTranslationRepository.updateTranslation(inTranslation.copy(newId = persistedTranslation.id))
+              inTranslationRepository.updateTranslation(inTranslation.copy(newTranslationId = persistedTranslation.id))
 
               api.internal.TranslationId(persistedTranslation.id.get)
             }

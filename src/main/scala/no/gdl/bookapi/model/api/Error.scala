@@ -79,8 +79,12 @@ object CrowdinException {
   def apply(message: String): CrowdinException = new CrowdinException(message, Seq(), Seq())
 }
 
-class DBException(message: String, cause: Throwable) extends RuntimeException(message, cause) {
-  def this(cause: Throwable) = {
-    this(cause.toString, cause)
-  }
+class DBException(message: String,
+                  causes: Seq[Throwable]) extends RuntimeException(message) {
+  def this(message: String, cause: Throwable) = this(message, Seq(cause))
+  def this(message: String) = this(message, Seq())
+  def this(causes: Seq[Throwable]) = this("DBException", causes)
+  def this(cause: Throwable) = this(Seq(cause))
+
+  def getCauses: Seq[Throwable] = causes
 }

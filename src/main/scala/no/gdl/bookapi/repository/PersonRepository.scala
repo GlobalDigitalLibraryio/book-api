@@ -37,7 +37,8 @@ trait PersonRepository {
 
       val id = insert.into(Person).namedValues(
         pc.revision -> startRevision,
-        pc.name -> person.name
+        pc.name -> person.name,
+        pc.gdlId -> person.gdlId
       ).toSQL.updateAndReturnGeneratedKey().apply()
 
       person.copy(id = Some(id), revision = Some(startRevision))
