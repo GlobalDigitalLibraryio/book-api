@@ -13,6 +13,11 @@ import no.gdl.bookapi.model.api.Book
 import no.gdl.bookapi.model.api.internal.NewChapter
 import no.gdl.bookapi.model.domain.Chapter
 import no.gdl.bookapi.repository.ChapterRepository
+import org.jsoup.Jsoup
+import org.jsoup.nodes.Element
+import org.jsoup.safety.Whitelist
+
+import scala.collection.JavaConverters._
 
 trait MergeService {
   this: ChapterRepository =>
@@ -27,10 +32,23 @@ trait MergeService {
           originalChapter => mergeChapter(originalChapter, chapter)))
     }
 
-    def mergeChapter(originalChapter: Chapter, chapter: TranslatedChapter): NewChapter = {
-      // TODO: Implement actual merging
-      NewChapter(originalChapter.seqNo, None, chapter.content)
-    }
+    def mergeChapter(originalChapter: Chapter, translatedChapter: TranslatedChapter): NewChapter = {
+      val originalDoc = Jsoup.parseBodyFragment(originalChapter.content)
 
+      val translatedDoc = Jsoup.parseBodyFragment(
+        Jsoup.clean(translatedChapter.content, Whitelist.basicWithImages().removeTags("a"))
+      )
+
+      val embedElements = originalDoc.select("embed[data-resource]").asScala
+      val imgElements = translatedDoc.getElementsByTag("img").asScala
+
+      embedElements.zipAll(imgElements, "", "").foreach {
+        case (embed: Element, img: Element) => img.replaceWith(embed)
+        case (_, img: Element) => img.remove()
+        case (_, _) => Unit
+      }
+
+      NewChapter(originalChapter.seqNo, None, translatedDoc.body().html())
+    }
   }
 }
