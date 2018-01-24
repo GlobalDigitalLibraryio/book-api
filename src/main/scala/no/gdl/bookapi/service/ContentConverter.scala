@@ -8,6 +8,7 @@
 package no.gdl.bookapi.service
 
 import com.typesafe.scalalogging.LazyLogging
+import no.gdl.bookapi.BookApiProperties
 import no.gdl.bookapi.integration.{DownloadedImage, ImageApiClient}
 import no.gdl.bookapi.model.api.NotFoundException
 import org.jsoup.Jsoup
@@ -27,15 +28,19 @@ trait ContentConverter {
         val image = images.get(i)
         val nodeId = image.attr("data-resource_id")
 
-        val url = imageApiClient.imageUrlFor(nodeId.toLong) match {
-          case Some(x) => x
-          case None => throw new NotFoundException(s"Could not find image for id $nodeId")
+        imageApiClient.imageUrlFor(nodeId.toLong) match {
+          case Some(url) => {
+            image.tagName("img")
+            image.attr("src", url)
+          }
+          case None => {
+            image.tagName("p")
+            image.html("Image not found")
+          }
         }
-
-        image.tagName("img")
-        image.attr("src", url)
         image.removeAttr("data-resource")
         image.removeAttr("data-resource_id")
+
       }
 
       document.outputSettings().syntax(Document.OutputSettings.Syntax.xml)
