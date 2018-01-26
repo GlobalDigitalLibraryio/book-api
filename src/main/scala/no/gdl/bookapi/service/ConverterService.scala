@@ -16,10 +16,11 @@ import io.digitallibrary.network.AuthUser
 import no.gdl.bookapi.BookApiProperties.Domain
 import no.gdl.bookapi.controller.NewFeaturedContent
 import no.gdl.bookapi.integration.ImageApiClient
+import no.gdl.bookapi.integration.crowdin.CrowdinUtils
 import no.gdl.bookapi.model._
 import no.gdl.bookapi.model.api.internal.{NewChapter, NewEducationalAlignment, NewTranslation}
 import no.gdl.bookapi.model.crowdin.CrowdinFile
-import no.gdl.bookapi.model.domain.{FileType, InTranslation, TranslationStatus}
+import no.gdl.bookapi.model.domain.{FileType, InTranslation, PublishingStatus, TranslationStatus}
 import no.gdl.bookapi.{BookApiProperties, model}
 
 
@@ -60,6 +61,7 @@ trait ConverterService {
         newTranslation.about,
         newTranslation.numPages.map(_.toInt),
         LanguageTag(newTranslation.language),
+        newTranslation.translatedFrom.map(LanguageTag(_)),
         newTranslation.datePublished,
         newTranslation.dateCreated,
         categoryIds = Seq(),
@@ -79,6 +81,7 @@ trait ConverterService {
         newTranslation.accessibilityFeature,
         newTranslation.accessibilityHazard,
         newTranslation.dateArrived.getOrElse(LocalDate.now()),
+        PublishingStatus.PUBLISHED,
         newTranslation.educationalAlignment.map(toDomainEducationalAlignment),
         chapters = Seq(),
         contributors = Seq(),
@@ -142,7 +145,7 @@ trait ConverterService {
           translation.uuid,
           translation.title,
           translation.about,
-          None, // TODO in #155: Add from language if this is a translation
+          translation.translatedFrom.map(toApiLanguage),
           toApiLanguage(translation.language),
           availableLanguages.map(toApiLanguage).sortBy(_.name),
           toApiLicense(book.license),
@@ -171,6 +174,20 @@ trait ConverterService {
         api <- Some(toApiBookInternal(t, b, availableLanguages))
       } yield api
     }
+
+    def toApiMyBook(inTranslation: InTranslation, translation: domain.Translation, availableLanguages: Seq[LanguageTag], book: api.Book): api.MyBook = {
+      api.MyBook(
+        book.id,
+        book.revision,
+        translation.title,
+        translation.translatedFrom.map(toApiLanguage),
+        toApiLanguage(translation.language),
+        book.publisher,
+        toApiCoverPhoto(translation.coverphoto),
+        synchronizeUrl = s"${BookApiProperties.Domain}${BookApiProperties.TranslationsPath}/synchronized/${inTranslation.id.get}",
+        crowdinUrl = CrowdinUtils.crowdinUrlToBook(book, inTranslation.crowdinProjectId, inTranslation.crowdinToLanguage))
+    }
+
 
     def toApiDownloads(translation: domain.Translation): api.Downloads = {
       api.Downloads(

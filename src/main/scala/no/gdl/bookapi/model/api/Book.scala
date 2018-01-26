@@ -100,6 +100,17 @@ case class SearchResult(@(ApiModelProperty@field)(description = "The total numbe
                         @(ApiModelProperty@field)(description = "The chosen language") language: Language,
                         @(ApiModelProperty@field)(description = "The results") results: Seq[Book])
 
+@ApiModel(description = "Information about a book that is being translated by user")
+case class MyBook(@(ApiModelProperty@field)(description = "The id of the book") id: Long,
+                  @(ApiModelProperty@field)(description = "The revision of the book") revision: Long,
+                  @(ApiModelProperty@field)(description = "The title of the book") title: String,
+                  @(ApiModelProperty@field)(description = "The language this book has been translated from") translatedFrom: Option[Language],
+                  @(ApiModelProperty@field)(description = "The language this book has been translated to") translatedTo: Language,
+                  @(ApiModelProperty@field)(description = "Information about publisher of the original book") publisher: Publisher,
+                  @(ApiModelProperty@field)(description = "Cover Photo information") coverPhoto: Option[CoverPhoto],
+                  @(ApiModelProperty@field)(description = "Url to call to fetch latest translations from crowdin") synchronizeUrl: String,
+                  @(ApiModelProperty@field)(description = "Url to Crowdin to continue translation") crowdinUrl: String)
+
 @ApiModel(description = "Information about the featured content")
 case class FeaturedContent(@(ApiModelProperty@field)(description = "The id of the featured content") id: Long,
                            @(ApiModelProperty@field)(description = "The revision of the featured content") revision: Long,

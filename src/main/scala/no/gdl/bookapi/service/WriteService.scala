@@ -168,16 +168,22 @@ trait WriteService {
             externalId = None,
             uuid = UUID.randomUUID().toString,
             language = inTranslation.toLanguage,
+            translatedFrom = Some(inTranslation.fromLanguage),
             title = metadata.title,
-            about = metadata.description)
+            about = metadata.description,
+            publishingStatus = PublishingStatus.UNLISTED)
 
           Try {
             inTransaction { implicit session =>
               val persistedTranslation = translationRepository.add(newTranslation)
 
               val newPersons = inTranslation.userIds.flatMap(gdlId => personRepository.withGdlId(gdlId))
-              val newTranslators = newPersons.map(person => Contributor(None, None, person.id.get, persistedTranslation.id.get, "Translator", person))
-              val persistedContributors = newTranslators.map(translator => contributorRepository.add(translator))
+              val newContributors = newPersons.map(person => Contributor(None, None, person.id.get, persistedTranslation.id.get, "Translator", person))
+              val copyContributors = translation.contributors.map(contributor => contributor.copy(id = None, revision = None, translationId = persistedTranslation.id.get))
+
+              val contributorsToPersist = newContributors ++ copyContributors
+
+              val persistedContributors = contributorsToPersist.map(contributor => contributorRepository.add(contributor))
               inTranslationRepository.updateTranslation(inTranslation.copy(newTranslationId = persistedTranslation.id))
 
               api.internal.TranslationId(persistedTranslation.id.get)

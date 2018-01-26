@@ -8,7 +8,7 @@
 package no.gdl.bookapi.service
 
 import io.digitallibrary.language.model.LanguageTag
-import no.gdl.bookapi.model.domain.{SearchResult, Sort}
+import no.gdl.bookapi.model.domain.{PublishingStatus, SearchResult, Sort}
 import no.gdl.bookapi.{TestData, TestEnvironment, UnitSuite}
 import org.mockito.Mockito._
 
@@ -61,7 +61,7 @@ class ReadServiceTest extends UnitSuite with TestEnvironment {
     when(converterService.toApiBook(Some(translation2), Seq(LanguageTag("nob")), Some(book2))).thenReturn(Some(similarBook))
 
     val searchResult = SearchResult[Long](2, page, pageSize, LanguageTag("nob"), Seq(TestData.Api.DefaultBook.id, 2))
-    when(translationRepository.bookIdsWithLanguageAndLevel(LanguageTag("nob"), TestData.Api.DefaultBook.readingLevel, pageSize, page, Sort.ByIdAsc)).thenReturn(searchResult)
+    when(translationRepository.bookIdsWithLanguageAndLevelAndStatus(LanguageTag("nob"), TestData.Api.DefaultBook.readingLevel, PublishingStatus.PUBLISHED, pageSize, page, Sort.ByIdAsc)).thenReturn(searchResult)
 
     readService.similarTo(TestData.Api.DefaultBook.id, LanguageTag("nob"), pageSize, page, Sort.ByIdAsc).results should equal(Seq(similarBook))
   }

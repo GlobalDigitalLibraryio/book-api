@@ -17,7 +17,7 @@ import no.gdl.bookapi.BookApiProperties
 import no.gdl.bookapi.BookApiProperties.{OpdsLanguageParam, OpdsLevelParam}
 import no.gdl.bookapi.model._
 import no.gdl.bookapi.model.api.{FeedCategory, FeedEntry}
-import no.gdl.bookapi.model.domain.Sort
+import no.gdl.bookapi.model.domain.{PublishingStatus, Sort}
 import no.gdl.bookapi.repository.{FeedRepository, TranslationRepository}
 
 trait FeedService {
@@ -92,8 +92,9 @@ trait FeedService {
     def allEntries(language: LanguageTag): Seq[FeedEntry] = {
       val justArrived = newEntries(language).map(addJustArrivedCategory(_, language))
 
-      val allBooks = readService.withLanguage(
+      val allBooks = readService.withLanguageAndStatus(
         language = language,
+        status = PublishingStatus.PUBLISHED,
         pageSize = pageSize,
         page = page,
         sort = Sort.ByArrivalDateDesc
@@ -102,13 +103,14 @@ trait FeedService {
       justArrived ++ allBooks
     }
 
-    def newEntries(lang: LanguageTag): Seq[FeedEntry] = readService.withLanguage(
-      lang, BookApiProperties.OpdsJustArrivedLimit, 1, Sort.ByArrivalDateDesc).results.map(FeedEntry(_))
+    def newEntries(lang: LanguageTag): Seq[FeedEntry] = readService.withLanguageAndStatus(
+      lang, PublishingStatus.PUBLISHED, BookApiProperties.OpdsJustArrivedLimit, 1, Sort.ByArrivalDateDesc).results.map(FeedEntry(_))
 
     def entriesForLanguageAndLevel(language: LanguageTag, level: String): Seq[FeedEntry] = {
-      readService.withLanguageAndLevel(
+      readService.withLanguageAndLevelAndStatus(
         language = language,
         readingLevel = Some(level),
+        status = PublishingStatus.PUBLISHED,
         pageSize = pageSize,
         page = page,
         sort = Sort.ByTitleAsc

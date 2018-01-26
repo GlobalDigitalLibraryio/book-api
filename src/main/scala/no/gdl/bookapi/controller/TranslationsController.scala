@@ -76,5 +76,11 @@ trait TranslationsController {
         case Failure(err) => errorHandler(err)
       }
     }
+
+    // TODO: Implement
+    get("/synchronized/:inTranslationId") {
+      val inTranslationId = params("inTranslationId")
+      logger.info(s"Synchronizing the translation for id $inTranslationId")
+    }
   }
 }
