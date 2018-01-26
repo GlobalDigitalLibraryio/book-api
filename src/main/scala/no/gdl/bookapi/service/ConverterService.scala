@@ -164,7 +164,7 @@ trait ConverterService {
           translation.tags,
           toApiContributors(translation.contributors),
           toApiChapterSummary(translation.chapters, translation.bookId, translation.language),
-          supportsTranslation = true // TODO in #155: Only set this to true if we support it
+          supportsTranslation = BookApiProperties.supportsTranslationFrom(translation.language)
         )
       }
 
