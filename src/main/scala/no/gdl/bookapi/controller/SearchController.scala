@@ -31,6 +31,17 @@ trait SearchController {
       queryParam[Option[String]]("query").description("Query to search for"))
       responseMessages response500)
 
+    private val searchBooksForLang = (apiOperation[api.SearchResult]("searchBooks")
+      summary s"Search for books in the default language $DefaultLanguage"
+      notes s"Returns a list of books in $DefaultLanguage"
+      parameters(
+      headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
+      pathParam[String]("lang").description("Desired language for books specified in ISO 639-2 format."),
+      queryParam[Option[Int]]("page-size").description("Return this many results per page."),
+      queryParam[Option[Int]]("page").description("Return results for this page."),
+      queryParam[Option[String]]("query").description("Query to search for"))
+      responseMessages response500)
+
     get("/", operation(searchBooks)) {
       val pageSize = intOrDefault("page-size", 10).min(100).max(1)
       val page = intOrDefault("page", 1).max(1)
@@ -39,6 +50,16 @@ trait SearchController {
       val query = paramOrNone("query")
 
       searchService.search(query = query, language = language, page = page, pageSize = pageSize)
+    }
+
+    get("/:lang/?", operation(searchBooksForLang)) {
+      val pageSize = intOrDefault("page-size", 10).min(100).max(1)
+      val page = intOrDefault("page", 1).max(1)
+      val readingLevel = params.get("reading-level")
+      val sort = Sort.valueOf(paramOrNone("sort")).getOrElse(Sort.ByIdAsc)
+      val query = paramOrNone("query")
+
+      searchService.search(query = query, LanguageTag(params("lang")), page = page, pageSize = pageSize)
     }
   }
 }

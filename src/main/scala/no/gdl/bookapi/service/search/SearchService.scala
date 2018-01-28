@@ -17,9 +17,11 @@ import org.elasticsearch.search.sort.SortBuilders
 import org.json4s.DefaultFormats
 import org.json4s.native.Serialization.read
 
+import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
+
 
 trait SearchService {
   this: ElasticClient with ConverterService with IndexBuilderService with IndexService =>
@@ -33,24 +35,9 @@ trait SearchService {
 
     def executeSearch(queryBuilder: BoolQueryBuilder, query: Option[String], language: LanguageTag, page: Int, pageSize: Int): SearchResult = {
 
-      /*val licensedFiltered = license match {
-        case None => queryBuilder.filter(noCopyright)
-        case Some(lic) => queryBuilder.filter(QueryBuilders.termQuery("license", lic))
-      }
+      val searchFields = Map[java.lang.String, java.lang.Float]("title" -> 1F, "description" -> 1F).asJava
 
-      val sizeFiltered = minimumSize match {
-        case None => licensedFiltered
-        case Some(size) => licensedFiltered.filter(QueryBuilders.rangeQuery("imageSize").gte(minimumSize.get))
-      }
-
-      val languageFiltered = language match {
-        case None => sizeFiltered
-        case Some(lang) => sizeFiltered.filter(QueryBuilders.nestedQuery("titles", QueryBuilders.existsQuery(s"titles.$lang"), ScoreMode.Avg))
-      }*/
-
-      val queryString = queryBuilder.should(QueryBuilders.queryStringQuery(query.getOrElse("*")))
-
-      //val languageFiltered = queryString.filter(QueryBuilders.termQuery("language.code", language.language.id))
+      val queryString = queryBuilder.should(QueryBuilders.simpleQueryStringQuery(query.getOrElse("*")).fields(searchFields))
 
       val search = new SearchSourceBuilder().query(queryString).sort(SortBuilders.fieldSort("id"))
 
