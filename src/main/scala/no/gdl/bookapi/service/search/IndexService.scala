@@ -22,7 +22,7 @@ import no.gdl.bookapi.BookApiProperties
 import no.gdl.bookapi.integration.ElasticClient
 import no.gdl.bookapi.model.domain.Translation
 import no.gdl.bookapi.model.Language._
-import no.gdl.bookapi.model.api.LocalDateSerializer
+import no.gdl.bookapi.model.api.{GdlSearchException, LocalDateSerializer}
 import no.gdl.bookapi.model.domain
 import no.gdl.bookapi.repository.{BookRepository, TranslationRepository}
 import no.gdl.bookapi.service.ConverterService
@@ -38,13 +38,12 @@ trait IndexService {
   val indexService: IndexService
 
   class IndexService extends LazyLogging {
-    //implicit val formats = SearchableLanguageFormats.JSonFormats
     implicit val formats = DefaultFormats + LocalDateSerializer
 
     def indexDocument(translation: Translation): Try[Translation] = {
       val availableLanguages: Seq[LanguageTag] = translationRepository.languagesFor(translation.bookId)
       val book: Option[domain.Book] = bookRepository.withId(translation.bookId)
-      val source = write(converterService.toSearchBook(Some(translation), availableLanguages, book))
+      val source = write(converterService.toApiBook(Some(translation), availableLanguages, book))
       val indexRequest = new Index.Builder(source).index(BookApiProperties.searchIndex(translation.language)).`type`(BookApiProperties.SearchDocument).id(translation.id.get.toString).build
 
       jestClient.execute(indexRequest).map(_ => translation)
@@ -55,7 +54,7 @@ trait IndexService {
       translationList.foreach(translation => {
         val availableLanguages: Seq[LanguageTag] = translationRepository.languagesFor(translation.bookId)
         val book: Option[domain.Book] = bookRepository.withId(translation.bookId)
-        val source = write(converterService.toSearchBook(Some(translation), availableLanguages, book))
+        val source = write(converterService.toApiBook(Some(translation), availableLanguages, book))
         bulkBuilder.addAction(new Index.Builder(source).index(indexName).`type`(BookApiProperties.SearchDocument).id(translation.id.get.toString).build)
       })
 
@@ -77,10 +76,14 @@ trait IndexService {
       } else {
         val createIndexResponse = jestClient.execute(
           new CreateIndex.Builder(indexName)
-            .settings(s"""{"index":{"max_result_window":${BookApiProperties.ElasticSearchIndexMaxResultWindow}}}""")
+            .settings(createSettings())
             .build())
         createIndexResponse.map(_ => createMapping(indexName, language)).map(_ => indexName)
       }
+    }
+
+    def createSettings(): String = {
+      s"""{"index":{"max_result_window":${BookApiProperties.ElasticSearchIndexMaxResultWindow}}}""".stripMargin
     }
 
     def createMapping(indexName: String, language: LanguageTag): Try[String] = {
@@ -98,6 +101,10 @@ trait IndexService {
         keywordField("uuid") index "false",
         languageField("title", language),
         languageField("description", language),
+        objectField("translatedFrom").as(
+          keywordField("code"),
+          keywordField("name")
+        ),
         objectField("language").as(
           keywordField("code"),
           keywordField("name")
@@ -118,7 +125,7 @@ trait IndexService {
           intField("revision"),
           keywordField("name")
         ),
-        intField("readingLevel"),
+        keywordField("readingLevel"),
         keywordField("typicalAgeRange"),
         keywordField("educationalUse"),
         keywordField("educationalRole"),
@@ -147,8 +154,8 @@ trait IndexService {
         nestedField("chapters").as(
           intField("id"),
           intField("seqNo"),
-          textField("url"),
-          languageField("content", language)
+          languageField("title", language),
+          textField("url")
         ),
         booleanField("supportsTranslation")
       ), BookApiProperties.SearchDocument).string()
@@ -197,7 +204,7 @@ trait IndexService {
     }
 
     def aliasTarget(language: LanguageTag): Try[Option[String]] = {
-      val getAliasRequest = new GetAliases.Builder().addIndex(s"${BookApiProperties.searchIndex(language)}}").build()
+      val getAliasRequest = new GetAliases.Builder().addIndex(s"${BookApiProperties.searchIndex(language)}").build()
       jestClient.execute(getAliasRequest) match {
         case Success(result) => {
           val aliasIterator = result.getJsonObject.entrySet().iterator()
@@ -206,7 +213,7 @@ trait IndexService {
             case false => Success(None)
           }
         }
-        //case Failure(_: NdlaSearchException) => Success(None)
+        case Failure(_: GdlSearchException) => Success(None)
         case Failure(t: Throwable) => Failure(t)
       }
     }

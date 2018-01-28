@@ -32,7 +32,7 @@ object BookApiProperties extends LazyLogging {
   val SearchServer = propOrElse("SEARCH_SERVER", "http://search-book-api.gdl-local")
   val SearchRegion = propOrElse("SEARCH_REGION", "eu-central-1")
   val RunWithSignedSearchRequests = propOrElse("RUN_WITH_SIGNED_SEARCH_REQUESTS", "true").toBoolean
-  val SearchIndex = propOrElse("SEARCH_INDEX_NAME", "books")
+  val   SearchIndex = propOrElse("SEARCH_INDEX_NAME", "books")
   val SearchDocument = "book"
   val ElasticSearchIndexMaxResultWindow = 10000
   val DefaultPageSize = 10
@@ -67,6 +67,7 @@ object BookApiProperties extends LazyLogging {
   val ApiDocPath = "/book-api/api-docs"
   val ImagePath = "/image-api/v1/raw"
   val TranslationsPath = "/book-api/v1/translations"
+  val SearchPath = "/book-api/v1/search"
 
   val LoginEndpoint = "https://digitallibrary.eu.auth0.com/authorize"
 

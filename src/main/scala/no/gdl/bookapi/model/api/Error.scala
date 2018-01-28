@@ -40,9 +40,11 @@ object Error {
   val VALIDATION_DESCRIPTION = "Validation Error"
   val INDEX_MISSING_DESCRIPTION = s"Ooops. Our search index is not available at the moment, but we are trying to recreate it. Please try again in a few minutes. Feel free to contact ${BookApiProperties.ContactEmail} if the error persists."
   val RESOURCE_OUTDATED_DESCRIPTION = "The resource is outdated. Please try fetching before submitting again."
+  val WINDOW_TOO_LARGE = "RESULT WINDOW TOO LARGE"
 
   val GenericError = Error(GENERIC, GENERIC_DESCRIPTION)
   val IndexMissingError = Error(INDEX_MISSING, INDEX_MISSING_DESCRIPTION)
+  val WindowTooLargeError = Error(WINDOW_TOO_LARGE, s"The result window is too large. Fetching pages above ${BookApiProperties.ElasticSearchIndexMaxResultWindow} results are unsupported.")
 }
 
 class NotFoundException(message: String = "The book was not found") extends RuntimeException(message)
@@ -52,3 +54,4 @@ class OptimisticLockException(message: String = Error.RESOURCE_OUTDATED_DESCRIPT
 class GdlSearchException(jestResponse: JestResult) extends RuntimeException(jestResponse.getErrorMessage) {
   def getResponse: JestResult = jestResponse
 }
+class ResultWindowTooLargeException(message: String) extends RuntimeException(message)
