@@ -11,7 +11,7 @@ import java.text.SimpleDateFormat
 import java.util.{Calendar, UUID}
 
 import com.sksamuel.elastic4s.http.ElasticDsl._
-import com.sksamuel.elastic4s.mappings.{MappingContentBuilder, NestedFieldDefinition, ObjectFieldDefinition, TextFieldDefinition}
+import com.sksamuel.elastic4s.mappings.{MappingContentBuilder, TextFieldDefinition}
 import com.typesafe.scalalogging.LazyLogging
 import io.digitallibrary.language.model.LanguageTag
 import io.searchbox.core.{Bulk, Index}
@@ -20,10 +20,10 @@ import io.searchbox.indices.mapping.PutMapping
 import io.searchbox.indices.{CreateIndex, DeleteIndex, IndicesExists, Stats}
 import no.gdl.bookapi.BookApiProperties
 import no.gdl.bookapi.integration.ElasticClient
-import no.gdl.bookapi.model.domain.Translation
 import no.gdl.bookapi.model.Language._
 import no.gdl.bookapi.model.api.{GdlSearchException, LocalDateSerializer}
-import no.gdl.bookapi.model.domain
+import no.gdl.bookapi.model.{BabelAnalyzer, domain}
+import no.gdl.bookapi.model.domain.Translation
 import no.gdl.bookapi.repository.{BookRepository, TranslationRepository}
 import no.gdl.bookapi.service.ConverterService
 import org.elasticsearch.ElasticsearchException
@@ -83,7 +83,18 @@ trait IndexService {
     }
 
     def createSettings(): String = {
-      s"""{"index":{"max_result_window":${BookApiProperties.ElasticSearchIndexMaxResultWindow}}}""".stripMargin
+      s"""{"index":{"max_result_window":${BookApiProperties.ElasticSearchIndexMaxResultWindow}},
+         |  "analysis":{
+         |    "analyzer":{
+         |      "babel":{
+         |        "type":"custom",
+         |        "tokenizer":"icu_tokenizer",
+         |        "char_filter":["icu_normalizer"],
+         |        "filter":["icu_folding","icu_collation"]
+         |      }
+         |    }
+         |  }
+         |}""".stripMargin
     }
 
     def createMapping(indexName: String, language: LanguageTag): Try[String] = {
@@ -98,29 +109,29 @@ trait IndexService {
         intField("id"),
         intField("revision"),
         intField("externalId"),
-        keywordField("uuid") index "false",
+        keywordField("uuid") index false,
         languageField("title", language),
         languageField("description", language),
-        objectField("translatedFrom").as(
+        objectField("translatedFrom").fields(
           keywordField("code"),
           keywordField("name")
         ),
-        objectField("language").as(
+        objectField("language").fields(
           keywordField("code"),
           keywordField("name")
         ),
-        nestedField("availableLanguages").as(
+        nestedField("availableLanguages").fields(
           keywordField("code"),
           keywordField("name")
         ),
-        objectField("licence").as(
+        objectField("licence").fields(
           intField("id"),
           intField("revision"),
           keywordField("name"),
           keywordField("description"),
           keywordField("url")
         ),
-        objectField("publisher").as(
+        objectField("publisher").fields(
           intField("id"),
           intField("revision"),
           keywordField("name")
@@ -133,25 +144,25 @@ trait IndexService {
         dateField("datePublished"),
         dateField("dateCreated"),
         dateField("dateArrived"),
-        nestedField("categories").as(
+        nestedField("categories").fields(
           textField("category")
         ),
-        objectField("coverPhoto").as(
+        objectField("coverPhoto").fields(
           textField("large"),
           textField("small")
         ),
-        objectField("downloads").as(
+        objectField("downloads").fields(
           textField("epub"),
           textField("pdf")
         ),
         //nestedField("tags"),
-        nestedField("contributors").as(
+        nestedField("contributors").fields(
           intField("id"),
           intField("revision"),
           keywordField("type"),
           textField("name")
         ),
-        nestedField("chapters").as(
+        nestedField("chapters").fields(
           intField("id"),
           intField("seqNo"),
           languageField("title", language),
@@ -162,8 +173,8 @@ trait IndexService {
     }
 
     private def languageField(fieldName: String, language: LanguageTag) = {
-      val languageAnalyzer = languageAnalyzers.find(p => p.lang.equals(language.language.id)).get
-      val languageSupportedField = new TextFieldDefinition(fieldName).fielddata(true) analyzer languageAnalyzer.analyzer
+      val languageAnalyzer = findByLanguage(Some(language.language.id))
+      val languageSupportedField = new TextFieldDefinition(fieldName).fielddata(true) analyzer languageAnalyzer.get.analyzer
       languageSupportedField
     }
 
