@@ -72,6 +72,9 @@ trait TranslationDbService {
       }
     }
 
+    def updateInTranslationFile(file: InTranslationFile): Try[InTranslationFile] = Try {
+      inTranslationFileRepository.updateInTranslationFile(file)
+    }
 
     def updateTranslationStatus(file: InTranslationFile, newStatus: TranslationStatus.Value): Try[InTranslationFile] = {
       Try(

@@ -12,7 +12,7 @@ import io.digitallibrary.network.GdlClient
 import no.gdl.bookapi.model.api.internal.ChapterId
 import no.gdl.bookapi.model.api.{Book, Chapter, CrowdinException}
 import no.gdl.bookapi.model.crowdin._
-import no.gdl.bookapi.model.domain.{FileType, InTranslation}
+import no.gdl.bookapi.model.domain.{FileType, InTranslation, InTranslationFile}
 import org.json4s.DefaultFormats
 import org.json4s.jackson.Serialization.{read, write}
 
@@ -62,8 +62,8 @@ class CrowdinClient(fromLanguage: String, projectIdentifier: String, projectKey:
   }
 
 
-  def fetchTranslatedMetaData(originalBook: Book, inTranslation: InTranslation): Try[BookMetaData] = {
-    val url = s"$ExportFileUrl&file=${CrowdinUtils.metadataFilenameFor(originalBook)}&language=${inTranslation.crowdinToLanguage}"
+  def fetchTranslatedMetaData(inTranslationFile: InTranslationFile, language: String): Try[BookMetaData] = {
+    val url = s"$ExportFileUrl&file=${inTranslationFile.filename}&language=$language"
 
     gdlClient.doRequestAsString(Http(url).copy(compress = false)).flatMap(response => {
       gdlClient.parseResponse[BookMetaData](response).map(bookMetaData =>  {
@@ -104,11 +104,11 @@ class CrowdinClient(fromLanguage: String, projectIdentifier: String, projectKey:
     }
   }
 
-  def fetchTranslatedChapter(originalBook: Book, chapterId: Long, inTranslation: InTranslation): Try[TranslatedChapter] = {
-    val url = s"$ExportFileUrl&file=${CrowdinUtils.filenameFor(originalBook, chapterId)}&language=${inTranslation.crowdinToLanguage}"
+  def fetchTranslatedChapter(inTranslationFile: InTranslationFile, language: String): Try[TranslatedChapter] = {
+    val url = s"$ExportFileUrl&file=${inTranslationFile.filename}&language=$language"
 
     gdlClient.doRequestAsString(Http(url).copy(compress = false)).map(response => {
-      TranslatedChapter(chapterId, response.body, response.header("ETag"))
+      TranslatedChapter(inTranslationFile.originalChapterId.get, inTranslationFile.newChapterId, response.body, response.header("ETag"))
     })
   }
 
@@ -180,4 +180,4 @@ object CrowdinUtils {
 }
 
 case class BookMetaData(title: String, description: String, etag: Option[String] = None)
-case class TranslatedChapter(id: Long, content: String, etag: Option[String] = None)
+case class TranslatedChapter(originalChapterId: Long, newChapterId: Option[Long], content: String, etag: Option[String] = None)

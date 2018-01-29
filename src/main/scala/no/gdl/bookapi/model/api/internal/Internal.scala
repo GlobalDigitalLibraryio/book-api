@@ -61,3 +61,5 @@ case class NewTranslation(externalId: Option[String],
 case class NewChapter(seqNo: Int,
                       title: Option[String],
                       content: String)
+
+case class NewTranslatedChapter(seqNo: Int, title: Option[String], content: String, originalChapterId: Long)

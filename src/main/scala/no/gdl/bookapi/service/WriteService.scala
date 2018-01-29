@@ -45,6 +45,10 @@ trait WriteService {
   val writeService: WriteService
 
   class WriteService extends LazyLogging {
+    def updateTranslation(translationToUpdate: Translation) = {
+      translationRepository.update(translationToUpdate)
+    }
+
     def addPersonFromAuthUser(): Try[Person] = {
       val gdlUserId = AuthUser.get
       val personName = AuthUser.getName.getOrElse("Unknown")
@@ -74,6 +78,8 @@ trait WriteService {
       featuredContentRepository.deleteContent(id)
     }
 
+    def updateChapter(chapter: domain.Chapter) = chapterRepository.updateChapter(chapter)
+
     def updateChapter(chapterid: Long, replacementChapter: NewChapter): Option[api.internal.ChapterId] = {
       chapterRepository.withId(chapterid).map(existing => {
         val updated = chapterRepository.updateChapter(existing.copy(
@@ -87,6 +93,13 @@ trait WriteService {
     def newChapter(translationId: Long, newChapter: api.internal.NewChapter): Try[api.internal.ChapterId] = {
       for {
         valid <- validationService.validateChapter(converterService.toDomainChapter(newChapter, translationId))
+        persisted <- Try(chapterRepository.add(valid))
+      } yield api.internal.ChapterId(persisted.id.get)
+    }
+
+    def newTranslatedChapter(translationId: Long, newTranslatedChapter: api.internal.NewTranslatedChapter): Try[api.internal.ChapterId] = {
+      for {
+        valid <- validationService.validateChapter(converterService.toDomainChapter(newTranslatedChapter, translationId))
         persisted <- Try(chapterRepository.add(valid))
       } yield api.internal.ChapterId(persisted.id.get)
     }

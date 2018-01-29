@@ -346,7 +346,7 @@ trait TranslationRepository {
         ${t.datePublished} = ${replacement.datePublished},
         ${t.dateCreated} = ${replacement.dateCreated},
         ${t.dateArrived} = ${replacement.dateArrived},
-        ${t.publishingStatus} = ${replacement.publishingStatus},
+        ${t.publishingStatus} = ${replacement.publishingStatus.toString},
         ${t.coverphoto} = ${replacement.coverphoto},
         ${t.isBasedOnUrl} = ${replacement.isBasedOnUrl},
         ${t.educationalUse} = ${replacement.educationalUse},

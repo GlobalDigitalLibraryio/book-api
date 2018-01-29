@@ -10,8 +10,8 @@ package no.gdl.bookapi.service.translation
 import com.typesafe.scalalogging.LazyLogging
 import no.gdl.bookapi.integration.crowdin.TranslatedChapter
 import no.gdl.bookapi.model.api.Book
-import no.gdl.bookapi.model.api.internal.NewChapter
-import no.gdl.bookapi.model.domain.Chapter
+import no.gdl.bookapi.model.api.internal.NewTranslatedChapter
+import no.gdl.bookapi.model.domain.{Chapter, Translation}
 import no.gdl.bookapi.repository.ChapterRepository
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
@@ -24,15 +24,26 @@ trait MergeService {
   val mergeService: MergeService
 
   class MergeService extends LazyLogging {
-    def mergeChapters(originalBook: Book, translatedChapters: Seq[TranslatedChapter]): Seq[NewChapter] = {
+
+    def mergeChapters(originalBook: Book, translatedChapters: Seq[TranslatedChapter]): Seq[NewTranslatedChapter] = {
       val originalChapters = originalBook.chapters.flatMap(chapter => chapterRepository.withId(chapter.id))
 
       translatedChapters.flatMap(
-        chapter => originalChapters.find(_.id.contains(chapter.id)).map(
-          originalChapter => mergeChapter(originalChapter, chapter)))
+        chapter => originalChapters.find(_.id.contains(chapter.originalChapterId)).map(
+          originalChapter => mergeChapterAsNewChapter(originalChapter, chapter)))
     }
 
-    def mergeChapter(originalChapter: Chapter, translatedChapter: TranslatedChapter): NewChapter = {
+    def mergeChapters(newTranslation: Translation, newContentChapters: Seq[TranslatedChapter]): Seq[Chapter] = {
+      newContentChapters.flatMap(
+        newChapter => newTranslation.chapters.find(_.id == newChapter.newChapterId).map(
+          originalChapter => mergeChapter(originalChapter, newChapter)))
+    }
+
+    def mergeChapterAsNewChapter(originalChapter: Chapter, translatedChapter: TranslatedChapter): NewTranslatedChapter = {
+      NewTranslatedChapter(originalChapter.seqNo, None, mergeChapter(originalChapter, translatedChapter).content, originalChapter.id.get)
+    }
+
+    def mergeChapter(originalChapter: Chapter, translatedChapter: TranslatedChapter): Chapter = {
       val originalDoc = Jsoup.parseBodyFragment(originalChapter.content)
 
       val translatedDoc = Jsoup.parseBodyFragment(
@@ -48,7 +59,8 @@ trait MergeService {
         case (_, _) => Unit
       }
 
-      NewChapter(originalChapter.seqNo, None, translatedDoc.body().html())
+      originalChapter.copy(content = translatedDoc.body().html())
+
     }
   }
 }

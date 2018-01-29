@@ -9,10 +9,10 @@ package no.gdl.bookapi.controller
 
 import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.model._
-import no.gdl.bookapi.model.api.{Language, TranslateRequest, TranslateResponse}
+import no.gdl.bookapi.model.api.{Error, Language, SynchronizeResponse, TranslateRequest, TranslateResponse}
 import no.gdl.bookapi.model.domain.TranslationStatus
 import no.gdl.bookapi.service.translation.{SupportedLanguageService, TranslationService}
-import org.scalatra.{NoContent, Ok}
+import org.scalatra.{NoContent, NotFound, Ok}
 import org.scalatra.swagger.{ResponseMessage, Swagger, SwaggerSupport}
 
 import scala.util.{Failure, Success}
@@ -77,10 +77,13 @@ trait TranslationsController {
       }
     }
 
-    // TODO: Implement
     get("/synchronized/:inTranslationId") {
-      val inTranslationId = params("inTranslationId")
+      val inTranslationId = long("inTranslationId")
       logger.info(s"Synchronizing the translation for id $inTranslationId")
+      translationService.inTranslationWithId(inTranslationId) match {
+        case None => NotFound(body = Error(Error.NOT_FOUND, s"No book is currently being translated with inTranslationId $inTranslationId"))
+        case Some(inTranslation) => translationService.fetchUpdatesFor(inTranslation)
+      }
     }
   }
 }

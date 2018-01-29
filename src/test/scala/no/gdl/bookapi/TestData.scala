@@ -117,13 +117,13 @@ object TestData {
     )
 
     val DefaultinTranslation = InTranslation(Some(1), Some(1), Seq("123"), 1, Some(2), LanguageTag("nob"), LanguageTag("eng"), "en", "abc")
-    val DefaultInTranslationFile = InTranslationFile(Some(1), Some(1), 1, FileType.CONTENT, Some(3), "filename", "fileId", TranslationStatus.IN_PROGRESS, Some("asdfa342"))
+    val DefaultInTranslationFile = InTranslationFile(Some(1), Some(1), 1, FileType.CONTENT, Some(3), None, "filename", "fileId", TranslationStatus.IN_PROGRESS, Some("asdfa342"))
   }
 
   object Crowdin {
     val DefaultContentCrowdinFile = CrowdinFile(Some(1), FileType.CONTENT, AddedFile(1, "filename", 1, 1))
     val DefaultMetadataCrowdinFile = CrowdinFile(Some(2), FileType.METADATA, AddedFile(1, "filename", 1, 1))
-    val DefaultTranslatedChapter = TranslatedChapter(1, "Some content", Some("123"))
+    val DefaultTranslatedChapter = TranslatedChapter(1, None, "Some content", Some("123"))
   }
 
 }

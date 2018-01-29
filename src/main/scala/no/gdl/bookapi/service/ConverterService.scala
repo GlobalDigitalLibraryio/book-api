@@ -18,7 +18,7 @@ import no.gdl.bookapi.controller.NewFeaturedContent
 import no.gdl.bookapi.integration.ImageApiClient
 import no.gdl.bookapi.integration.crowdin.CrowdinUtils
 import no.gdl.bookapi.model._
-import no.gdl.bookapi.model.api.internal.{NewChapter, NewEducationalAlignment, NewTranslation}
+import no.gdl.bookapi.model.api.internal.{NewChapter, NewEducationalAlignment, NewTranslatedChapter, NewTranslation}
 import no.gdl.bookapi.model.crowdin.CrowdinFile
 import no.gdl.bookapi.model.domain.{FileType, InTranslation, PublishingStatus, TranslationStatus}
 import no.gdl.bookapi.{BookApiProperties, model}
@@ -48,6 +48,14 @@ trait ConverterService {
       seqNo = newChapter.seqNo,
       title = newChapter.title,
       content = newChapter.content)
+
+    def toDomainChapter(newTranslatedChapter: NewTranslatedChapter, translationId: Long): domain.Chapter = domain.Chapter(
+      id = None,
+      revision = None,
+      translationId = translationId,
+      seqNo = newTranslatedChapter.seqNo,
+      title = newTranslatedChapter.title,
+      content = newTranslatedChapter.content)
 
 
     def toDomainTranslation(newTranslation: NewTranslation, bookId: Long) = {
@@ -225,7 +233,8 @@ trait ConverterService {
         revision = None,
         inTranslationId = inTranslation.id.get,
         fileType = file.fileType,
-        originalId = file.sourceId,
+        originalChapterId = file.sourceId,
+        newChapterId = None,
         filename = file.addedFile.name,
         crowdinFileId = file.addedFile.fileId.toString,
         translationStatus = TranslationStatus.IN_PROGRESS,
