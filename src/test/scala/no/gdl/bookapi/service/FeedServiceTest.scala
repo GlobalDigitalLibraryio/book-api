@@ -10,7 +10,7 @@ package no.gdl.bookapi.service
 import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.BookApiProperties.{OpdsLanguageParam, OpdsLevelParam}
 import no.gdl.bookapi.TestData.{LanguageCodeAmharic, LanguageCodeEnglish, LanguageCodeNorwegian}
-import no.gdl.bookapi.model.api.FeedEntry
+import no.gdl.bookapi.model.api.{Facet, FeedEntry}
 import no.gdl.bookapi.{BookApiProperties, TestData, TestEnvironment, UnitSuite}
 import org.mockito.Matchers._
 import org.mockito.Mockito._
@@ -83,5 +83,26 @@ class FeedServiceTest extends UnitSuite with TestEnvironment {
 
     withCategory.categories.size should be (1)
     withCategory.categories.head.url should equal (s"${BookApiProperties.CloudFrontOpds}/amh/level${feedEntry.book.readingLevel.get}.xml")
+  }
+
+  test("that facetsForLanguage returns facets for languages") {
+    when(readService.listAvailableLanguagesAsLanguageTags).thenReturn(Seq("eng", "hin", "ben", "eng-latn-gb").map(LanguageTag(_)))
+    feedService.facetsForLanguages(LanguageTag("eng")) should equal (Seq(
+      Facet("http://local.digitallibrary.io/book-api/opds/eng/new.xml", "English", "Languages", isActive = true),
+      Facet("http://local.digitallibrary.io/book-api/opds/hin/new.xml", "Hindi", "Languages", isActive = false),
+      Facet("http://local.digitallibrary.io/book-api/opds/ben/new.xml", "Bengali", "Languages", isActive = false),
+      Facet("http://local.digitallibrary.io/book-api/opds/eng-latn-gb/new.xml", "English (Latin, United Kingdom)", "Languages", isActive = false))
+    )
+  }
+
+  test("that facetsForReadingLevels returns facets for reading levels") {
+    val language = LanguageTag("eng")
+    when(readService.listAvailableLevelsForLanguage(Some(language))).thenReturn(Seq("1", "2", "3", "4"))
+    feedService.facetsForReadingLevels(language, "http://local.digitallibrary.io/book-api/opds/eng/level3.xml") should equal (Seq(
+      Facet("http://local.digitallibrary.io/book-api/opds/eng/level1.xml", "Level 1", "Reading level", isActive = false),
+      Facet("http://local.digitallibrary.io/book-api/opds/eng/level2.xml", "Level 2", "Reading level", isActive = false),
+      Facet("http://local.digitallibrary.io/book-api/opds/eng/level3.xml", "Level 3", "Reading level", isActive = true),
+      Facet("http://local.digitallibrary.io/book-api/opds/eng/level4.xml", "Level 4", "Reading level", isActive = false)
+    ))
   }
 }

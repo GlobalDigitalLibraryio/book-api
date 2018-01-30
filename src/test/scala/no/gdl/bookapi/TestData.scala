@@ -13,10 +13,7 @@ import java.util.UUID
 import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.integration.crowdin.{BookMetaData, TranslatedChapter}
 import no.gdl.bookapi.model._
-import no.gdl.bookapi.model.api.FeedCategory
 import no.gdl.bookapi.model.api.internal.NewTranslatedChapter
-import no.gdl.bookapi.model.crowdin.{AddedFile, CrowdinFile}
-import no.gdl.bookapi.model.domain._
 
 object TestData {
   val LanguageCodeNorwegian = "nob"
@@ -56,9 +53,17 @@ object TestData {
       Some(Level1), Some(ageRangeDefault), None, None, None, Some(today), Some(yesterday), today, Seq(category1, category2), None, api.Downloads(epub, pdf), Seq(), Seq(DefaultContributor), Seq(ChapterSummary1), supportsTranslation = true)
 
     val DefaultFeedDefinition = api.FeedDefinition(1, 1, "some-url", "some-uuid")
-    val DefaultFeed = api.Feed(DefaultFeedDefinition, "default title", Some("default description"), Some("default-rel"), yesterday, Seq())
+    val DefaultFacets = Seq(
+      api.Facet("https://opds.test.digitallibrary.io/eng/new.xml", "English", "Languages", isActive = true),
+      api.Facet("https://opds.test.digitallibrary.io/hin/new.xml", "Hindu", "Languages", isActive = false),
+      api.Facet("https://opds.test.digitallibrary.io/ben/new.xml", "Bengali", "Languages", isActive = false),
+      api.Facet("https://opds.test.digitallibrary.io/eng/level1.xml", "Level 1", "Reading level", isActive = false),
+      api.Facet("https://opds.test.digitallibrary.io/eng/level2.xml", "Level 2", "Reading level", isActive = true),
+      api.Facet("https://opds.test.digitallibrary.io/eng/level3.xml", "Level 3", "Reading level", isActive = false)
+    )
+    val DefaultFeed = api.Feed(DefaultFeedDefinition, "default title", Some("default description"), Some("default-rel"), yesterday, Seq(), DefaultFacets)
     val DefaultFeedEntry = api.FeedEntry(DefaultBook, Seq())
-    val DefaultFeedCategory = FeedCategory("some-url", "some-title", 1)
+    val DefaultFeedCategory = api.FeedCategory("some-url", "some-title", 1)
   }
 
   object Domain {
@@ -94,7 +99,7 @@ object TestData {
       datePublished = Some(today),
       dateCreated = Some(yesterday),
       dateArrived = today,
-      publishingStatus = PublishingStatus.PUBLISHED,
+      publishingStatus = domain.PublishingStatus.PUBLISHED,
       categoryIds = Seq(DefaultCategory.id.get),
       coverphoto = None,
       tags = Seq("tag1", "tag2"),
@@ -117,13 +122,13 @@ object TestData {
       categories = Seq(DefaultCategory)
     )
 
-    val DefaultinTranslation = InTranslation(Some(1), Some(1), Seq("123"), 1, Some(2), LanguageTag("nob"), LanguageTag("eng"), "en", "abc")
-    val DefaultInTranslationFile = InTranslationFile(Some(1), Some(1), 1, FileType.CONTENT, Some(3), None, "filename", "fileId", TranslationStatus.IN_PROGRESS, Some("asdfa342"))
+    val DefaultinTranslation = domain.InTranslation(Some(1), Some(1), Seq("123"), 1, Some(2), LanguageTag("nob"), LanguageTag("eng"), "en", "abc")
+    val DefaultInTranslationFile = domain.InTranslationFile(Some(1), Some(1), 1, domain.FileType.CONTENT, Some(3), None, "filename", "fileId", domain.TranslationStatus.IN_PROGRESS, Some("asdfa342"))
   }
 
   object Crowdin {
-    val DefaultContentCrowdinFile = CrowdinFile(Some(1), FileType.CONTENT, AddedFile(1, "filename", 1, 1))
-    val DefaultMetadataCrowdinFile = CrowdinFile(Some(2), FileType.METADATA, AddedFile(1, "filename", 1, 1))
+    val DefaultContentCrowdinFile = crowdin.CrowdinFile(Some(1), domain.FileType.CONTENT, crowdin.AddedFile(1, "filename", 1, 1))
+    val DefaultMetadataCrowdinFile = crowdin.CrowdinFile(Some(2), domain.FileType.METADATA, crowdin.AddedFile(1, "filename", 1, 1))
     val DefaultTranslatedChapter = TranslatedChapter(1, None, "Some content", Some("123"))
     val DefaultBookMetaData = BookMetaData("Title", "Description", Some("123"))
   }

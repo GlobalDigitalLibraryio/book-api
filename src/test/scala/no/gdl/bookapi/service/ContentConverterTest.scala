@@ -16,7 +16,11 @@ class ContentConverterTest extends UnitSuite with TestEnvironment {
 
   val service = new ContentConverter
 
-  test("that toApiContent throws exception if an image is missing") {
+  test("that toApiContent converts embed-tags to image-tags correctly") {
+    when(imageApiClient.imageUrlFor(1)).thenReturn(Some("image-url-1"))
+    when(imageApiClient.imageUrlFor(2)).thenReturn(Some("image-url-2"))
+    when(imageApiClient.imageUrlFor(3)).thenReturn(None)
+
     val content =
       """
         |<p>
@@ -26,33 +30,12 @@ class ContentConverterTest extends UnitSuite with TestEnvironment {
         |</p>
       """.stripMargin
 
-
-    when(imageApiClient.imageUrlFor(1)).thenReturn(Some("image-url-1"))
-    when(imageApiClient.imageUrlFor(2)).thenReturn(Some("image-url-2"))
-    when(imageApiClient.imageUrlFor(3)).thenReturn(None)
-
-    intercept[NotFoundException] {
-      service.toApiContent(content)
-    }.getMessage should equal ("Could not find image for id 3")
-  }
-
-  test("that toApiContent converts embed-tags to image-tags correctly") {
-    when(imageApiClient.imageUrlFor(1)).thenReturn(Some("image-url-1"))
-    when(imageApiClient.imageUrlFor(2)).thenReturn(Some("image-url-2"))
-
-    val content =
-      """
-        |<p>
-        |<embed data-resource="image" data-resource_id="1"/>
-        |<embed data-resource="image" data-resource_id="2"/>
-        |</p>
-      """.stripMargin
-
     val expectedApiContent =
       """
         |<p>
         |<img src="image-url-1" />
         |<img src="image-url-2" />
+        |<p>Image not found</p>
         |</p>
       """.stripMargin
 

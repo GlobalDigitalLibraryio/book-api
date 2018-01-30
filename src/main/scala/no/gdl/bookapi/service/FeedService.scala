@@ -16,7 +16,7 @@ import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.BookApiProperties
 import no.gdl.bookapi.BookApiProperties.{OpdsLanguageParam, OpdsLevelParam}
 import no.gdl.bookapi.model._
-import no.gdl.bookapi.model.api.{FeedCategory, FeedEntry}
+import no.gdl.bookapi.model.api.{Facet, FeedCategory, FeedEntry}
 import no.gdl.bookapi.model.domain.{PublishingStatus, Sort}
 import no.gdl.bookapi.repository.{FeedRepository, TranslationRepository}
 
@@ -36,6 +36,8 @@ trait FeedService {
         case None => books.sortBy(_.book.dateArrived).reverse.headOption.map(_.book.dateArrived).getOrElse(LocalDate.now())
       }
 
+      val facets = facetsForLanguages(language) ++ facetsForReadingLevels(language, url)
+
       feedRepository.forUrl(url.replace(BookApiProperties.OpdsPath,"")).map(feedDefinition => {
         api.Feed(
           api.FeedDefinition(
@@ -47,8 +49,32 @@ trait FeedService {
           feedDefinition.descriptionKey.map(Messages(_)(Lang(language.toString))),
           Some("self"),
           updated,
-          books)
+          books,
+          facets)
       })
+    }
+
+    def facetsForLanguages(currentLanguage: LanguageTag): Seq[Facet] = {
+      readService.listAvailableLanguagesAsLanguageTags.map(lang => Facet(
+        href = s"${
+          BookApiProperties.CloudFrontOpds}${BookApiProperties.OpdsNewUrl.url
+          .replace(BookApiProperties.OpdsLanguageParam, lang.toString)}",
+        title = s"${lang.displayName}",
+        group = "Languages",
+        isActive = lang == currentLanguage))
+    }
+
+    def facetsForReadingLevels(currentLanguage: LanguageTag, url: String): Seq[Facet] = {
+      readService.listAvailableLevelsForLanguage(Some(currentLanguage)).map(readingLevel =>
+        Facet(
+          href = s"${
+            BookApiProperties.CloudFrontOpds}${BookApiProperties.OpdsLevelUrl.url
+            .replace(BookApiProperties.OpdsLanguageParam, currentLanguage.toString)
+            .replace(BookApiProperties.OpdsLevelParam, readingLevel)}",
+          title = s"Level $readingLevel",
+          group = "Reading level",
+          isActive = url.endsWith(s"level$readingLevel.xml"))
+      )
     }
 
     def feedsForNavigation(language: LanguageTag): Seq[api.Feed] = {
@@ -65,7 +91,8 @@ trait FeedService {
           Messages(definition.titleKey),
           definition.descriptionKey.map(Messages(_)),
           Some("http://opds-spec.org/sort/new"),
-          justArrivedUpdated, Seq()))
+          justArrivedUpdated, Seq(),
+          Seq.empty))
 
 
       val levels: Seq[api.Feed] = readService.listAvailableLevelsForLanguage(Some(language))
@@ -83,7 +110,8 @@ trait FeedService {
               Messages(definition.titleKey, level),
               definition.descriptionKey.map(Messages(_)),
               None,
-              levelUpdated, Seq()))
+              levelUpdated, Seq(),
+              Seq.empty))
         })
 
       Seq(justArrived).flatten ++ levels

@@ -71,7 +71,7 @@ object BookApiProperties extends LazyLogging {
 
   val LoginEndpoint = "https://digitallibrary.eu.auth0.com/authorize"
 
-  val ImageApiHost = "image-api.gdl-local"
+  val ImageApiHost = propOrElse("IMAGE_API_SERVER","image-api.gdl-local")
   val InternalImageApiUrl = s"$ImageApiHost/image-api/v1/images"
 
   val CoverPhotoTumbSize = 200
