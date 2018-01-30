@@ -12,15 +12,15 @@ import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.integration.crowdin.{CrowdinClient, CrowdinClientBuilder, CrowdinUtils, TranslatedChapter}
 import no.gdl.bookapi.model._
 import no.gdl.bookapi.model.api._
-import no.gdl.bookapi.model.api.internal.{NewChapter, NewTranslatedChapter}
+import no.gdl.bookapi.model.api.internal.NewTranslatedChapter
 import no.gdl.bookapi.model.domain.{FileType, InTranslation, InTranslationFile, TranslationStatus}
-import no.gdl.bookapi.repository.TranslationRepository
+import no.gdl.bookapi.repository.{TransactionHandler, TranslationRepository}
 import no.gdl.bookapi.service.{ReadService, WriteService}
 
 import scala.util.{Failure, Success, Try}
 
 trait TranslationService {
-  this: CrowdinClientBuilder with ReadService with WriteService with SupportedLanguageService with TranslationDbService with MergeService with TranslationRepository =>
+  this: CrowdinClientBuilder with ReadService with WriteService with SupportedLanguageService with TranslationDbService with MergeService with TranslationRepository with TransactionHandler =>
   val translationService: TranslationService
 
 
@@ -33,31 +33,32 @@ trait TranslationService {
       inTranslation.newTranslationId match {
         case None => Failure(new RuntimeException(s"The book for ${inTranslation.originalTranslationId} has not yet been translated. Cannot fetch updates."))
         case Some(newTranslationId) => {
-          val inTranslationFilesToUpdate = translationDbService.filesForTranslation(inTranslation.id.get)
           crowdinClientBuilder.forSourceLanguage(inTranslation.fromLanguage).flatMap(crowdinClient => {
             readService.withIdAndLanguage(inTranslation.originalTranslationId, inTranslation.fromLanguage) match {
               case None => Failure(new RuntimeException(s"The original book with id ${inTranslation.originalTranslationId} was not found. Cannot fetch updates."))
               case Some(originalBook) => {
-
                 translationRepository.withId(newTranslationId) match {
                   case None => Failure(new RuntimeException(s"The translated book with id $newTranslationId was not found. Cannot fetch updates."))
                   case Some(existingTranslation) => {
+                    val inTranslationFilesToUpdate = translationDbService.filesForTranslation(inTranslation.id.get)
                     val metaDataOpt = inTranslationFilesToUpdate.find(_.fileType == FileType.METADATA).map(metadata => crowdinClient.fetchTranslatedMetaData(metadata, inTranslation.crowdinToLanguage))
                     metaDataOpt match {
                       case None => Failure(new RuntimeException(s"No metadata for translation with id ${inTranslation.id} found. Cannot fetch updates"))
                       case Some(metadataTry) => {
                         val chapters: Seq[Try[TranslatedChapter]] = inTranslationFilesToUpdate.filter(_.fileType == FileType.CONTENT).map(content => crowdinClient.fetchTranslatedChapter(content, inTranslation.crowdinToLanguage))
 
-                        val persisted_all = for {
-                          metadata <- metadataTry
-                          persisted <- Try(writeService.updateTranslation(existingTranslation.copy(title = metadata.title, about = metadata.description)))
-                          mergedChapters <- Try(mergeService.mergeChapters(persisted, chapters.filter(_.isSuccess).map(_.get)))
-                          _ <- Try(mergedChapters.map(ch => writeService.updateChapter(ch)))
-                        } yield persisted
+                        inTransaction { implicit session =>
+                          val persisted_all = for {
+                            metadata <- metadataTry
+                            persisted <- Try(writeService.updateTranslation(existingTranslation.copy(title = metadata.title, about = metadata.description)))
+                            mergedChapters <- Try(mergeService.mergeChapters(persisted, chapters.filter(_.isSuccess).map(_.get)))
+                            _ <- Try(mergedChapters.map(ch => writeService.updateChapter(ch)))
+                          } yield persisted
 
-                        persisted_all match {
-                          case Success(translation) => Success(SynchronizeResponse(translation.bookId, CrowdinUtils.crowdinUrlToBook(originalBook, crowdinClient.getProjectIdentifier, inTranslation.crowdinToLanguage)))
-                          case Failure(err) => Failure(err)
+                          persisted_all match {
+                            case Success(translation) => Success(SynchronizeResponse(translation.bookId, CrowdinUtils.crowdinUrlToBook(originalBook, crowdinClient.getProjectIdentifier, inTranslation.crowdinToLanguage)))
+                            case Failure(err) => Failure(err)
+                          }
                         }
                       }
                     }
@@ -75,24 +76,25 @@ trait TranslationService {
       if (translationFiles.forall(_.translationStatus == TranslationStatus.TRANSLATED)) {
         translationDbService.translationWithId(inTranslationFile.inTranslationId) match {
           case None => Failure(new RuntimeException(s"InTranslation with id ${inTranslationFile.inTranslationId} was not found. Cannot continue."))
-          case Some(inTranslation) => {
+          case Some(inTranslation) =>
             readService.withIdAndLanguage(inTranslation.originalTranslationId, inTranslation.fromLanguage) match {
               case None => Failure(new RuntimeException(s"Original translation with id ${inTranslation.originalTranslationId} and language ${inTranslation.fromLanguage} was not found. Cannot continue."))
-              case Some(originalBook) => {
+              case Some(originalBook) =>
                 crowdinClientBuilder.forSourceLanguage(inTranslation.fromLanguage).flatMap(crowdinClient => {
                   val metadataOpt = translationFiles.find(_.fileType == FileType.METADATA).map(metadata => crowdinClient.fetchTranslatedMetaData(metadata, inTranslation.crowdinToLanguage))
                   metadataOpt match {
                     case None => Failure(new RuntimeException(s"No metadata for translation with id ${inTranslationFile.inTranslationId} found. Cannot continue."))
-                    case Some(metadataTry) => {
-                        val newTranslationIdTry = metadataTry.flatMap(metadata => writeService.newTranslationForBook(originalBook, inTranslation, metadata))
+                    case Some(Failure(err)) => Failure(err)
+                    case Some(Success(metadata)) =>
+                      val translatedChapters = translationFiles.filter(_.fileType == FileType.CONTENT).map(content => crowdinClient.fetchTranslatedChapter(content, inTranslation.crowdinToLanguage))
+                      val translatedFailures = translatedChapters.filter(_.isFailure).map(_.failed.get)
+                      val chaptersToAdd: Seq[NewTranslatedChapter] = mergeService.mergeChapters(originalBook, translatedChapters.map(_.get))
 
-                        newTranslationIdTry.map(newTranslationId => {
-                          val translatedChapters = translationFiles.filter(_.fileType == FileType.CONTENT).map(content => crowdinClient.fetchTranslatedChapter(content, inTranslation.crowdinToLanguage))
-                          val translatedFailures = translatedChapters.filter(_.isFailure).map(_.failed.get)
-                          if(translatedFailures.nonEmpty) {
-                            Failure(new CrowdinException(translatedFailures))
-                          } else {
-                            val chaptersToAdd: Seq[NewTranslatedChapter] = mergeService.mergeChapters(originalBook, translatedChapters.map(_.get))
+                      if (translatedFailures.nonEmpty) {
+                        Failure(new CrowdinException(translatedFailures))
+                      } else {
+                        inTransaction { implicit session =>
+                          writeService.newTranslationForBook(originalBook, inTranslation, metadata).map(newTranslationId => {
                             val persisted: Seq[Try[InTranslationFile]] = chaptersToAdd.map(chapterToAdd => {
                               writeService.newTranslatedChapter(newTranslationId.id, chapterToAdd).flatMap(newChapterId => {
                                 val inTranslationOpt = translationFiles.find(_.originalChapterId.contains(chapterToAdd.originalChapterId))
@@ -104,25 +106,22 @@ trait TranslationService {
                             })
 
                             val persistErrors = persisted.filter(_.isFailure).map(_.failed.get)
-                            if(persistErrors.nonEmpty) {
+                            if (persistErrors.nonEmpty) {
                               Failure(new DBException(persistErrors))
                             } else {
                               Success()
                             }
-                          }
-                        })
+                          })
+                        }
                       }
-                    }
+                  }
                 })
-              }
             }
-          }
         }
       } else {
         Success()
       }
     }
-
 
     def updateTranslationStatus(projectIdentifier: String, language: LanguageTag, fileId: String, status: TranslationStatus.Value): Try[InTranslationFile] = {
       translationDbService.fileForCrowdinProjectWithFileIdAndLanguage(projectIdentifier, fileId, language) match {

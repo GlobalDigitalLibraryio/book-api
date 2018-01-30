@@ -11,9 +11,10 @@ import java.time.LocalDate
 import java.util.UUID
 
 import io.digitallibrary.language.model.LanguageTag
-import no.gdl.bookapi.integration.crowdin.TranslatedChapter
+import no.gdl.bookapi.integration.crowdin.{BookMetaData, TranslatedChapter}
 import no.gdl.bookapi.model._
 import no.gdl.bookapi.model.api.FeedCategory
+import no.gdl.bookapi.model.api.internal.NewTranslatedChapter
 import no.gdl.bookapi.model.crowdin.{AddedFile, CrowdinFile}
 import no.gdl.bookapi.model.domain._
 
@@ -124,6 +125,11 @@ object TestData {
     val DefaultContentCrowdinFile = CrowdinFile(Some(1), FileType.CONTENT, AddedFile(1, "filename", 1, 1))
     val DefaultMetadataCrowdinFile = CrowdinFile(Some(2), FileType.METADATA, AddedFile(1, "filename", 1, 1))
     val DefaultTranslatedChapter = TranslatedChapter(1, None, "Some content", Some("123"))
+    val DefaultBookMetaData = BookMetaData("Title", "Description", Some("123"))
+  }
+
+  object Internal {
+    val DefaultNewTranslatedChapter = NewTranslatedChapter(1, Some("title"), "Some content", 1)
   }
 
 }

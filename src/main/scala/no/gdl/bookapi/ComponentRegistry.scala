@@ -20,7 +20,7 @@ import scalikejdbc.{ConnectionPool, DataSourceConnectionPool}
 
 object ComponentRegistry
   extends DataSource
-  with TransactionHandler
+  with LiveTransactionHandler
   with ReadService
   with WriteService
   with ElasticClient
