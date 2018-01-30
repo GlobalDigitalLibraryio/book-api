@@ -86,11 +86,12 @@ object BookApiProperties extends LazyLogging {
   val CorrelationIdKey = "correlationID"
   val CorrelationIdHeader = "X-Correlation-ID"
 
+  val CrowdinProjectsKey = "CROWDIN_PROJECTS"
   lazy val CrowdinProjects: Seq[CrowdinProject] = readCrowdinProjects()
 
   //In format lang;projectid;projectkey, lang:projectid;projectkey
   def readCrowdinProjects(): Seq[CrowdinProject] = {
-    prop("CROWDIN_PROJECTS")
+    prop(CrowdinProjectsKey)
       .split(",")
       .map(projectString => {
         val Array(lang, projectId, projectKey) = projectString.split(";", 3).map(_.trim)
@@ -98,7 +99,7 @@ object BookApiProperties extends LazyLogging {
       })
   }
 
-  lazy val secrets = readSecrets(SecretsFile) match {
+  lazy val secrets = readSecrets(SecretsFile, Set(CrowdinProjectsKey)) match {
      case Success(values) => values
      case Failure(exception) => throw new RuntimeException(s"Unable to load remote secrets from $SecretsFile", exception)
    }
