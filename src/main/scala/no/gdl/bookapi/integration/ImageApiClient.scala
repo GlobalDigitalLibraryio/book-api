@@ -43,8 +43,10 @@ trait ImageApiClient {
     private def doRequest(httpRequest: HttpRequest): Option[ImageMetaInformation] = {
       gdlClient.fetch[ImageMetaInformation](httpRequest) match {
         case Success(metaInfo) => Some(metaInfo)
-        case Failure(hre: HttpRequestException) => if (hre.is404) None else throw hre
-        case Failure(ex: Throwable) => throw ex
+        case Failure(ex: Throwable) =>  {
+          logger.error(s"Got ${ex.getClass.getSimpleName} when calling ${httpRequest.url}: ${ex.getMessage}")
+          None
+        }
       }
     }
   }

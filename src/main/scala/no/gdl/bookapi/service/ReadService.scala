@@ -37,6 +37,10 @@ trait ReadService {
       translationRepository.allAvailableLanguages().map(converterService.toApiLanguage).sortBy(_.name)
     }
 
+    def listAvailableLanguagesAsLanguageTags: Seq[LanguageTag] = {
+      translationRepository.allAvailableLanguages()
+    }
+
     def listAvailableLevelsForLanguage(lang: Option[LanguageTag] = None): Seq[String] =
       translationRepository.allAvailableLevels(lang)
 

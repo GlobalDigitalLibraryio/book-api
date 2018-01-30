@@ -65,6 +65,15 @@ class OPDSControllerTest extends UnitSuite with TestEnvironment {
         <title>{feed.title}</title>
         <updated>{feed.updated.atStartOfDay(ZoneId.systemDefault()).format(formatter)}</updated>
         <link href={feed.feedDefinition.url} rel="self"/>
+
+        <link rel="http://opds-spec.org/facet" href="https://opds.test.digitallibrary.io/eng/new.xml" title="English" opds:facetGroup="Languages" opds:activeFacet="true"/>
+        <link rel="http://opds-spec.org/facet" href="https://opds.test.digitallibrary.io/hin/new.xml" title="Hindu" opds:facetGroup="Languages" opds:activeFacet="false"/>
+        <link rel="http://opds-spec.org/facet" href="https://opds.test.digitallibrary.io/ben/new.xml" title="Bengali" opds:facetGroup="Languages" opds:activeFacet="false"/>
+
+        <link rel="http://opds-spec.org/facet" href="https://opds.test.digitallibrary.io/eng/level1.xml" title="Level 1" opds:facetGroup="Reading level" opds:activeFacet="false"/>
+        <link rel="http://opds-spec.org/facet" href="https://opds.test.digitallibrary.io/eng/level2.xml" title="Level 2" opds:facetGroup="Reading level" opds:activeFacet="true"/>
+        <link rel="http://opds-spec.org/facet" href="https://opds.test.digitallibrary.io/eng/level3.xml" title="Level 3" opds:facetGroup="Reading level" opds:activeFacet="false"/>
+
         <entry>
           <id>urn:uuid:{entry1.book.uuid}</id>
           <title>{entry1.book.title}</title>
