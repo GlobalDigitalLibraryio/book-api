@@ -14,7 +14,7 @@ import no.gdl.bookapi.integration.crowdin.CrowdinClientBuilder
 import no.gdl.bookapi.integration._
 import no.gdl.bookapi.repository._
 import no.gdl.bookapi.service._
-import no.gdl.bookapi.service.translation.{SupportedLanguageService, TranslationService}
+import no.gdl.bookapi.service.translation.{SupportedLanguageService, TranslationService, TranslationDbService}
 import org.postgresql.ds.PGPoolingDataSource
 import scalikejdbc.{ConnectionPool, DataSourceConnectionPool}
 
@@ -54,8 +54,12 @@ object ComponentRegistry
   with TranslationsController
   with SupportedLanguageService
   with CrowdinClientBuilder 
-  with TranslationService {
-  implicit val swagger: BookSwagger = new BookSwagger
+  with TranslationService
+  with TranslationDbService
+  with InTranslationRepository
+  with InTranslationFileRepository
+{
+  implicit val swagger = new BookSwagger
 
   lazy val dataSource = new PGPoolingDataSource()
   dataSource.setUser(BookApiProperties.MetaUserName)
@@ -106,4 +110,7 @@ object ComponentRegistry
   lazy val supportedLanguageService = new SupportedLanguageService
   lazy val crowdinClientBuilder = new CrowdinClientBuilder
   lazy val translationService = new TranslationService
+  lazy val translationDbService = new TranslationDbService
+  lazy val inTranslationRepository = new InTranslationRepository
+  lazy val inTranslationFileRepository = new InTranslationFileRepository
 }

@@ -12,7 +12,6 @@ import java.util.UUID
 
 import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.model._
-import no.gdl.bookapi.model.api.FeedCategory
 
 object TestData {
   val LanguageCodeNorwegian = "nob"
@@ -62,7 +61,7 @@ object TestData {
     )
     val DefaultFeed = api.Feed(DefaultFeedDefinition, "default title", Some("default description"), Some("default-rel"), yesterday, Seq(), DefaultFacets)
     val DefaultFeedEntry = api.FeedEntry(DefaultBook, Seq())
-    val DefaultFeedCategory = FeedCategory("some-url", "some-title", 1)
+    val DefaultFeedCategory = api.FeedCategory("some-url", "some-title", 1)
   }
 
   object Domain {
@@ -119,6 +118,13 @@ object TestData {
       categories = Seq(DefaultCategory)
     )
 
+    val DefaultinTranslation = domain.InTranslation(Some(1), Some(1), Seq("123"), 1, Some(2), LanguageTag("nob"), LanguageTag("eng"), "en", "abc")
+    val DefaultInTranslationFile = domain.InTranslationFile(Some(1), Some(1), 1, domain.FileType.CONTENT, Some(3), "filename", "fileId", domain.TranslationStatus.IN_PROGRESS, Some("asdfa342"))
+  }
+
+  object Crowdin {
+    val DefaultContentCrowdinFile = crowdin.CrowdinFile(Some(1), domain.FileType.CONTENT, crowdin.AddedFile(1, "filename", 1, 1))
+    val DefaultMetadataCrowdinFile = crowdin.CrowdinFile(Some(2), domain.FileType.METADATA, crowdin.AddedFile(1, "filename", 1, 1))
   }
 
 }
