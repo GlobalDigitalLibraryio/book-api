@@ -13,7 +13,6 @@ import java.util.UUID
 import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.model._
 import no.gdl.bookapi.model.api.FeedCategory
-import no.gdl.bookapi.model.domain.{Category, Chapter, Contributor, EducationalAlignment}
 
 object TestData {
   val LanguageCodeNorwegian = "nob"
@@ -53,7 +52,15 @@ object TestData {
       Some(Level1), Some(ageRangeDefault), None, None, None, Some(today), Some(yesterday), today, Seq(category1, category2), None, api.Downloads(epub, pdf), Seq(), Seq(DefaultContributor), Seq(ChapterSummary1), supportsTranslation = true)
 
     val DefaultFeedDefinition = api.FeedDefinition(1, 1, "some-url", "some-uuid")
-    val DefaultFeed = api.Feed(DefaultFeedDefinition, "default title", Some("default description"), Some("default-rel"), yesterday, Seq())
+    val DefaultFacets = Seq(
+      api.Facet("https://opds.test.digitallibrary.io/eng/new.xml", "English", "Languages", isActive = true),
+      api.Facet("https://opds.test.digitallibrary.io/hin/new.xml", "Hindu", "Languages", isActive = false),
+      api.Facet("https://opds.test.digitallibrary.io/ben/new.xml", "Bengali", "Languages", isActive = false),
+      api.Facet("https://opds.test.digitallibrary.io/eng/level1.xml", "Level 1", "Reading level", isActive = false),
+      api.Facet("https://opds.test.digitallibrary.io/eng/level2.xml", "Level 2", "Reading level", isActive = true),
+      api.Facet("https://opds.test.digitallibrary.io/eng/level3.xml", "Level 3", "Reading level", isActive = false)
+    )
+    val DefaultFeed = api.Feed(DefaultFeedDefinition, "default title", Some("default description"), Some("default-rel"), yesterday, Seq(), DefaultFacets)
     val DefaultFeedEntry = api.FeedEntry(DefaultBook, Seq())
     val DefaultFeedCategory = FeedCategory("some-url", "some-title", 1)
   }
