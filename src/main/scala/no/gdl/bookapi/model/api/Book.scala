@@ -115,14 +115,23 @@ case class FeedDefinition(@(ApiModelProperty@field)(description = "The internal 
                           @(ApiModelProperty@field)(description = "The uuid of the feed") uuid: String)
 
 @ApiModel(description = "Information about an OPDS-Feed")
-case class Feed (feedDefinition: FeedDefinition, title: String, description: Option[String], rel: Option[String], updated: LocalDate, content: Seq[FeedEntry], facets: Seq[Facet])
+case class Feed(@(ApiModelProperty@field)(description = "Definitions of the feed") feedDefinition: FeedDefinition,
+                @(ApiModelProperty@field)(description = "Title of the feed") title: String,
+                @(ApiModelProperty@field)(description = "Description of the feed") description: Option[String],
+                @(ApiModelProperty@field)(description = "rel attribute of each entry's link tag") rel: Option[String],
+                @(ApiModelProperty@field)(description = "When the feed was last updated") updated: LocalDate,
+                @(ApiModelProperty@field)(description = "List of feed entries") content: Seq[FeedEntry],
+                @(ApiModelProperty@field)(description = "List of facets, which contain links to other feeds or variants of the current one") facets: Seq[Facet])
 
-@ApiModel(description = "Information about a facet in an OPDS-feed")
-case class Facet(href: String, title: String, group: String, isActive: Boolean)
+@ApiModel(description = "Information about a facet in an OPDS-feed. A facet links to another feed")
+case class Facet(@(ApiModelProperty@field)(description = "The location of the feed referred to, as a URL") href: String,
+                 @(ApiModelProperty@field)(description = "The title of the other feed") title: String,
+                 @(ApiModelProperty@field)(description = "Which group the facet belongs to") group: String,
+                 @(ApiModelProperty@field)(description = "Indicates if this facet is the current feed. Only 1 facet should be set as active per group") isActive: Boolean)
 
 @ApiModel(description = "Information about an Entry in an OPDS-Feed")
-case class FeedEntry (@(ApiModelProperty@field)(description = "The book associated with this entry") book: Book,
-                      @(ApiModelProperty@field)(description = "The revision of the feed") categories: Seq[FeedCategory] = Seq())
+case class FeedEntry(@(ApiModelProperty@field)(description = "The book associated with this entry") book: Book,
+                     @(ApiModelProperty@field)(description = "The revision of the feed") categories: Seq[FeedCategory] = Seq())
 
 @ApiModel(description = "Information about a feed category in an opds-feed")
 case class FeedCategory(@(ApiModelProperty@field)(description = "The url to the category feed") url: String,
