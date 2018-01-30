@@ -86,11 +86,11 @@ object BookApiProperties extends LazyLogging {
   val CorrelationIdKey = "correlationID"
   val CorrelationIdHeader = "X-Correlation-ID"
 
-  val CrowdinProjects: Seq[CrowdinProject] = readCrowdinProjects()
+  lazy val CrowdinProjects: Seq[CrowdinProject] = readCrowdinProjects()
 
   //In format lang;projectid;projectkey, lang:projectid;projectkey
   def readCrowdinProjects(): Seq[CrowdinProject] = {
-    propOrElse("CROWDIN_PROJECTS", "")
+    prop("CROWDIN_PROJECTS")
       .split(",")
       .map(projectString => {
         val Array(lang, projectId, projectKey) = projectString.split(";", 3).map(_.trim)
