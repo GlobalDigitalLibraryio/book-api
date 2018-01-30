@@ -3,18 +3,23 @@ package no.gdl.bookapi.controller
 import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.BookApiProperties.DefaultLanguage
 import no.gdl.bookapi.model.api
+import no.gdl.bookapi.model.api.ValidationError
 import no.gdl.bookapi.model.domain.Sort
+import no.gdl.bookapi.service.ConverterService
 import no.gdl.bookapi.service.search.SearchService
 import org.scalatra.swagger.{ResponseMessage, Swagger, SwaggerSupport}
 /**
   * @author gv@knowit.no
   */
 trait SearchController {
-  this: SearchService =>
+  this: SearchService with ConverterService =>
   val searchController: SearchController
 
   class SearchController(implicit val swagger: Swagger) extends GdlController with SwaggerSupport {
     protected val applicationDescription = "API for searching books from GDL."
+
+    registerModel[api.Error]
+    registerModel[ValidationError]
 
     val response400 = ResponseMessage(400, "Validation error", Some("ValidationError"))
     val response403 = ResponseMessage(403, "Access Denied", Some("Error"))
