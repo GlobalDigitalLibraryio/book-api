@@ -10,7 +10,7 @@ package no.gdl.bookapi.service
 import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.BookApiProperties.{OpdsLanguageParam, OpdsLevelParam}
 import no.gdl.bookapi.TestData.{LanguageCodeAmharic, LanguageCodeEnglish, LanguageCodeNorwegian}
-import no.gdl.bookapi.model.api.{Facet, FeedEntry, Language}
+import no.gdl.bookapi.model.api.{Facet, FeedEntry}
 import no.gdl.bookapi.{BookApiProperties, TestData, TestEnvironment, UnitSuite}
 import org.mockito.Matchers._
 import org.mockito.Mockito._
@@ -86,14 +86,10 @@ class FeedServiceTest extends UnitSuite with TestEnvironment {
   }
 
   test("that facetsForLanguage returns facets for languages") {
-    when(readService.listAvailableLanguages).thenReturn(Seq(
-      Language("eng", "English"),
-      Language("hin", "Hindu"),
-      Language("ben", "Bengali")))
-
+    when(readService.listAvailableLanguagesAsLanguageTags).thenReturn(Seq("eng", "hin", "ben").map(LanguageTag(_)))
     feedService.facetsForLanguages(LanguageTag("eng")) should equal (Seq(
       Facet("http://local.digitallibrary.io/book-api/opds/eng/new.xml", "English", "Languages", isActive = true),
-      Facet("http://local.digitallibrary.io/book-api/opds/hin/new.xml", "Hindu", "Languages", isActive = false),
+      Facet("http://local.digitallibrary.io/book-api/opds/hin/new.xml", "Hindi", "Languages", isActive = false),
       Facet("http://local.digitallibrary.io/book-api/opds/ben/new.xml", "Bengali", "Languages", isActive = false))
     )
   }

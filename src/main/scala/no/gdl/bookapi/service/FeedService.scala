@@ -55,13 +55,13 @@ trait FeedService {
     }
 
     def facetsForLanguages(currentLanguage: LanguageTag): Seq[Facet] = {
-      readService.listAvailableLanguages.map(lang => Facet(
+      readService.listAvailableLanguagesAsLanguageTags.map(lang => Facet(
         href = s"${
           BookApiProperties.CloudFrontOpds}${BookApiProperties.OpdsNewUrl.url
-          .replace(BookApiProperties.OpdsLanguageParam, lang.code)}",
-        title = s"${lang.name}",
+          .replace(BookApiProperties.OpdsLanguageParam, lang.toString)}",
+        title = s"${lang.displayName}",
         group = "Languages",
-        isActive = LanguageTag(lang.code) == currentLanguage))
+        isActive = lang == currentLanguage))
     }
 
     def facetsForReadingLevels(currentLanguage: LanguageTag, url: String): Seq[Facet] = {
