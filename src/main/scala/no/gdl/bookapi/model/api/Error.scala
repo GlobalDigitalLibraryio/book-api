@@ -10,7 +10,7 @@ package no.gdl.bookapi.model.api
 
 import java.util.Date
 
-import io.searchbox.client.JestResult
+import com.sksamuel.elastic4s.http.RequestFailure
 import no.gdl.bookapi.BookApiProperties
 import org.scalatra.swagger.annotations.{ApiModel, ApiModelProperty}
 
@@ -51,7 +51,7 @@ class NotFoundException(message: String = "The book was not found") extends Runt
 class ValidationException(message: String = "Validation Error", val errors: Seq[ValidationMessage]) extends RuntimeException(message)
 class AccessDeniedException(message: String) extends RuntimeException(message)
 class OptimisticLockException(message: String = Error.RESOURCE_OUTDATED_DESCRIPTION) extends RuntimeException(message)
-class GdlSearchException(jestResponse: JestResult) extends RuntimeException(jestResponse.getErrorMessage) {
-  def getResponse: JestResult = jestResponse
+class GdlSearchException(requestFailure: RequestFailure) extends RuntimeException(requestFailure.error.reason) {
+  def getFailure: RequestFailure = requestFailure
 }
 class ResultWindowTooLargeException(message: String) extends RuntimeException(message)

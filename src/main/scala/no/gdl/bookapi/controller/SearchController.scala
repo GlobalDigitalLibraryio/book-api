@@ -54,7 +54,7 @@ trait SearchController {
       val language = LanguageTag(DefaultLanguage)
       val query = paramOrNone("query")
 
-      searchService.search(query = query, language = language, page = page, pageSize = pageSize)
+      searchService.searchBook(query = query, language = language, page = page, pageSize = pageSize)
     }
 
     get("/:lang/?", operation(searchBooksForLang)) {
@@ -64,7 +64,7 @@ trait SearchController {
       val sort = Sort.valueOf(paramOrNone("sort")).getOrElse(Sort.ByIdAsc)
       val query = paramOrNone("query")
 
-      searchService.search(query = query, LanguageTag(params("lang")), page = page, pageSize = pageSize)
+      searchService.searchBook(query = query, LanguageTag(params("lang")), page = page, pageSize = pageSize)
     }
   }
 }

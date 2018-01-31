@@ -8,6 +8,7 @@
 
 package no.gdl.bookapi
 
+import com.sksamuel.elastic4s.http.HttpClient
 import io.digitallibrary.network.GdlClient
 import no.gdl.bookapi.controller._
 import no.gdl.bookapi.integration.crowdin.CrowdinClientBuilder
@@ -84,7 +85,7 @@ object ComponentRegistry
   lazy val writeService = new WriteService
   lazy val converterService = new ConverterService
 
-  lazy val jestClient: NdlaJestClient = JestClientFactory.getClient()
+  lazy val esClient: HttpClient = EsClientFactory.getClient()
   lazy val gdlClient = new GdlClient
   lazy val imageApiClient = new ImageApiClient
   lazy val downloadController = new DownloadController

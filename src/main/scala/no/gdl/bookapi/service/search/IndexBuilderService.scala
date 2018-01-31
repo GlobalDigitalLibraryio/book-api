@@ -9,7 +9,6 @@ package no.gdl.bookapi.service.search
 
 import com.typesafe.scalalogging.LazyLogging
 import io.digitallibrary.language.model.LanguageTag
-import no.gdl.bookapi.BookApiProperties
 import no.gdl.bookapi.model.domain.{ReindexResult, Translation}
 import no.gdl.bookapi.repository.TranslationRepository
 
@@ -25,21 +24,11 @@ trait IndexBuilderService {
       for {
         _ <- indexService.aliasTarget(imported.language).map {
           case Some(index) => Success(index)
-          case None => indexService.createIndex(imported.language).map(newIndex => indexService.updateAliasTarget(None, newIndex, imported.language))
+          case None => indexService.createSearchIndex(imported.language).map(newIndex => indexService.updateAliasTarget(None, newIndex, imported.language))
         }
         imported <- indexService.indexDocument(imported)
       } yield imported
     }
-
-    /*def createEmptyIndex: Try[Option[String]] = {
-      indexService.createIndex().flatMap(indexName => {
-        for {
-          aliasTarget <- indexService.aliasTarget
-          _ <- indexService.updateAliasTarget(aliasTarget, indexName)
-          _ <- indexService.deleteIndex(aliasTarget)
-        } yield (aliasTarget)
-      })
-    }*/
 
     def indexDocuments: Try[ReindexResult] = {
       synchronized {
@@ -47,17 +36,17 @@ trait IndexBuilderService {
         val start = System.currentTimeMillis()
         getLanguages.map(languages => {
           languages.foreach(language => {
-            indexService.createIndex(language).flatMap(indexName => {
+            indexService.createSearchIndex(language).flatMap(indexName => {
               val operations = for {
                 numIndexed <- sendToElastic(indexName, language)
                 aliasTarget <- indexService.aliasTarget(language)
                 _ <- indexService.updateAliasTarget(aliasTarget, indexName, language)
-                _ <- indexService.deleteIndex(aliasTarget)
+                _ <- indexService.deleteSearchIndex(aliasTarget)
               } yield numIndexed
 
               operations match {
                 case Failure(f) => {
-                  indexService.deleteIndex(Some(indexName))
+                  indexService.deleteSearchIndex(Some(indexName))
                   Failure(f)
                 }
                 case Success(totalIndexed) => {

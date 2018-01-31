@@ -7,11 +7,13 @@
 
 package no.gdl.bookapi.service.search
 
-import com.google.gson.JsonObject
+import com.sksamuel.elastic4s.IndexAndTypes
+import com.sksamuel.elastic4s.http.ElasticDsl._
+import com.sksamuel.elastic4s.http.search.SearchHits
+import com.sksamuel.elastic4s.searches.queries.{BoolQueryDefinition, QueryStringQueryDefinition}
+import com.sksamuel.elastic4s.searches.sort.FieldSortDefinition
 import com.typesafe.scalalogging.LazyLogging
 import io.digitallibrary.language.model.LanguageTag
-import io.searchbox.core.{Count, Search, SearchResult => JestSearchResult}
-import io.searchbox.params.Parameters
 import no.gdl.bookapi.BookApiProperties
 import no.gdl.bookapi.integration.ElasticClient
 import no.gdl.bookapi.model.api.{Book, Error, GdlSearchException, LocalDateSerializer, ResultWindowTooLargeException, SearchResult}
@@ -19,12 +21,9 @@ import no.gdl.bookapi.service.ConverterService
 import org.elasticsearch.ElasticsearchException
 import org.elasticsearch.index.IndexNotFoundException
 import org.elasticsearch.index.query.{BoolQueryBuilder, QueryBuilders}
-import org.elasticsearch.search.builder.SearchSourceBuilder
-import org.elasticsearch.search.sort.SortBuilders
 import org.json4s.DefaultFormats
 import org.json4s.native.Serialization.read
 
-import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
@@ -37,19 +36,12 @@ trait SearchService {
   class SearchService extends LazyLogging {
     implicit val formats = DefaultFormats + LocalDateSerializer
 
-    def search(query: Option[String], language: LanguageTag, page: Int, pageSize: Int): SearchResult =
+    def searchBook(query: Option[String], language: LanguageTag, page: Int, pageSize: Int): SearchResult =
       executeSearch(QueryBuilders.boolQuery(), query, language, page, pageSize)
 
     def executeSearch(queryBuilder: BoolQueryBuilder, query: Option[String], language: LanguageTag, page: Int, pageSize: Int): SearchResult = {
 
-      val searchFields = Map[java.lang.String, java.lang.Float]("title" -> 1F, "description" -> 1F).asJava
-
-      val queryString = queryBuilder.should(QueryBuilders.simpleQueryStringQuery(query.getOrElse("*")).fields(searchFields))
-
-      val search = new SearchSourceBuilder().query(queryString).sort(SortBuilders.fieldSort("id"))
-
       val (startAt, numResults) = getStartAtAndNumResults(Some(page), Some(pageSize))
-      val request = new Search.Builder(search.toString).addIndex(BookApiProperties.searchIndex(language)).setParameter(Parameters.SIZE, numResults).setParameter("from", startAt).build()
 
       val requestedResultWindow = page * numResults
       if (requestedResultWindow > BookApiProperties.ElasticSearchIndexMaxResultWindow) {
@@ -57,20 +49,28 @@ trait SearchService {
         throw new ResultWindowTooLargeException(Error.WindowTooLargeError.description)
       }
 
-      jestClient.execute(request) match {
-        case Success(response) => SearchResult(response.getTotal.toLong, page, numResults, converterService.toApiLanguage(language), getHits(response, language))
-        case Failure(f) => errorHandler(Failure(f))
+      val indexAndTypes = new IndexAndTypes(BookApiProperties.searchIndex(language), Seq(BookApiProperties.SearchDocument))
+      val searchResponse = esClient.execute(
+        searchWithType(indexAndTypes).size(numResults).from(startAt)
+          .bool(BoolQueryDefinition()
+            .should(QueryStringQueryDefinition(query = query.getOrElse("*")).field("title").field("description")))
+          .sortBy(FieldSortDefinition("id"))
+      ).await
+
+      searchResponse match {
+        case Right(response) => SearchResult(response.result.totalHits, page, numResults, converterService.toApiLanguage(language), getHits(response.result.hits, language))
+        case Left(failure) => errorHandler(Failure(new GdlSearchException(failure)))
       }
     }
 
-    def getHits(response: JestSearchResult, language: LanguageTag): Seq[Book] = {
+    def getHits(hits: SearchHits, language: LanguageTag): Seq[Book] = {
       var resultList = Seq[Book]()
-      response.getTotal match {
-        case count: Integer if count > 0 => {
-          val resultArray = response.getJsonObject.get("hits").asInstanceOf[JsonObject].get("hits").getAsJsonArray
-          val iterator = resultArray.iterator()
+      hits.total match {
+        case count: Long if count > 0 => {
+          val results = hits.hits
+          val iterator = results.iterator
           while(iterator.hasNext) {
-            resultList = resultList :+ hitAsApiBook(iterator.next().asInstanceOf[JsonObject].get("_source").toString, language)
+            resultList = resultList :+ hitAsApiBook(iterator.next().sourceAsString, language)
           }
           resultList
         }
@@ -80,13 +80,6 @@ trait SearchService {
 
     def hitAsApiBook(hit: String, language: LanguageTag): Book = {
       read[Book](hit)
-    }
-
-    def countDocuments(): Int = {
-      val ret = jestClient.execute(
-        new Count.Builder().addIndex(BookApiProperties.SearchIndex).build()
-      ).map(result => result.getCount.toInt)
-      ret.getOrElse(0)
     }
 
     private def getStartAtAndNumResults(page: Option[Int], pageSize: Option[Int]): (Int, Int) = {
@@ -107,15 +100,15 @@ trait SearchService {
     private def errorHandler[T](failure: Failure[T]) = {
       failure match {
         case Failure(e: GdlSearchException) => {
-          e.getResponse.getResponseCode match {
+          e.getFailure.status match {
             case notFound: Int if notFound == 404 => {
               logger.error(s"Index ${BookApiProperties.SearchIndex} not found. Scheduling a reindex.")
               scheduleIndexDocuments()
               throw new IndexNotFoundException(s"Index ${BookApiProperties.SearchIndex} not found. Scheduling a reindex")
             }
             case _ => {
-              logger.error(e.getResponse.getErrorMessage)
-              throw new ElasticsearchException(s"Unable to execute search in ${BookApiProperties.SearchIndex}", e.getResponse.getErrorMessage)
+              logger.error(e.getFailure.error.reason)
+              throw new ElasticsearchException(s"Unable to execute search in ${BookApiProperties.SearchIndex}", e.getFailure.error.reason)
             }
           }
 
