@@ -95,14 +95,15 @@ class FeedServiceTest extends UnitSuite with TestEnvironment {
     )
   }
 
-  test("that facetsForReadingLevels returns facets for reading levels") {
+  test("that facetsForSelections returns facets for reading levels") {
     val language = LanguageTag("eng")
     when(readService.listAvailableLevelsForLanguage(Some(language))).thenReturn(Seq("1", "2", "3", "4"))
-    feedService.facetsForReadingLevels(language, "http://local.digitallibrary.io/book-api/opds/eng/level3.xml") should equal (Seq(
-      Facet("http://local.digitallibrary.io/book-api/opds/eng/level1.xml", "Level 1", "Reading level", isActive = false),
-      Facet("http://local.digitallibrary.io/book-api/opds/eng/level2.xml", "Level 2", "Reading level", isActive = false),
-      Facet("http://local.digitallibrary.io/book-api/opds/eng/level3.xml", "Level 3", "Reading level", isActive = true),
-      Facet("http://local.digitallibrary.io/book-api/opds/eng/level4.xml", "Level 4", "Reading level", isActive = false)
+    feedService.facetsForSelections(language, "http://local.digitallibrary.io/book-api/opds/eng/level3.xml") should equal (Seq(
+      Facet("http://local.digitallibrary.io/book-api/opds/eng/new.xml", "New arrivals", "Selection", isActive = false),
+      Facet("http://local.digitallibrary.io/book-api/opds/eng/level1.xml", "Level 1", "Selection", isActive = false),
+      Facet("http://local.digitallibrary.io/book-api/opds/eng/level2.xml", "Level 2", "Selection", isActive = false),
+      Facet("http://local.digitallibrary.io/book-api/opds/eng/level3.xml", "Level 3", "Selection", isActive = true),
+      Facet("http://local.digitallibrary.io/book-api/opds/eng/level4.xml", "Level 4", "Selection", isActive = false)
     ))
   }
 }

@@ -36,7 +36,7 @@ trait FeedService {
         case None => books.sortBy(_.book.dateArrived).reverse.headOption.map(_.book.dateArrived).getOrElse(LocalDate.now())
       }
 
-      val facets = facetsForLanguages(language) ++ facetsForReadingLevels(language, url)
+      val facets = facetsForLanguages(language) ++ facetsForSelections(language, url)
 
       feedRepository.forUrl(url.replace(BookApiProperties.OpdsPath,"")).map(feedDefinition => {
         api.Feed(
@@ -64,17 +64,26 @@ trait FeedService {
         isActive = lang == currentLanguage))
     }
 
-    def facetsForReadingLevels(currentLanguage: LanguageTag, url: String): Seq[Facet] = {
-      readService.listAvailableLevelsForLanguage(Some(currentLanguage)).map(readingLevel =>
-        Facet(
-          href = s"${
-            BookApiProperties.CloudFrontOpds}${BookApiProperties.OpdsLevelUrl.url
-            .replace(BookApiProperties.OpdsLanguageParam, currentLanguage.toString)
-            .replace(BookApiProperties.OpdsLevelParam, readingLevel)}",
-          title = s"Level $readingLevel",
-          group = "Reading level",
-          isActive = url.endsWith(s"level$readingLevel.xml"))
-      )
+    def facetsForSelections(currentLanguage: LanguageTag, url: String): Seq[Facet] = {
+      val group = "Selection"
+      (Facet(
+        href = s"${
+          BookApiProperties.CloudFrontOpds}${BookApiProperties.OpdsNewUrl.url
+          .replace(BookApiProperties.OpdsLanguageParam, currentLanguage.toString)}",
+        title = s"New arrivals",
+        group = group,
+        isActive = url.endsWith("new.xml"))
+        +:
+        readService.listAvailableLevelsForLanguage(Some(currentLanguage)).map(readingLevel =>
+          Facet(
+            href = s"${
+              BookApiProperties.CloudFrontOpds}${BookApiProperties.OpdsLevelUrl.url
+              .replace(BookApiProperties.OpdsLanguageParam, currentLanguage.toString)
+              .replace(BookApiProperties.OpdsLevelParam, readingLevel)}",
+            title = s"Level $readingLevel",
+            group = group,
+            isActive = url.endsWith(s"level$readingLevel.xml"))
+        ))
     }
 
     def feedsForNavigation(language: LanguageTag): Seq[api.Feed] = {
