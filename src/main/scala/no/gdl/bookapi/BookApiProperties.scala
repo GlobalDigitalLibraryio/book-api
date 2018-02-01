@@ -13,6 +13,7 @@ import io.digitallibrary.language.model.LanguageTag
 import io.digitallibrary.network.Domains
 import io.digitallibrary.network.secrets.PropertyKeys
 import io.digitallibrary.network.secrets.Secrets.readSecrets
+import no.gdl.bookapi.model.crowdin.CrowdinProject
 import no.gdl.bookapi.model.domain.FeedDefinition
 
 import scala.util.Properties._
@@ -87,6 +88,18 @@ object BookApiProperties extends LazyLogging {
 
   val CorrelationIdKey = "correlationID"
   val CorrelationIdHeader = "X-Correlation-ID"
+
+  lazy val CrowdinProjects: Seq[CrowdinProject] = readCrowdinProjects()
+
+  //In format lang;projectid;projectkey, lang:projectid;projectkey
+  def readCrowdinProjects(): Seq[CrowdinProject] = {
+    prop("CROWDIN_PROJECTS")
+      .split(",")
+      .map(projectString => {
+        val Array(lang, projectId, projectKey) = projectString.split(";", 3).map(_.trim)
+        CrowdinProject(lang, projectId, projectKey)
+      })
+  }
 
   lazy val secrets = readSecrets(SecretsFile) match {
      case Success(values) => values

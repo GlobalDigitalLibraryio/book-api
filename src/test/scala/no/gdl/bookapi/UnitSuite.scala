@@ -19,6 +19,7 @@ abstract class UnitSuite extends FunSuite with Matchers with OptionValues with I
   setEnv(PropertyKeys.MetaServerKey, "localhost")
   setEnv(PropertyKeys.MetaPortKey, "5432")
   setEnv(PropertyKeys.MetaSchemaKey, "bookapitest")
+  setEnv("CROWDIN_PROJECTS", "eng;project-identifier;project-key")
 
   def setEnv(key: String, value: String) = env.put(key, value)
 
