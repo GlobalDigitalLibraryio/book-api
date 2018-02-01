@@ -85,19 +85,19 @@ class FeedServiceTest extends UnitSuite with TestEnvironment {
     withCategory.categories.head.url should equal (s"${BookApiProperties.CloudFrontOpds}/amh/level${feedEntry.book.readingLevel.get}.xml")
   }
 
-  test("that facetsForLanguage returns facets for languages") {
+  test("that facetsForLanguage returns facets for languages, with languages alphabetically sorted") {
     when(readService.listAvailableLanguagesAsLanguageTags).thenReturn(Seq("eng", "hin", "ben", "eng-latn-gb").map(LanguageTag(_)))
     feedService.facetsForLanguages(LanguageTag("eng")) should equal (Seq(
-      Facet("http://local.digitallibrary.io/book-api/opds/eng/new.xml", "English", "Languages", isActive = true),
-      Facet("http://local.digitallibrary.io/book-api/opds/hin/new.xml", "Hindi", "Languages", isActive = false),
       Facet("http://local.digitallibrary.io/book-api/opds/ben/new.xml", "Bengali", "Languages", isActive = false),
-      Facet("http://local.digitallibrary.io/book-api/opds/eng-latn-gb/new.xml", "English (Latin, United Kingdom)", "Languages", isActive = false))
+      Facet("http://local.digitallibrary.io/book-api/opds/eng/new.xml", "English", "Languages", isActive = true),
+      Facet("http://local.digitallibrary.io/book-api/opds/eng-latn-gb/new.xml", "English (Latin, United Kingdom)", "Languages", isActive = false),
+      Facet("http://local.digitallibrary.io/book-api/opds/hin/new.xml", "Hindi", "Languages", isActive = false))
     )
   }
 
-  test("that facetsForSelections returns facets for reading levels") {
+  test("that facetsForSelections returns facets for reading levels, with reading levels numerically sorted and new arrivals at the top") {
     val language = LanguageTag("eng")
-    when(readService.listAvailableLevelsForLanguage(Some(language))).thenReturn(Seq("1", "2", "3", "4"))
+    when(readService.listAvailableLevelsForLanguage(Some(language))).thenReturn(Seq("4", "1", "3", "2"))
     feedService.facetsForSelections(language, "http://local.digitallibrary.io/book-api/opds/eng/level3.xml") should equal (Seq(
       Facet("http://local.digitallibrary.io/book-api/opds/eng/new.xml", "New arrivals", "Selection", isActive = false),
       Facet("http://local.digitallibrary.io/book-api/opds/eng/level1.xml", "Level 1", "Selection", isActive = false),

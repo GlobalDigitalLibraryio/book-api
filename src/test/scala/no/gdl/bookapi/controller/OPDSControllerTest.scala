@@ -66,9 +66,9 @@ class OPDSControllerTest extends UnitSuite with TestEnvironment {
         <updated>{feed.updated.atStartOfDay(ZoneId.systemDefault()).format(formatter)}</updated>
         <link href={feed.feedDefinition.url} rel="self"/>
 
+        <link rel="http://opds-spec.org/facet" href="https://opds.test.digitallibrary.io/ben/new.xml" title="Bengali" opds:facetGroup="Languages" opds:activeFacet="false"/>
         <link rel="http://opds-spec.org/facet" href="https://opds.test.digitallibrary.io/eng/new.xml" title="English" opds:facetGroup="Languages" opds:activeFacet="true"/>
         <link rel="http://opds-spec.org/facet" href="https://opds.test.digitallibrary.io/hin/new.xml" title="Hindu" opds:facetGroup="Languages" opds:activeFacet="false"/>
-        <link rel="http://opds-spec.org/facet" href="https://opds.test.digitallibrary.io/ben/new.xml" title="Bengali" opds:facetGroup="Languages" opds:activeFacet="false"/>
 
         <link rel="http://opds-spec.org/facet" href="https://opds.test.digitallibrary.io/eng/new.xml" title="New arrivals" opds:facetGroup="Selection" opds:activeFacet="false"/>
         <link rel="http://opds-spec.org/facet" href="https://opds.test.digitallibrary.io/eng/level1.xml" title="Level 1" opds:facetGroup="Selection" opds:activeFacet="false"/>

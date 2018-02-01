@@ -20,6 +20,8 @@ import no.gdl.bookapi.model.api.{Facet, FeedCategory, FeedEntry}
 import no.gdl.bookapi.model.domain.Sort
 import no.gdl.bookapi.repository.{FeedRepository, TranslationRepository}
 
+import scala.util.Try
+
 trait FeedService {
   this: FeedRepository with TranslationRepository with ReadService with ConverterService =>
   val feedService: FeedService
@@ -55,7 +57,7 @@ trait FeedService {
     }
 
     def facetsForLanguages(currentLanguage: LanguageTag): Seq[Facet] = {
-      readService.listAvailableLanguagesAsLanguageTags.map(lang => Facet(
+      readService.listAvailableLanguagesAsLanguageTags.sortBy(_.toString).map(lang => Facet(
         href = s"${
           BookApiProperties.CloudFrontOpds}${BookApiProperties.OpdsNewUrl.url
           .replace(BookApiProperties.OpdsLanguageParam, lang.toString)}",
@@ -74,7 +76,8 @@ trait FeedService {
         group = group,
         isActive = url.endsWith("new.xml"))
         +:
-        readService.listAvailableLevelsForLanguage(Some(currentLanguage)).map(readingLevel =>
+        readService.listAvailableLevelsForLanguage(Some(currentLanguage))
+          .sortBy(level => Try(level.toInt).getOrElse(0)).map(readingLevel =>
           Facet(
             href = s"${
               BookApiProperties.CloudFrontOpds}${BookApiProperties.OpdsLevelUrl.url
