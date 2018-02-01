@@ -17,7 +17,7 @@ import no.gdl.bookapi.BookApiProperties
 import no.gdl.bookapi.BookApiProperties.{OpdsLanguageParam, OpdsLevelParam}
 import no.gdl.bookapi.model._
 import no.gdl.bookapi.model.api.{Facet, FeedCategory, FeedEntry}
-import no.gdl.bookapi.model.domain.Sort
+import no.gdl.bookapi.model.domain.{Paging, Sort}
 import no.gdl.bookapi.repository.{FeedRepository, TranslationRepository}
 
 import scala.util.Try
@@ -28,9 +28,6 @@ trait FeedService {
 
   class FeedService extends LazyLogging {
     implicit val localDateOrdering: Ordering[LocalDate] = Ordering.by(_.toEpochDay)
-
-    val page = 1
-    val pageSize = 10000 //TODO in #94: Create partial opds feed entries, to solve paging
 
     def feedForUrl(url: String, language: LanguageTag, feedUpdated: Option[LocalDate], titleArgs: Seq[String], books: => Seq[FeedEntry]): Option[api.Feed] = {
       val updated = feedUpdated match {
@@ -96,15 +93,16 @@ trait FeedService {
       val justArrived = feedRepository.forUrl(justArrivedPath(language)).map(definition =>
         api.Feed(
           api.FeedDefinition(
-            definition.id.get,
-            definition.revision.get,
-            s"${BookApiProperties.CloudFrontOpds}${definition.url}",
-            definition.uuid),
-          Messages(definition.titleKey),
-          definition.descriptionKey.map(Messages(_)),
-          Some("http://opds-spec.org/sort/new"),
-          justArrivedUpdated, Seq(),
-          Seq.empty))
+            id = definition.id.get,
+            revision = definition.revision.get,
+            url = s"${BookApiProperties.CloudFrontOpds}${definition.url}",
+            uuid = definition.uuid),
+          title = Messages(definition.titleKey),
+          description = definition.descriptionKey.map(Messages(_)),
+          rel = Some("http://opds-spec.org/sort/new"),
+          updated = justArrivedUpdated,
+          content = Seq.empty,
+          facets = Seq.empty))
 
 
       val levels: Seq[api.Feed] = readService.listAvailableLevelsForLanguage(Some(language))
@@ -115,27 +113,28 @@ trait FeedService {
           feedRepository.forUrl(url).map(definition =>
             api.Feed(
               api.FeedDefinition(
-                definition.id.get,
-                definition.revision.get,
-                s"${BookApiProperties.CloudFrontOpds}${definition.url}",
-                definition.uuid),
-              Messages(definition.titleKey, level),
-              definition.descriptionKey.map(Messages(_)),
-              None,
-              levelUpdated, Seq(),
-              Seq.empty))
+                id = definition.id.get,
+                revision = definition.revision.get,
+                url = s"${BookApiProperties.CloudFrontOpds}${definition.url}",
+                uuid = definition.uuid),
+              title = Messages(definition.titleKey, level),
+              description = definition.descriptionKey.map(Messages(_)),
+              rel = None,
+              updated = levelUpdated,
+              content = Seq.empty,
+              facets = Seq.empty))
         })
 
       Seq(justArrived).flatten ++ levels
     }
 
-    def allEntries(language: LanguageTag): Seq[FeedEntry] = {
+    def allEntries(language: LanguageTag, paging: Paging): Seq[FeedEntry] = {
       val justArrived = newEntries(language).map(addJustArrivedCategory(_, language))
 
       val allBooks = readService.withLanguage(
         language = language,
-        pageSize = pageSize,
-        page = page,
+        pageSize = paging.pageSize,
+        page = paging.page,
         sort = Sort.ByArrivalDateDesc
       ).results.map(book => FeedEntry(book)).map(addLevelCategory(_, language)).sortBy(_.book.readingLevel)
 
@@ -145,12 +144,12 @@ trait FeedService {
     def newEntries(lang: LanguageTag): Seq[FeedEntry] = readService.withLanguage(
       lang, BookApiProperties.OpdsJustArrivedLimit, 1, Sort.ByArrivalDateDesc).results.map(FeedEntry(_))
 
-    def entriesForLanguageAndLevel(language: LanguageTag, level: String): Seq[FeedEntry] = {
+    def entriesForLanguageAndLevel(language: LanguageTag, level: String, paging: Paging): Seq[FeedEntry] = {
       readService.withLanguageAndLevel(
         language = language,
         readingLevel = Some(level),
-        pageSize = pageSize,
-        page = page,
+        pageSize = paging.pageSize,
+        page = paging.page,
         sort = Sort.ByTitleAsc
       ).results.map(book => api.FeedEntry(book))
     }

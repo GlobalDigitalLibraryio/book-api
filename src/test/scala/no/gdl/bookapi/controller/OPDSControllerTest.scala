@@ -11,6 +11,7 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 import no.gdl.bookapi.model.api.{Feed, FeedEntry}
+import no.gdl.bookapi.model.domain.Paging
 import no.gdl.bookapi.{TestData, TestEnvironment, UnitSuite}
 
 
@@ -65,6 +66,7 @@ class OPDSControllerTest extends UnitSuite with TestEnvironment {
         <title>{feed.title}</title>
         <updated>{feed.updated.atStartOfDay(ZoneId.systemDefault()).format(formatter)}</updated>
         <link href={feed.feedDefinition.url} rel="self"/>
+        <link href="some-url?page-size=100&amp;page=2" rel="next"/>
 
         <link rel="http://opds-spec.org/facet" href="https://opds.test.digitallibrary.io/ben/new.xml" title="Bengali" opds:facetGroup="Languages" opds:activeFacet="false"/>
         <link rel="http://opds-spec.org/facet" href="https://opds.test.digitallibrary.io/eng/new.xml" title="English" opds:facetGroup="Languages" opds:activeFacet="true"/>
@@ -110,7 +112,7 @@ class OPDSControllerTest extends UnitSuite with TestEnvironment {
       </entry>
       </feed>
 
-    val generated = controller.render(feed)
+    val generated = controller.render(feed, Paging(page = 1, pageSize = 100))
     val toCheck = generated.mkString.replaceAll("\\s", "")
     val expected = expectedXml.mkString.replaceAll("\\s", "")
 
