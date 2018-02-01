@@ -11,7 +11,6 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 import no.gdl.bookapi.model.api.{Feed, FeedEntry}
-import no.gdl.bookapi.model.domain.Paging
 import no.gdl.bookapi.{TestData, TestEnvironment, UnitSuite}
 
 
@@ -112,11 +111,28 @@ class OPDSControllerTest extends UnitSuite with TestEnvironment {
       </entry>
       </feed>
 
-    val generated = controller.render(feed, Paging(page = 1, pageSize = 100))
+    val generated = controller.render(feed, HasMore(currentPage = 1, currentPageSize = 100))
     val toCheck = generated.mkString.replaceAll("\\s", "")
     val expected = expectedXml.mkString.replaceAll("\\s", "")
 
     toCheck should equal (expected)
   }
+
+  test("that next link is present and pointing to the next page if there is more content to show") {
+    val entry1: FeedEntry = TestData.Api.DefaultFeedEntry
+    val entry2: FeedEntry = TestData.Api.DefaultFeedEntry.copy(categories = Seq(TestData.Api.DefaultFeedCategory))
+    val feed = TestData.Api.DefaultFeed.copy(content = Seq(entry1, entry2))
+    val generated = controller.render(feed, HasMore(currentPage = 2, currentPageSize = 100))
+    generated.mkString.contains("<link href=\"some-url?page-size=100&amp;page=3\" rel=\"next\"/>") should be (true)
+  }
+
+  test("that next link is not present when there is no more content to show") {
+    val entry1: FeedEntry = TestData.Api.DefaultFeedEntry
+    val entry2: FeedEntry = TestData.Api.DefaultFeedEntry.copy(categories = Seq(TestData.Api.DefaultFeedCategory))
+    val feed = TestData.Api.DefaultFeed.copy(content = Seq(entry1, entry2))
+    val generated = controller.render(feed, NothingMore)
+    generated.mkString.contains("<link href=\"some-url?page-size") should be (false)
+  }
+
 
 }

@@ -16,7 +16,7 @@ import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.BookApiProperties
 import no.gdl.bookapi.BookApiProperties.{OpdsLanguageParam, OpdsLevelParam}
 import no.gdl.bookapi.model._
-import no.gdl.bookapi.model.api.{Facet, FeedCategory, FeedEntry}
+import no.gdl.bookapi.model.api.{Facet, FeedCategory, FeedEntry, SearchResult}
 import no.gdl.bookapi.model.domain.{Paging, Sort}
 import no.gdl.bookapi.repository.{FeedRepository, TranslationRepository}
 
@@ -25,6 +25,10 @@ import scala.util.Try
 trait FeedService {
   this: FeedRepository with TranslationRepository with ReadService with ConverterService =>
   val feedService: FeedService
+
+  sealed trait PagingStatus
+  case object NothingMore extends PagingStatus
+  case class HasMore(currentPage: Int, currentPageSize: Int) extends PagingStatus
 
   class FeedService extends LazyLogging {
     implicit val localDateOrdering: Ordering[LocalDate] = Ordering.by(_.toEpochDay)
@@ -128,30 +132,44 @@ trait FeedService {
       Seq(justArrived).flatten ++ levels
     }
 
-    def allEntries(language: LanguageTag, paging: Paging): Seq[FeedEntry] = {
+    def allEntries(language: LanguageTag, paging: Paging): (PagingStatus, Seq[FeedEntry]) = {
       val justArrived = newEntries(language).map(addJustArrivedCategory(_, language))
 
-      val allBooks = readService.withLanguage(
+      val searchResult =
+        readService.withLanguage(
         language = language,
         pageSize = paging.pageSize,
         page = paging.page,
-        sort = Sort.ByArrivalDateDesc
-      ).results.map(book => FeedEntry(book)).map(addLevelCategory(_, language)).sortBy(_.book.readingLevel)
+        sort = Sort.ByArrivalDateDesc)
 
-      justArrived ++ allBooks
+      val allBooks = searchResult.results.map(book => FeedEntry(book)).map(addLevelCategory(_, language)).sortBy(_.book.readingLevel)
+
+      (searchResultToPagingStatus(searchResult, paging), justArrived ++ allBooks)
     }
 
-    def newEntries(lang: LanguageTag): Seq[FeedEntry] = readService.withLanguage(
-      lang, BookApiProperties.OpdsJustArrivedLimit, 1, Sort.ByArrivalDateDesc).results.map(FeedEntry(_))
+    def newEntries(lang: LanguageTag): Seq[FeedEntry] = {
+      val searchResult = readService.withLanguage(
+        lang, BookApiProperties.OpdsJustArrivedLimit, 1, Sort.ByArrivalDateDesc)
+      searchResult.results.map(FeedEntry(_))
+    }
 
-    def entriesForLanguageAndLevel(language: LanguageTag, level: String, paging: Paging): Seq[FeedEntry] = {
-      readService.withLanguageAndLevel(
+    def entriesForLanguageAndLevel(language: LanguageTag, level: String, paging: Paging): (PagingStatus, Seq[FeedEntry]) = {
+      val searchResult =
+        readService.withLanguageAndLevel(
         language = language,
         readingLevel = Some(level),
         pageSize = paging.pageSize,
         page = paging.page,
         sort = Sort.ByTitleAsc
-      ).results.map(book => api.FeedEntry(book))
+      )
+      (searchResultToPagingStatus(searchResult, paging), searchResult.results.map(book => api.FeedEntry(book)))
+    }
+
+    private def searchResultToPagingStatus(searchResult: SearchResult, paging: Paging) = {
+      if (searchResult.totalCount > paging.page * paging.pageSize)
+        HasMore(currentPage = paging.page, currentPageSize = paging.pageSize)
+      else
+        NothingMore
     }
 
     def addFeaturedCategory(feedEntry: FeedEntry, language: LanguageTag): FeedEntry = {

@@ -48,21 +48,17 @@ trait OPDSController {
     }
 
     get(BookApiProperties.OpdsRootUrl.url) {
-      val paging = extractPageAndPageSize()
-      acquisitionFeed(books = feedService.allEntries(LanguageTag(params("lang")), paging), paging = paging)
+      val (pagingStatus, books) = feedService.allEntries(LanguageTag(params("lang")), extractPageAndPageSize())
+      acquisitionFeed(books = books, pagingStatus = pagingStatus)
     }
 
     get(BookApiProperties.OpdsNewUrl.url) {
-      val paging = extractPageAndPageSize()
-      acquisitionFeed(books = feedService.newEntries(LanguageTag(params("lang"))), paging = paging)
+      acquisitionFeed(books = feedService.newEntries(LanguageTag(params("lang"))), pagingStatus = NothingMore)
     }
 
     get(BookApiProperties.OpdsLevelUrl.url) {
-      val paging = extractPageAndPageSize()
-      acquisitionFeed(
-        titleArgs = Seq(params("lev")),
-        books = feedService.entriesForLanguageAndLevel(LanguageTag(params("lang")), params("lev"), paging),
-        paging = paging)
+      val (pagingStatus, books) = feedService.entriesForLanguageAndLevel(LanguageTag(params("lang")), params("lev"), extractPageAndPageSize())
+      acquisitionFeed(titleArgs = Seq(params("lev")), books = books, pagingStatus = pagingStatus)
     }
 
     private def navigationFeed(feedUpdated: Option[LocalDate], feeds: => Seq[Feed])(implicit request: HttpServletRequest) = {
@@ -76,10 +72,10 @@ trait OPDSController {
       }
     }
 
-    private def acquisitionFeed(feedUpdated: Option[LocalDate] = None, titleArgs: Seq[String] = Seq(), books: => Seq[FeedEntry], paging: Paging)(implicit request: HttpServletRequest) = {
+    private def acquisitionFeed(feedUpdated: Option[LocalDate] = None, titleArgs: Seq[String] = Seq(), books: => Seq[FeedEntry], pagingStatus: PagingStatus)(implicit request: HttpServletRequest) = {
       val lang = LanguageTag(params("lang"))
       feedService.feedForUrl(request.getRequestURI, lang, feedUpdated, titleArgs, books) match {
-        case Some(feed) => render(feed, paging)
+        case Some(feed) => render(feed, pagingStatus)
         case None =>
           contentType = "text/plain"
           NotFound(body = s"No books available for language $lang.")
@@ -113,13 +109,19 @@ trait OPDSController {
       </feed>
     }
 
-    private[controller] def render(feed: Feed, paging: Paging): Elem = {
+    private[controller] def render(feed: Feed, pagingStatus: PagingStatus): Elem = {
       <feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/terms/" xmlns:opds="http://opds-spec.org/2010/catalog" xmlns:lrmi="http://purl.org/dcx/lrmi-terms/">
         <id>{feed.feedDefinition.uuid}</id>
         <title>{feed.title}</title>
         <updated>{feed.updated.atStartOfDay(ZoneId.systemDefault()).format(dtf)}</updated>
         <link href={feed.feedDefinition.url} rel="self"/>
-        <link href={s"${feed.feedDefinition.url}?page-size=${paging.pageSize}&page=${paging.page + 1}"} rel="next"/>
+        {pagingStatus match {
+        case HasMore(currentPage, currentPageSize) =>
+            <link href={s"${feed.feedDefinition.url}?page-size=$currentPageSize&page=${currentPage + 1}"} rel="next"/>
+        case NothingMore =>
+
+          }
+        }
         {feed.facets.map(facet =>
           <link rel="http://opds-spec.org/facet" href={facet.href} title={facet.title} opds:facetGroup={facet.group} opds:activeFacet={facet.isActive.toString}/>)
         }
