@@ -52,9 +52,9 @@ object TestData {
 
     val DefaultFeedDefinition = api.FeedDefinition(1, 1, "some-url", "some-uuid")
     val DefaultFacets = Seq(
+      api.Facet("https://opds.test.digitallibrary.io/ben/new.xml", "Bengali", "Languages", isActive = false),
       api.Facet("https://opds.test.digitallibrary.io/eng/new.xml", "English", "Languages", isActive = true),
       api.Facet("https://opds.test.digitallibrary.io/hin/new.xml", "Hindu", "Languages", isActive = false),
-      api.Facet("https://opds.test.digitallibrary.io/ben/new.xml", "Bengali", "Languages", isActive = false),
       api.Facet("https://opds.test.digitallibrary.io/eng/new.xml", "New arrivals", "Selection", isActive = false),
       api.Facet("https://opds.test.digitallibrary.io/eng/level1.xml", "Level 1", "Selection", isActive = false),
       api.Facet("https://opds.test.digitallibrary.io/eng/level2.xml", "Level 2", "Selection", isActive = true),
