@@ -13,11 +13,11 @@ import com.sksamuel.elastic4s.http.HttpClient
 import io.digitallibrary.network.GdlClient
 import no.gdl.bookapi.controller._
 import no.gdl.bookapi.integration.crowdin.CrowdinClientBuilder
-import no.gdl.bookapi.integration.{DataSource, ElasticClient, ImageApiClient}
+import no.gdl.bookapi.integration.{DataSource, E4sClient, ElasticClient, ImageApiClient}
 import no.gdl.bookapi.repository._
 import no.gdl.bookapi.service._
 import no.gdl.bookapi.service.search.{IndexBuilderService, IndexService, SearchService}
-import no.gdl.bookapi.service.translation.{SupportedLanguageService, TranslationService, TranslationDbService}
+import no.gdl.bookapi.service.translation.{SupportedLanguageService, TranslationDbService, TranslationService}
 import org.mockito.Mockito
 import org.scalatest.mockito.MockitoSugar._
 
@@ -77,7 +77,7 @@ trait TestEnvironment
   val levelController = mock[LevelController]
   val featuredContentController = mock[FeaturedContentController]
 
-  val esClient = mock[HttpClient]
+  val esClient = mock[E4sClient]
 
   val gdlClient = mock[GdlClient]
   val imageApiClient = mock[ImageApiClient]

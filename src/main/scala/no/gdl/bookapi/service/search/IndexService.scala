@@ -26,16 +26,18 @@ import no.gdl.bookapi.model.domain
 import no.gdl.bookapi.model.domain.Translation
 import no.gdl.bookapi.repository.{BookRepository, TranslationRepository}
 import no.gdl.bookapi.service.ConverterService
+import org.elasticsearch.ElasticsearchException
+import org.elasticsearch.index.IndexNotFoundException
 import org.json4s.DefaultFormats
 import org.json4s.native.Serialization.write
 
 import scala.util.{Failure, Success, Try}
 
-trait IndexService {
+trait IndexService extends LazyLogging {
   this: ElasticClient with ConverterService with TranslationRepository with BookRepository =>
   val indexService: IndexService
 
-  class IndexService extends LazyLogging {
+  class IndexService {
     implicit val formats = DefaultFormats + LocalDateSerializer
 
     def indexDocument(translation: Translation): Try[Translation] = {
@@ -43,15 +45,13 @@ trait IndexService {
       val book: Option[domain.Book] = bookRepository.withId(translation.bookId)
       val source = write(converterService.toApiBook(Some(translation), availableLanguages, book))
 
-      val indexResponse = esClient.execute(
+      esClient.execute(
         indexInto(BookApiProperties.searchIndex(translation.language), BookApiProperties.SearchDocument)
           .id(translation.id.toString)
           .source(source)
-      ).await
-
-      indexResponse match {
-        case Left(failure) => Failure(new GdlSearchException(failure))
-        case Right(_) => Success(translation)
+      ) match {
+        case Success(_) => Success(translation)
+        case Failure(failure) => errorHandler(Failure(failure))
       }
     }
 
@@ -65,14 +65,11 @@ trait IndexService {
         actions = actions :+ IndexDefinition(indexAndType, id = Some(translation.id.toString), source = Some(source))
       })
 
-      // TODO Limit bulk size
-      val bulkResponse = esClient.execute(
+      esClient.execute(
         bulk(actions).refresh(RefreshPolicy.WAIT_UNTIL)
-      ).await
-
-      bulkResponse match {
-        case Left(failure) => Failure(new GdlSearchException(failure))
-        case Right(_) => {
+      ) match {
+        case Failure(failure) => errorHandler(Failure(failure))
+        case Success(_) => {
           logger.info(s"Indexed ${translationList.size} documents")
           Success(translationList.size)
         }
@@ -88,19 +85,17 @@ trait IndexService {
       if (indexExisting(indexName).getOrElse(false)) {
         Success(indexName)
       } else {
-        val createIndexResponse = esClient.execute(
+        esClient.execute(
           createIndex(indexName)
             .indexSetting("max_result_window",BookApiProperties.ElasticSearchIndexMaxResultWindow)
             .mappings(mappings(languageTag))
             .analysis(analysis())
-        ).await
-
-        createIndexResponse match {
-          case Left(failure) => {
-            logger.error(failure.error.reason)
-            Failure(new GdlSearchException(failure))
+          ) match {
+          case Failure(failure) => {
+            logger.error(failure.getMessage)
+            errorHandler(Failure(failure))
           }
-          case Right(_) => Success(indexName)
+          case Success(_) => Success(indexName)
         }
       }
     }
@@ -190,13 +185,11 @@ trait IndexService {
     }
 
     def findAllIndexes(): Try[Seq[String]] = {
-      val indexesResponse = esClient.execute(
+      esClient.execute(
         getAliases()
-      ).await
-
-      indexesResponse match {
-        case Left(failure) => Failure(new GdlSearchException(failure))
-        case Right(response) => Success(response.result.mappings.keys.toSeq.map(_.name))
+      ) match {
+        case Failure(failure) => errorHandler(Failure(failure))
+        case Success(response) => Success(response.result.mappings.keys.toSeq.map(_.name))
       }
     }
 
@@ -211,13 +204,11 @@ trait IndexService {
             actions = actions :+ RemoveAliasActionDefinition(BookApiProperties.searchIndex(languageTag), oldIndex)
           }
         }
-        val aliasResponse = esClient.execute(
+        esClient.execute(
           aliases(actions)
-        ).await
-
-        aliasResponse match {
-          case Left(failure) => Failure(new GdlSearchException(failure))
-          case Right(_) => Success()
+        ) match {
+          case Failure(failure) => errorHandler(Failure(failure))
+          case Success(_) => Success()
         }
       }
     }
@@ -229,12 +220,11 @@ trait IndexService {
           if (!indexExisting(indexName).getOrElse(false)) {
             Failure(new IllegalArgumentException(s"No such index: $indexName"))
           } else {
-            val deleteResponse = esClient.execute(
+            esClient.execute(
               deleteIndex(indexName)
-            ).await
-            deleteResponse match {
-              case Left(failure) => Failure(new GdlSearchException(failure))
-              case Right(_) => Success()
+            ) match {
+              case Failure(failure) => errorHandler(Failure(failure))
+              case Success(_) => Success()
             }
           }
         }
@@ -243,13 +233,11 @@ trait IndexService {
 
     def aliasTarget(languageTag: LanguageTag): Try[Option[String]] = {
 
-      val aliasesResponse = esClient.execute(
+      esClient.execute(
         getAliases(BookApiProperties.searchIndex(languageTag),Nil)
-      ).await
-
-      aliasesResponse match {
-        case Left(failure) => Failure(new GdlSearchException(failure))
-        case Right(response) => {
+      ) match {
+        case Failure(failure) => Failure(failure)
+        case Success(response) => {
           val iterator = response.result.mappings.iterator
           iterator.hasNext match {
             case false => Success(None)
@@ -260,17 +248,37 @@ trait IndexService {
     }
 
     def indexExisting(indexName: String): Try[Boolean] = {
-      esClient.execute(indexExists(indexName)).await match {
-        case Left(failure) => {
-          logger.error(failure.error.reason)
+      esClient.execute(indexExists(indexName)) match {
+        case Failure(failure) => {
+          logger.error(failure.getLocalizedMessage)
           Success(false)
         }
-        case Right(response) => Success(response.result.isExists)
+        case Success(response) => Success(response.result.isExists)
       }
     }
 
     private def getTimestamp: String = {
       new SimpleDateFormat("yyyyMMddHHmmss").format(Calendar.getInstance.getTime)
+    }
+  }
+
+  private def errorHandler[T](failure: Failure[T]) = {
+    failure match {
+      case Failure(e: GdlSearchException) => {
+        e.getFailure.status match {
+          case notFound: Int if notFound == 404 => {
+            logger.error(s"Index ${BookApiProperties.SearchIndex} not found. Scheduling a reindex.")
+            //scheduleIndexDocuments()
+            throw new IndexNotFoundException(s"Index ${BookApiProperties.SearchIndex} not found. Scheduling a reindex")
+          }
+          case _ => {
+            logger.error(e.getMessage)
+            throw new ElasticsearchException(s"Unable to execute search in ${BookApiProperties.SearchIndex}", e.getMessage)
+          }
+        }
+
+      }
+      case Failure(t: Throwable) => throw t
     }
   }
 

@@ -89,7 +89,7 @@ object ComponentRegistry
   lazy val writeService = new WriteService
   lazy val converterService = new ConverterService
 
-  lazy val esClient: HttpClient = EsClientFactory.getClient()
+  lazy val esClient: E4sClient = EsClientFactory.getClient()
   lazy val gdlClient = new GdlClient
   lazy val imageApiClient = new ImageApiClient
   lazy val downloadController = new DownloadController

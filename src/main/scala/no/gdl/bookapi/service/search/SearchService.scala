@@ -55,11 +55,11 @@ trait SearchService {
           .bool(BoolQueryDefinition()
             .should(QueryStringQueryDefinition(query = query.getOrElse("*")).field("title").field("description")))
           .sortBy(FieldSortDefinition("id"))
-      ).await
+      )
 
       searchResponse match {
-        case Right(response) => SearchResult(response.result.totalHits, page, numResults, converterService.toApiLanguage(language), getHits(response.result.hits, language))
-        case Left(failure) => errorHandler(Failure(new GdlSearchException(failure)))
+        case Success(response) => SearchResult(response.result.totalHits, page, numResults, converterService.toApiLanguage(language), getHits(response.result.hits, language))
+        case Failure(failure) => errorHandler(Failure(failure))
       }
     }
 
