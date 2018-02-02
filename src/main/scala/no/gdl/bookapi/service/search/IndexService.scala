@@ -11,6 +11,7 @@ import java.text.SimpleDateFormat
 import java.util.{Calendar, UUID}
 
 import com.sksamuel.elastic4s.alias.{AddAliasActionDefinition, AliasActionDefinition, RemoveAliasActionDefinition}
+import com.sksamuel.elastic4s.analyzers._
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.indexes.IndexDefinition
 import com.sksamuel.elastic4s.mappings.{MappingDefinition, TextFieldDefinition}
@@ -78,19 +79,20 @@ trait IndexService {
       }
     }
 
-    def createSearchIndex(language: LanguageTag): Try[String] = {
-      logger.info(s"Create index for language: ${language.language.id}")
-      createSearchIndexWithName(BookApiProperties.searchIndex(language) + "_" + getTimestamp + "_" + UUID.randomUUID().toString, language)
+    def createSearchIndex(languageTag: LanguageTag): Try[String] = {
+      logger.info(s"Create index for language: ${languageTag.language.id}")
+      createSearchIndexWithName(BookApiProperties.searchIndex(languageTag) + "_" + getTimestamp + "_" + UUID.randomUUID().toString, languageTag)
     }
 
-    def createSearchIndexWithName(indexName: String, language: LanguageTag): Try[String] = {
+    def createSearchIndexWithName(indexName: String, languageTag: LanguageTag): Try[String] = {
       if (indexExisting(indexName).getOrElse(false)) {
         Success(indexName)
       } else {
         val createIndexResponse = esClient.execute(
           createIndex(indexName)
-            .settings(settings())
-            .mappings(mappings(language))
+            .indexSetting("max_result_window",BookApiProperties.ElasticSearchIndexMaxResultWindow)
+            .mappings(mappings(languageTag))
+            .analysis(analysis())
         ).await
 
         createIndexResponse match {
@@ -103,24 +105,18 @@ trait IndexService {
       }
     }
 
-    def settings(): Map[String, Any] = {
-      Map(
-        "max_result_window" -> BookApiProperties.ElasticSearchIndexMaxResultWindow,
-        "analysis" -> Map(
-          "analyzer" -> Map(
-            "babel" -> Map(
-              "type" -> "custom",
-              "tokenizer" -> "icu_tokenizer",
-              "char_filter" -> Seq("icu_normalizer"),
-              "filter" -> Seq("icu_folding","icu_collation")
-            )
-          )
-        )
-      )
+    def analysis(): Iterable[AnalyzerDefinition] = {
+      List(CustomAnalyzerDefinition(
+        "babel",
+        IcuTokenizer,
+        IcuNormalizer,
+        IcuFolding,
+        IcuCollation
+      ))
     }
 
     def mappings(language: LanguageTag): List[MappingDefinition] = {
-      List(mapping(BookApiProperties.SearchDocument).fields(
+      List(mapping(BookApiProperties.SearchDocument) as (
         intField("id"),
         intField("revision"),
         intField("externalId"),
@@ -187,8 +183,8 @@ trait IndexService {
       ))
     }
 
-    private def languageField(fieldName: String, language: LanguageTag) = {
-      val languageAnalyzer = findByLanguage(Some(language.language.id))
+    private def languageField(fieldName: String, languageTag: LanguageTag) = {
+      val languageAnalyzer = findByLanguage(Some(languageTag.language.id))
       val languageSupportedField = TextFieldDefinition(fieldName).fielddata(true) analyzer languageAnalyzer.get.analyzer
       languageSupportedField
     }
@@ -204,15 +200,15 @@ trait IndexService {
       }
     }
 
-    def updateAliasTarget(oldIndexName: Option[String], newIndexName: String, language: LanguageTag): Try[Any] = {
+    def updateAliasTarget(oldIndexName: Option[String], newIndexName: String, languageTag: LanguageTag): Try[Any] = {
       if (!indexExisting(newIndexName).getOrElse(false)) {
         Failure(new IllegalArgumentException(s"No such index: $newIndexName"))
       } else {
-        var actions = List[AliasActionDefinition](AddAliasActionDefinition(BookApiProperties.searchIndex(language), newIndexName))
+        var actions = List[AliasActionDefinition](AddAliasActionDefinition(BookApiProperties.searchIndex(languageTag), newIndexName))
         oldIndexName match {
           case None => // Do nothing
           case Some(oldIndex) => {
-            actions = actions :+ RemoveAliasActionDefinition(BookApiProperties.searchIndex(language), oldIndex)
+            actions = actions :+ RemoveAliasActionDefinition(BookApiProperties.searchIndex(languageTag), oldIndex)
           }
         }
         val aliasResponse = esClient.execute(
@@ -245,10 +241,10 @@ trait IndexService {
       }
     }
 
-    def aliasTarget(language: LanguageTag): Try[Option[String]] = {
+    def aliasTarget(languageTag: LanguageTag): Try[Option[String]] = {
 
       val aliasesResponse = esClient.execute(
-        getAliases(BookApiProperties.searchIndex(language),Nil)
+        getAliases(BookApiProperties.searchIndex(languageTag),Nil)
       ).await
 
       aliasesResponse match {
@@ -278,4 +274,15 @@ trait IndexService {
     }
   }
 
+}
+
+case object IcuTokenizer extends Tokenizer("icu_tokenizer")
+case object IcuNormalizer extends CharFilter {
+  val name = "icu_normalizer"
+}
+case object IcuFolding extends TokenFilter {
+  val name = "icu_folding"
+}
+case object IcuCollation extends TokenFilter {
+  val name = "icu_collation"
 }

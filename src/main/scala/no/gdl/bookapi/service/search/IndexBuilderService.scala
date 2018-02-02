@@ -9,6 +9,7 @@ package no.gdl.bookapi.service.search
 
 import com.typesafe.scalalogging.LazyLogging
 import io.digitallibrary.language.model.LanguageTag
+import no.gdl.bookapi.BookApiProperties
 import no.gdl.bookapi.model.domain.{ReindexResult, Translation}
 import no.gdl.bookapi.repository.TranslationRepository
 
@@ -60,13 +61,17 @@ trait IndexBuilderService {
       }
     }
 
-    def sendToElastic(indexName: String, language: LanguageTag): Try[Int] = {
+    def sendToElastic(indexName: String, languageTag: LanguageTag): Try[Int] = {
       var numIndexed = 0
-      val numberInBulk = indexService.indexDocuments(translationRepository.translationsWithLanguage(language), indexName)
-      numberInBulk match {
-        case Success(num) => numIndexed += num
-        case Failure(f) => return Failure(f)
-      }
+      val numTranslations = translationRepository.numberOfTranslations(languageTag)
+      var iterations = numTranslations / BookApiProperties.IndexBulkSize
+      0 to iterations foreach(iter => {
+        val numberInBulk = indexService.indexDocuments(translationRepository.translationsWithLanguage(languageTag, BookApiProperties.IndexBulkSize, iter * BookApiProperties.IndexBulkSize), indexName)
+        numberInBulk match {
+          case Success(num) => numIndexed += num
+          case Failure(f) => return Failure(f)
+        }
+      })
       Success(numIndexed)
     }
 
@@ -78,5 +83,6 @@ trait IndexBuilderService {
       }
     }
   }
+
 
 }
