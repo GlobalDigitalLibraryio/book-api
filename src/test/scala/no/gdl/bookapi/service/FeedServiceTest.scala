@@ -10,7 +10,8 @@ package no.gdl.bookapi.service
 import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.BookApiProperties.{OpdsLanguageParam, OpdsLevelParam}
 import no.gdl.bookapi.TestData.{LanguageCodeAmharic, LanguageCodeEnglish, LanguageCodeNorwegian}
-import no.gdl.bookapi.model.api.{Facet, FeedEntry}
+import no.gdl.bookapi.model.api.{Facet, FeedEntry, SearchResult}
+import no.gdl.bookapi.model.domain.Paging
 import no.gdl.bookapi.{BookApiProperties, TestData, TestEnvironment, UnitSuite}
 import org.mockito.Matchers._
 import org.mockito.Mockito._
@@ -106,4 +107,29 @@ class FeedServiceTest extends UnitSuite with TestEnvironment {
       Facet("http://local.digitallibrary.io/book-api/opds/eng/level4.xml", "Level 4", "Selection", isActive = false)
     ))
   }
+
+  test("that searchResultToPagingStatus returns correct status when there's more content ahead") {
+    val searchResult = mock[SearchResult]
+    when(searchResult.totalCount).thenReturn(130)
+    feedService.searchResultToPagingStatus(searchResult, Paging(1, 25)) should equal (MoreAhead(Paging(1, 25), lastPage = 6))
+  }
+
+  test("that searchResultToPagingStatus returns correct status when there's more content before") {
+    val searchResult = mock[SearchResult]
+    when(searchResult.totalCount).thenReturn(50)
+    feedService.searchResultToPagingStatus(searchResult, Paging(2, 25)) should equal (MoreBefore(Paging(2, 25)))
+  }
+
+  test("that searchResultToPagingStatus returns correct status when there's more content in both directions") {
+    val searchResult = mock[SearchResult]
+    when(searchResult.totalCount).thenReturn(120)
+    feedService.searchResultToPagingStatus(searchResult, Paging(3, 25)) should equal (MoreInBothDirections(Paging(3, 25), lastPage = 5))
+  }
+
+  test("that searchResultToPagingStatus returns correct status when there's only one page of content") {
+    val searchResult = mock[SearchResult]
+    when(searchResult.totalCount).thenReturn(23)
+    feedService.searchResultToPagingStatus(searchResult, Paging(1, 25)) should equal (OnlyOnePage(Paging(1, 25)))
+  }
+
 }

@@ -53,7 +53,7 @@ trait OPDSController {
     }
 
     get(BookApiProperties.OpdsNewUrl.url) {
-      acquisitionFeed(books = feedService.newEntries(LanguageTag(params("lang"))), pagingStatus = NothingMore)
+      acquisitionFeed(books = feedService.newEntries(LanguageTag(params("lang"))), pagingStatus = OnlyOnePage(extractPageAndPageSize()))
     }
 
     get(BookApiProperties.OpdsLevelUrl.url) {
@@ -116,10 +116,21 @@ trait OPDSController {
         <updated>{feed.updated.atStartOfDay(ZoneId.systemDefault()).format(dtf)}</updated>
         <link href={feed.feedDefinition.url} rel="self"/>
         {pagingStatus match {
-        case HasMore(currentPage, currentPageSize) =>
-            <link href={s"${feed.feedDefinition.url}?page-size=$currentPageSize&page=${currentPage + 1}"} rel="next"/>
-        case NothingMore =>
-
+        case MoreAhead(Paging(currentPage, currentPageSize), lastPage) =>
+                <link href={s"${feed.feedDefinition.url}?page-size=$currentPageSize&page=1"} rel="first"/>
+                <link href={s"${feed.feedDefinition.url}?page-size=$currentPageSize&page=${currentPage + 1}"} rel="next"/>
+                <link href={s"${feed.feedDefinition.url}?page-size=$currentPageSize&page=$lastPage"} rel="last"/>
+        case MoreBefore(Paging(currentPage, currentPageSize)) =>
+                <link href={s"${feed.feedDefinition.url}?page-size=$currentPageSize&page=1"} rel="first"/>
+                <link href={s"${feed.feedDefinition.url}?page-size=$currentPageSize&page=${currentPage - 1}"} rel="previous"/>
+        case MoreInBothDirections(Paging(currentPage, currentPageSize), lastPage) =>
+                <link href={s"${feed.feedDefinition.url}?page-size=$currentPageSize&page=1"} rel="first"/>
+                <link href={s"${feed.feedDefinition.url}?page-size=$currentPageSize&page=${currentPage - 1}"} rel="previous"/>
+                <link href={s"${feed.feedDefinition.url}?page-size=$currentPageSize&page=${currentPage + 1}"} rel="next"/>
+                <link href={s"${feed.feedDefinition.url}?page-size=$currentPageSize&page=$lastPage"} rel="last"/>
+        case OnlyOnePage(Paging(currentPage, currentPageSize)) =>
+                <link href={s"${feed.feedDefinition.url}?page-size=$currentPageSize&page=$currentPage"} rel="first"/>
+                <link href={s"${feed.feedDefinition.url}?page-size=$currentPageSize&page=$currentPage"} rel="last"/>
           }
         }
         {feed.facets.map(facet =>

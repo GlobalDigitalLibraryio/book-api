@@ -27,8 +27,10 @@ trait FeedService {
   val feedService: FeedService
 
   sealed trait PagingStatus
-  case object NothingMore extends PagingStatus
-  case class HasMore(currentPage: Int, currentPageSize: Int) extends PagingStatus
+  case class OnlyOnePage(currentPaging: Paging) extends PagingStatus
+  case class MoreAhead(currentPaging: Paging, lastPage: Int) extends PagingStatus
+  case class MoreBefore(currentPaging: Paging) extends PagingStatus
+  case class MoreInBothDirections(currentPaging: Paging, lastPage: Int) extends PagingStatus
 
   class FeedService extends LazyLogging {
     implicit val localDateOrdering: Ordering[LocalDate] = Ordering.by(_.toEpochDay)
@@ -165,11 +167,19 @@ trait FeedService {
       (searchResultToPagingStatus(searchResult, paging), searchResult.results.map(book => api.FeedEntry(book)))
     }
 
-    private def searchResultToPagingStatus(searchResult: SearchResult, paging: Paging) = {
-      if (searchResult.totalCount > paging.page * paging.pageSize)
-        HasMore(currentPage = paging.page, currentPageSize = paging.pageSize)
-      else
-        NothingMore
+    def searchResultToPagingStatus(searchResult: SearchResult, paging: Paging): PagingStatus = {
+      if (searchResult.totalCount > paging.pageSize) {
+        val lastPage = Math.round(Math.ceil(searchResult.totalCount.toFloat / paging.pageSize)).toInt
+        if (paging.page == lastPage) {
+          MoreBefore(currentPaging = paging)
+        } else if (paging.page > 1) {
+          MoreInBothDirections(currentPaging = paging, lastPage = lastPage)
+        } else {
+          MoreAhead(currentPaging = paging, lastPage = lastPage)
+        }
+      } else {
+        OnlyOnePage(currentPaging = paging)
+      }
     }
 
     def addFeaturedCategory(feedEntry: FeedEntry, language: LanguageTag): FeedEntry = {
