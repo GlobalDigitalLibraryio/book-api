@@ -92,7 +92,7 @@ object BookApiProperties extends LazyLogging {
   //In format lang;projectid;projectkey, lang:projectid;projectkey
   def readCrowdinProjects(): Seq[CrowdinProject] = {
     secrets.keys.foreach(key => {
-      val secretLength = secrets.getOrElse(key, None).getOrElse("").length
+      val secretLength = secrets.getOrElse(key, "").length
       logger.info(s"SECRET-KEY: $key, SECRET-LENGTH: $secretLength")
     })
 
@@ -116,7 +116,7 @@ object BookApiProperties extends LazyLogging {
   }
 
   def propOrElse(key: String, default: => String): String = {
-    secrets.get(key).flatten match {
+    secrets.get(key) match {
       case Some(secret) => secret
       case None =>
         envOrNone(key) match {
