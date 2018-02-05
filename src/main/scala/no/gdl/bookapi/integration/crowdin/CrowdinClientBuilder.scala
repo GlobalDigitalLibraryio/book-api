@@ -19,7 +19,7 @@ trait CrowdinClientBuilder {
 
   class CrowdinClientBuilder extends LazyLogging {
     def forSourceLanguage(sourceLanguage: LanguageTag): Try[CrowdinClient] = {
-      BookApiProperties.CrowdinProjects.find(_.sourceLanguage == sourceLanguage.toString) match {
+      BookApiProperties.readCrowdinProjects().find(_.sourceLanguage == sourceLanguage.toString) match {
         case Some(project) =>
           Success(new CrowdinClient(project.sourceLanguage, project.projectIdentifier, project.projectKey))
 
