@@ -8,6 +8,8 @@
 
 package no.gdl.bookapi
 
+import java.util.Collections.SingletonSet
+
 import com.typesafe.scalalogging.LazyLogging
 import io.digitallibrary.network.Domains
 import io.digitallibrary.network.secrets.PropertyKeys
@@ -21,6 +23,7 @@ import scala.util.{Failure, Success}
 object BookApiProperties extends LazyLogging {
   val RoleWithWriteAccess = "books:write"
   val SecretsFile = "book-api.secrets"
+  val CrowdinProjectsKey = "CROWDIN_PROJECTS"
 
   // TODO Consider more generic role name
   val FeaturedContentAdminRole = "book-api:featuredContentAdmin"
@@ -86,7 +89,7 @@ object BookApiProperties extends LazyLogging {
   val CorrelationIdKey = "correlationID"
   val CorrelationIdHeader = "X-Correlation-ID"
 
-  val CrowdinProjectsKey = "CROWDIN_PROJECTS"
+
   lazy val CrowdinProjects: Seq[CrowdinProject] = readCrowdinProjects()
 
   //In format lang;projectid;projectkey, lang:projectid;projectkey
@@ -108,6 +111,7 @@ object BookApiProperties extends LazyLogging {
      case Success(values) => values
      case Failure(exception) => throw new RuntimeException(s"Unable to load remote secrets from $SecretsFile", exception)
    }
+
 
   def booleanProp(key: String) = prop(key).toBoolean
 
