@@ -366,20 +366,23 @@ trait TranslationRepository {
       case (Sort.ByArrivalDateDesc) => sqls.orderBy(t.dateArrived.desc, t.bookId.desc)
     }
 
-    def translationsWithLanguage(languageTag: LanguageTag, limit: Int, offset: Int): List[Translation] =
-      translationsWhere(sqls"t.language = ${languageTag.language.id} order by t.id", sqls"limit ${limit} offset ${offset}").map(id => withId(id).get)
-
-    private def translationsWhere(whereClause: SQLSyntax, limitClause: SQLSyntax = sqls"")(implicit session: DBSession = ReadOnlyAutoSession): List[Long] = {
-      val t = Translation.syntax("t")
-      sql"select ${t.result.id} from ${Translation.as(t)} where $whereClause $limitClause".map(_.long(1)).list.apply()
+    def translationsWithLanguage(languageTag: LanguageTag, limit: Int, offset: Int)(implicit session: DBSession = ReadOnlyAutoSession): List[Translation] = {
+      select(t.result.id)
+        .from(Translation as t)
+        .where
+        .eq(t.language, languageTag.toString())
+        .orderBy(t.id)
+        .limit(limit)
+        .offset(offset)
+        .toSQL.map(rs => withId(rs.long(1)).get).list().apply()
     }
 
-    def numberOfTranslations(languageTag: LanguageTag): Int = {
-      DB readOnly { implicit session =>
-        sql"select count(*) as nt from translation where language = ${languageTag.language.id}".map(rs => {
-          rs.int("nt")
-        }).single().apply().getOrElse(0)
-      }
+    def numberOfTranslations(languageTag: LanguageTag)(implicit session: DBSession = ReadOnlyAutoSession): Int = {
+      select(sqls"count(*)")
+        .from(Translation as t)
+        .where
+        .eq(t.language, languageTag.toString())
+        .toSQL.map(rs => rs.int(1)).single().apply().getOrElse(0)
     }
   }
 
