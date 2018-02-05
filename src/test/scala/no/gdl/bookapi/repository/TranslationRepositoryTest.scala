@@ -60,6 +60,25 @@ class TranslationRepositoryTest extends IntegrationSuite with TestEnvironment wi
     }
   }
 
+  test("that bookIdsWithLanguage gives correct totalCount when pageSize is less than number of books in database") {
+    withRollback { implicit session =>
+      val book1 = addBookDef()
+      val book2 = addBookDef()
+      val book3 = addBookDef()
+      val book4 = addBookDef()
+
+      addTranslationDef("ext1", "Title 1 - eng", book1.id.get, LanguageTag("eng"))
+      addTranslationDef("ext2", "Title 1 - nob", book1.id.get, LanguageTag("nob"))
+      addTranslationDef("ext3", "Title 2 - eng", book2.id.get, LanguageTag("eng"))
+      addTranslationDef("ext4", "Title 2 - nob", book2.id.get, LanguageTag("nob"))
+      addTranslationDef("ext6", "Title 3 - nob", book3.id.get, LanguageTag("nob"))
+      addTranslationDef("ext8", "Title 4 - nob", book4.id.get, LanguageTag("nob"))
+
+      val searchResult = translationRepository.bookIdsWithLanguage(LanguageTag("nob"), 3, 1, Sort.ByIdAsc)
+      searchResult.totalCount should equal(4)
+    }
+  }
+
   test("that languagesFor returns all languages for the given book") {
     withRollback { implicit session =>
       val book1 = addBookDef()
@@ -102,6 +121,23 @@ class TranslationRepositoryTest extends IntegrationSuite with TestEnvironment wi
 
       val ids = translationRepository.bookIdsWithLanguageAndLevel(LanguageTag("xho"), Some("2"), 10, 1, Sort.ByIdAsc)
       ids.results should equal (Seq(book1.id.get, book2.id.get))
+    }
+  }
+
+  test("that bookIdsWithLanguageAndLevel gives correct totalCount when pageSize is less than number of books in database") {
+    withRollback { implicit session =>
+      val book1 = addBookDef()
+      val book2 = addBookDef()
+      val book3 = addBookDef()
+      val book4 = addBookDef()
+
+      addTranslationDef("ext1", "title 1", book1.id.get, LanguageTag("xho"), Some("2"))
+      addTranslationDef("ext2", "title 2", book2.id.get, LanguageTag("xho"), Some("2"))
+      addTranslationDef("ext3", "title 3", book3.id.get, LanguageTag("xho"), Some("1"))
+      addTranslationDef("ext4", "title 4", book4.id.get, LanguageTag("xho"), Some("2"))
+
+      val ids = translationRepository.bookIdsWithLanguageAndLevel(LanguageTag("xho"), Some("2"), 1, 1, Sort.ByIdAsc)
+      ids.totalCount should equal (3)
     }
   }
 
