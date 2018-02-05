@@ -1,6 +1,6 @@
 /*
  * Part of GDL book_api.
- * Copyright (C) 2017 Global Digital Library
+ * Copyright (C) 2018 Global Digital Library
  *
  * See LICENSE
  */
@@ -47,7 +47,7 @@ object Language {
     GdlLanguageAnalyzer("por", PortugueseLanguageAnalyzer),
     GdlLanguageAnalyzer("rum", RomanianLanguageAnalyzer),
     GdlLanguageAnalyzer("rus", RussianLanguageAnalyzer),
-    //GdlLanguageAnalyzer("nob", SoraniLanguageAnalyzer),
+    GdlLanguageAnalyzer("kur", SoraniLanguageAnalyzer),
     GdlLanguageAnalyzer("spa", SpanishLanguageAnalyzer),
     GdlLanguageAnalyzer("swe", SwedishLanguageAnalyzer),
     GdlLanguageAnalyzer("tur", TurkishLanguageAnalyzer),
@@ -79,5 +79,6 @@ object Language {
     }
   }
 }
+
 case object BabelAnalyzer extends LanguageAnalyzer("babel")
 case class GdlLanguageAnalyzer(lang: String, analyzer: Analyzer)

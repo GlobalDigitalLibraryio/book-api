@@ -17,6 +17,7 @@ import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.BookApiProperties
 import no.gdl.bookapi.integration.ElasticClient
 import no.gdl.bookapi.model.api.{Book, Error, GdlSearchException, LocalDateSerializer, ResultWindowTooLargeException, SearchResult}
+import no.gdl.bookapi.model.domain.Paging
 import no.gdl.bookapi.service.ConverterService
 import org.elasticsearch.ElasticsearchException
 import org.elasticsearch.index.IndexNotFoundException
@@ -36,20 +37,20 @@ trait SearchService {
   class SearchService extends LazyLogging {
     implicit val formats = DefaultFormats + LocalDateSerializer
 
-    def searchBook(query: Option[String], language: LanguageTag, page: Int, pageSize: Int): SearchResult =
-      executeSearch(QueryBuilders.boolQuery(), query, language, page, pageSize)
+    def searchBook(query: Option[String], language: LanguageTag, paging: Paging): SearchResult =
+      executeSearch(QueryBuilders.boolQuery(), query, language, paging)
 
-    def executeSearch(queryBuilder: BoolQueryBuilder, query: Option[String], language: LanguageTag, page: Int, pageSize: Int): SearchResult = {
+    def executeSearch(queryBuilder: BoolQueryBuilder, query: Option[String], language: LanguageTag, paging: Paging): SearchResult = {
 
-      val (startAt, numResults) = getStartAtAndNumResults(Some(page), Some(pageSize))
+      val (startAt, numResults) = getStartAtAndNumResults(paging.page, paging.pageSize)
 
-      val requestedResultWindow = page * numResults
+      val requestedResultWindow = paging.page * numResults
       if (requestedResultWindow > BookApiProperties.ElasticSearchIndexMaxResultWindow) {
         logger.info(s"Max supported results are ${BookApiProperties.ElasticSearchIndexMaxResultWindow}, user requested ${requestedResultWindow}")
         throw new ResultWindowTooLargeException(Error.WindowTooLargeError.description)
       }
 
-      val indexAndTypes = new IndexAndTypes(BookApiProperties.searchIndex(language), Seq(BookApiProperties.SearchDocument))
+      val indexAndTypes = IndexAndTypes(BookApiProperties.searchIndex(language), Seq(BookApiProperties.SearchDocument))
       val searchResponse = esClient.execute(
         searchWithType(indexAndTypes).size(numResults).from(startAt)
           .bool(BoolQueryDefinition()
@@ -58,43 +59,22 @@ trait SearchService {
       )
 
       searchResponse match {
-        case Success(response) => SearchResult(response.result.totalHits, page, numResults, converterService.toApiLanguage(language), getHits(response.result.hits, language))
+        case Success(response) => SearchResult(response.result.totalHits, paging.page, numResults, converterService.toApiLanguage(language), getHits(response.result.hits, language))
         case Failure(failure) => errorHandler(Failure(failure))
       }
     }
 
     def getHits(hits: SearchHits, language: LanguageTag): Seq[Book] = {
-      var resultList = Seq[Book]()
-      hits.total match {
-        case count: Long if count > 0 => {
-          val results = hits.hits
-          val iterator = results.iterator
-          while(iterator.hasNext) {
-            resultList = resultList :+ hitAsApiBook(iterator.next().sourceAsString, language)
-          }
-          resultList
-        }
-        case _ => Seq()
-      }
+      hits.hits.iterator.toSeq.map(hit => hitAsApiBook(hit.sourceAsString, language))
     }
 
     def hitAsApiBook(hit: String, language: LanguageTag): Book = {
       read[Book](hit)
     }
 
-    private def getStartAtAndNumResults(page: Option[Int], pageSize: Option[Int]): (Int, Int) = {
-      val numResults = pageSize match {
-        case Some(num) =>
-          if (num > 0) num.min(BookApiProperties.MaxPageSize) else BookApiProperties.DefaultPageSize
-        case None => BookApiProperties.DefaultPageSize
-      }
-
-      val startAt = page match {
-        case Some(sa) => (sa - 1).max(0) * numResults
-        case None => 0
-      }
-
-      (startAt, numResults)
+    private def getStartAtAndNumResults(page: Int, pageSize: Int): (Int, Int) = {
+      val startAt = (page-1) * pageSize
+      (startAt, pageSize)
     }
 
     private def errorHandler[T](failure: Failure[T]) = {

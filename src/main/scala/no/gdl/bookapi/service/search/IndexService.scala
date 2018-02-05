@@ -15,22 +15,21 @@ import com.sksamuel.elastic4s.analyzers._
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.indexes.IndexDefinition
 import com.sksamuel.elastic4s.mappings.{MappingDefinition, TextFieldDefinition}
-import com.sksamuel.elastic4s.{IndexAndType, RefreshPolicy}
+import com.sksamuel.elastic4s.{Index, IndexAndType, RefreshPolicy}
 import com.typesafe.scalalogging.LazyLogging
 import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.BookApiProperties
 import no.gdl.bookapi.integration.ElasticClient
 import no.gdl.bookapi.model.Language._
-import no.gdl.bookapi.model.api.{GdlSearchException, LocalDateSerializer}
+import no.gdl.bookapi.model.api.LocalDateSerializer
 import no.gdl.bookapi.model.domain
 import no.gdl.bookapi.model.domain.Translation
 import no.gdl.bookapi.repository.{BookRepository, TranslationRepository}
 import no.gdl.bookapi.service.ConverterService
-import org.elasticsearch.ElasticsearchException
-import org.elasticsearch.index.IndexNotFoundException
 import org.json4s.DefaultFormats
 import org.json4s.native.Serialization.write
 
+import scala.collection.immutable
 import scala.util.{Failure, Success, Try}
 
 trait IndexService extends LazyLogging {
@@ -51,24 +50,22 @@ trait IndexService extends LazyLogging {
           .source(source)
       ) match {
         case Success(_) => Success(translation)
-        case Failure(failure) => errorHandler(Failure(failure))
+        case Failure(failure) => Failure(failure)
       }
     }
 
     def indexDocuments(translationList: List[Translation], indexName: String): Try[Int] = {
-      var actions = List[IndexDefinition]()
-      translationList.foreach(f = translation => {
-        val availableLanguages: Seq[LanguageTag] = translationRepository.languagesFor(translation.bookId)
-        val book: Option[domain.Book] = bookRepository.withId(translation.bookId)
-        val source = write(converterService.toApiBook(Some(translation), availableLanguages, book))
-        val indexAndType = new IndexAndType(indexName, BookApiProperties.SearchDocument)
-        actions = actions :+ IndexDefinition(indexAndType, id = Some(translation.id.toString), source = Some(source))
-      })
+      val actions: immutable.Seq[IndexDefinition] = for {translation <- translationList
+        availableLanguages: Seq[LanguageTag] = translationRepository.languagesFor(translation.bookId)
+        book: Option[domain.Book] = bookRepository.withId(translation.bookId)
+        source = write(converterService.toApiBook(Some(translation), availableLanguages, book))
+        indexAndType = new IndexAndType(indexName, BookApiProperties.SearchDocument)
+      } yield IndexDefinition(indexAndType, id = Some(translation.id.toString), source = Some(source))
 
       esClient.execute(
         bulk(actions).refresh(RefreshPolicy.WAIT_UNTIL)
       ) match {
-        case Failure(failure) => errorHandler(Failure(failure))
+        case Failure(failure) => Failure(failure)
         case Success(_) => {
           logger.info(s"Indexed ${translationList.size} documents")
           Success(translationList.size)
@@ -93,7 +90,7 @@ trait IndexService extends LazyLogging {
           ) match {
           case Failure(failure) => {
             logger.error(failure.getMessage)
-            errorHandler(Failure(failure))
+            Failure(failure)
           }
           case Success(_) => Success(indexName)
         }
@@ -161,7 +158,6 @@ trait IndexService extends LazyLogging {
           textField("epub"),
           textField("pdf")
         ),
-        //nestedField("tags"),
         nestedField("contributors").fields(
           intField("id"),
           intField("revision"),
@@ -188,7 +184,7 @@ trait IndexService extends LazyLogging {
       esClient.execute(
         getAliases()
       ) match {
-        case Failure(failure) => errorHandler(Failure(failure))
+        case Failure(failure) => Failure(failure)
         case Success(response) => Success(response.result.mappings.keys.toSeq.map(_.name))
       }
     }
@@ -207,7 +203,7 @@ trait IndexService extends LazyLogging {
         esClient.execute(
           aliases(actions)
         ) match {
-          case Failure(failure) => errorHandler(Failure(failure))
+          case Failure(failure) => Failure(failure)
           case Success(_) => Success()
         }
       }
@@ -216,18 +212,17 @@ trait IndexService extends LazyLogging {
     def deleteSearchIndex(optIndexName: Option[String]): Try[_] = {
       optIndexName match {
         case None => Success(optIndexName)
-        case Some(indexName) => {
+        case Some(indexName) =>
           if (!indexExisting(indexName).getOrElse(false)) {
             Failure(new IllegalArgumentException(s"No such index: $indexName"))
           } else {
             esClient.execute(
               deleteIndex(indexName)
             ) match {
-              case Failure(failure) => errorHandler(Failure(failure))
+              case Failure(failure) => Failure(failure)
               case Success(_) => Success()
             }
           }
-        }
       }
     }
 
@@ -237,13 +232,11 @@ trait IndexService extends LazyLogging {
         getAliases(BookApiProperties.searchIndex(languageTag),Nil)
       ) match {
         case Failure(failure) => Failure(failure)
-        case Success(response) => {
-          val iterator = response.result.mappings.iterator
-          iterator.hasNext match {
-            case false => Success(None)
-            case true => Success(Some(iterator.next()._1.name))
+        case Success(response) =>
+          response.result.mappings.headOption match {
+            case Some((index, _)) => Success(Some(index.name))
+            case None => Success(None)
           }
-        }
       }
     }
 
@@ -262,35 +255,18 @@ trait IndexService extends LazyLogging {
     }
   }
 
-  private def errorHandler[T](failure: Failure[T]) = {
-    failure match {
-      case Failure(e: GdlSearchException) => {
-        e.getFailure.status match {
-          case notFound: Int if notFound == 404 => {
-            logger.error(s"Index ${BookApiProperties.SearchIndex} not found. Scheduling a reindex.")
-            //scheduleIndexDocuments()
-            throw new IndexNotFoundException(s"Index ${BookApiProperties.SearchIndex} not found. Scheduling a reindex")
-          }
-          case _ => {
-            logger.error(e.getMessage)
-            throw new ElasticsearchException(s"Unable to execute search in ${BookApiProperties.SearchIndex}", e.getMessage)
-          }
-        }
-
-      }
-      case Failure(t: Throwable) => throw t
-    }
-  }
-
 }
 
 case object IcuTokenizer extends Tokenizer("icu_tokenizer")
+
 case object IcuNormalizer extends CharFilter {
   val name = "icu_normalizer"
 }
+
 case object IcuFolding extends TokenFilter {
   val name = "icu_folding"
 }
+
 case object IcuCollation extends TokenFilter {
   val name = "icu_collation"
 }

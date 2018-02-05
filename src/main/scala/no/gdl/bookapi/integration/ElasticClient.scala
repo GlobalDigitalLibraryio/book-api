@@ -1,10 +1,9 @@
 /*
  * Part of GDL book_api.
- * Copyright (C) 2017 Global Digital Library
+ * Copyright (C) 2018 Global Digital Library
  *
  * See LICENSE
  */
-
 
 package no.gdl.bookapi.integration
 
@@ -52,10 +51,11 @@ object EsClientFactory {
   }
 
   private def signingClient(searchServer: String): HttpClient = {
-    //val awsRegion = Option(Regions.getCurrentRegion).getOrElse(Region.getRegion(Regions.EU_CENTRAL_1)).toString
-    //setEnv("AWS_DEFAULT_REGION", awsRegion)
+    val awsRegion = Option(Regions.getCurrentRegion).getOrElse(Region.getRegion(Regions.EU_CENTRAL_1)).toString
+    setEnv("AWS_DEFAULT_REGION", awsRegion)
     Aws4ElasticClient(searchServer)
   }
+
   private def setEnv(key: String, value: String) = {
     val field = System.getenv().getClass.getDeclaredField("m")
     field.setAccessible(true)

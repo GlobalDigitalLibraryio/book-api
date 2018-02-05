@@ -126,8 +126,6 @@ trait ConverterService {
       chapter.title,
       s"${Domain}${BookApiProperties.ApiPath}/${language.toString}/${bookId}/chapters/${chapter.id.get}")
 
-    def toApiChapter(chapters: Seq[domain.Chapter], bookId: Long, language: LanguageTag): Seq[api.Chapter] = chapters.map(c => toApiChapter(c))
-
     def toApiChapter(chapter: domain.Chapter): api.Chapter = api.Chapter(
       chapter.id.get,
       chapter.revision.get,

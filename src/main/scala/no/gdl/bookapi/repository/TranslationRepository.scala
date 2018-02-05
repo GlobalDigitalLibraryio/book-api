@@ -378,10 +378,7 @@ trait TranslationRepository {
       DB readOnly { implicit session =>
         sql"select count(*) as nt from translation where language = ${languageTag.language.id}".map(rs => {
           rs.int("nt")
-        }).single().apply() match {
-          case Some(num) => num
-          case None => 0
-        }
+        }).single().apply().getOrElse(0)
       }
     }
   }
