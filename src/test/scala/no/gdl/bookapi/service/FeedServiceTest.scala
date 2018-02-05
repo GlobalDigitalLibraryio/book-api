@@ -10,7 +10,8 @@ package no.gdl.bookapi.service
 import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.BookApiProperties.{OpdsLanguageParam, OpdsLevelParam}
 import no.gdl.bookapi.TestData.{LanguageCodeAmharic, LanguageCodeEnglish, LanguageCodeNorwegian}
-import no.gdl.bookapi.model.api.{Facet, FeedEntry}
+import no.gdl.bookapi.model.api.{Facet, FeedEntry, SearchResult}
+import no.gdl.bookapi.model.domain.Paging
 import no.gdl.bookapi.{BookApiProperties, TestData, TestEnvironment, UnitSuite}
 import org.mockito.Matchers._
 import org.mockito.Mockito._
@@ -85,24 +86,50 @@ class FeedServiceTest extends UnitSuite with TestEnvironment {
     withCategory.categories.head.url should equal (s"${BookApiProperties.CloudFrontOpds}/amh/level${feedEntry.book.readingLevel.get}.xml")
   }
 
-  test("that facetsForLanguage returns facets for languages") {
+  test("that facetsForLanguage returns facets for languages, with languages alphabetically sorted") {
     when(readService.listAvailableLanguagesAsLanguageTags).thenReturn(Seq("eng", "hin", "ben", "eng-latn-gb").map(LanguageTag(_)))
     feedService.facetsForLanguages(LanguageTag("eng")) should equal (Seq(
-      Facet("http://local.digitallibrary.io/book-api/opds/eng/new.xml", "English", "Languages", isActive = true),
-      Facet("http://local.digitallibrary.io/book-api/opds/hin/new.xml", "Hindi", "Languages", isActive = false),
       Facet("http://local.digitallibrary.io/book-api/opds/ben/new.xml", "Bengali", "Languages", isActive = false),
-      Facet("http://local.digitallibrary.io/book-api/opds/eng-latn-gb/new.xml", "English (Latin, United Kingdom)", "Languages", isActive = false))
+      Facet("http://local.digitallibrary.io/book-api/opds/eng/new.xml", "English", "Languages", isActive = true),
+      Facet("http://local.digitallibrary.io/book-api/opds/eng-latn-gb/new.xml", "English (Latin, United Kingdom)", "Languages", isActive = false),
+      Facet("http://local.digitallibrary.io/book-api/opds/hin/new.xml", "Hindi", "Languages", isActive = false))
     )
   }
 
-  test("that facetsForReadingLevels returns facets for reading levels") {
+  test("that facetsForSelections returns facets for reading levels, with reading levels numerically sorted and new arrivals at the top") {
     val language = LanguageTag("eng")
-    when(readService.listAvailableLevelsForLanguage(Some(language))).thenReturn(Seq("1", "2", "3", "4"))
-    feedService.facetsForReadingLevels(language, "http://local.digitallibrary.io/book-api/opds/eng/level3.xml") should equal (Seq(
-      Facet("http://local.digitallibrary.io/book-api/opds/eng/level1.xml", "Level 1", "Reading level", isActive = false),
-      Facet("http://local.digitallibrary.io/book-api/opds/eng/level2.xml", "Level 2", "Reading level", isActive = false),
-      Facet("http://local.digitallibrary.io/book-api/opds/eng/level3.xml", "Level 3", "Reading level", isActive = true),
-      Facet("http://local.digitallibrary.io/book-api/opds/eng/level4.xml", "Level 4", "Reading level", isActive = false)
+    when(readService.listAvailableLevelsForLanguage(Some(language))).thenReturn(Seq("4", "1", "3", "2"))
+    feedService.facetsForSelections(language, "http://local.digitallibrary.io/book-api/opds/eng/level3.xml") should equal (Seq(
+      Facet("http://local.digitallibrary.io/book-api/opds/eng/new.xml", "New arrivals", "Selection", isActive = false),
+      Facet("http://local.digitallibrary.io/book-api/opds/eng/level1.xml", "Level 1", "Selection", isActive = false),
+      Facet("http://local.digitallibrary.io/book-api/opds/eng/level2.xml", "Level 2", "Selection", isActive = false),
+      Facet("http://local.digitallibrary.io/book-api/opds/eng/level3.xml", "Level 3", "Selection", isActive = true),
+      Facet("http://local.digitallibrary.io/book-api/opds/eng/level4.xml", "Level 4", "Selection", isActive = false)
     ))
   }
+
+  test("that searchResultToPagingStatus returns correct status when there's more content ahead") {
+    val searchResult = mock[SearchResult]
+    when(searchResult.totalCount).thenReturn(130)
+    feedService.searchResultToPagingStatus(searchResult, Paging(1, 25)) should equal (MoreAhead(Paging(1, 25), lastPage = 6))
+  }
+
+  test("that searchResultToPagingStatus returns correct status when there's more content before") {
+    val searchResult = mock[SearchResult]
+    when(searchResult.totalCount).thenReturn(50)
+    feedService.searchResultToPagingStatus(searchResult, Paging(2, 25)) should equal (MoreBefore(Paging(2, 25)))
+  }
+
+  test("that searchResultToPagingStatus returns correct status when there's more content in both directions") {
+    val searchResult = mock[SearchResult]
+    when(searchResult.totalCount).thenReturn(120)
+    feedService.searchResultToPagingStatus(searchResult, Paging(3, 25)) should equal (MoreInBothDirections(Paging(3, 25), lastPage = 5))
+  }
+
+  test("that searchResultToPagingStatus returns correct status when there's only one page of content") {
+    val searchResult = mock[SearchResult]
+    when(searchResult.totalCount).thenReturn(23)
+    feedService.searchResultToPagingStatus(searchResult, Paging(1, 25)) should equal (OnlyOnePage(Paging(1, 25)))
+  }
+
 }

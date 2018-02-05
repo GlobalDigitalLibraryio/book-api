@@ -1,6 +1,6 @@
 import java.util.Properties
 
-val Scalaversion = "2.12.1"
+val Scalaversion = "2.12.2"
 val Scalatraversion = "2.5.1-NDLA-3"
 val ScalaLoggingVersion = "3.5.0"
 val Log4JVersion = "2.7"
@@ -35,7 +35,7 @@ lazy val book_api = (project in file(".")).
     javacOptions ++= Seq("-source", "1.8", "-target", "1.8"),
     scalacOptions := Seq("-target:jvm-1.8"),
     libraryDependencies ++= Seq(
-      "gdl" %% "network" % "0.9",
+      "gdl" %% "network" % "0.10",
       "gdl" %% "language" % "0.2",
       "com.typesafe.scala-logging" %% "scala-logging" % ScalaLoggingVersion,
       "org.apache.logging.log4j" % "log4j-api" % Log4JVersion,

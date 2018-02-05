@@ -20,6 +20,8 @@ trait TranslationRepository {
   this: ContributorRepository =>
   val translationRepository: TranslationRepository
 
+  val countAllBeforeLimiting = sqls"count(*) over ()"
+
   class TranslationRepository {
     private val (t, ch, ea, ctb, p, cat) = (
       Translation.syntax,
@@ -54,43 +56,36 @@ trait TranslationRepository {
       val limit = pageSize.max(1)
       val offset = (page.max(1) - 1) * pageSize
 
-      val results = select(t.result.bookId)
+      val result =
+        select(countAllBeforeLimiting, t.result.bookId)
         .from(Translation as t)
         .where.eq(t.language, language.toString)
         .and.eq(t.publishingStatus, publishingStatus.toString)
         .append(getSorting(sortDef))
         .limit(limit).offset(offset)
         .toSQL
-        .map(_.long(1)).list().apply()
+        .map(row => (row.long(1), row.long(2))).list().apply()
 
-      SearchResult[Long](results.length, page, pageSize, language, results)
+      SearchResult[Long](result.map(_._1).headOption.getOrElse(0), page, pageSize, language, result.map(_._2))
     }
 
     def bookIdsWithLanguageAndLevelAndStatus(language: LanguageTag, readingLevel: Option[String], publishingStatus: PublishingStatus.Value, pageSize: Int, page: Int, sortDef: Sort.Value)(implicit session: DBSession = ReadOnlyAutoSession): SearchResult[Long] = {
       val limit = pageSize.max(1)
       val offset = (page.max(1) - 1) * pageSize
 
-      val num_matching = select(sqls.count)
+      val result = select(countAllBeforeLimiting, t.result.bookId)
         .from(Translation as t)
         .where
         .eq(t.language, language.toString)
         .and.eq(t.publishingStatus, publishingStatus.toString)
-        .and(
-          sqls.toAndConditionOpt(readingLevel.map(l => sqls.eq(t.readingLevel, l))))
-        .toSQL.map(_.long(1)).single().apply()
-
-      val results = select(t.result.bookId)
-        .from(Translation as t)
-        .where
-        .eq(t.language, language.toString)
         .and.eq(t.publishingStatus, publishingStatus.toString)
         .and(
           sqls.toAndConditionOpt(readingLevel.map(l => sqls.eq(t.readingLevel, l))))
         .append(getSorting(sortDef))
         .limit(limit).offset(offset).toSQL
-        .map(_.long(1)).list().apply()
+        .map(row => (row.long(1), row.long(2))).list().apply()
 
-      SearchResult[Long](num_matching.getOrElse(0), page, pageSize, language, results)
+      SearchResult[Long](result.map(_._1).headOption.getOrElse(0), page, pageSize, language, result.map(_._2))
     }
 
     def forBookIdAndLanguage(bookId: Long, language: LanguageTag)(implicit session: DBSession = ReadOnlyAutoSession): Option[Translation] = {

@@ -16,19 +16,24 @@ import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.BookApiProperties
 import no.gdl.bookapi.BookApiProperties.{OpdsLanguageParam, OpdsLevelParam}
 import no.gdl.bookapi.model._
-import no.gdl.bookapi.model.api.{Facet, FeedCategory, FeedEntry}
-import no.gdl.bookapi.model.domain.{PublishingStatus, Sort}
+import no.gdl.bookapi.model.api.{Facet, FeedCategory, FeedEntry, SearchResult}
+import no.gdl.bookapi.model.domain.{PublishingStatus, Paging, Sort}
 import no.gdl.bookapi.repository.{FeedRepository, TranslationRepository}
+
+import scala.util.Try
 
 trait FeedService {
   this: FeedRepository with TranslationRepository with ReadService with ConverterService =>
   val feedService: FeedService
 
+  sealed trait PagingStatus
+  case class OnlyOnePage(currentPaging: Paging) extends PagingStatus
+  case class MoreAhead(currentPaging: Paging, lastPage: Int) extends PagingStatus
+  case class MoreBefore(currentPaging: Paging) extends PagingStatus
+  case class MoreInBothDirections(currentPaging: Paging, lastPage: Int) extends PagingStatus
+
   class FeedService extends LazyLogging {
     implicit val localDateOrdering: Ordering[LocalDate] = Ordering.by(_.toEpochDay)
-
-    val page = 1
-    val pageSize = 10000 //TODO in #94: Create partial opds feed entries, to solve paging
 
     def feedForUrl(url: String, language: LanguageTag, feedUpdated: Option[LocalDate], titleArgs: Seq[String], books: => Seq[FeedEntry]): Option[api.Feed] = {
       val updated = feedUpdated match {
@@ -36,7 +41,7 @@ trait FeedService {
         case None => books.sortBy(_.book.dateArrived).reverse.headOption.map(_.book.dateArrived).getOrElse(LocalDate.now())
       }
 
-      val facets = facetsForLanguages(language) ++ facetsForReadingLevels(language, url)
+      val facets = facetsForLanguages(language) ++ facetsForSelections(language, url)
 
       feedRepository.forUrl(url.replace(BookApiProperties.OpdsPath,"")).map(feedDefinition => {
         api.Feed(
@@ -55,7 +60,7 @@ trait FeedService {
     }
 
     def facetsForLanguages(currentLanguage: LanguageTag): Seq[Facet] = {
-      readService.listAvailableLanguagesAsLanguageTags.map(lang => Facet(
+      readService.listAvailableLanguagesAsLanguageTags.sortBy(_.toString).map(lang => Facet(
         href = s"${
           BookApiProperties.CloudFrontOpds}${BookApiProperties.OpdsNewUrl.url
           .replace(BookApiProperties.OpdsLanguageParam, lang.toString)}",
@@ -64,17 +69,27 @@ trait FeedService {
         isActive = lang == currentLanguage))
     }
 
-    def facetsForReadingLevels(currentLanguage: LanguageTag, url: String): Seq[Facet] = {
-      readService.listAvailableLevelsForLanguage(Some(currentLanguage)).map(readingLevel =>
-        Facet(
-          href = s"${
-            BookApiProperties.CloudFrontOpds}${BookApiProperties.OpdsLevelUrl.url
-            .replace(BookApiProperties.OpdsLanguageParam, currentLanguage.toString)
-            .replace(BookApiProperties.OpdsLevelParam, readingLevel)}",
-          title = s"Level $readingLevel",
-          group = "Reading level",
-          isActive = url.endsWith(s"level$readingLevel.xml"))
-      )
+    def facetsForSelections(currentLanguage: LanguageTag, url: String): Seq[Facet] = {
+      val group = "Selection"
+      (Facet(
+        href = s"${
+          BookApiProperties.CloudFrontOpds}${BookApiProperties.OpdsNewUrl.url
+          .replace(BookApiProperties.OpdsLanguageParam, currentLanguage.toString)}",
+        title = s"New arrivals",
+        group = group,
+        isActive = url.endsWith("new.xml"))
+        +:
+        readService.listAvailableLevelsForLanguage(Some(currentLanguage))
+          .sortBy(level => Try(level.toInt).getOrElse(0)).map(readingLevel =>
+          Facet(
+            href = s"${
+              BookApiProperties.CloudFrontOpds}${BookApiProperties.OpdsLevelUrl.url
+              .replace(BookApiProperties.OpdsLanguageParam, currentLanguage.toString)
+              .replace(BookApiProperties.OpdsLevelParam, readingLevel)}",
+            title = s"Level $readingLevel",
+            group = group,
+            isActive = url.endsWith(s"level$readingLevel.xml"))
+        ))
     }
 
     def feedsForNavigation(language: LanguageTag): Seq[api.Feed] = {
@@ -84,15 +99,16 @@ trait FeedService {
       val justArrived = feedRepository.forUrl(justArrivedPath(language)).map(definition =>
         api.Feed(
           api.FeedDefinition(
-            definition.id.get,
-            definition.revision.get,
-            s"${BookApiProperties.CloudFrontOpds}${definition.url}",
-            definition.uuid),
-          Messages(definition.titleKey),
-          definition.descriptionKey.map(Messages(_)),
-          Some("http://opds-spec.org/sort/new"),
-          justArrivedUpdated, Seq(),
-          Seq.empty))
+            id = definition.id.get,
+            revision = definition.revision.get,
+            url = s"${BookApiProperties.CloudFrontOpds}${definition.url}",
+            uuid = definition.uuid),
+          title = Messages(definition.titleKey),
+          description = definition.descriptionKey.map(Messages(_)),
+          rel = Some("http://opds-spec.org/sort/new"),
+          updated = justArrivedUpdated,
+          content = Seq.empty,
+          facets = Seq.empty))
 
 
       val levels: Seq[api.Feed] = readService.listAvailableLevelsForLanguage(Some(language))
@@ -103,46 +119,69 @@ trait FeedService {
           feedRepository.forUrl(url).map(definition =>
             api.Feed(
               api.FeedDefinition(
-                definition.id.get,
-                definition.revision.get,
-                s"${BookApiProperties.CloudFrontOpds}${definition.url}",
-                definition.uuid),
-              Messages(definition.titleKey, level),
-              definition.descriptionKey.map(Messages(_)),
-              None,
-              levelUpdated, Seq(),
-              Seq.empty))
+                id = definition.id.get,
+                revision = definition.revision.get,
+                url = s"${BookApiProperties.CloudFrontOpds}${definition.url}",
+                uuid = definition.uuid),
+              title = Messages(definition.titleKey, level),
+              description = definition.descriptionKey.map(Messages(_)),
+              rel = None,
+              updated = levelUpdated,
+              content = Seq.empty,
+              facets = Seq.empty))
         })
 
       Seq(justArrived).flatten ++ levels
     }
 
-    def allEntries(language: LanguageTag): Seq[FeedEntry] = {
-      val justArrived = newEntries(language).map(addJustArrivedCategory(_, language))
+    def allEntries(languagTag: LanguageTag, paging: Paging): (PagingStatus, Seq[FeedEntry]) = {
+      val justArrived = newEntries(languagTag).map(addJustArrivedCategory(_, languagTag))
 
-      val allBooks = readService.withLanguageAndStatus(
-        language = language,
+      val searchResult =
+        readService.withLanguageAndStatus(
+        language = languagTag,
         status = PublishingStatus.PUBLISHED,
-        pageSize = pageSize,
-        page = page,
-        sort = Sort.ByArrivalDateDesc
-      ).results.map(book => FeedEntry(book)).map(addLevelCategory(_, language)).sortBy(_.book.readingLevel)
+        pageSize = paging.pageSize,
+        page = paging.page,
+        sort = Sort.ByArrivalDateDesc)
 
-      justArrived ++ allBooks
+      val allBooks = searchResult.results.map(book => FeedEntry(book)).map(addLevelCategory(_, languagTag)).sortBy(_.book.readingLevel)
+
+      (searchResultToPagingStatus(searchResult, paging), justArrived ++ allBooks)
     }
 
-    def newEntries(lang: LanguageTag): Seq[FeedEntry] = readService.withLanguageAndStatus(
-      lang, PublishingStatus.PUBLISHED, BookApiProperties.OpdsJustArrivedLimit, 1, Sort.ByArrivalDateDesc).results.map(FeedEntry(_))
+    def newEntries(lang: LanguageTag): Seq[FeedEntry] = {
+      val searchResult = readService.withLanguageAndStatus(
+        lang, PublishingStatus.PUBLISHED, BookApiProperties.OpdsJustArrivedLimit, 1, Sort.ByArrivalDateDesc)
+      searchResult.results.map(FeedEntry(_))
+    }
 
-    def entriesForLanguageAndLevel(language: LanguageTag, level: String): Seq[FeedEntry] = {
-      readService.withLanguageAndLevelAndStatus(
+    def entriesForLanguageAndLevel(language: LanguageTag, level: String, paging: Paging): (PagingStatus, Seq[FeedEntry]) = {
+      val searchResult =
+        readService.withLanguageAndLevelAndStatus(
         language = language,
         readingLevel = Some(level),
-        status = PublishingStatus.PUBLISHED,
-        pageSize = pageSize,
-        page = page,
-        sort = Sort.ByTitleAsc
-      ).results.map(book => api.FeedEntry(book))
+        pageSize = paging.pageSize,
+        page = paging.page,
+        sort = Sort.ByTitleAsc,
+        status = PublishingStatus.PUBLISHED
+      )
+      (searchResultToPagingStatus(searchResult, paging), searchResult.results.map(book => api.FeedEntry(book)))
+    }
+
+    def searchResultToPagingStatus(searchResult: SearchResult, paging: Paging): PagingStatus = {
+      if (searchResult.totalCount > paging.pageSize) {
+        val lastPage = Math.round(Math.ceil(searchResult.totalCount.toFloat / paging.pageSize)).toInt
+        if (paging.page == lastPage) {
+          MoreBefore(currentPaging = paging)
+        } else if (paging.page > 1) {
+          MoreInBothDirections(currentPaging = paging, lastPage = lastPage)
+        } else {
+          MoreAhead(currentPaging = paging, lastPage = lastPage)
+        }
+      } else {
+        OnlyOnePage(currentPaging = paging)
+      }
     }
 
     def addFeaturedCategory(feedEntry: FeedEntry, language: LanguageTag): FeedEntry = {
