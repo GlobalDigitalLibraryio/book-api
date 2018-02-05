@@ -8,8 +8,6 @@
 
 package no.gdl.bookapi
 
-import java.util.Collections.SingletonSet
-
 import com.typesafe.scalalogging.LazyLogging
 import io.digitallibrary.network.Domains
 import io.digitallibrary.network.secrets.PropertyKeys
@@ -85,20 +83,13 @@ object BookApiProperties extends LazyLogging {
   lazy val MetaSchema = prop(PropertyKeys.MetaSchemaKey)
   val MetaInitialConnections = 3
   val MetaMaxConnections = 20
-
   val CorrelationIdKey = "correlationID"
   val CorrelationIdHeader = "X-Correlation-ID"
-
 
   lazy val CrowdinProjects: Seq[CrowdinProject] = readCrowdinProjects()
 
   //In format lang;projectid;projectkey, lang:projectid;projectkey
   def readCrowdinProjects(): Seq[CrowdinProject] = {
-    secrets.keys.foreach(key => {
-      val secretLength = secrets.getOrElse(key, "").length
-      logger.info(s"SECRETKEY: $key, SECRETLENGTH: $secretLength")
-    })
-
     prop(CrowdinProjectsKey)
       .split(",")
       .map(projectString => {
@@ -111,7 +102,6 @@ object BookApiProperties extends LazyLogging {
      case Success(values) => values
      case Failure(exception) => throw new RuntimeException(s"Unable to load remote secrets from $SecretsFile", exception)
    }
-
 
   def booleanProp(key: String) = prop(key).toBoolean
 
