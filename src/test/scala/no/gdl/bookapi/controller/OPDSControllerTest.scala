@@ -11,6 +11,7 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 import no.gdl.bookapi.model.api.{Feed, FeedEntry}
+import no.gdl.bookapi.model.domain.Paging
 import no.gdl.bookapi.{TestData, TestEnvironment, UnitSuite}
 
 
@@ -65,10 +66,14 @@ class OPDSControllerTest extends UnitSuite with TestEnvironment {
         <title>{feed.title}</title>
         <updated>{feed.updated.atStartOfDay(ZoneId.systemDefault()).format(formatter)}</updated>
         <link href={feed.feedDefinition.url} rel="self"/>
+        <link href="some-url?page-size=10&amp;page=1" rel="first"/>
+        <link href="some-url?page-size=10&amp;page=2" rel="previous"/>
+        <link href="some-url?page-size=10&amp;page=4" rel="next"/>
+        <link href="some-url?page-size=10&amp;page=10" rel="last"/>
 
+        <link rel="http://opds-spec.org/facet" href="https://opds.test.digitallibrary.io/ben/new.xml" title="Bengali" opds:facetGroup="Languages" opds:activeFacet="false"/>
         <link rel="http://opds-spec.org/facet" href="https://opds.test.digitallibrary.io/eng/new.xml" title="English" opds:facetGroup="Languages" opds:activeFacet="true"/>
         <link rel="http://opds-spec.org/facet" href="https://opds.test.digitallibrary.io/hin/new.xml" title="Hindu" opds:facetGroup="Languages" opds:activeFacet="false"/>
-        <link rel="http://opds-spec.org/facet" href="https://opds.test.digitallibrary.io/ben/new.xml" title="Bengali" opds:facetGroup="Languages" opds:activeFacet="false"/>
 
         <link rel="http://opds-spec.org/facet" href="https://opds.test.digitallibrary.io/eng/new.xml" title="New arrivals" opds:facetGroup="Selection" opds:activeFacet="false"/>
         <link rel="http://opds-spec.org/facet" href="https://opds.test.digitallibrary.io/eng/level1.xml" title="Level 1" opds:facetGroup="Selection" opds:activeFacet="false"/>
@@ -110,11 +115,56 @@ class OPDSControllerTest extends UnitSuite with TestEnvironment {
       </entry>
       </feed>
 
-    val generated = controller.render(feed)
+    val generated = controller.render(feed, MoreInBothDirections(Paging(page = 3, pageSize = 10), lastPage = 10))
     val toCheck = generated.mkString.replaceAll("\\s", "")
     val expected = expectedXml.mkString.replaceAll("\\s", "")
 
     toCheck should equal (expected)
   }
+
+  test("that only first, next and last links are present and correct if there is more content ahead") {
+    val entry1: FeedEntry = TestData.Api.DefaultFeedEntry
+    val entry2: FeedEntry = TestData.Api.DefaultFeedEntry.copy(categories = Seq(TestData.Api.DefaultFeedCategory))
+    val feed = TestData.Api.DefaultFeed.copy(content = Seq(entry1, entry2))
+    val generated = controller.render(feed, MoreAhead(Paging(page = 2, pageSize = 100), lastPage = 11))
+    generated.mkString.contains("rel=\"previous\"") should be (false)
+    generated.mkString.contains("<link href=\"some-url?page-size=100&amp;page=1\" rel=\"first\"/>") should be (true)
+    generated.mkString.contains("<link href=\"some-url?page-size=100&amp;page=3\" rel=\"next\"/>") should be (true)
+    generated.mkString.contains("<link href=\"some-url?page-size=100&amp;page=11\" rel=\"last\"/>") should be (true)
+  }
+
+  test("that only first and previous links are present and correct if there is more content before") {
+    val entry1: FeedEntry = TestData.Api.DefaultFeedEntry
+    val entry2: FeedEntry = TestData.Api.DefaultFeedEntry.copy(categories = Seq(TestData.Api.DefaultFeedCategory))
+    val feed = TestData.Api.DefaultFeed.copy(content = Seq(entry1, entry2))
+    val generated = controller.render(feed, MoreBefore(Paging(page = 3, pageSize = 100)))
+    generated.mkString.contains("rel=\"next\"") should be (false)
+    generated.mkString.contains("rel=\"last\"") should be (false)
+    generated.mkString.contains("<link href=\"some-url?page-size=100&amp;page=1\" rel=\"first\"/>") should be (true)
+    generated.mkString.contains("<link href=\"some-url?page-size=100&amp;page=2\" rel=\"previous\"/>") should be (true)
+  }
+
+  test("that first, previous, next and last links are present and correct if there is more content in both directions") {
+    val entry1: FeedEntry = TestData.Api.DefaultFeedEntry
+    val entry2: FeedEntry = TestData.Api.DefaultFeedEntry.copy(categories = Seq(TestData.Api.DefaultFeedCategory))
+    val feed = TestData.Api.DefaultFeed.copy(content = Seq(entry1, entry2))
+    val generated = controller.render(feed, MoreInBothDirections(Paging(page = 3, pageSize = 100), lastPage = 15))
+    generated.mkString.contains("<link href=\"some-url?page-size=100&amp;page=1\" rel=\"first\"/>") should be (true)
+    generated.mkString.contains("<link href=\"some-url?page-size=100&amp;page=2\" rel=\"previous\"/>") should be (true)
+    generated.mkString.contains("<link href=\"some-url?page-size=100&amp;page=4\" rel=\"next\"/>") should be (true)
+    generated.mkString.contains("<link href=\"some-url?page-size=100&amp;page=15\" rel=\"last\"/>") should be (true)
+  }
+
+  test("that only previous and next links are present when there is only 1 page to show") {
+    val entry1: FeedEntry = TestData.Api.DefaultFeedEntry
+    val entry2: FeedEntry = TestData.Api.DefaultFeedEntry.copy(categories = Seq(TestData.Api.DefaultFeedCategory))
+    val feed = TestData.Api.DefaultFeed.copy(content = Seq(entry1, entry2))
+    val generated = controller.render(feed, OnlyOnePage(Paging(page = 1, pageSize = 10)))
+    generated.mkString.contains("rel=\"previous\"") should be (false)
+    generated.mkString.contains("rel=\"next\"") should be (false)
+    generated.mkString.contains("<link href=\"some-url?page-size=10&amp;page=1\" rel=\"first\"/>") should be (true)
+    generated.mkString.contains("<link href=\"some-url?page-size=10&amp;page=1\" rel=\"last\"/>") should be (true)
+  }
+
 
 }
