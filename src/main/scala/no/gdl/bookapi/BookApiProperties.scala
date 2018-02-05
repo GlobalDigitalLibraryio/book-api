@@ -93,7 +93,7 @@ object BookApiProperties extends LazyLogging {
   def readCrowdinProjects(): Seq[CrowdinProject] = {
     secrets.keys.foreach(key => {
       val secretLength = secrets.getOrElse(key, "").length
-      logger.info(s"SECRET-KEY: $key, SECRET-LENGTH: $secretLength")
+      logger.info(s"SECRETKEY: $key, SECRETLENGTH: $secretLength")
     })
 
     prop(CrowdinProjectsKey)
