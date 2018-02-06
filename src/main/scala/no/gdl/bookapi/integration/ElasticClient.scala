@@ -7,9 +7,10 @@
 
 package no.gdl.bookapi.integration
 
+import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
 import com.amazonaws.regions.{Region, Regions}
 import com.sksamuel.elastic4s.ElasticsearchClientUri
-import com.sksamuel.elastic4s.aws.Aws4ElasticClient
+import com.sksamuel.elastic4s.aws.{Aws4ElasticClient, Aws4ElasticConfig}
 import com.sksamuel.elastic4s.http.{HttpClient, HttpExecutable, RequestSuccess}
 import no.gdl.bookapi.BookApiProperties
 import no.gdl.bookapi.model.api.GdlSearchException
@@ -52,14 +53,9 @@ object EsClientFactory {
 
   private def signingClient(searchServer: String): HttpClient = {
     val awsRegion = Option(Regions.getCurrentRegion).getOrElse(Region.getRegion(Regions.EU_CENTRAL_1)).toString
-    setEnv("AWS_DEFAULT_REGION", awsRegion)
-    Aws4ElasticClient(searchServer)
-  }
+    val provider = new DefaultAWSCredentialsProviderChain
+    val config = Aws4ElasticConfig(searchServer, provider.getCredentials.getAWSAccessKeyId, provider.getCredentials.getAWSSecretKey, awsRegion)
 
-  private def setEnv(key: String, value: String) = {
-    val field = System.getenv().getClass.getDeclaredField("m")
-    field.setAccessible(true)
-    val map = field.get(System.getenv()).asInstanceOf[java.util.Map[java.lang.String, java.lang.String]]
-    map.put(key, value)
+    Aws4ElasticClient(config)
   }
 }
