@@ -44,33 +44,6 @@ trait ReadService {
     def listAvailableLevelsForLanguage(lang: Option[LanguageTag] = None): Seq[String] =
       translationRepository.allAvailableLevels(lang)
 
-
-    def withLanguageAndLevel(language: LanguageTag, readingLevel: Option[String], pageSize: Int, page: Int, sort: Sort.Value): api.SearchResult = {
-      val searchResult = translationRepository
-        .bookIdsWithLanguageAndLevel(language, readingLevel, pageSize, page, sort)
-
-      val books = searchResult.results.flatMap(id => withIdAndLanguage(id, language))
-
-      api.SearchResult(
-        searchResult.totalCount,
-        searchResult.page,
-        searchResult.pageSize,
-        converterService.toApiLanguage(language),
-        books)
-    }
-
-    def withLanguage(language: LanguageTag, pageSize: Int, page: Int, sort: Sort.Value): api.SearchResult = {
-      val searchResult = translationRepository.bookIdsWithLanguage(language, pageSize, page, sort)
-      val books = searchResult.results.flatMap(id => withIdAndLanguage(id, language))
-
-      api.SearchResult(
-        searchResult.totalCount,
-        searchResult.page,
-        searchResult.pageSize,
-        converterService.toApiLanguage(searchResult.language),
-        books)
-    }
-
     def withIdAndLanguage(bookId: Long, language: LanguageTag): Option[api.Book] = {
       val translation = translationRepository.forBookIdAndLanguage(bookId, language)
       val availableLanguages: Seq[LanguageTag] = translationRepository.languagesFor(bookId)

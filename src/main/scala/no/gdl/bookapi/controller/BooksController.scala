@@ -12,13 +12,14 @@ import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.BookApiProperties.DefaultLanguage
 import no.gdl.bookapi.model.api
 import no.gdl.bookapi.model.api.{Error, ValidationError}
-import no.gdl.bookapi.model.domain.Sort
+import no.gdl.bookapi.model.domain.{Paging, Sort}
+import no.gdl.bookapi.service.search.SearchService
 import no.gdl.bookapi.service.{ConverterService, ReadService}
 import org.scalatra._
 import org.scalatra.swagger.{ResponseMessage, Swagger, SwaggerSupport}
 
 trait BooksController {
-  this: ReadService with ConverterService =>
+  this: ReadService with ConverterService with SearchService =>
   val booksController: BooksController
 
   class BooksController(implicit val swagger: Swagger) extends GdlController with SwaggerSupport {
@@ -116,7 +117,7 @@ trait BooksController {
       val sort = Sort.valueOf(paramOrNone("sort")).getOrElse(Sort.ByIdAsc)
       val language = LanguageTag(DefaultLanguage)
 
-      readService.withLanguageAndLevel(language, readingLevel, pageSize, page, sort)
+      searchService.searchWithLevel(language, readingLevel, Paging(page, pageSize), sort)
     }
 
     get("/:lang/?", operation(getAllBooksInLang)) {
@@ -125,8 +126,7 @@ trait BooksController {
       val readingLevel = params.get("reading-level")
       val sort = Sort.valueOf(paramOrNone("sort")).getOrElse(Sort.ByIdAsc)
 
-      readService.withLanguageAndLevel(LanguageTag(params("lang")), readingLevel, pageSize, page, sort)
-
+      searchService.searchWithLevel(LanguageTag(params("lang")), readingLevel, Paging(page, pageSize), sort)
     }
 
     get("/:lang/:id/?", operation(getBook)) {
@@ -172,7 +172,7 @@ trait BooksController {
       val sort = Sort.valueOf(paramOrNone("sort")).getOrElse(Sort.ByIdAsc)
       val lang = LanguageTag(DefaultLanguage)
 
-      readService.withLanguageAndLevel(lang, None, pageSize, page, sort)
+      searchService.searchWithLevel(lang, None, Paging(page, pageSize), sort)
     }
 
     get("/mine/:id/?", operation(getMyBook)) {
