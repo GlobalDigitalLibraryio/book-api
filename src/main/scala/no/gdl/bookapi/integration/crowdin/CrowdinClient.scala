@@ -36,12 +36,13 @@ class CrowdinClient(fromLanguage: String, projectIdentifier: String, projectKey:
 
 
   private def urlFor(action: String) = s"$CrowdinBaseUrl/project/$projectIdentifier/$action?key=$projectKey&json"
+  private def exportFileUrl(filename: String, language: String) = s"${urlFor("export-file")}&file=$filename&language=$language"
   private val ProjectDetailsUrl = urlFor("info")
   private val EditProjectUrl = urlFor("edit-project")
   private val AddDirectoryUrl = urlFor("add-directory")
   private val DeleteDirectoryUrl = urlFor("delete-directory")
   private val AddFileUrl = urlFor("add-file")
-  private val ExportFileUrl = urlFor("export-file")
+
 
   def getProjectIdentifier: String = projectIdentifier
 
@@ -63,7 +64,7 @@ class CrowdinClient(fromLanguage: String, projectIdentifier: String, projectKey:
 
 
   def fetchTranslatedMetaData(inTranslationFile: InTranslationFile, language: String): Try[BookMetaData] = {
-    val url = s"$ExportFileUrl&file=${inTranslationFile.filename}&language=$language"
+    val url = exportFileUrl(inTranslationFile.filename, language)
 
     gdlClient.doRequestAsString(Http(url).copy(compress = false)).flatMap(response => {
       gdlClient.parseResponse[BookMetaData](response).map(bookMetaData =>  {
@@ -105,7 +106,7 @@ class CrowdinClient(fromLanguage: String, projectIdentifier: String, projectKey:
   }
 
   def fetchTranslatedChapter(inTranslationFile: InTranslationFile, language: String): Try[TranslatedChapter] = {
-    val url = s"$ExportFileUrl&file=${inTranslationFile.filename}&language=$language"
+    val url = exportFileUrl(inTranslationFile.filename, language)
 
     gdlClient.doRequestAsString(Http(url).copy(compress = false)).map(response => {
       TranslatedChapter(inTranslationFile.originalChapterId.get, inTranslationFile.newChapterId, response.body, response.header("ETag"))

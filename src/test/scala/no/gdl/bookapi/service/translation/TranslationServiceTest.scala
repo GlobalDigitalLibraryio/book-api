@@ -156,55 +156,54 @@ class TranslationServiceTest extends UnitSuite with TestEnvironment {
     result should be a 'Success
   }
 
-  test("that fetchTranslationsIfAllTranslated returns Success when not all translated") {
-    when(translationDbService.filesForTranslation(any[Long])).thenReturn(Seq(
+  test("that fetchTranslationsIfAllTranslated returns Failure when not all translated") {
+    val translationFiles = Seq(
       TestData.Domain.DefaultInTranslationFile.copy(id = Some(1), translationStatus = TranslationStatus.IN_PROGRESS),
       TestData.Domain.DefaultInTranslationFile.copy(id = Some(2), translationStatus = TranslationStatus.TRANSLATED)
-    ))
+    )
 
-    val result = service.fetchTranslationsIfAllTranslated(TestData.Domain.DefaultInTranslationFile)
-    result should be a 'Success
+    val result = service.fetchTranslations(TestData.Domain.DefaultInTranslationFile, translationFiles)
+    result should be a 'Failure
+    result.failed.get.getMessage contains "Not all files for translation are finished translating" should be (true)
   }
 
   test("that fetchTranslationsIfAllTranslated returns Failure when InTranslation not found") {
-    when(translationDbService.filesForTranslation(any[Long])).thenReturn(Seq(
-      TestData.Domain.DefaultInTranslationFile.copy(id = Some(1), translationStatus = TranslationStatus.TRANSLATED)))
-
+    val translationFiles = Seq(TestData.Domain.DefaultInTranslationFile.copy(id = Some(1), translationStatus = TranslationStatus.TRANSLATED))
     when(translationDbService.translationWithId(any[Long])).thenReturn(None)
 
-    val result = service.fetchTranslationsIfAllTranslated(TestData.Domain.DefaultInTranslationFile)
+    val result = service.fetchTranslations(TestData.Domain.DefaultInTranslationFile, translationFiles)
     result should be a 'Failure
     result.failed.get.getMessage contains "InTranslation with id" should be (true)
   }
 
   test("that fetchTranslationsIfAllTranslated returns Failure when original cannot be found") {
-    when(translationDbService.filesForTranslation(any[Long])).thenReturn(Seq(
-      TestData.Domain.DefaultInTranslationFile.copy(id = Some(1), translationStatus = TranslationStatus.TRANSLATED)))
+    val translationFiles = Seq(
+      TestData.Domain.DefaultInTranslationFile.copy(id = Some(1), translationStatus = TranslationStatus.TRANSLATED))
 
     when(translationDbService.translationWithId(any[Long])).thenReturn(Some(TestData.Domain.DefaultinTranslation))
     when(readService.withIdAndLanguage(any[Long], any[LanguageTag])).thenReturn(None)
 
-    val result = service.fetchTranslationsIfAllTranslated(TestData.Domain.DefaultInTranslationFile)
+    val result = service.fetchTranslations(TestData.Domain.DefaultInTranslationFile, translationFiles)
     result should be a 'Failure
-    result.failed.get.getMessage contains "Original translation with id" should be (true)
+    result.failed.get.getMessage contains "The original book with id" should be (true)
   }
 
   test("that fetchTranslationsIfAllTranslated returns Failure when missing metadata") {
-    when(translationDbService.filesForTranslation(any[Long])).thenReturn(Seq(
-      TestData.Domain.DefaultInTranslationFile.copy(id = Some(1), translationStatus = TranslationStatus.TRANSLATED, fileType = FileType.CONTENT)))
+    val translationFiles = Seq(
+      TestData.Domain.DefaultInTranslationFile.copy(id = Some(1), translationStatus = TranslationStatus.TRANSLATED, fileType = FileType.CONTENT))
 
     when(translationDbService.translationWithId(any[Long])).thenReturn(Some(TestData.Domain.DefaultinTranslation))
     when(readService.withIdAndLanguage(any[Long], any[LanguageTag])).thenReturn(Some(TestData.Api.DefaultBook))
     when(crowdinClientBuilder.forSourceLanguage(any[LanguageTag])).thenReturn(Success(mock[CrowdinClient]))
 
-    val result = service.fetchTranslationsIfAllTranslated(TestData.Domain.DefaultInTranslationFile)
+    val result = service.fetchTranslations(TestData.Domain.DefaultInTranslationFile, translationFiles)
     result should be a 'Failure
     result.failed.get.getMessage contains "No metadata for translation with id" should be (true)
   }
 
   test("that fetchTranslationsIfAllTranslated returns Failure when metadata cannot be fetched from crowdin") {
-    when(translationDbService.filesForTranslation(any[Long])).thenReturn(Seq(
-      TestData.Domain.DefaultInTranslationFile.copy(id = Some(1), translationStatus = TranslationStatus.TRANSLATED, fileType = FileType.METADATA)))
+    val translationFiles = Seq(
+      TestData.Domain.DefaultInTranslationFile.copy(id = Some(1), translationStatus = TranslationStatus.TRANSLATED, fileType = FileType.METADATA))
 
     when(translationDbService.translationWithId(any[Long])).thenReturn(Some(TestData.Domain.DefaultinTranslation))
     when(readService.withIdAndLanguage(any[Long], any[LanguageTag])).thenReturn(Some(TestData.Api.DefaultBook))
@@ -213,16 +212,16 @@ class TranslationServiceTest extends UnitSuite with TestEnvironment {
     when(crowdinClientBuilder.forSourceLanguage(any[LanguageTag])).thenReturn(Success(crowdinClientMock))
     when(crowdinClientMock.fetchTranslatedMetaData(any[InTranslationFile], any[String])).thenReturn(Failure(new RuntimeException("Provoked error from Crowdin")))
 
-    val result = service.fetchTranslationsIfAllTranslated(TestData.Domain.DefaultInTranslationFile)
+    val result = service.fetchTranslations(TestData.Domain.DefaultInTranslationFile, translationFiles)
     result should be a 'Failure
     result.failed.get.getMessage should equal ("Provoked error from Crowdin")
   }
 
   test("that fetchTranslationsIfAllTranslated returns Failure when a chapter cannot be fetched from crowdin") {
-    when(translationDbService.filesForTranslation(any[Long])).thenReturn(Seq(
+    val translationFiles = Seq(
       TestData.Domain.DefaultInTranslationFile.copy(id = Some(1), translationStatus = TranslationStatus.TRANSLATED, fileType = FileType.METADATA),
       TestData.Domain.DefaultInTranslationFile.copy(id = Some(2), translationStatus = TranslationStatus.TRANSLATED, fileType = FileType.CONTENT)
-    ))
+    )
 
     when(translationDbService.translationWithId(any[Long])).thenReturn(Some(TestData.Domain.DefaultinTranslation))
     when(readService.withIdAndLanguage(any[Long], any[LanguageTag])).thenReturn(Some(TestData.Api.DefaultBook))
@@ -230,11 +229,11 @@ class TranslationServiceTest extends UnitSuite with TestEnvironment {
     val crowdinClientMock = mock[CrowdinClient]
     when(crowdinClientBuilder.forSourceLanguage(any[LanguageTag])).thenReturn(Success(crowdinClientMock))
     when(crowdinClientMock.fetchTranslatedMetaData(any[InTranslationFile], any[String])).thenReturn(Success(TestData.Crowdin.DefaultBookMetaData))
-    when(crowdinClientMock.fetchTranslatedChapter(any[InTranslationFile], any[String])).thenReturn(Failure(new RuntimeException("Provoked chapter error from Crowdin")))
+    when(crowdinClientMock.fetchTranslatedChapter(any[InTranslationFile], any[String])).thenReturn(Failure(new RuntimeException("Any error")))
 
-    val result = service.fetchTranslationsIfAllTranslated(TestData.Domain.DefaultInTranslationFile)
+    val result = service.fetchTranslations(TestData.Domain.DefaultInTranslationFile, translationFiles)
     result should be a 'Failure
-    result.failed.get.getMessage should equal ("Provoked chapter error from Crowdin")
+    result.failed.get.getMessage should equal ("Received Crowdin Exceptions")
   }
 
   test("that fetchUpdatesFor returns Failure when book has not been translated yet") {

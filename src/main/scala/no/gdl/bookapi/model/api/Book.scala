@@ -100,7 +100,7 @@ case class SearchResult(@(ApiModelProperty@field)(description = "The total numbe
                         @(ApiModelProperty@field)(description = "The chosen language") language: Language,
                         @(ApiModelProperty@field)(description = "The results") results: Seq[Book])
 
-@ApiModel(description = "Information about a book that is being translated by user")
+@ApiModel(description = "Information about a book that is being translated by a user")
 case class MyBook(@(ApiModelProperty@field)(description = "The id of the book") id: Long,
                   @(ApiModelProperty@field)(description = "The revision of the book") revision: Long,
                   @(ApiModelProperty@field)(description = "The title of the book") title: String,

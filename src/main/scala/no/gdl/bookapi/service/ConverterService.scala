@@ -185,13 +185,13 @@ trait ConverterService {
 
     def toApiMyBook(inTranslation: InTranslation, translation: domain.Translation, availableLanguages: Seq[LanguageTag], book: api.Book): api.MyBook = {
       api.MyBook(
-        book.id,
-        book.revision,
-        translation.title,
-        translation.translatedFrom.map(toApiLanguage),
-        toApiLanguage(translation.language),
-        book.publisher,
-        toApiCoverPhoto(translation.coverphoto),
+        id = book.id,
+        revision = book.revision,
+        title = translation.title,
+        translatedFrom = translation.translatedFrom.map(toApiLanguage),
+        translatedTo = toApiLanguage(translation.language),
+        publisher = book.publisher,
+        coverPhoto = toApiCoverPhoto(translation.coverphoto),
         synchronizeUrl = s"${BookApiProperties.Domain}${BookApiProperties.TranslationsPath}/synchronized/${inTranslation.id.get}",
         crowdinUrl = CrowdinUtils.crowdinUrlToBook(book, inTranslation.crowdinProjectId, inTranslation.crowdinToLanguage))
     }

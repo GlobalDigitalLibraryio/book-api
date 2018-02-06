@@ -62,14 +62,12 @@ trait ReadService {
 
     def forUserWithLanguage(userId: String, pageSize: Int, page: Int, sort: Sort.Value): Seq[api.MyBook] = {
       val inTranslationForUser = inTranslationRepository.inTranslationForUser(userId)
-      inTranslationForUser.filter(_.newTranslationId.isDefined).flatMap(inTranslation => {
-        translationRepository.withId(inTranslation.newTranslationId.get).flatMap(newTranslation => {
-          val availableLanguages = translationRepository.languagesFor(newTranslation.bookId)
-          withIdAndLanguage(newTranslation.bookId, inTranslation.fromLanguage).map(book => {
-            converterService.toApiMyBook(inTranslation, newTranslation, availableLanguages, book)
-          })
-        })
-      })
+      for {
+        inTranslation <- inTranslationForUser.filter(_.newTranslationId.isDefined)
+        newTranslation <- translationRepository.withId(inTranslation.newTranslationId.get)
+        availableLanguages = translationRepository.languagesFor(newTranslation.bookId)
+        book <- withIdAndLanguage(newTranslation.bookId, inTranslation.fromLanguage)
+      } yield converterService.toApiMyBook(inTranslation, newTranslation, availableLanguages, book)
     }
 
     def withLanguageAndStatus(language: LanguageTag, status: PublishingStatus.Value, pageSize: Int, page: Int, sort: Sort.Value): api.SearchResult = {

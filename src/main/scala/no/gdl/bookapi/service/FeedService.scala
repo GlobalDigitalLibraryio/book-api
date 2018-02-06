@@ -134,18 +134,18 @@ trait FeedService {
       Seq(justArrived).flatten ++ levels
     }
 
-    def allEntries(languagTag: LanguageTag, paging: Paging): (PagingStatus, Seq[FeedEntry]) = {
-      val justArrived = newEntries(languagTag).map(addJustArrivedCategory(_, languagTag))
+    def allEntries(languageTag: LanguageTag, paging: Paging): (PagingStatus, Seq[FeedEntry]) = {
+      val justArrived = newEntries(languageTag).map(addJustArrivedCategory(_, languageTag))
 
       val searchResult =
         readService.withLanguageAndStatus(
-        language = languagTag,
+        language = languageTag,
         status = PublishingStatus.PUBLISHED,
         pageSize = paging.pageSize,
         page = paging.page,
         sort = Sort.ByArrivalDateDesc)
 
-      val allBooks = searchResult.results.map(book => FeedEntry(book)).map(addLevelCategory(_, languagTag)).sortBy(_.book.readingLevel)
+      val allBooks = searchResult.results.map(book => FeedEntry(book)).map(addLevelCategory(_, languageTag)).sortBy(_.book.readingLevel)
 
       (searchResultToPagingStatus(searchResult, paging), justArrived ++ allBooks)
     }

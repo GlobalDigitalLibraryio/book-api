@@ -78,7 +78,6 @@ trait TranslationRepository {
         .where
         .eq(t.language, language.toString)
         .and.eq(t.publishingStatus, publishingStatus.toString)
-        .and.eq(t.publishingStatus, publishingStatus.toString)
         .and(
           sqls.toAndConditionOpt(readingLevel.map(l => sqls.eq(t.readingLevel, l))))
         .append(getSorting(sortDef))

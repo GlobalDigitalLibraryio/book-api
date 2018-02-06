@@ -15,7 +15,7 @@ import no.gdl.bookapi.service.translation.{SupportedLanguageService, Translation
 import org.scalatra.{NoContent, NotFound, Ok}
 import org.scalatra.swagger.{ResponseMessage, Swagger, SwaggerSupport}
 
-import scala.util.{Failure, Success}
+import scala.util.{Failure, Success, Try}
 
 trait TranslationsController {
   this: SupportedLanguageService with TranslationService =>
@@ -70,8 +70,14 @@ trait TranslationsController {
       val language = LanguageTag(crowdinLanguage)
       val fileId = params("file_id")
 
-      translationService.updateTranslationStatus(projectIdentifier, language, fileId, TranslationStatus.TRANSLATED).flatMap(inTranslationFile =>
-        translationService.fetchTranslationsIfAllTranslated(inTranslationFile)) match {
+      translationService.updateTranslationStatus(projectIdentifier, language, fileId, TranslationStatus.TRANSLATED).flatMap(inTranslationFile => {
+        val translationFiles = translationService.findAllTranslationFiles(inTranslationFile)
+        if(translationFiles.forall(_.translationStatus == TranslationStatus.TRANSLATED)) {
+          translationService.fetchTranslations(inTranslationFile, translationFiles)
+        } else {
+          Success()
+        }
+      }) match {
         case Success(_) => NoContent()
         case Failure(err) => errorHandler(err)
       }

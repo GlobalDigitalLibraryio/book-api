@@ -55,7 +55,7 @@ trait WriteService {
 
       personRepository.withGdlId(gdlUserId.get) match {
         case Some(person) => Try(personRepository.updatePerson(person.copy(name = personName)))
-        case None => Try(personRepository.add(Person(None, None, personName, gdlUserId)))
+        case None => Try(personRepository.add(Person(id = None, revision = None, name = personName, gdlId = gdlUserId)))
       }
     }
 

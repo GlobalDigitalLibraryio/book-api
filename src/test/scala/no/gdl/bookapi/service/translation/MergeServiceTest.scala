@@ -19,6 +19,7 @@ class MergeServiceTest extends UnitSuite with TestEnvironment {
       |<p>
       | There was a large boulder on the grassy plain. He stumbled and fell down.
       |</p>
+      |<embed data-resource="image" data-resource_id="558"/>
       |""".stripMargin
 
   private val translatedHtml =
@@ -27,6 +28,7 @@ class MergeServiceTest extends UnitSuite with TestEnvironment {
       |<p>
       | Hjorten traff en stor stein på den grønne sletten. Han snublet og falt.
       |</p>
+      |<img src="https://images.test.digitallibrary.io/123.jpg" />
       |""".stripMargin
 
   test("that img-tags are replaced with embed-tags") {
@@ -35,7 +37,11 @@ class MergeServiceTest extends UnitSuite with TestEnvironment {
 
     val newChapter = service.mergeChapter(original, translated)
     val newContentDoc = Jsoup.parseBodyFragment(newChapter.content)
-    newContentDoc.select("embed[data-resource]").size() should be (2)
+    val embedElements = newContentDoc.select("embed[data-resource]")
+    embedElements.size() should be (3)
+    embedElements.get(0).toString should equal ("<embed data-resource=\"image\" data-resource_id=\"556\">")
+    embedElements.get(1).toString should equal ("<embed data-resource=\"image\" data-resource_id=\"557\">")
+    embedElements.get(2).toString should equal ("<embed data-resource=\"image\" data-resource_id=\"558\">")
     newContentDoc.getElementsByTag("img").size() should be (0)
   }
 
@@ -54,7 +60,7 @@ class MergeServiceTest extends UnitSuite with TestEnvironment {
 
     val newChapter = service.mergeChapter(original, translated)
     val newContentDoc = Jsoup.parseBodyFragment(newChapter.content)
-    newContentDoc.select("embed[data-resource]").size() should be (2)
+    newContentDoc.select("embed[data-resource]").size() should be (3)
     newContentDoc.getElementsByTag("img").size() should be (0)
   }
 
