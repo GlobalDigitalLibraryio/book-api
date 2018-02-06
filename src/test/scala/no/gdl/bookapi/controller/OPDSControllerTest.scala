@@ -71,11 +71,11 @@ class OPDSControllerTest extends UnitSuite with TestEnvironment {
         <link href="some-url?page-size=10&amp;page=4" rel="next"/>
         <link href="some-url?page-size=10&amp;page=10" rel="last"/>
 
-        <link rel="http://opds-spec.org/facet" href="https://opds.test.digitallibrary.io/ben/new.xml" title="Bengali" opds:facetGroup="Languages" opds:activeFacet="false"/>
-        <link rel="http://opds-spec.org/facet" href="https://opds.test.digitallibrary.io/eng/new.xml" title="English" opds:facetGroup="Languages" opds:activeFacet="true"/>
-        <link rel="http://opds-spec.org/facet" href="https://opds.test.digitallibrary.io/hin/new.xml" title="Hindu" opds:facetGroup="Languages" opds:activeFacet="false"/>
+        <link rel="http://opds-spec.org/facet" href="https://opds.test.digitallibrary.io/ben/root.xml" title="Bengali" opds:facetGroup="Languages" opds:activeFacet="false"/>
+        <link rel="http://opds-spec.org/facet" href="https://opds.test.digitallibrary.io/eng/root.xml" title="English" opds:facetGroup="Languages" opds:activeFacet="true"/>
+        <link rel="http://opds-spec.org/facet" href="https://opds.test.digitallibrary.io/hin/root.xml" title="Hindu" opds:facetGroup="Languages" opds:activeFacet="false"/>
 
-        <link rel="http://opds-spec.org/facet" href="https://opds.test.digitallibrary.io/eng/new.xml" title="New arrivals" opds:facetGroup="Selection" opds:activeFacet="false"/>
+        <link rel="http://opds-spec.org/facet" href="https://opds.test.digitallibrary.io/eng/root.xml" title="New arrivals" opds:facetGroup="Selection" opds:activeFacet="false"/>
         <link rel="http://opds-spec.org/facet" href="https://opds.test.digitallibrary.io/eng/level1.xml" title="Level 1" opds:facetGroup="Selection" opds:activeFacet="false"/>
         <link rel="http://opds-spec.org/facet" href="https://opds.test.digitallibrary.io/eng/level2.xml" title="Level 2" opds:facetGroup="Selection" opds:activeFacet="true"/>
         <link rel="http://opds-spec.org/facet" href="https://opds.test.digitallibrary.io/eng/level3.xml" title="Level 3" opds:facetGroup="Selection" opds:activeFacet="false"/>
@@ -166,5 +166,15 @@ class OPDSControllerTest extends UnitSuite with TestEnvironment {
     generated.mkString.contains("<link href=\"some-url?page-size=10&amp;page=1\" rel=\"last\"/>") should be (true)
   }
 
+  test("that incorrect page number for single page is replaced by page=1") {
+    val entry1: FeedEntry = TestData.Api.DefaultFeedEntry
+    val entry2: FeedEntry = TestData.Api.DefaultFeedEntry.copy(categories = Seq(TestData.Api.DefaultFeedCategory))
+    val feed = TestData.Api.DefaultFeed.copy(content = Seq(entry1, entry2))
+    val generated = controller.render(feed, OnlyOnePage(Paging(page = 2, pageSize = 10)))
+    generated.mkString.contains("rel=\"previous\"") should be (false)
+    generated.mkString.contains("rel=\"next\"") should be (false)
+    generated.mkString.contains("<link href=\"some-url?page-size=10&amp;page=1\" rel=\"first\"/>") should be (true)
+    generated.mkString.contains("<link href=\"some-url?page-size=10&amp;page=1\" rel=\"last\"/>") should be (true)
+  }
 
 }

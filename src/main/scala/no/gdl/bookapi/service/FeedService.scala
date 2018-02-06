@@ -16,7 +16,7 @@ import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.BookApiProperties
 import no.gdl.bookapi.BookApiProperties.{OpdsLanguageParam, OpdsLevelParam}
 import no.gdl.bookapi.model._
-import no.gdl.bookapi.model.api.{Facet, FeedCategory, FeedEntry, SearchResult}
+import no.gdl.bookapi.model.api.{Facet, FeedEntry, SearchResult}
 import no.gdl.bookapi.model.domain.{Paging, Sort}
 import no.gdl.bookapi.repository.{FeedRepository, TranslationRepository}
 
@@ -62,7 +62,7 @@ trait FeedService {
     def facetsForLanguages(currentLanguage: LanguageTag): Seq[Facet] = {
       readService.listAvailableLanguagesAsLanguageTags.sortBy(_.toString).map(lang => Facet(
         href = s"${
-          BookApiProperties.CloudFrontOpds}${BookApiProperties.OpdsNewUrl.url
+          BookApiProperties.CloudFrontOpds}${BookApiProperties.OpdsRootUrl.url
           .replace(BookApiProperties.OpdsLanguageParam, lang.toString)}",
         title = s"${lang.displayName}",
         group = "Languages",
@@ -73,11 +73,11 @@ trait FeedService {
       val group = "Selection"
       (Facet(
         href = s"${
-          BookApiProperties.CloudFrontOpds}${BookApiProperties.OpdsNewUrl.url
+          BookApiProperties.CloudFrontOpds}${BookApiProperties.OpdsRootUrl.url
           .replace(BookApiProperties.OpdsLanguageParam, currentLanguage.toString)}",
         title = s"New arrivals",
         group = group,
-        isActive = url.endsWith("new.xml"))
+        isActive = url.endsWith("root.xml"))
         +:
         readService.listAvailableLevelsForLanguage(Some(currentLanguage))
           .sortBy(level => Try(level.toInt).getOrElse(0)).map(readingLevel =>
@@ -92,11 +92,12 @@ trait FeedService {
         ))
     }
 
+    // TODO Issue#200: Remove when not used anymore
     def feedsForNavigation(language: LanguageTag): Seq[api.Feed] = {
       implicit val lang: Lang = Lang(language.toString)
 
       val justArrivedUpdated = translationRepository.latestArrivalDateFor(language)
-      val justArrived = feedRepository.forUrl(justArrivedPath(language)).map(definition =>
+      val justArrived = feedRepository.forUrl(rootPath(language)).map(definition =>
         api.Feed(
           api.FeedDefinition(
             id = definition.id.get,
@@ -135,8 +136,6 @@ trait FeedService {
     }
 
     def allEntries(language: LanguageTag, paging: Paging): (PagingStatus, Seq[FeedEntry]) = {
-      val justArrived = newEntries(language).map(addJustArrivedCategory(_, language))
-
       val searchResult =
         readService.withLanguage(
         language = language,
@@ -144,15 +143,7 @@ trait FeedService {
         page = paging.page,
         sort = Sort.ByArrivalDateDesc)
 
-      val allBooks = searchResult.results.map(book => FeedEntry(book)).map(addLevelCategory(_, language)).sortBy(_.book.readingLevel)
-
-      (searchResultToPagingStatus(searchResult, paging), justArrived ++ allBooks)
-    }
-
-    def newEntries(lang: LanguageTag): Seq[FeedEntry] = {
-      val searchResult = readService.withLanguage(
-        lang, BookApiProperties.OpdsJustArrivedLimit, 1, Sort.ByArrivalDateDesc)
-      searchResult.results.map(FeedEntry(_))
+      (searchResultToPagingStatus(searchResult, paging), searchResult.results.map(book => api.FeedEntry(book)))
     }
 
     def entriesForLanguageAndLevel(language: LanguageTag, level: String, paging: Paging): (PagingStatus, Seq[FeedEntry]) = {
@@ -182,34 +173,11 @@ trait FeedService {
       }
     }
 
-    def addFeaturedCategory(feedEntry: FeedEntry, language: LanguageTag): FeedEntry = {
-      val title = Messages("featured_feed_title")(Lang(language.toString))
-      val url = s"${BookApiProperties.CloudFrontOpds}${featuredPath(language)}"
-      feedEntry.copy(
-        categories = feedEntry.categories :+ FeedCategory(url, title, sortOrder = 1))
-    }
-
-    def addJustArrivedCategory(feedEntry: FeedEntry, language: LanguageTag): FeedEntry = {
-      val title = Messages("new_entries_feed_title")(Lang(language.toString))
-      val url = s"${BookApiProperties.CloudFrontOpds}${justArrivedPath(language)}"
-      feedEntry.copy(
-        categories = feedEntry.categories :+ FeedCategory(url, title, sortOrder = 2))
-    }
-
-    def addLevelCategory(feedEntry: FeedEntry, language: LanguageTag): FeedEntry = {
-      val level = feedEntry.book.readingLevel.getOrElse(BookApiProperties.DefaultReadingLevel)
-      val readingLevelCategoryTitle = Messages("level_feed_title", level)(Lang(language.toString))
-      val readingLevelUrl = s"${BookApiProperties.CloudFrontOpds}${levelPath(language, level)}"
-      feedEntry.copy(
-        categories = feedEntry.categories :+ FeedCategory(readingLevelUrl, readingLevelCategoryTitle, sortOrder = level.toInt + 2))
-    }
-
-    def featuredPath(language: LanguageTag): String = s"${BookApiProperties.OpdsFeaturedUrl.url}"
+    // TODO Issue#200: Remove when not used anymore
+    def rootPath(language: LanguageTag): String = s"${BookApiProperties.OpdsRootUrl.url}"
       .replace(BookApiProperties.OpdsLanguageParam, language.toString)
 
-    def justArrivedPath(language: LanguageTag): String = s"${BookApiProperties.OpdsNewUrl.url}"
-      .replace(BookApiProperties.OpdsLanguageParam, language.toString)
-
+    // TODO Issue#200: Remove when not used anymore
     def levelPath(language: LanguageTag, level: String): String = s"${BookApiProperties.OpdsLevelUrl.url}"
       .replace(BookApiProperties.OpdsLanguageParam, language.toString)
       .replace(BookApiProperties.OpdsLevelParam, level)

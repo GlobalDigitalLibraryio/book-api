@@ -48,12 +48,9 @@ object BookApiProperties extends LazyLogging {
 
   val OpdsNavUrl = FeedDefinition(s"/$OpdsLanguageParam/nav.xml", "opds_nav_title", None)
   val OpdsRootUrl = FeedDefinition(s"/$OpdsLanguageParam/root.xml", "opds_root_title", None)
-  val OpdsNewUrl = FeedDefinition(s"/$OpdsLanguageParam/new.xml", "new_entries_feed_title", Some("new_entries_feed_description"))
-  val OpdsFeaturedUrl = FeedDefinition(s"/$OpdsLanguageParam/featured.xml", "featured_feed_title", Some("featured_feed_description"))
   val OpdsLevelUrl = FeedDefinition(s"/$OpdsLanguageParam/level$OpdsLevelParam.xml", "level_feed_title", Some("level_feed_description"))
 
-  val OpdsFeeds = Seq(OpdsNavUrl, OpdsRootUrl, OpdsNewUrl, OpdsFeaturedUrl, OpdsLevelUrl)
-  val OpdsJustArrivedLimit = 15
+  val OpdsFeeds = Seq(OpdsNavUrl, OpdsRootUrl, OpdsLevelUrl)
 
   val DownloadPath = "/book-api/download"
   val Books = "books"
