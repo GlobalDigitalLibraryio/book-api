@@ -22,7 +22,7 @@ import no.gdl.bookapi.BookApiProperties
 import no.gdl.bookapi.integration.ElasticClient
 import no.gdl.bookapi.model.Language._
 import no.gdl.bookapi.model.api.LocalDateSerializer
-import no.gdl.bookapi.model.domain
+import no.gdl.bookapi.model._
 import no.gdl.bookapi.model.domain.Translation
 import no.gdl.bookapi.repository.{BookRepository, TranslationRepository}
 import no.gdl.bookapi.service.ConverterService
@@ -99,7 +99,7 @@ trait IndexService extends LazyLogging {
 
     def analysis(): Iterable[AnalyzerDefinition] = {
       List(CustomAnalyzerDefinition(
-        "babel",
+        BabelAnalyzer.name,
         IcuTokenizer,
         IcuNormalizer,
         IcuFolding,
@@ -175,7 +175,7 @@ trait IndexService extends LazyLogging {
     }
 
     private def languageField(fieldName: String, languageTag: LanguageTag) = {
-      val languageAnalyzer = findByLanguage(Some(languageTag.language.id))
+      val languageAnalyzer = findByLanguage(languageTag)
       val languageSupportedField = TextFieldDefinition(fieldName).fielddata(true) analyzer languageAnalyzer.get.analyzer
       languageSupportedField
     }
@@ -254,19 +254,4 @@ trait IndexService extends LazyLogging {
       new SimpleDateFormat("yyyyMMddHHmmss").format(Calendar.getInstance.getTime)
     }
   }
-
-}
-
-case object IcuTokenizer extends Tokenizer("icu_tokenizer")
-
-case object IcuNormalizer extends CharFilter {
-  val name = "icu_normalizer"
-}
-
-case object IcuFolding extends TokenFilter {
-  val name = "icu_folding"
-}
-
-case object IcuCollation extends TokenFilter {
-  val name = "icu_collation"
 }

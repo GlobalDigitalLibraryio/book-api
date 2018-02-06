@@ -11,74 +11,76 @@ import com.sksamuel.elastic4s.analyzers._
 import io.digitallibrary.language.model.LanguageTag
 
 object Language {
-  val DefaultLanguage = "eng"
-  val UnknownLanguage = "unknown"
+  val DefaultLanguage = LanguageTag("eng")
+  val UnknownLanguage = LanguageTag("und")//Undetermined
   val AllLanguages = "all"
   val NoLanguage = ""
 
   val languageAnalyzers = Seq(
     GdlLanguageAnalyzer(DefaultLanguage, EnglishLanguageAnalyzer),
-    GdlLanguageAnalyzer("ara", ArabicLanguageAnalyzer),
-    GdlLanguageAnalyzer("axm", ArmenianLanguageAnalyzer),
-    GdlLanguageAnalyzer("baq", BasqueLanguageAnalyzer),
-    GdlLanguageAnalyzer("bra", BrazilianLanguageAnalyzer),
-    GdlLanguageAnalyzer("bul", BulgarianLanguageAnalyzer),
-    GdlLanguageAnalyzer("cat", CatalanLanguageAnalyzer),
-    GdlLanguageAnalyzer("zho", ChineseLanguageAnalyzer),
-    GdlLanguageAnalyzer("cjk", CjkLanguageAnalyzer),
-    GdlLanguageAnalyzer("cze", CzechLanguageAnalyzer),
-    GdlLanguageAnalyzer("dan", DanishLanguageAnalyzer),
-    GdlLanguageAnalyzer("dut", DutchLanguageAnalyzer),
-    GdlLanguageAnalyzer("eng", EnglishLanguageAnalyzer),
-    GdlLanguageAnalyzer("fin", FinnishLanguageAnalyzer),
-    GdlLanguageAnalyzer("fra", FrenchLanguageAnalyzer),
-    GdlLanguageAnalyzer("glg", GalicianLanguageAnalyzer),
-    GdlLanguageAnalyzer("ger", GermanLanguageAnalyzer),
-    GdlLanguageAnalyzer("gre", GreekLanguageAnalyzer),
-    GdlLanguageAnalyzer("hin", HindiLanguageAnalyzer),
-    GdlLanguageAnalyzer("hun", HungarianLanguageAnalyzer),
-    GdlLanguageAnalyzer("ind", IndonesianLanguageAnalyzer),
-    GdlLanguageAnalyzer("gle", IrishLanguageAnalyzer),
-    GdlLanguageAnalyzer("ita", ItalianLanguageAnalyzer),
-    GdlLanguageAnalyzer("lav", LatvianLanguageAnalyzer),
-    GdlLanguageAnalyzer("lit", LithuanianLanguageAnalyzer),
-    GdlLanguageAnalyzer("nob", NorwegianLanguageAnalyzer),
-    GdlLanguageAnalyzer("per", PersianLanguageAnalyzer),
-    GdlLanguageAnalyzer("por", PortugueseLanguageAnalyzer),
-    GdlLanguageAnalyzer("rum", RomanianLanguageAnalyzer),
-    GdlLanguageAnalyzer("rus", RussianLanguageAnalyzer),
-    GdlLanguageAnalyzer("kur", SoraniLanguageAnalyzer),
-    GdlLanguageAnalyzer("spa", SpanishLanguageAnalyzer),
-    GdlLanguageAnalyzer("swe", SwedishLanguageAnalyzer),
-    GdlLanguageAnalyzer("tur", TurkishLanguageAnalyzer),
-    GdlLanguageAnalyzer("tha", ThaiLanguageAnalyzer),
+    GdlLanguageAnalyzer(LanguageTag("ara"), ArabicLanguageAnalyzer),
+    GdlLanguageAnalyzer(LanguageTag("axm"), ArmenianLanguageAnalyzer),
+    GdlLanguageAnalyzer(LanguageTag("baq"), BasqueLanguageAnalyzer),
+    GdlLanguageAnalyzer(LanguageTag("bra"), BrazilianLanguageAnalyzer),
+    GdlLanguageAnalyzer(LanguageTag("bul"), BulgarianLanguageAnalyzer),
+    GdlLanguageAnalyzer(LanguageTag("cat"), CatalanLanguageAnalyzer),
+    GdlLanguageAnalyzer(LanguageTag("zho"), ChineseLanguageAnalyzer),
+    GdlLanguageAnalyzer(LanguageTag("cjk"), CjkLanguageAnalyzer),
+    GdlLanguageAnalyzer(LanguageTag("cze"), CzechLanguageAnalyzer),
+    GdlLanguageAnalyzer(LanguageTag("dan"), DanishLanguageAnalyzer),
+    GdlLanguageAnalyzer(LanguageTag("dut"), DutchLanguageAnalyzer),
+    GdlLanguageAnalyzer(LanguageTag("eng"), EnglishLanguageAnalyzer),
+    GdlLanguageAnalyzer(LanguageTag("fin"), FinnishLanguageAnalyzer),
+    GdlLanguageAnalyzer(LanguageTag("fra"), FrenchLanguageAnalyzer),
+    GdlLanguageAnalyzer(LanguageTag("glg"), GalicianLanguageAnalyzer),
+    GdlLanguageAnalyzer(LanguageTag("ger"), GermanLanguageAnalyzer),
+    GdlLanguageAnalyzer(LanguageTag("gre"), GreekLanguageAnalyzer),
+    GdlLanguageAnalyzer(LanguageTag("hin"), HindiLanguageAnalyzer),
+    GdlLanguageAnalyzer(LanguageTag("hun"), HungarianLanguageAnalyzer),
+    GdlLanguageAnalyzer(LanguageTag("ind"), IndonesianLanguageAnalyzer),
+    GdlLanguageAnalyzer(LanguageTag("gle"), IrishLanguageAnalyzer),
+    GdlLanguageAnalyzer(LanguageTag("ita"), ItalianLanguageAnalyzer),
+    GdlLanguageAnalyzer(LanguageTag("lav"), LatvianLanguageAnalyzer),
+    GdlLanguageAnalyzer(LanguageTag("lit"), LithuanianLanguageAnalyzer),
+    GdlLanguageAnalyzer(LanguageTag("nob"), NorwegianLanguageAnalyzer),
+    GdlLanguageAnalyzer(LanguageTag("per"), PersianLanguageAnalyzer),
+    GdlLanguageAnalyzer(LanguageTag("por"), PortugueseLanguageAnalyzer),
+    GdlLanguageAnalyzer(LanguageTag("rum"), RomanianLanguageAnalyzer),
+    GdlLanguageAnalyzer(LanguageTag("rus"), RussianLanguageAnalyzer),
+    GdlLanguageAnalyzer(LanguageTag("kur"), SoraniLanguageAnalyzer),
+    GdlLanguageAnalyzer(LanguageTag("spa"), SpanishLanguageAnalyzer),
+    GdlLanguageAnalyzer(LanguageTag("swe"), SwedishLanguageAnalyzer),
+    GdlLanguageAnalyzer(LanguageTag("tur"), TurkishLanguageAnalyzer),
+    GdlLanguageAnalyzer(LanguageTag("tha"), ThaiLanguageAnalyzer),
     GdlLanguageAnalyzer(UnknownLanguage, BabelAnalyzer)
   )
 
-  val supportedLanguages = languageAnalyzers.map(_.lang)
+  val supportedLanguages = languageAnalyzers.map(_.languageTag)
 
-  def findByLanguage(lang: Option[String]): Option[GdlLanguageAnalyzer] = {
-    def findFirstLanguageMatching(sequence: Seq[GdlLanguageAnalyzer], lang: Seq[String]): Option[GdlLanguageAnalyzer] = {
+  def findByLanguage(languageTag: LanguageTag): Option[GdlLanguageAnalyzer] = {
+    def findFirstLanguageMatching(sequence: Seq[GdlLanguageAnalyzer], lang: Seq[LanguageTag]): Option[GdlLanguageAnalyzer] = {
       lang match {
         case Nil => sequence.headOption
         case head :: tail =>
-          sequence.find(_.lang == head) match {
+          sequence.find(_.languageTag == head) match {
             case Some(x) => Some(x)
             case None => findFirstLanguageMatching(sequence, tail)
           }
       }
     }
-
-    findFirstLanguageMatching(languageAnalyzers, lang.toList :+ UnknownLanguage)
-  }
-
-  def languageOrUnknown(language: Option[String]): String = {
-    language.filter(_.nonEmpty) match {
-      case Some(x) => x
-      case None => UnknownLanguage
-    }
+    findFirstLanguageMatching(languageAnalyzers, List(languageTag,UnknownLanguage))
   }
 }
 
+case class GdlLanguageAnalyzer(languageTag: LanguageTag, analyzer: Analyzer)
 case object BabelAnalyzer extends LanguageAnalyzer("babel")
-case class GdlLanguageAnalyzer(lang: String, analyzer: Analyzer)
+case object IcuTokenizer extends Tokenizer("icu_tokenizer")
+case object IcuNormalizer extends CharFilter {
+  val name = "icu_normalizer"
+}
+case object IcuFolding extends TokenFilter {
+  val name = "icu_folding"
+}
+case object IcuCollation extends TokenFilter {
+  val name = "icu_collation"
+}
