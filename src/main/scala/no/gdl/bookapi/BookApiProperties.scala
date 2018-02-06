@@ -22,6 +22,7 @@ import scala.util.{Failure, Success}
 object BookApiProperties extends LazyLogging {
   val RoleWithWriteAccess = "books:write"
   val SecretsFile = "book-api.secrets"
+  val CrowdinProjectsKey = "CROWDIN_PROJECTS"
 
   // TODO Consider more generic role name
   val FeaturedContentAdminRole = "book-api:featuredContentAdmin"
@@ -85,7 +86,6 @@ object BookApiProperties extends LazyLogging {
   lazy val MetaSchema = prop(PropertyKeys.MetaSchemaKey)
   val MetaInitialConnections = 3
   val MetaMaxConnections = 20
-
   val CorrelationIdKey = "correlationID"
   val CorrelationIdHeader = "X-Correlation-ID"
 
@@ -93,7 +93,7 @@ object BookApiProperties extends LazyLogging {
 
   //In format lang;projectid;projectkey, lang:projectid;projectkey
   def readCrowdinProjects(): Seq[CrowdinProject] = {
-    prop("CROWDIN_PROJECTS")
+    prop(CrowdinProjectsKey)
       .split(",")
       .map(projectString => {
         val Array(lang, projectId, projectKey) = projectString.split(";", 3).map(_.trim)
@@ -101,7 +101,7 @@ object BookApiProperties extends LazyLogging {
       })
   }
 
-  lazy val secrets = readSecrets(SecretsFile) match {
+  lazy val secrets = readSecrets(SecretsFile, Set(CrowdinProjectsKey)) match {
      case Success(values) => values
      case Failure(exception) => throw new RuntimeException(s"Unable to load remote secrets from $SecretsFile", exception)
    }
@@ -113,7 +113,7 @@ object BookApiProperties extends LazyLogging {
   }
 
   def propOrElse(key: String, default: => String): String = {
-    secrets.get(key).flatten match {
+    secrets.get(key) match {
       case Some(secret) => secret
       case None =>
         envOrNone(key) match {
