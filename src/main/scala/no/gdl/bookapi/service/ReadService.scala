@@ -42,8 +42,8 @@ trait ReadService {
       translationRepository.allAvailableLanguagesWithStatus(PublishingStatus.PUBLISHED)
     }
 
-    def listAvailableLevelsForLanguage(lang: Option[LanguageTag] = None): Seq[String] =
-      translationRepository.allAvailableLevels(lang)
+    def listAvailablePublishedLevelsForLanguage(lang: Option[LanguageTag] = None): Seq[String] =
+      translationRepository.allAvailableLevelsWithStatus(PublishingStatus.PUBLISHED, lang)
 
 
     def withLanguageAndLevelAndStatus(language: LanguageTag, readingLevel: Option[String], status: PublishingStatus.Value, pageSize: Int, page: Int, sort: Sort.Value): api.SearchResult = {

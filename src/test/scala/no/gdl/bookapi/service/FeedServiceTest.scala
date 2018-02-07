@@ -13,7 +13,7 @@ import no.gdl.bookapi.TestData.{LanguageCodeAmharic, LanguageCodeEnglish, Langua
 import no.gdl.bookapi.model.api.{Facet, FeedEntry, SearchResult}
 import no.gdl.bookapi.model.domain.{Paging, PublishingStatus}
 import no.gdl.bookapi.{BookApiProperties, TestData, TestEnvironment, UnitSuite}
-import org.mockito.Matchers._
+import org.mockito.Matchers.{eq => eqTo, _}
 import org.mockito.Mockito._
 import scalikejdbc.DBSession
 
@@ -26,7 +26,7 @@ class FeedServiceTest extends UnitSuite with TestEnvironment {
     val levels = Seq("1")
 
     when(translationRepository.allAvailableLanguagesWithStatus(PublishingStatus.PUBLISHED)).thenReturn(languages)
-    when(translationRepository.allAvailableLevels(any[Option[LanguageTag]])(any[DBSession])).thenReturn(levels)
+    when(translationRepository.allAvailableLevelsWithStatus(anyObject(), any[Option[LanguageTag]])(any[DBSession])).thenReturn(levels)
 
     val calculatedFeedUrls = feedService.calculateFeeds
     calculatedFeedUrls.size should be (5)
@@ -44,7 +44,7 @@ class FeedServiceTest extends UnitSuite with TestEnvironment {
     val expectedNumberOfFeeds = (4 * languages.size) + (languages.size * levels.size)
 
     when(translationRepository.allAvailableLanguagesWithStatus(PublishingStatus.PUBLISHED)).thenReturn(languages)
-    when(translationRepository.allAvailableLevels(any[Option[LanguageTag]])(any[DBSession])).thenReturn(levels)
+    when(translationRepository.allAvailableLevelsWithStatus(anyObject(), any[Option[LanguageTag]])(any[DBSession])).thenReturn(levels)
 
     val calculatedFeedUrls = feedService.calculateFeeds
     calculatedFeedUrls.size should be (expectedNumberOfFeeds)
@@ -98,7 +98,7 @@ class FeedServiceTest extends UnitSuite with TestEnvironment {
 
   test("that facetsForSelections returns facets for reading levels, with reading levels numerically sorted and new arrivals at the top") {
     val language = LanguageTag("eng")
-    when(readService.listAvailableLevelsForLanguage(Some(language))).thenReturn(Seq("4", "1", "3", "2"))
+    when(readService.listAvailablePublishedLevelsForLanguage(Some(language))).thenReturn(Seq("4", "1", "3", "2"))
     feedService.facetsForSelections(language, "http://local.digitallibrary.io/book-api/opds/eng/level3.xml") should equal (Seq(
       Facet("http://local.digitallibrary.io/book-api/opds/eng/new.xml", "New arrivals", "Selection", isActive = false),
       Facet("http://local.digitallibrary.io/book-api/opds/eng/level1.xml", "Level 1", "Selection", isActive = false),
