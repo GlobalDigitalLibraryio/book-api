@@ -9,17 +9,18 @@ package no.gdl.bookapi.service
 
 
 import io.digitallibrary.language.model.LanguageTag
+import io.digitallibrary.network.AuthUser
 import no.gdl.bookapi.model._
-import no.gdl.bookapi.model.domain.Sort
+import no.gdl.bookapi.model.api.MyBook
+import no.gdl.bookapi.model.domain.{PublishingStatus, Sort}
 import no.gdl.bookapi.repository._
 
 trait ReadService {
-  this: ConverterService with BookRepository with ChapterRepository with TranslationRepository
+  this: ConverterService with BookRepository with ChapterRepository with TranslationRepository with InTranslationRepository
   with FeaturedContentRepository =>
   val readService: ReadService
 
   class ReadService {
-
     def featuredContentForLanguage(tag: LanguageTag): Seq[api.FeaturedContent] = {
       featuredContentRepository.forLanguage(tag).map(fc => {
         api.FeaturedContent(
@@ -45,9 +46,9 @@ trait ReadService {
       translationRepository.allAvailableLevels(lang)
 
 
-    def withLanguageAndLevel(language: LanguageTag, readingLevel: Option[String], pageSize: Int, page: Int, sort: Sort.Value): api.SearchResult = {
+    def withLanguageAndLevelAndStatus(language: LanguageTag, readingLevel: Option[String], status: PublishingStatus.Value, pageSize: Int, page: Int, sort: Sort.Value): api.SearchResult = {
       val searchResult = translationRepository
-        .bookIdsWithLanguageAndLevel(language, readingLevel, pageSize, page, sort)
+        .bookIdsWithLanguageAndLevelAndStatus(language, readingLevel, status, pageSize, page, sort)
 
       val books = searchResult.results.flatMap(id => withIdAndLanguage(id, language))
 
@@ -59,8 +60,18 @@ trait ReadService {
         books)
     }
 
-    def withLanguage(language: LanguageTag, pageSize: Int, page: Int, sort: Sort.Value): api.SearchResult = {
-      val searchResult = translationRepository.bookIdsWithLanguage(language, pageSize, page, sort)
+    def forUserWithLanguage(userId: String, pageSize: Int, page: Int, sort: Sort.Value): Seq[api.MyBook] = {
+      val inTranslationForUser = inTranslationRepository.inTranslationForUser(userId)
+      for {
+        inTranslation <- inTranslationForUser.filter(_.newTranslationId.isDefined)
+        newTranslation <- translationRepository.withId(inTranslation.newTranslationId.get)
+        availableLanguages = translationRepository.languagesFor(newTranslation.bookId)
+        book <- withIdAndLanguage(newTranslation.bookId, inTranslation.fromLanguage)
+      } yield converterService.toApiMyBook(inTranslation, newTranslation, availableLanguages, book)
+    }
+
+    def withLanguageAndStatus(language: LanguageTag, status: PublishingStatus.Value, pageSize: Int, page: Int, sort: Sort.Value): api.SearchResult = {
+      val searchResult = translationRepository.bookIdsWithLanguageAndStatus(language, status, pageSize, page, sort)
       val books = searchResult.results.flatMap(id => withIdAndLanguage(id, language))
 
       api.SearchResult(
@@ -84,7 +95,7 @@ trait ReadService {
         case None => api.SearchResult(0, page, pageSize, converterService.toApiLanguage(language), Seq())
         case Some(book) =>
           val searchResult = translationRepository
-            .bookIdsWithLanguageAndLevel(language, book.readingLevel, pageSize, page, sort)
+            .bookIdsWithLanguageAndLevelAndStatus(language, book.readingLevel, PublishingStatus.PUBLISHED, pageSize, page, sort)
 
           val books = searchResult.results
             .flatMap(id => withIdAndLanguage(id, language))

@@ -9,6 +9,7 @@
 package no.gdl.bookapi
 
 import com.typesafe.scalalogging.LazyLogging
+import io.digitallibrary.language.model.LanguageTag
 import io.digitallibrary.network.Domains
 import io.digitallibrary.network.secrets.PropertyKeys
 import io.digitallibrary.network.secrets.Secrets.readSecrets
@@ -19,6 +20,7 @@ import scala.util.Properties._
 import scala.util.{Failure, Success}
 
 object BookApiProperties extends LazyLogging {
+
   val RoleWithWriteAccess = "books:write"
   val SecretsFile = "book-api.secrets"
   val CrowdinProjectsKey = "CROWDIN_PROJECTS"
@@ -95,10 +97,13 @@ object BookApiProperties extends LazyLogging {
       })
   }
 
+  def supportsTranslationFrom(language: LanguageTag): Boolean =
+    CrowdinProjects.exists(_.sourceLanguage == language.toString)
+
   lazy val secrets = readSecrets(SecretsFile, Set(CrowdinProjectsKey)) match {
-     case Success(values) => values
-     case Failure(exception) => throw new RuntimeException(s"Unable to load remote secrets from $SecretsFile", exception)
-   }
+    case Success(values) => values
+    case Failure(exception) => throw new RuntimeException(s"Unable to load remote secrets from $SecretsFile", exception)
+  }
 
   def booleanProp(key: String) = prop(key).toBoolean
 

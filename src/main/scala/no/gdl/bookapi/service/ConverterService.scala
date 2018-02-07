@@ -16,10 +16,11 @@ import io.digitallibrary.network.AuthUser
 import no.gdl.bookapi.BookApiProperties.Domain
 import no.gdl.bookapi.controller.NewFeaturedContent
 import no.gdl.bookapi.integration.ImageApiClient
+import no.gdl.bookapi.integration.crowdin.CrowdinUtils
 import no.gdl.bookapi.model._
-import no.gdl.bookapi.model.api.internal.{NewChapter, NewEducationalAlignment, NewTranslation}
+import no.gdl.bookapi.model.api.internal.{NewChapter, NewEducationalAlignment, NewTranslatedChapter, NewTranslation}
 import no.gdl.bookapi.model.crowdin.CrowdinFile
-import no.gdl.bookapi.model.domain.{FileType, InTranslation, TranslationStatus}
+import no.gdl.bookapi.model.domain.{FileType, InTranslation, PublishingStatus, TranslationStatus}
 import no.gdl.bookapi.{BookApiProperties, model}
 
 
@@ -48,6 +49,14 @@ trait ConverterService {
       title = newChapter.title,
       content = newChapter.content)
 
+    def toDomainChapter(newTranslatedChapter: NewTranslatedChapter, translationId: Long): domain.Chapter = domain.Chapter(
+      id = None,
+      revision = None,
+      translationId = translationId,
+      seqNo = newTranslatedChapter.seqNo,
+      title = newTranslatedChapter.title,
+      content = newTranslatedChapter.content)
+
 
     def toDomainTranslation(newTranslation: NewTranslation, bookId: Long) = {
       domain.Translation(
@@ -60,6 +69,7 @@ trait ConverterService {
         newTranslation.about,
         newTranslation.numPages.map(_.toInt),
         LanguageTag(newTranslation.language),
+        newTranslation.translatedFrom.map(LanguageTag(_)),
         newTranslation.datePublished,
         newTranslation.dateCreated,
         categoryIds = Seq(),
@@ -79,6 +89,7 @@ trait ConverterService {
         newTranslation.accessibilityFeature,
         newTranslation.accessibilityHazard,
         newTranslation.dateArrived.getOrElse(LocalDate.now()),
+        PublishingStatus.PUBLISHED,
         newTranslation.educationalAlignment.map(toDomainEducationalAlignment),
         chapters = Seq(),
         contributors = Seq(),
@@ -142,7 +153,7 @@ trait ConverterService {
           translation.uuid,
           translation.title,
           translation.about,
-          None, // TODO in #155: Add from language if this is a translation
+          translation.translatedFrom.map(toApiLanguage),
           toApiLanguage(translation.language),
           availableLanguages.map(toApiLanguage).sortBy(_.name),
           toApiLicense(book.license),
@@ -161,7 +172,7 @@ trait ConverterService {
           translation.tags,
           toApiContributors(translation.contributors),
           toApiChapterSummary(translation.chapters, translation.bookId, translation.language),
-          supportsTranslation = true // TODO in #155: Only set this to true if we support it
+          supportsTranslation = BookApiProperties.supportsTranslationFrom(translation.language)
         )
       }
 
@@ -171,6 +182,20 @@ trait ConverterService {
         api <- Some(toApiBookInternal(t, b, availableLanguages))
       } yield api
     }
+
+    def toApiMyBook(inTranslation: InTranslation, translation: domain.Translation, availableLanguages: Seq[LanguageTag], book: api.Book): api.MyBook = {
+      api.MyBook(
+        id = book.id,
+        revision = book.revision,
+        title = translation.title,
+        translatedFrom = translation.translatedFrom.map(toApiLanguage),
+        translatedTo = toApiLanguage(translation.language),
+        publisher = book.publisher,
+        coverPhoto = toApiCoverPhoto(translation.coverphoto),
+        synchronizeUrl = s"${BookApiProperties.Domain}${BookApiProperties.TranslationsPath}/synchronized/${inTranslation.id.get}",
+        crowdinUrl = CrowdinUtils.crowdinUrlToBook(book, inTranslation.crowdinProjectId, inTranslation.crowdinToLanguage))
+    }
+
 
     def toApiDownloads(translation: domain.Translation): api.Downloads = {
       api.Downloads(
@@ -208,7 +233,8 @@ trait ConverterService {
         revision = None,
         inTranslationId = inTranslation.id.get,
         fileType = file.fileType,
-        originalId = file.sourceId,
+        originalChapterId = file.sourceId,
+        newChapterId = None,
         filename = file.addedFile.name,
         crowdinFileId = file.addedFile.fileId.toString,
         translationStatus = TranslationStatus.IN_PROGRESS,

@@ -15,7 +15,7 @@ import com.typesafe.scalalogging.LazyLogging
 import io.digitallibrary.language.model.LanguageNotSupportedException
 import io.digitallibrary.network.{ApplicationUrl, AuthUser, CorrelationID}
 import no.gdl.bookapi.BookApiProperties.{CorrelationIdHeader, CorrelationIdKey}
-import no.gdl.bookapi.model.api.{AccessDeniedException, CrowdinException, Error, LocalDateSerializer, NotFoundException, OptimisticLockException, ValidationError, ValidationException, ValidationMessage}
+import no.gdl.bookapi.model.api.{AccessDeniedException, CrowdinException, DBException, Error, LocalDateSerializer, NotFoundException, OptimisticLockException, ValidationError, ValidationException, ValidationMessage}
 import org.apache.logging.log4j.ThreadContext
 import org.elasticsearch.index.IndexNotFoundException
 import org.json4s.native.Serialization.read
@@ -59,6 +59,10 @@ abstract class GdlController extends ScalatraServlet with NativeJsonSupport with
       c.getErrors.foreach(error => logger.error(s"${c.getMessage}: ${error.code} - ${error.message}"))
       c.getCauses.foreach(throwable => logger.error(c.getMessage, throwable))
       InternalServerError(body = Error.TranslationError)
+    }
+    case d: DBException => {
+      logger.error(d.getMessage)
+      d.getCauses.foreach(throwable => logger.error(d.getMessage, throwable))
     }
     case t: Throwable => {
       logger.error(Error.GenericError.toString, t)

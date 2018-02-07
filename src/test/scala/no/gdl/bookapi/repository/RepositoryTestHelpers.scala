@@ -25,7 +25,13 @@ trait RepositoryTestHelpers {
     bookRepository.add(Book(None, None, publisher.id.get, license.id.get, publisher, license))
   }
 
-  def addTranslationDef(externalId: String, title: String, bookId: Long, language: LanguageTag, readingLevel: Option[String] = None, dateArrived: Option[LocalDate] = None)(implicit session: DBSession = AutoSession): Translation = {
+  def addTranslationDef(externalId: String,
+                        title: String,
+                        bookId: Long,
+                        language: LanguageTag,
+                        readingLevel: Option[String] = None,
+                        dateArrived: Option[LocalDate] = None,
+                        status: PublishingStatus.Value = PublishingStatus.PUBLISHED)(implicit session: DBSession = AutoSession): Translation = {
     val cat1 = categoryRepository.add(Category(None, None, "some-category"))
 
     val translationDef = Translation(
@@ -38,9 +44,11 @@ trait RepositoryTestHelpers {
       about = "Some description",
       numPages = Some(123),
       language = language,
+      translatedFrom = None,
       datePublished = Some(LocalDate.now()),
       dateCreated = Some(LocalDate.now()),
       dateArrived = dateArrived.getOrElse(LocalDate.now()),
+      publishingStatus = status,
       categoryIds = Seq(cat1.id.get),
       coverphoto = None,
       tags = Seq("tag1", "tag2"),

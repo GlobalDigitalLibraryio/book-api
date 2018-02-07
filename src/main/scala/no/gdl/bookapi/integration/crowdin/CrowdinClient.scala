@@ -9,11 +9,12 @@ package no.gdl.bookapi.integration.crowdin
 
 import com.typesafe.scalalogging.LazyLogging
 import io.digitallibrary.network.GdlClient
+import no.gdl.bookapi.model.api.internal.ChapterId
 import no.gdl.bookapi.model.api.{Book, Chapter, CrowdinException}
 import no.gdl.bookapi.model.crowdin._
-import no.gdl.bookapi.model.domain.FileType
+import no.gdl.bookapi.model.domain.{FileType, InTranslation, InTranslationFile}
 import org.json4s.DefaultFormats
-import org.json4s.jackson.Serialization.write
+import org.json4s.jackson.Serialization.{read, write}
 
 import scala.util.{Failure, Success, Try}
 import scalaj.http.{Http, MultiPart}
@@ -29,9 +30,19 @@ class LimitedCrowdinClient extends GdlClient with LazyLogging {
     gdlClient.fetch[Seq[SupportedLanguage]](Http(SupportedLanguagesUrl))
 }
 
+
+
 class CrowdinClient(fromLanguage: String, projectIdentifier: String, projectKey: String) extends LimitedCrowdinClient {
 
-  case class BookMetaData(title: String, description: String)
+
+  private def urlFor(action: String) = s"$CrowdinBaseUrl/project/$projectIdentifier/$action?key=$projectKey&json"
+  private def exportFileUrl(filename: String, language: String) = s"${urlFor("export-file")}&file=$filename&language=$language"
+  private val ProjectDetailsUrl = urlFor("info")
+  private val EditProjectUrl = urlFor("edit-project")
+  private val AddDirectoryUrl = urlFor("add-directory")
+  private val DeleteDirectoryUrl = urlFor("delete-directory")
+  private val AddFileUrl = urlFor("add-file")
+
 
   def getProjectIdentifier: String = projectIdentifier
 
@@ -50,6 +61,18 @@ class CrowdinClient(fromLanguage: String, projectIdentifier: String, projectKey:
       case Failure(ex) => Failure(CrowdinException(ex))
     }
   }
+
+
+  def fetchTranslatedMetaData(inTranslationFile: InTranslationFile, language: String): Try[BookMetaData] = {
+    val url = exportFileUrl(inTranslationFile.filename, language)
+
+    gdlClient.doRequestAsString(Http(url).copy(compress = false)).flatMap(response => {
+      gdlClient.parseResponse[BookMetaData](response).map(bookMetaData =>  {
+        bookMetaData.copy(etag = response.header("ETag"))
+      })
+    })
+  }
+
 
   def addChaptersFor(book: Book, chapters: Seq[Chapter]): Try[Seq[CrowdinFile]] = {
     val uploadTries: Seq[Try[AddFilesResponse]] = chapters.sliding(20, 20).toList.map(window => {
@@ -82,6 +105,14 @@ class CrowdinClient(fromLanguage: String, projectIdentifier: String, projectKey:
     }
   }
 
+  def fetchTranslatedChapter(inTranslationFile: InTranslationFile, language: String): Try[TranslatedChapter] = {
+    val url = exportFileUrl(inTranslationFile.filename, language)
+
+    gdlClient.doRequestAsString(Http(url).copy(compress = false)).map(response => {
+      TranslatedChapter(inTranslationFile.originalChapterId.get, inTranslationFile.newChapterId, response.body, response.header("ETag"))
+    })
+  }
+
   def addDirectoryFor(book: Book): Try[String] = {
     val directoryName = CrowdinUtils.directoryNameFor(book)
 
@@ -103,13 +134,6 @@ class CrowdinClient(fromLanguage: String, projectIdentifier: String, projectKey:
       case Failure(err) => Failure(CrowdinException(err))
     }
   }
-
-  private def urlFor(action: String) = s"$CrowdinBaseUrl/project/$projectIdentifier/$action?key=$projectKey&json"
-  private val ProjectDetailsUrl = urlFor("info")
-  private val EditProjectUrl = urlFor("edit-project")
-  private val AddDirectoryUrl = urlFor("add-directory")
-  private val DeleteDirectoryUrl = urlFor("delete-directory")
-  private val AddFileUrl = urlFor("add-file")
 
   def addTargetLanguage(toLanguage: String): Try[Unit] = {
     getTargetLanguages.flatMap(languages => {
@@ -153,4 +177,8 @@ object CrowdinUtils {
   def metadataFilenameFor(book: Book) = s"${directoryNameFor(book)}/metadata.json"
 
   def filenameFor(book: Book, chapter: Chapter) = s"${directoryNameFor(book)}/${chapter.id}.xhtml"
+  def filenameFor(book: Book, chapterId: Long) = s"${directoryNameFor(book)}/$chapterId.xhtml"
 }
+
+case class BookMetaData(title: String, description: String, etag: Option[String] = None)
+case class TranslatedChapter(originalChapterId: Long, newChapterId: Option[Long], content: String, etag: Option[String] = None)
