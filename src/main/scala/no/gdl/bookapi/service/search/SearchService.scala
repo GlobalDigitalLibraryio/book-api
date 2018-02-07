@@ -22,7 +22,7 @@ import no.gdl.bookapi.model.domain.{Paging, Sort}
 import no.gdl.bookapi.service.ConverterService
 import org.elasticsearch.ElasticsearchException
 import org.elasticsearch.index.IndexNotFoundException
-import org.json4s.DefaultFormats
+import org.json4s.{DefaultFormats, Formats}
 import org.json4s.native.Serialization.read
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -35,12 +35,12 @@ trait SearchService {
   val searchService: SearchService
 
   class SearchService extends LazyLogging {
-    implicit val formats = DefaultFormats + LocalDateSerializer
+    implicit val formats: Formats = DefaultFormats + LocalDateSerializer
 
     def searchWithQuery(languageTag: LanguageTag, query: Option[String], paging: Paging, sort: Sort.Value): SearchResult =
       executeSearch(BoolQueryDefinition(), languageTag, query, None, paging, sort)
 
-    def searchWithLevel(languageTag: LanguageTag, readingLevel: Option[String], paging: Paging, sort: Sort.Value): SearchResult =
+    def searchWithLevelAndStatus(languageTag: LanguageTag, readingLevel: Option[String],  paging: Paging, sort: Sort.Value): SearchResult =
       executeSearch(BoolQueryDefinition(), languageTag, None, readingLevel, paging, sort)
 
     private def executeSearch(boolDefinition: BoolQueryDefinition, languageTag: LanguageTag, query: Option[String], readingLevel: Option[String], paging: Paging, sort: Sort.Value) = {
@@ -49,7 +49,7 @@ trait SearchService {
 
       val requestedResultWindow = paging.page * numResults
       if (requestedResultWindow > BookApiProperties.ElasticSearchIndexMaxResultWindow) {
-        logger.info(s"Max supported results are ${BookApiProperties.ElasticSearchIndexMaxResultWindow}, user requested ${requestedResultWindow}")
+        logger.info(s"Max supported results are ${BookApiProperties.ElasticSearchIndexMaxResultWindow}, user requested $requestedResultWindow")
         throw new ResultWindowTooLargeException(Error.WindowTooLargeError.description)
       }
       val indexAndTypes = IndexAndTypes(BookApiProperties.searchIndex(languageTag), Seq(BookApiProperties.SearchDocument))
@@ -100,25 +100,21 @@ trait SearchService {
 
     private def errorHandler[T](failure: Failure[T]) = {
       failure match {
-        case Failure(e: GdlSearchException) => {
+        case Failure(e: GdlSearchException) =>
           e.getFailure.status match {
-            case notFound: Int if notFound == 404 => {
+            case notFound: Int if notFound == 404 =>
               logger.error(s"Index ${BookApiProperties.SearchIndex} not found. Scheduling a reindex.")
               scheduleIndexDocuments()
               throw new IndexNotFoundException(s"Index ${BookApiProperties.SearchIndex} not found. Scheduling a reindex")
-            }
-            case _ => {
+            case _ =>
               logger.error(e.getFailure.error.reason)
               throw new ElasticsearchException(s"Unable to execute search in ${BookApiProperties.SearchIndex}", e.getFailure.error.reason)
-            }
           }
-
-        }
         case Failure(t: Throwable) => throw t
       }
     }
 
-    private def scheduleIndexDocuments() = {
+    private def scheduleIndexDocuments(): Unit = {
       val f = Future {
         indexBuilderService.indexDocuments
       }

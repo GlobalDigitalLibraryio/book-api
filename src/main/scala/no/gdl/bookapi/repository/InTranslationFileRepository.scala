@@ -28,7 +28,8 @@ trait InTranslationFileRepository {
         col.revision -> startRevision,
         col.inTranslationId -> file.inTranslationId,
         col.fileType -> file.fileType.toString,
-        col.originalId -> file.originalId,
+        col.originalChapterId -> file.originalChapterId,
+        col.newChapterId -> file.newChapterId,
         col.filename -> file.filename,
         col.crowdinFileId -> file.crowdinFileId,
         col.translationStatus -> file.translationStatus.toString,
@@ -48,7 +49,8 @@ trait InTranslationFileRepository {
         col.revision -> nextRevision,
         col.inTranslationId -> toUpdate.inTranslationId,
         col.fileType -> toUpdate.fileType.toString,
-        col.originalId -> toUpdate.originalId,
+        col.originalChapterId -> toUpdate.originalChapterId,
+        col.newChapterId -> toUpdate.newChapterId,
         col.filename -> toUpdate.filename,
         col.crowdinFileId -> toUpdate.crowdinFileId,
         col.translationStatus -> toUpdate.translationStatus.toString,
@@ -74,7 +76,7 @@ trait InTranslationFileRepository {
         .single().apply()
     }
 
-    def withTranslationId(id: Option[Long])(implicit session: DBSession = ReadOnlyAutoSession): Seq[InTranslationFile] = {
+    def withTranslationId(id: Long)(implicit session: DBSession = ReadOnlyAutoSession): Seq[InTranslationFile] = {
       select
         .from(InTranslationFile as itf)
         .where.eq(itf.inTranslationId, id)

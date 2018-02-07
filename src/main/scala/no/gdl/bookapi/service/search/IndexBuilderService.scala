@@ -10,7 +10,7 @@ package no.gdl.bookapi.service.search
 import com.typesafe.scalalogging.LazyLogging
 import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.BookApiProperties
-import no.gdl.bookapi.model.domain.{Paging, ReindexResult, Translation}
+import no.gdl.bookapi.model.domain.{PublishingStatus, ReindexResult, Translation}
 import no.gdl.bookapi.repository.TranslationRepository
 
 import scala.util.{Failure, Success, Try}
@@ -33,10 +33,10 @@ trait IndexBuilderService {
 
     def indexDocuments: Try[ReindexResult] = {
       synchronized {
-        var numIndexed = 0;
+        var numIndexed = 0
         val start = System.currentTimeMillis()
         getLanguages.foreach(language => {
-          indexService.createSearchIndex(language).flatMap(indexName => {
+          indexService.createSearchIndex(language).flatMap(f = indexName => {
             val operations = for {
               numIndexed <- sendToElastic(indexName, language)
               aliasTarget <- indexService.aliasTarget(language)
@@ -45,13 +45,11 @@ trait IndexBuilderService {
             } yield numIndexed
 
             operations match {
-              case Failure(f) => {
+              case Failure(f) =>
                 indexService.deleteSearchIndex(Some(indexName))
                 Failure(f)
-              }
-              case Success(totalIndexed) => {
+              case Success(totalIndexed) =>
                 Success(numIndexed += totalIndexed)
-              }
             }
           })
         })
@@ -61,10 +59,10 @@ trait IndexBuilderService {
 
     def sendToElastic(indexName: String, languageTag: LanguageTag): Try[Int] = {
       var numIndexed = 0
-      val numTranslations = translationRepository.numberOfTranslations(languageTag)
+      val numTranslations = translationRepository.numberOfTranslationsWithStatus(languageTag, PublishingStatus.PUBLISHED)
       val iterations = numTranslations / BookApiProperties.IndexBulkSize
       0 to iterations foreach(iter => {
-        val numberInBulk = indexService.indexDocuments(translationRepository.translationsWithLanguage(languageTag, BookApiProperties.IndexBulkSize, iter * BookApiProperties.IndexBulkSize), indexName)
+        val numberInBulk = indexService.indexDocuments(translationRepository.translationsWithLanguageAndStatus(languageTag, PublishingStatus.PUBLISHED, BookApiProperties.IndexBulkSize, iter * BookApiProperties.IndexBulkSize), indexName)
         numberInBulk match {
           case Success(num) => numIndexed += num
           case Failure(f) => Failure(f)

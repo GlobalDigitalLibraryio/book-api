@@ -91,23 +91,15 @@ trait BooksController {
       pathParam[Long]("id").description("Id of the book to find similar for."))
       responseMessages(response400, response404, response500))
 
-    private val getMyBooks = (apiOperation[api.SearchResult]("getMyBooksIn")
+    private val getMyBooks = (apiOperation[Seq[api.MyBook]]("getMyBooks")
       summary s"Returns all the books for the logged in user."
       notes s"Returns a list of books for the logged in user."
       parameters(
       headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
       queryParam[Option[Int]]("page-size").description("Return this many results per page."),
-      queryParam[Option[Int]]("page").description("Return results for this page."))
+      queryParam[Option[Int]]("page").description("Return results for this page."),
+      queryParam[Option[String]]("sort").description("Sorting order for the books."))
       responseMessages (response403, response500)
-      authorizations "oauth2")
-
-    private val getMyBook = (apiOperation[Option[api.Book]]("getMyBookIn")
-      summary "Returns metadata about a personal book"
-      notes "Returns a book for the logged in user"
-      parameters(
-      headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
-      pathParam[Long]("id").description("Id of the book that is to be returned."))
-      responseMessages(response400, response403, response404, response500)
       authorizations "oauth2")
 
     get("/", operation(getAllBooks)) {
@@ -117,7 +109,7 @@ trait BooksController {
       val sort = Sort.valueOf(paramOrNone("sort")).getOrElse(Sort.ByIdAsc)
       val language = LanguageTag(DefaultLanguage)
 
-      searchService.searchWithLevel(language, readingLevel, Paging(page, pageSize), sort)
+      searchService.searchWithLevelAndStatus(language, readingLevel, Paging(page, pageSize), sort)
     }
 
     get("/:lang/?", operation(getAllBooksInLang)) {
@@ -126,7 +118,7 @@ trait BooksController {
       val readingLevel = params.get("reading-level")
       val sort = Sort.valueOf(paramOrNone("sort")).getOrElse(Sort.ByIdAsc)
 
-      searchService.searchWithLevel(LanguageTag(params("lang")), readingLevel, Paging(page, pageSize), sort)
+      searchService.searchWithLevelAndStatus(LanguageTag(params("lang")), readingLevel, Paging(page, pageSize), sort)
     }
 
     get("/:lang/:id/?", operation(getBook)) {
@@ -164,28 +156,13 @@ trait BooksController {
     }
 
     get("/mine/?", operation(getMyBooks)) {
-      requireUser
-
-      // TODO: #155 - change to lookup the actual users books
+      val userId = requireUser
       val pageSize = intOrDefault("page-size", 10).min(100).max(1)
       val page = intOrDefault("page", 1).max(1)
       val sort = Sort.valueOf(paramOrNone("sort")).getOrElse(Sort.ByIdAsc)
-      val lang = LanguageTag(DefaultLanguage)
 
-      searchService.searchWithLevel(lang, None, Paging(page, pageSize), sort)
-    }
+      readService.forUserWithLanguage(userId, pageSize, page, sort)
 
-    get("/mine/:id/?", operation(getMyBook)) {
-      requireUser
-
-      // TODO: #155 - change to lookup book for an actual user
-      val id = long("id")
-      val lang = LanguageTag(DefaultLanguage)
-
-      readService.withIdAndLanguage(id, lang) match {
-        case Some(x) => x
-        case None => NotFound(body = Error(Error.NOT_FOUND, s"No book with id $id found"))
-      }
     }
   }
 

@@ -11,7 +11,7 @@ val MockitoVersion = "1.10.19"
 val Elastic4sVersion = "6.1.1"
 val ElasticsearchVersion = "6.0.0"
 val JacksonVersion = "2.7.4"
-val JsoupVersion =  "1.10.2"
+val JsoupVersion =  "1.11.2"
 val OpenHtmlPdfVersion = "0.0.1-RC11"
 
 val appProperties = settingKey[Properties]("The application properties")

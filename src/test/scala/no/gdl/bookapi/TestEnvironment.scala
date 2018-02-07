@@ -9,7 +9,6 @@ package no.gdl.bookapi
 
 import javax.sql
 
-import com.sksamuel.elastic4s.http.HttpClient
 import io.digitallibrary.network.GdlClient
 import no.gdl.bookapi.controller._
 import no.gdl.bookapi.integration.crowdin.CrowdinClientBuilder
@@ -17,9 +16,8 @@ import no.gdl.bookapi.integration.{DataSource, E4sClient, ElasticClient, ImageAp
 import no.gdl.bookapi.repository._
 import no.gdl.bookapi.service._
 import no.gdl.bookapi.service.search.{IndexBuilderService, IndexService, SearchService}
-import no.gdl.bookapi.service.translation.{SupportedLanguageService, TranslationDbService, TranslationService}
+import no.gdl.bookapi.service.translation.{MergeService, SupportedLanguageService, TranslationDbService, TranslationService}
 import org.mockito.Mockito
-import org.scalatest.mockito.MockitoSugar._
 
 trait TestEnvironment
   extends DataSource
@@ -28,7 +26,7 @@ trait TestEnvironment
     with ElasticClient
     with ConverterService
     with ContentConverter
-    with TransactionHandler
+    with TestTransactionHandler
     with BooksController
     with LanguageController
     with LevelController
@@ -60,12 +58,15 @@ trait TestEnvironment
     with TranslationDbService
     with InTranslationRepository
     with InTranslationFileRepository
+    with MergeService
     with IndexBuilderService
     with IndexService
     with SearchService
-    with SearchController {
+    with SearchController
+{
 
   val dataSource = mock[sql.DataSource]
+
   val readService = mock[ReadService]
   val writeService = mock[WriteService]
   val converterService = mock[ConverterService]
@@ -106,6 +107,7 @@ trait TestEnvironment
   val translationDbService = mock[TranslationDbService]
   val inTranslationRepository = mock[InTranslationRepository]
   val inTranslationFileRepository = mock[InTranslationFileRepository]
+  val mergeService = mock[MergeService]
   val indexBuilderService = mock[IndexBuilderService]
   val indexService = mock[IndexService]
   val searchService = mock[SearchService]
@@ -150,7 +152,8 @@ trait TestEnvironment
       translationService,
       translationDbService,
       inTranslationRepository,
-      inTranslationFileRepository
+      inTranslationFileRepository,
+      mergeService
     )
   }
 }

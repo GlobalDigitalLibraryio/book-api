@@ -12,6 +12,8 @@ import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi._
 import no.gdl.bookapi.model.api._
 import no.gdl.bookapi.model.domain.{Paging, Sort}
+import no.gdl.bookapi.model.domain.{PublishingStatus, Sort}
+import org.json4s.{DefaultFormats, Formats}
 import org.json4s.native.Serialization._
 import org.json4s.{DefaultFormats, Formats}
 import org.mockito.Matchers._
@@ -36,6 +38,7 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
 
   test("that GET / will get books with default language") {
     val result = SearchResult(0, 1, 10, Language("eng", "English"), Seq(TestData.Api.DefaultBook))
+    when(readService.withLanguageAndLevelAndStatus(LanguageTag(BookApiProperties.DefaultLanguage), Some("1"), PublishingStatus.PUBLISHED, 10, 1, Sort.ByIdAsc)).thenReturn(result)
     when(searchService.searchWithLevel(LanguageTag(BookApiProperties.DefaultLanguage), Some("1"), Paging(1, 10), Sort.ByIdAsc)).thenReturn(result)
 
     get("/?reading-level=1&page-size=10&page=1") {
@@ -50,6 +53,7 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
     val language = TestData.Api.norwegian_bokmal
 
     val result = SearchResult(0, 1, 10, language, Seq(TestData.Api.DefaultBook))
+    when(readService.withLanguageAndLevelAndStatus(LanguageTag(language.code), Some("2"), PublishingStatus.PUBLISHED, 10, 1, Sort.ByIdAsc)).thenReturn(result)
     when(searchService.searchWithLevel(LanguageTag(language.code), Some("2"), Paging(1,10), Sort.ByIdAsc)).thenReturn(result)
 
     get("/nob?reading-level=2&page-size=10&page=1") {
@@ -67,6 +71,7 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
     val secondBook = TestData.Api.DefaultBook.copy(id = 1, title = "This should be last")
 
     val result = SearchResult(2, 1, 10, language, Seq(firstBook, secondBook))
+    when(readService.withLanguageAndLevelAndStatus(LanguageTag(language.code), Some("2"), PublishingStatus.PUBLISHED, 10, 1, Sort.ByTitleDesc)).thenReturn(result)
     when(searchService.searchWithLevel(LanguageTag(language.code), Some("2"), Paging(1,10), Sort.ByTitleDesc)).thenReturn(result)
 
     get("/nob?reading-level=2&page-size=10&page=1&sort=-title") {
@@ -134,32 +139,6 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
   test("that GET /mine returns 200 ok for a valid user") {
     get("/mine", headers = Seq(("Authorization", s"Bearer $validTestToken"))) {
       status should equal (200)
-    }
-  }
-
-  test("that GET /mine/1 returns AccessDenied for no user") {
-    get("/mine/123") {
-      status should equal (403)
-      val error = read[Error](body)
-      error.code should equal ("ACCESS DENIED")
-    }
-  }
-
-  test("that GET /mine/1 returns AccessDenied for invalid user") {
-    get("/mine/123", headers = Seq(("Authorization", s"Bearer $invalidTestToken"))) {
-      status should equal (403)
-      val error = read[Error](body)
-      error.code should equal ("ACCESS DENIED")
-    }
-  }
-
-  test("that GET /mine/1 returns 200 ok for a valid user") {
-    when(readService.withIdAndLanguage(any[Long], any[LanguageTag])).thenReturn(Some(TestData.Api.DefaultBook))
-
-    get("/mine/123", headers = Seq(("Authorization", s"Bearer $validTestToken"))) {
-      status should equal (200)
-      val book = read[Book](body)
-      book.uuid should equal (TestData.Api.DefaultBook.uuid)
     }
   }
 }

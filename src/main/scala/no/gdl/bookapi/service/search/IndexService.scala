@@ -15,18 +15,18 @@ import com.sksamuel.elastic4s.analyzers._
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.indexes.IndexDefinition
 import com.sksamuel.elastic4s.mappings.{MappingDefinition, TextFieldDefinition}
-import com.sksamuel.elastic4s.{Index, IndexAndType, RefreshPolicy}
+import com.sksamuel.elastic4s.{IndexAndType, RefreshPolicy}
 import com.typesafe.scalalogging.LazyLogging
 import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.BookApiProperties
 import no.gdl.bookapi.integration.ElasticClient
 import no.gdl.bookapi.model.Language._
-import no.gdl.bookapi.model.api.LocalDateSerializer
 import no.gdl.bookapi.model._
+import no.gdl.bookapi.model.api.LocalDateSerializer
 import no.gdl.bookapi.model.domain.Translation
 import no.gdl.bookapi.repository.{BookRepository, TranslationRepository}
 import no.gdl.bookapi.service.ConverterService
-import org.json4s.DefaultFormats
+import org.json4s.{DefaultFormats, Formats}
 import org.json4s.native.Serialization.write
 
 import scala.collection.immutable
@@ -37,7 +37,7 @@ trait IndexService extends LazyLogging {
   val indexService: IndexService
 
   class IndexService {
-    implicit val formats = DefaultFormats + LocalDateSerializer
+    implicit val formats: Formats = DefaultFormats + LocalDateSerializer
 
     def indexDocument(translation: Translation): Try[Translation] = {
       val availableLanguages: Seq[LanguageTag] = translationRepository.languagesFor(translation.bookId)
@@ -66,10 +66,9 @@ trait IndexService extends LazyLogging {
         bulk(actions).refresh(RefreshPolicy.WAIT_UNTIL)
       ) match {
         case Failure(failure) => Failure(failure)
-        case Success(_) => {
+        case Success(_) =>
           logger.info(s"Indexed ${translationList.size} documents")
           Success(translationList.size)
-        }
       }
     }
 
@@ -88,10 +87,9 @@ trait IndexService extends LazyLogging {
             .mappings(mappings(languageTag))
             .analysis(analysis())
           ) match {
-          case Failure(failure) => {
+          case Failure(failure) =>
             logger.error(failure.getMessage)
             Failure(failure)
-          }
           case Success(_) => Success(indexName)
         }
       }
@@ -196,9 +194,8 @@ trait IndexService extends LazyLogging {
         var actions = List[AliasActionDefinition](AddAliasActionDefinition(BookApiProperties.searchIndex(languageTag), newIndexName))
         oldIndexName match {
           case None => // Do nothing
-          case Some(oldIndex) => {
+          case Some(oldIndex) =>
             actions = actions :+ RemoveAliasActionDefinition(BookApiProperties.searchIndex(languageTag), oldIndex)
-          }
         }
         esClient.execute(
           aliases(actions)
@@ -242,10 +239,9 @@ trait IndexService extends LazyLogging {
 
     def indexExisting(indexName: String): Try[Boolean] = {
       esClient.execute(indexExists(indexName)) match {
-        case Failure(failure) => {
+        case Failure(failure) =>
           logger.error(failure.getLocalizedMessage)
           Success(false)
-        }
         case Success(response) => Success(response.result.isExists)
       }
     }

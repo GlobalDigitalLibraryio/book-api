@@ -135,25 +135,26 @@ trait FeedService {
       Seq(justArrived).flatten ++ levels
     }
 
-    def allEntries(language: LanguageTag, paging: Paging): (PagingStatus, Seq[FeedEntry]) = {
-      val justArrived = newEntries(language).map(addJustArrivedCategory(_, language))
+    def allEntries(languageTag: LanguageTag, paging: Paging): (PagingStatus, Seq[FeedEntry]) = {
+      val justArrived = newEntries(languageTag).map(addJustArrivedCategory(_, languageTag))
 
-      val searchResult =
-        searchService.searchWithQuery(languageTag = language, None, paging = paging, sort = Sort.ByArrivalDateDesc)
+      val searchResult = {
+        searchService.searchWithQuery(languageTag = languageTag, None, paging = paging, sort = Sort.ByArrivalDateDesc)
+      }
 
-      val allBooks = searchResult.results.map(book => FeedEntry(book)).map(addLevelCategory(_, language)).sortBy(_.book.readingLevel)
+      val allBooks = searchResult.results.map(book => FeedEntry(book)).map(addLevelCategory(_, languageTag)).sortBy(_.book.readingLevel)
 
       (searchResultToPagingStatus(searchResult, paging), justArrived ++ allBooks)
     }
 
     def newEntries(lang: LanguageTag): Seq[FeedEntry] = {
-      val searchResult = searchService.searchWithQuery(languageTag = lang, None, paging = Paging(1,BookApiProperties.OpdsJustArrivedLimit), sort = Sort.ByTitleAsc)
+      val searchResult = searchService.searchWithQuery(languageTag = lang, None, paging = Paging(1,BookApiProperties.OpdsJustArrivedLimit), sort = Sort.ByArrivalDateDesc)
 
       searchResult.results.map(FeedEntry(_))
     }
 
     def entriesForLanguageAndLevel(language: LanguageTag, level: String, paging: Paging): (PagingStatus, Seq[FeedEntry]) = {
-      val searchResult = searchService.searchWithLevel(languageTag = language, readingLevel = Some(level), paging = paging, sort = Sort.ByTitleAsc)
+      val searchResult = searchService.searchWithLevelAndStatus(languageTag = language, readingLevel = Some(level), paging = paging, sort = Sort.ByTitleAsc)
       (searchResultToPagingStatus(searchResult, paging), searchResult.results.map(book => api.FeedEntry(book)))
     }
 

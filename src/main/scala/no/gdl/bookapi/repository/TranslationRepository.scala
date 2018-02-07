@@ -12,7 +12,7 @@ import java.time.LocalDate
 
 import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.model.api.OptimisticLockException
-import no.gdl.bookapi.model.domain._
+import no.gdl.bookapi.model.domain.{Sort, _}
 import scalikejdbc._
 
 trait TranslationRepository {
@@ -45,11 +45,13 @@ trait TranslationRepository {
     def languagesFor(id: Long)(implicit session: DBSession = ReadOnlyAutoSession): Seq[LanguageTag] = {
       select(t.result.language)
         .from(Translation as t)
-        .where.eq(t.bookId, id).toSQL
+        .where.eq(t.bookId, id)
+        .and.eq(t.publishingStatus, PublishingStatus.PUBLISHED.toString)
+        .toSQL
         .map(rs => LanguageTag(rs.string(1))).list().apply()
     }
 
-    def bookIdsWithLanguage(language: LanguageTag, pageSize: Int, page: Int, sortDef: Sort.Value)(implicit session: DBSession = ReadOnlyAutoSession): SearchResult[Long] = {
+    def bookIdsWithLanguageAndStatus(language: LanguageTag, publishingStatus: PublishingStatus.Value, pageSize: Int, page: Int, sortDef: Sort.Value)(implicit session: DBSession = ReadOnlyAutoSession): SearchResult[Long] = {
       val limit = pageSize.max(1)
       val offset = (page.max(1) - 1) * pageSize
 
@@ -57,6 +59,7 @@ trait TranslationRepository {
         select(countAllBeforeLimiting, t.result.bookId)
         .from(Translation as t)
         .where.eq(t.language, language.toString)
+        .and.eq(t.publishingStatus, publishingStatus.toString)
         .append(getSorting(sortDef))
         .limit(limit).offset(offset)
         .toSQL
@@ -65,7 +68,7 @@ trait TranslationRepository {
       SearchResult[Long](result.map(_._1).headOption.getOrElse(0), page, pageSize, language, result.map(_._2))
     }
 
-    def bookIdsWithLanguageAndLevel(language: LanguageTag, readingLevel: Option[String], pageSize: Int, page: Int, sortDef: Sort.Value)(implicit session: DBSession = ReadOnlyAutoSession): SearchResult[Long] = {
+    def bookIdsWithLanguageAndLevelAndStatus(language: LanguageTag, readingLevel: Option[String], publishingStatus: PublishingStatus.Value, pageSize: Int, page: Int, sortDef: Sort.Value)(implicit session: DBSession = ReadOnlyAutoSession): SearchResult[Long] = {
       val limit = pageSize.max(1)
       val offset = (page.max(1) - 1) * pageSize
 
@@ -73,6 +76,7 @@ trait TranslationRepository {
         .from(Translation as t)
         .where
         .eq(t.language, language.toString)
+        .and.eq(t.publishingStatus, publishingStatus.toString)
         .and(
           sqls.toAndConditionOpt(readingLevel.map(l => sqls.eq(t.readingLevel, l))))
         .append(getSorting(sortDef))
@@ -252,9 +256,11 @@ trait TranslationRepository {
                 ${t.about},
                 ${t.numPages},
                 ${t.language},
+                ${t.translatedFrom},
                 ${t.datePublished},
                 ${t.dateCreated},
                 ${t.dateArrived},
+                ${t.publishingStatus},
                 ${t.coverphoto},
                 ${t.isBasedOnUrl},
                 ${t.educationalUse},
@@ -280,9 +286,11 @@ trait TranslationRepository {
                ${translation.about},
                ${translation.numPages},
                ${translation.language.toString},
+               ${translation.translatedFrom.map(_.toString)},
                ${translation.datePublished},
                ${translation.dateCreated},
                ${translation.dateArrived},
+               ${translation.publishingStatus.toString},
                ${translation.coverphoto},
                ${translation.isBasedOnUrl},
                ${translation.educationalUse},
@@ -327,9 +335,11 @@ trait TranslationRepository {
         ${t.about} = ${replacement.about},
         ${t.numPages} = ${replacement.numPages},
         ${t.language} = ${replacement.language.toString},
+        ${t.translatedFrom} = ${replacement.translatedFrom.map(_.toString)},
         ${t.datePublished} = ${replacement.datePublished},
         ${t.dateCreated} = ${replacement.dateCreated},
         ${t.dateArrived} = ${replacement.dateArrived},
+        ${t.publishingStatus} = ${replacement.publishingStatus.toString},
         ${t.coverphoto} = ${replacement.coverphoto},
         ${t.isBasedOnUrl} = ${replacement.isBasedOnUrl},
         ${t.educationalUse} = ${replacement.educationalUse},
@@ -366,22 +376,26 @@ trait TranslationRepository {
       case (Sort.ByArrivalDateDesc) => sqls.orderBy(t.dateArrived.desc, t.bookId.desc)
     }
 
-    def translationsWithLanguage(languageTag: LanguageTag, limit: Int, offset: Int)(implicit session: DBSession = ReadOnlyAutoSession): List[Translation] = {
+    def translationsWithLanguageAndStatus(languageTag: LanguageTag, status: PublishingStatus.Value, limit: Int, offset: Int)(implicit session: DBSession = ReadOnlyAutoSession): List[Translation] = {
       select(t.result.id)
         .from(Translation as t)
         .where
         .eq(t.language, languageTag.toString())
+        .and
+        .eq(t.publishingStatus, status.toString)
         .orderBy(t.id)
         .limit(limit)
         .offset(offset)
         .toSQL.map(rs => withId(rs.long(1)).get).list().apply()
     }
 
-    def numberOfTranslations(languageTag: LanguageTag)(implicit session: DBSession = ReadOnlyAutoSession): Int = {
+    def numberOfTranslationsWithStatus(languageTag: LanguageTag, status: PublishingStatus.Value)(implicit session: DBSession = ReadOnlyAutoSession): Int = {
       select(sqls"count(*)")
         .from(Translation as t)
         .where
         .eq(t.language, languageTag.toString())
+        .and
+        .eq(t.publishingStatus, status.toString)
         .toSQL.map(rs => rs.int(1)).single().apply().getOrElse(0)
     }
   }

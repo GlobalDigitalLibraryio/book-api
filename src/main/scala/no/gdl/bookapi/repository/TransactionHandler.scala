@@ -13,6 +13,12 @@ import scalikejdbc._
 trait TransactionHandler {
   this: DataSource =>
 
+  def inTransaction[A](work: DBSession => A)(implicit session: DBSession = null): A
+}
+
+trait LiveTransactionHandler extends TransactionHandler {
+  this: DataSource =>
+
   def inTransaction[A](work: DBSession => A)(implicit session: DBSession = null): A = {
     Option(session) match {
       case Some(x) => work(x)
