@@ -10,7 +10,6 @@ package no.gdl.bookapi.service
 import java.time.LocalDate
 import java.util.UUID
 
-import com.osinka.i18n.{Lang, Messages}
 import com.typesafe.scalalogging.LazyLogging
 import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.BookApiProperties
@@ -23,7 +22,7 @@ import no.gdl.bookapi.repository.{FeedRepository, TranslationRepository}
 import scala.util.Try
 
 trait FeedService {
-  this: FeedRepository with TranslationRepository with ReadService with ConverterService =>
+  this: FeedRepository with TranslationRepository with ReadService with ConverterService with FeedLocalizationService =>
   val feedService: FeedService
 
   sealed trait PagingStatus
@@ -42,20 +41,32 @@ trait FeedService {
       }
 
       val facets = facetsForLanguages(language) ++ facetsForSelections(language, url)
+      val localization = feedLocalizationService.localizationFor(language)
 
+      // TODO Do something else here? Do we have to read this from the database?
       feedRepository.forUrl(url.replace(BookApiProperties.OpdsPath,"")).map(feedDefinition => {
+        val levelRegex = ".*/level(\\d+).xml".r
+        val (title, description) = feedDefinition.titleKey match {
+          case "opds_root_title" => (localization.rootTitle, None)
+          case "opds_nav_title" => (localization.navTitle, None)
+          case "level_feed_title" => url match {
+            case levelRegex(level) => (localization.levelTitle(level), Some(localization.levelDescription))
+            case _ => ("TODO", Some(localization.levelDescription))
+          }
+        }
+
         api.Feed(
-          api.FeedDefinition(
+          feedDefinition = api.FeedDefinition(
             feedDefinition.id.get,
             feedDefinition.revision.get,
             s"${BookApiProperties.CloudFrontOpds}${feedDefinition.url}",
             feedDefinition.uuid),
-          Messages(feedDefinition.titleKey, titleArgs:_*)(Lang(language.toString)),
-          feedDefinition.descriptionKey.map(Messages(_)(Lang(language.toString))),
-          Some("self"),
-          updated,
-          books,
-          facets)
+          title = title,
+          description = description,
+          rel = Some("self"),
+          updated = updated,
+          content = books,
+          facets = facets)
       })
     }
 
@@ -70,6 +81,7 @@ trait FeedService {
     }
 
     def facetsForSelections(currentLanguage: LanguageTag, url: String): Seq[Facet] = {
+      val localization = feedLocalizationService.localizationFor(currentLanguage)
       val group = "Selection"
       (Facet(
         href = s"${
@@ -86,7 +98,7 @@ trait FeedService {
               BookApiProperties.CloudFrontOpds}${BookApiProperties.OpdsLevelUrl.url
               .replace(BookApiProperties.OpdsLanguageParam, currentLanguage.toString)
               .replace(BookApiProperties.OpdsLevelParam, readingLevel)}",
-            title = s"Level $readingLevel",
+            title = localization.levelTitle(readingLevel),
             group = group,
             isActive = url.endsWith(s"level$readingLevel.xml"))
         ))
@@ -94,7 +106,7 @@ trait FeedService {
 
     // TODO Issue#200: Remove when not used anymore
     def feedsForNavigation(language: LanguageTag): Seq[api.Feed] = {
-      implicit val lang: Lang = Lang(language.toString)
+      val localization = feedLocalizationService.localizationFor(language)
 
       val justArrivedUpdated = translationRepository.latestArrivalDateFor(language)
       val justArrived = feedRepository.forUrl(rootPath(language)).map(definition =>
@@ -104,8 +116,8 @@ trait FeedService {
             revision = definition.revision.get,
             url = s"${BookApiProperties.CloudFrontOpds}${definition.url}",
             uuid = definition.uuid),
-          title = Messages(definition.titleKey),
-          description = definition.descriptionKey.map(Messages(_)),
+          title = localization.navTitle,
+          description = None,
           rel = Some("http://opds-spec.org/sort/new"),
           updated = justArrivedUpdated,
           content = Seq.empty,
@@ -124,8 +136,8 @@ trait FeedService {
                 revision = definition.revision.get,
                 url = s"${BookApiProperties.CloudFrontOpds}${definition.url}",
                 uuid = definition.uuid),
-              title = Messages(definition.titleKey, level),
-              description = definition.descriptionKey.map(Messages(_)),
+              title = localization.levelTitle(level),
+              description = Some(localization.levelDescription),
               rel = None,
               updated = levelUpdated,
               content = Seq.empty,

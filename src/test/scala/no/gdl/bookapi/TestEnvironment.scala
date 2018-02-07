@@ -48,6 +48,7 @@ trait TestEnvironment
     with PdfService
     with FeedRepository
     with FeedService
+    with FeedLocalizationService
     with OPDSController
     with TranslationsController
     with SupportedLanguageService
@@ -90,6 +91,7 @@ trait TestEnvironment
   val pdfService = mock[PdfService]
   val feedRepository = mock[FeedRepository]
   val feedService = mock[FeedService]
+  val feedLocalizationService = mock[FeedLocalizationService]
   val opdsController = mock[OPDSController]
   val translationsController = mock[TranslationsController]
   val supportedLanguageService = mock[SupportedLanguageService]
@@ -131,6 +133,7 @@ trait TestEnvironment
       pdfService,
       feedRepository,
       feedService,
+      feedLocalizationService,
       opdsController,
       translationsController,
       supportedLanguageService,

@@ -21,6 +21,15 @@ class FeedServiceTest extends UnitSuite with TestEnvironment {
 
   override val feedService = new FeedService
 
+  val defaultFeedLocalization = FeedLocalization(
+    rootTitle = "Root title",
+    navTitle = "Nav title",
+    levelTitle = level => s"Level $level",
+    levelDescription = "Level description"
+  )
+
+  when(feedLocalizationService.localizationFor(any[LanguageTag])).thenReturn(defaultFeedLocalization)
+
   test("that calculateFeeds returns correct urls for one language and one level") {
     val languages = Seq(LanguageTag(LanguageCodeEnglish))
     val levels = Seq("1")
