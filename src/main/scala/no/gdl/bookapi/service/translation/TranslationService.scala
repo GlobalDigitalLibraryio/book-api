@@ -213,8 +213,8 @@ trait TranslationService {
 
     private def findChapterFiles(translation: InTranslation, translationFiles: Seq[InTranslationFile]): Try[Seq[InTranslationFile]] = {
       translationFiles.filter(_.fileType == FileType.CONTENT) match {
-        case head :: tail => Success(head :: tail)
-        case _ => Failure(new RuntimeException(s"No chapters found for translation with id ${translation.id}."))
+        case Nil => Failure(new RuntimeException(s"No chapters found for translation with id ${translation.id}."))
+        case list => Success(list)
       }
     }
 
