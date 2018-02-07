@@ -270,9 +270,9 @@ class TranslationRepositoryTest extends IntegrationSuite with TestEnvironment wi
       addTranslationDef("ext2", "title2", book2.id.get, LanguageTag("nob"))
       addTranslationDef("ext2", "title2", book2.id.get, LanguageTag("xho"))
 
-      val engTranslations = translationRepository.translationsWithLanguage(LanguageTag("eng"), 10, 0)
-      val nobTranslations = translationRepository.translationsWithLanguage(LanguageTag("nob"), 10, 0)
-      val xhoTranslationsWithLimiting = translationRepository.translationsWithLanguage(LanguageTag("xho"), 1, 0)
+      val engTranslations = translationRepository.translationsWithLanguageAndStatus(LanguageTag("eng"), PublishingStatus.PUBLISHED, 10, 0)
+      val nobTranslations = translationRepository.translationsWithLanguageAndStatus(LanguageTag("nob"), PublishingStatus.PUBLISHED,10, 0)
+      val xhoTranslationsWithLimiting = translationRepository.translationsWithLanguageAndStatus(LanguageTag("xho"), PublishingStatus.PUBLISHED, 1, 0)
 
       engTranslations.length should be(1)
       nobTranslations.length should be(2)
@@ -293,10 +293,10 @@ class TranslationRepositoryTest extends IntegrationSuite with TestEnvironment wi
       addTranslationDef("ext2", "title2", book2.id.get, LanguageTag("nob"))
       addTranslationDef("ext3", "title3", book3.id.get, LanguageTag("nob"))
 
-      val nobBooks = translationRepository.numberOfTranslations(LanguageTag("nob"))
-      val engBooks = translationRepository.numberOfTranslations(LanguageTag("eng"))
-      val xhoBooks = translationRepository.numberOfTranslations(LanguageTag("xho"))
-      val sweBooks = translationRepository.numberOfTranslations(LanguageTag("swe"))
+      val nobBooks = translationRepository.numberOfTranslationsWithStatus(LanguageTag("nob"), PublishingStatus.PUBLISHED)
+      val engBooks = translationRepository.numberOfTranslationsWithStatus(LanguageTag("eng"), PublishingStatus.PUBLISHED)
+      val xhoBooks = translationRepository.numberOfTranslationsWithStatus(LanguageTag("xho"), PublishingStatus.PUBLISHED)
+      val sweBooks = translationRepository.numberOfTranslationsWithStatus(LanguageTag("swe"), PublishingStatus.PUBLISHED)
 
       nobBooks should be(3)
       engBooks should be(2)
