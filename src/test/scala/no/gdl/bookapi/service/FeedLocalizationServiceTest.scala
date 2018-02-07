@@ -3,7 +3,7 @@ package no.gdl.bookapi.service
 import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.{TestEnvironment, UnitSuite}
 
-class FeedFeedLocalizationServiceTest extends UnitSuite with TestEnvironment {
+class FeedLocalizationServiceTest extends UnitSuite with TestEnvironment {
 
   override val feedLocalizationService = new FeedLocalizationService
 
