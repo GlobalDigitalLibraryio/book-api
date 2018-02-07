@@ -60,7 +60,7 @@ trait IndexService extends LazyLogging {
         book: Option[domain.Book] = bookRepository.withId(translation.bookId)
         source = write(converterService.toApiBook(Some(translation), availableLanguages, book))
         indexAndType = new IndexAndType(indexName, BookApiProperties.SearchDocument)
-      } yield IndexDefinition(indexAndType, id = Some(translation.id.toString), source = Some(source))
+      } yield IndexDefinition(indexAndType, id = Some(translation.id.get.toString), source = Some(source))
 
       esClient.execute(
         bulk(actions).refresh(RefreshPolicy.WAIT_UNTIL)
@@ -111,7 +111,7 @@ trait IndexService extends LazyLogging {
       List(mapping(BookApiProperties.SearchDocument) as (
         intField("id"),
         intField("revision"),
-        intField("externalId"),
+        keywordField("externalId"),
         keywordField("uuid") index false,
         languageField("title", language),
         languageField("description", language),
