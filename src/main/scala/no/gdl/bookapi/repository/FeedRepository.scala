@@ -8,6 +8,7 @@
 package no.gdl.bookapi.repository
 
 import com.typesafe.scalalogging.LazyLogging
+import no.gdl.bookapi.model.api.OptimisticLockException
 import no.gdl.bookapi.model.domain.Feed
 import scalikejdbc._
 
@@ -25,19 +26,39 @@ trait FeedRepository {
         .map(Feed(f)).single().apply()
     }
 
-    def add(feed: Feed)(implicit session: DBSession = AutoSession): Feed = {
+    // TODO Change this to "upsert" (on conflict do update) when we're on PostgreSQL >= 9.5
+    // https://www.postgresql.org/docs/devel/static/sql-insert.html
+    def addOrUpdate(feed: Feed)(implicit session: DBSession = AutoSession): Feed = {
       val f = Feed.column
       val startRevision = 1
 
-      val id = insert.into(Feed).namedValues(
-        f.revision -> startRevision,
-        f.url -> feed.url,
-        f.uuid -> feed.uuid,
-        f.titleKey -> feed.titleKey,
-        f.descriptionKey -> feed.descriptionKey
-      ).toSQL.updateAndReturnGeneratedKey().apply()
+      forUrl(feed.url) match {
+        case Some(existingFeed) =>
+          val newRevision = existingFeed.revision.getOrElse(0) + 1
+          val count = update(Feed).set(
+            f.revision -> newRevision,
+            f.title -> feed.title,
+            f.description -> feed.description
+          ).where
+            .eq(f.id, existingFeed.id).and
+            .eq(f.revision, f.revision).toSQL.update().apply()
+          if (count != 1) {
+            throw new OptimisticLockException()
+          } else {
+            existingFeed.copy(revision = Some(newRevision), title = feed.title, description = feed.description)
+          }
+        case None =>
+          val id = insert.into(Feed).namedValues(
+            f.revision -> startRevision,
+            f.url -> feed.url,
+            f.uuid -> feed.uuid,
+            f.title -> feed.title,
+            f.description -> feed.description
+          ).toSQL.updateAndReturnGeneratedKey().apply()
 
-      feed.copy(id = Some(id), revision = Some(startRevision))
+          feed.copy(id = Some(id), revision = Some(startRevision))
+      }
+
     }
 
     def all()(implicit session: DBSession = ReadOnlyAutoSession): Seq[Feed] = {

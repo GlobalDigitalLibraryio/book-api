@@ -14,7 +14,6 @@ import io.digitallibrary.network.Domains
 import io.digitallibrary.network.secrets.PropertyKeys
 import io.digitallibrary.network.secrets.Secrets.readSecrets
 import no.gdl.bookapi.model.crowdin.CrowdinProject
-import no.gdl.bookapi.model.domain.FeedDefinition
 
 import scala.util.Properties._
 import scala.util.{Failure, Success}
@@ -48,11 +47,9 @@ object BookApiProperties extends LazyLogging {
   val OpdsLanguageParam = ":lang"
   val OpdsLevelParam = ":lev"
 
-  val OpdsNavUrl = FeedDefinition(s"/$OpdsLanguageParam/nav.xml", "opds_nav_title", None)
-  val OpdsRootUrl = FeedDefinition(s"/$OpdsLanguageParam/root.xml", "opds_root_title", None)
-  val OpdsLevelUrl = FeedDefinition(s"/$OpdsLanguageParam/level$OpdsLevelParam.xml", "level_feed_title", Some("level_feed_description"))
-
-  val OpdsFeeds = Seq(OpdsNavUrl, OpdsRootUrl, OpdsLevelUrl)
+  val OpdsNavUrl = s"/$OpdsLanguageParam/nav.xml"
+  val OpdsRootUrl = s"/$OpdsLanguageParam/root.xml"
+  val OpdsLevelUrl = s"/$OpdsLanguageParam/level$OpdsLevelParam.xml"
 
   val DownloadPath = "/book-api/download"
   val Books = "books"

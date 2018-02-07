@@ -42,18 +42,18 @@ trait OPDSController {
     }
 
     // TODO Issue#200: Remove when not used anymore
-    get(BookApiProperties.OpdsNavUrl.url) {
+    get(BookApiProperties.OpdsNavUrl) {
       val navFeeds = feedService.feedsForNavigation(LanguageTag(params("lang")))
       val navLastUpdated = navFeeds.map(_.updated).sorted.reverse.headOption
       navigationFeed(feedUpdated = navLastUpdated, feeds = navFeeds)
     }
 
-    get(BookApiProperties.OpdsRootUrl.url) {
+    get(BookApiProperties.OpdsRootUrl) {
       val (pagingStatus, books) = feedService.allEntries(LanguageTag(params("lang")), extractPageAndPageSize())
       acquisitionFeed(books = books, pagingStatus = pagingStatus)
     }
 
-    get(BookApiProperties.OpdsLevelUrl.url) {
+    get(BookApiProperties.OpdsLevelUrl) {
       val (pagingStatus, books) = feedService.entriesForLanguageAndLevel(LanguageTag(params("lang")), params("lev"), extractPageAndPageSize())
       acquisitionFeed(titleArgs = Seq(params("lev")), books = books, pagingStatus = pagingStatus)
     }

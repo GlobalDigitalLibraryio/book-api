@@ -8,11 +8,11 @@
 package no.gdl.bookapi.service
 
 import io.digitallibrary.language.model.LanguageTag
-import no.gdl.bookapi.BookApiProperties.{OpdsLanguageParam, OpdsLevelParam}
+import no.gdl.bookapi.BookApiProperties._
 import no.gdl.bookapi.TestData.{LanguageCodeAmharic, LanguageCodeEnglish, LanguageCodeNorwegian}
 import no.gdl.bookapi.model.api.{Facet, SearchResult}
 import no.gdl.bookapi.model.domain.Paging
-import no.gdl.bookapi.{BookApiProperties, TestEnvironment, UnitSuite}
+import no.gdl.bookapi.{TestEnvironment, UnitSuite}
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 import scalikejdbc.DBSession
@@ -40,8 +40,8 @@ class FeedServiceTest extends UnitSuite with TestEnvironment {
     val calculatedFeedUrls = feedService.calculateFeeds
     calculatedFeedUrls.size should be (3)
 
-    val expectedFeedUrls = BookApiProperties.OpdsFeeds.map(feed =>
-      s"${feed.url.replace(OpdsLevelParam, "1").replace(OpdsLanguageParam, LanguageCodeEnglish)}")
+    val expectedFeedUrls = Seq(OpdsNavUrl, OpdsRootUrl, OpdsLevelUrl).map(url =>
+      s"${url.replace(OpdsLevelParam, "1").replace(OpdsLanguageParam, LanguageCodeEnglish)}")
 
     expectedFeedUrls.sorted should equal (calculatedFeedUrls.map(_.url).sorted)
   }
