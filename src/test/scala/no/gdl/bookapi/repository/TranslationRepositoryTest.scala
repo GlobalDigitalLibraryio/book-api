@@ -258,4 +258,23 @@ class TranslationRepositoryTest extends IntegrationSuite with TestEnvironment wi
       page2.results should equal (Seq(book3.id.get, book2.id.get, book1.id.get))
     }
   }
+
+  test("that allAvailableLanguagesWithStatus only returns languages where translations with given status exists") {
+    withRollback { implicit session =>
+      val book1 = addBookDef()
+      val book2 = addBookDef()
+      val book3 = addBookDef()
+
+      addTranslationDef("ext1", "a", book1.id.get, LanguageTag("xho"), None, Some(LocalDate.now()), status = PublishingStatus.UNLISTED)
+      addTranslationDef("ext2", "b", book2.id.get, LanguageTag("amh"), None, Some(LocalDate.now()), status = PublishingStatus.PUBLISHED)
+      addTranslationDef("ext3", "c", book3.id.get, LanguageTag("nob"), None, Some(LocalDate.now()), status = PublishingStatus.PUBLISHED)
+
+      val languages = translationRepository.allAvailableLanguagesWithStatus(PublishingStatus.PUBLISHED)
+
+      languages.size should be (2)
+      languages.contains(LanguageTag("xho")) should be (false)
+      languages.contains(LanguageTag("amh")) should be (true)
+      languages.contains(LanguageTag("nob")) should be (true)
+    }
+  }
 }

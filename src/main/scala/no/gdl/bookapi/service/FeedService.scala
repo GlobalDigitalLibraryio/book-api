@@ -60,7 +60,7 @@ trait FeedService {
     }
 
     def facetsForLanguages(currentLanguage: LanguageTag): Seq[Facet] = {
-      readService.listAvailableLanguagesAsLanguageTags.sortBy(_.toString).map(lang => Facet(
+      readService.listAvailablePublishedLanguagesAsLanguageTags.sortBy(_.toString).map(lang => Facet(
         href = s"${
           BookApiProperties.CloudFrontOpds}${BookApiProperties.OpdsNewUrl.url
           .replace(BookApiProperties.OpdsLanguageParam, lang.toString)}",
@@ -225,7 +225,7 @@ trait FeedService {
     }
 
     def calculateFeeds: Seq[domain.Feed] = {
-      val languages = translationRepository.allAvailableLanguages()
+      val languages = translationRepository.allAvailableLanguagesWithStatus(PublishingStatus.PUBLISHED)
       val languageAndLevel = languages.flatMap(lang => {
         translationRepository.allAvailableLevels(Some(lang)).map(level => (lang, level))
       })
