@@ -97,7 +97,7 @@ trait IndexService extends LazyLogging {
       }
     }
 
-    def analysis(): Iterable[AnalyzerDefinition] = {
+    private def analysis(): Iterable[AnalyzerDefinition] = {
       List(CustomAnalyzerDefinition(
         BabelAnalyzer.name,
         IcuTokenizer,
@@ -107,7 +107,7 @@ trait IndexService extends LazyLogging {
       ))
     }
 
-    def mappings(language: LanguageTag): List[MappingDefinition] = {
+    private def mappings(language: LanguageTag): List[MappingDefinition] = {
       List(mapping(BookApiProperties.SearchDocument) as (
         intField("id"),
         intField("revision"),

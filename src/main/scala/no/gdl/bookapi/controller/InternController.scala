@@ -12,13 +12,13 @@ import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.model.api.Error
 import no.gdl.bookapi.model.api.internal.{NewBook, NewChapter, NewTranslation}
 import no.gdl.bookapi.service._
-import no.gdl.bookapi.service.search.IndexBuilderService
+import no.gdl.bookapi.service.search.{IndexBuilderService, IndexService}
 import org.scalatra.{Conflict, InternalServerError, NotFound, Ok}
 
 import scala.util.{Failure, Success}
 
 trait InternController {
-  this: WriteService with ReadService with ConverterService with ValidationService with FeedService with IndexBuilderService =>
+  this: WriteService with ReadService with ConverterService with ValidationService with FeedService with IndexBuilderService with IndexService =>
   val internController: InternController
 
   class InternController extends GdlController {
@@ -135,6 +135,26 @@ trait InternController {
           logger.warn(f.getMessage, f)
           InternalServerError(f.getMessage)
         }
+      }
+    }
+
+    delete("/index") {
+      def pluralIndex(n: Int) = if (n == 1) "1 index" else s"$n indexes"
+      val deleteResults = indexService.findAllIndexes() match {
+        case Failure(f) => halt(status = 500, body = f.getMessage)
+        case Success(indexes) => indexes.map(index => {
+          logger.info(s"Deleting index $index")
+          indexService.deleteSearchIndex(Option(index))
+        })
+      }
+      val (errors, successes) = deleteResults.partition(_.isFailure)
+      if (errors.nonEmpty) {
+        val message = s"Failed to delete ${pluralIndex(errors.length)}: " +
+          s"${errors.map(_.failed.get.getMessage).mkString(", ")}. " +
+          s"${pluralIndex(successes.length)} were deleted successfully."
+        halt(status = 500, body = message)
+      } else {
+        Ok(body = s"Deleted ${pluralIndex(successes.length)}")
       }
     }
 
