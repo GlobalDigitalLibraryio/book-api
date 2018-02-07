@@ -22,6 +22,7 @@ case class Translation(id: Option[Long],
                        about: String,
                        numPages: Option[Int],
                        language: LanguageTag,
+                       translatedFrom: Option[LanguageTag],
                        datePublished: Option[LocalDate],
                        dateCreated: Option[LocalDate],
                        categoryIds: Seq[Long],
@@ -41,10 +42,19 @@ case class Translation(id: Option[Long],
                        accessibilityFeature: Option[String],
                        accessibilityHazard: Option[String],
                        dateArrived: LocalDate,
+                       publishingStatus: PublishingStatus.Value,
                        educationalAlignment: Option[EducationalAlignment] = None,
                        chapters: Seq[Chapter],
                        contributors: Seq[Contributor],
                        categories: Seq[Category])
+
+object PublishingStatus extends Enumeration {
+  val PUBLISHED, UNLISTED = Value
+
+  def valueOfOrDefault(s: String): PublishingStatus.Value = {
+    PublishingStatus.values.find(_.toString == s.toUpperCase).getOrElse(PUBLISHED)
+  }
+}
 
 object Translation extends SQLSyntaxSupport[Translation] {
 
@@ -63,6 +73,7 @@ object Translation extends SQLSyntaxSupport[Translation] {
     about = rs.string(t.about),
     numPages = rs.intOpt(t.numPages),
     language = LanguageTag(rs.string(t.language)),
+    translatedFrom = rs.stringOpt(t.translatedFrom).map(LanguageTag(_)),
     datePublished = rs.localDateOpt(t.datePublished),
     dateCreated = rs.localDateOpt(t.dateCreated),
     categoryIds = rs.array(t.categoryIds).getArray().asInstanceOf[Array[java.lang.Long]].toSeq.map(_.toLong),
@@ -82,6 +93,7 @@ object Translation extends SQLSyntaxSupport[Translation] {
     accessibilityFeature = rs.stringOpt(t.accessibilityFeature),
     accessibilityHazard = rs.stringOpt(t.accessibilityHazard),
     dateArrived = rs.localDate(t.dateArrived),
+    publishingStatus = PublishingStatus.valueOfOrDefault(rs.string(t.publishingStatus)),
     chapters = Seq(),
     contributors = Seq(),
     categories = Seq()

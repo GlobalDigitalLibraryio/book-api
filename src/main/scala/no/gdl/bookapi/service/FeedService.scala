@@ -17,7 +17,7 @@ import no.gdl.bookapi.BookApiProperties
 import no.gdl.bookapi.BookApiProperties.{OpdsLanguageParam, OpdsLevelParam}
 import no.gdl.bookapi.model._
 import no.gdl.bookapi.model.api.{Facet, FeedCategory, FeedEntry, SearchResult}
-import no.gdl.bookapi.model.domain.{Paging, Sort}
+import no.gdl.bookapi.model.domain.{PublishingStatus, Paging, Sort}
 import no.gdl.bookapi.repository.{FeedRepository, TranslationRepository}
 
 import scala.util.Try
@@ -134,35 +134,37 @@ trait FeedService {
       Seq(justArrived).flatten ++ levels
     }
 
-    def allEntries(language: LanguageTag, paging: Paging): (PagingStatus, Seq[FeedEntry]) = {
-      val justArrived = newEntries(language).map(addJustArrivedCategory(_, language))
+    def allEntries(languageTag: LanguageTag, paging: Paging): (PagingStatus, Seq[FeedEntry]) = {
+      val justArrived = newEntries(languageTag).map(addJustArrivedCategory(_, languageTag))
 
       val searchResult =
-        readService.withLanguage(
-        language = language,
+        readService.withLanguageAndStatus(
+        language = languageTag,
+        status = PublishingStatus.PUBLISHED,
         pageSize = paging.pageSize,
         page = paging.page,
         sort = Sort.ByArrivalDateDesc)
 
-      val allBooks = searchResult.results.map(book => FeedEntry(book)).map(addLevelCategory(_, language)).sortBy(_.book.readingLevel)
+      val allBooks = searchResult.results.map(book => FeedEntry(book)).map(addLevelCategory(_, languageTag)).sortBy(_.book.readingLevel)
 
       (searchResultToPagingStatus(searchResult, paging), justArrived ++ allBooks)
     }
 
     def newEntries(lang: LanguageTag): Seq[FeedEntry] = {
-      val searchResult = readService.withLanguage(
-        lang, BookApiProperties.OpdsJustArrivedLimit, 1, Sort.ByArrivalDateDesc)
+      val searchResult = readService.withLanguageAndStatus(
+        lang, PublishingStatus.PUBLISHED, BookApiProperties.OpdsJustArrivedLimit, 1, Sort.ByArrivalDateDesc)
       searchResult.results.map(FeedEntry(_))
     }
 
     def entriesForLanguageAndLevel(language: LanguageTag, level: String, paging: Paging): (PagingStatus, Seq[FeedEntry]) = {
       val searchResult =
-        readService.withLanguageAndLevel(
+        readService.withLanguageAndLevelAndStatus(
         language = language,
         readingLevel = Some(level),
         pageSize = paging.pageSize,
         page = paging.page,
-        sort = Sort.ByTitleAsc
+        sort = Sort.ByTitleAsc,
+        status = PublishingStatus.PUBLISHED
       )
       (searchResultToPagingStatus(searchResult, paging), searchResult.results.map(book => api.FeedEntry(book)))
     }

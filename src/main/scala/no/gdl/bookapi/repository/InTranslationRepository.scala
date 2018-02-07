@@ -12,7 +12,7 @@ import java.sql.PreparedStatement
 import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.model.api.OptimisticLockException
 import no.gdl.bookapi.model.domain.InTranslation
-import scalikejdbc.{AutoSession, DBSession, ParameterBinder, ReadOnlyAutoSession, insert, select, update}
+import scalikejdbc._
 
 trait InTranslationRepository {
   val inTranslationRepository: InTranslationRepository
@@ -73,7 +73,7 @@ trait InTranslationRepository {
         .eq(t.revision, toUpdate.revision)
         .toSQL.update().apply()
 
-      if(count != 1) {
+      if (count != 1) {
         throw new OptimisticLockException()
       } else {
         toUpdate.copy(revision = Some(nextRevision))
@@ -97,5 +97,10 @@ trait InTranslationRepository {
         .map(InTranslation(tr))
         .list().apply()
     }
+
+    def inTranslationForUser(userId: String)(implicit session: DBSession = ReadOnlyAutoSession): Seq[InTranslation] = {
+      sql"select ${tr.result.*} from ${InTranslation.as(tr)} where $userId = ANY(user_ids)".map(InTranslation(tr)).list().apply()
+    }
   }
+
 }

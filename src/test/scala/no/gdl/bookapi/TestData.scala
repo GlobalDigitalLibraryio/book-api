@@ -11,7 +11,9 @@ import java.time.LocalDate
 import java.util.UUID
 
 import io.digitallibrary.language.model.LanguageTag
+import no.gdl.bookapi.integration.crowdin.{BookMetaData, TranslatedChapter}
 import no.gdl.bookapi.model._
+import no.gdl.bookapi.model.api.internal.NewTranslatedChapter
 
 object TestData {
   val LanguageCodeNorwegian = "nob"
@@ -81,7 +83,7 @@ object TestData {
     val DefaultTranslationId = 1
     val DefaultChapter = domain.Chapter(Some(1), Some(1), DefaultTranslationId, 1, Some("Default chapter title"), "Chapter-content")
 
-    val DefaultPerson = domain.Person(Some(1), Some(1), "Default person name")
+    val DefaultPerson = domain.Person(Some(1), Some(1), "Default person name", None)
     val DefaultContributor = domain.Contributor(Some(1), Some(1), DefaultPerson.id.get, DefaultTranslationId, "Author", DefaultPerson)
 
     val DefaultTranslation: domain.Translation = domain.Translation(
@@ -94,9 +96,11 @@ object TestData {
       about = "Default translation description",
       numPages = Some(10),
       language = LanguageTag(DefaultLanguage),
+      translatedFrom = None,
       datePublished = Some(today),
       dateCreated = Some(yesterday),
       dateArrived = today,
+      publishingStatus = domain.PublishingStatus.PUBLISHED,
       categoryIds = Seq(DefaultCategory.id.get),
       coverphoto = None,
       tags = Seq("tag1", "tag2"),
@@ -120,12 +124,18 @@ object TestData {
     )
 
     val DefaultinTranslation = domain.InTranslation(Some(1), Some(1), Seq("123"), 1, Some(2), LanguageTag("nob"), LanguageTag("eng"), "en", "abc")
-    val DefaultInTranslationFile = domain.InTranslationFile(Some(1), Some(1), 1, domain.FileType.CONTENT, Some(3), "filename", "fileId", domain.TranslationStatus.IN_PROGRESS, Some("asdfa342"))
+    val DefaultInTranslationFile = domain.InTranslationFile(Some(1), Some(1), 1, domain.FileType.CONTENT, Some(3), None, "filename", "fileId", domain.TranslationStatus.IN_PROGRESS, Some("asdfa342"))
   }
 
   object Crowdin {
     val DefaultContentCrowdinFile = crowdin.CrowdinFile(Some(1), domain.FileType.CONTENT, crowdin.AddedFile(1, "filename", 1, 1))
     val DefaultMetadataCrowdinFile = crowdin.CrowdinFile(Some(2), domain.FileType.METADATA, crowdin.AddedFile(1, "filename", 1, 1))
+    val DefaultTranslatedChapter = TranslatedChapter(1, None, "Some content", Some("123"))
+    val DefaultBookMetaData = BookMetaData("Title", "Description", Some("123"))
+  }
+
+  object Internal {
+    val DefaultNewTranslatedChapter = NewTranslatedChapter(1, Some("title"), "Some content", 1)
   }
 
 }

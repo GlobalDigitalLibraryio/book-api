@@ -9,13 +9,13 @@ package no.gdl.bookapi.controller
 
 import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.model._
-import no.gdl.bookapi.model.api.{Language, TranslateRequest, TranslateResponse}
+import no.gdl.bookapi.model.api.{Error, Language, SynchronizeResponse, TranslateRequest, TranslateResponse}
 import no.gdl.bookapi.model.domain.TranslationStatus
 import no.gdl.bookapi.service.translation.{SupportedLanguageService, TranslationService}
-import org.scalatra.{NoContent, Ok}
+import org.scalatra.{NoContent, NotFound, Ok}
 import org.scalatra.swagger.{ResponseMessage, Swagger, SwaggerSupport}
 
-import scala.util.{Failure, Success}
+import scala.util.{Failure, Success, Try}
 
 trait TranslationsController {
   this: SupportedLanguageService with TranslationService =>
@@ -66,13 +66,29 @@ trait TranslationsController {
 
     get("/file-translated", operation(projectFileTranslated)) {
       val projectIdentifier = params("project")
-      val language = LanguageTag(params("language"))
+      val crowdinLanguage = params("language")
+      val language = LanguageTag(crowdinLanguage)
       val fileId = params("file_id")
 
-      translationService.updateTranslationStatus(projectIdentifier, language, fileId, TranslationStatus.TRANSLATED).flatMap(_ =>
-        translationService.fetchTranslationsIfAllTranslated(projectIdentifier, language)) match {
+      translationService.updateTranslationStatus(projectIdentifier, language, fileId, TranslationStatus.TRANSLATED).flatMap(inTranslationFile => {
+        val translationFiles = translationService.findAllTranslationFiles(inTranslationFile)
+        if(translationFiles.forall(_.translationStatus == TranslationStatus.TRANSLATED)) {
+          translationService.fetchTranslations(inTranslationFile, translationFiles)
+        } else {
+          Success()
+        }
+      }) match {
         case Success(_) => NoContent()
         case Failure(err) => errorHandler(err)
+      }
+    }
+
+    get("/synchronized/:inTranslationId") {
+      val inTranslationId = long("inTranslationId")
+      logger.info(s"Synchronizing the translation for id $inTranslationId")
+      translationService.inTranslationWithId(inTranslationId) match {
+        case None => NotFound(body = Error(Error.NOT_FOUND, s"No book is currently being translated with inTranslationId $inTranslationId"))
+        case Some(inTranslation) => translationService.fetchUpdatesFor(inTranslation)
       }
     }
   }

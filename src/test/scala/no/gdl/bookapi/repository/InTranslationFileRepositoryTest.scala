@@ -37,7 +37,7 @@ class InTranslationFileRepositoryTest extends IntegrationSuite with TestEnvironm
       val addedFile3 = inTranslationFileRepository.add(DefaultInTranslationFile.copy(inTranslationId = inTranslation2.id.get))
       val addedFile4 = inTranslationFileRepository.add(DefaultInTranslationFile.copy(inTranslationId = inTranslation2.id.get))
 
-      val files = inTranslationFileRepository.withTranslationId(inTranslation1.id)
+      val files = inTranslationFileRepository.withTranslationId(inTranslation1.id.get)
       files.length should be(2)
       files.forall(_.inTranslationId == inTranslation1.id.get) should be(true)
     }

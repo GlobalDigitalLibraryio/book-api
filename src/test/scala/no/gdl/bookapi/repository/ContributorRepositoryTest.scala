@@ -26,7 +26,7 @@ class ContributorRepositoryTest extends IntegrationSuite with TestEnvironment wi
     withRollback { implicit session =>
       val book = addBookDef()
       val translation = addTranslationDef("external-id", "Some title", book.id.get, LanguageTag("eng"))
-      val person = personRepository.add(Person(None, None, "Some person"))
+      val person = personRepository.add(Person(None, None, "Some person", None))
 
       val contributor = Contributor(None, None, person.id.get, translation.id.get, "Author", person)
 
@@ -41,8 +41,8 @@ class ContributorRepositoryTest extends IntegrationSuite with TestEnvironment wi
     withRollback { implicit session =>
       val book = addBookDef()
       val translation = addTranslationDef("external-id", "Some title", book.id.get, LanguageTag("eng"))
-      val person1 = personRepository.add(Person(None, None, "Some person"))
-      val person2 = personRepository.add(Person(None, None, "Some other person"))
+      val person1 = personRepository.add(Person(None, None, "Some person", None))
+      val person2 = personRepository.add(Person(None, None, "Some other person", None))
 
       val contributor1 = Contributor(None, None, person1.id.get, translation.id.get, "Author", person1)
       val contributor2 = Contributor(None, None, person2.id.get, translation.id.get, "Translator", person2)

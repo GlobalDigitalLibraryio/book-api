@@ -36,6 +36,7 @@ case class NewTranslation(externalId: Option[String],
                           about: String,
                           numPages: Option[String],
                           language: String,
+                          translatedFrom: Option[String],
                           datePublished: Option[LocalDate],
                           dateCreated: Option[LocalDate],
                           dateArrived: Option[LocalDate],
@@ -60,3 +61,5 @@ case class NewTranslation(externalId: Option[String],
 case class NewChapter(seqNo: Int,
                       title: Option[String],
                       content: String)
+
+case class NewTranslatedChapter(seqNo: Int, title: Option[String], content: String, originalChapterId: Long)
