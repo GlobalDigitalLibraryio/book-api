@@ -16,8 +16,6 @@ trait FeedLocalizationService {
 
     private val defaultLanguage: LanguageTag = LanguageTag("eng")
 
-    // TODO Read all .properties files instead of hard coding the languages here?
-    // https://stackoverflow.com/questions/2637643/how-do-i-list-all-files-in-a-subdirectory-in-scala
     private[service] val supportedLanguages: Set[LanguageTag] = Seq(
       defaultLanguage.toString,
       "amh",
