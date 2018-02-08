@@ -12,9 +12,10 @@ import javax.sql
 import io.digitallibrary.network.GdlClient
 import no.gdl.bookapi.controller._
 import no.gdl.bookapi.integration.crowdin.CrowdinClientBuilder
-import no.gdl.bookapi.integration.{DataSource, ElasticClient, ImageApiClient, NdlaJestClient}
+import no.gdl.bookapi.integration.{DataSource, E4sClient, ElasticClient, ImageApiClient}
 import no.gdl.bookapi.repository._
 import no.gdl.bookapi.service._
+import no.gdl.bookapi.service.search.{IndexBuilderService, IndexService, SearchService}
 import no.gdl.bookapi.service.translation.{MergeService, SupportedLanguageService, TranslationDbService, TranslationService}
 import org.mockito.Mockito
 
@@ -58,7 +59,12 @@ trait TestEnvironment
     with InTranslationRepository
     with InTranslationFileRepository
     with MergeService
+    with IndexBuilderService
+    with IndexService
+    with SearchService
+    with SearchController
 {
+
   val dataSource = mock[sql.DataSource]
 
   val readService = mock[ReadService]
@@ -72,7 +78,7 @@ trait TestEnvironment
   val levelController = mock[LevelController]
   val featuredContentController = mock[FeaturedContentController]
 
-  val jestClient = mock[NdlaJestClient]
+  val esClient = mock[E4sClient]
 
   val gdlClient = mock[GdlClient]
   val imageApiClient = mock[ImageApiClient]
@@ -102,6 +108,10 @@ trait TestEnvironment
   val inTranslationRepository = mock[InTranslationRepository]
   val inTranslationFileRepository = mock[InTranslationFileRepository]
   val mergeService = mock[MergeService]
+  val indexBuilderService = mock[IndexBuilderService]
+  val indexService = mock[IndexService]
+  val searchService = mock[SearchService]
+  val searchController = mock[SearchController]
 
   def resetMocks() = {
     Mockito.reset(
@@ -115,7 +125,7 @@ trait TestEnvironment
       languageController,
       levelController,
       featuredContentController,
-      jestClient,
+      esClient,
       gdlClient,
       imageApiClient,
       downloadController,

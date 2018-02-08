@@ -32,11 +32,12 @@ object BookApiProperties extends LazyLogging {
   val Environment = propOrElse("GDL_ENVIRONMENT", "local")
   lazy val Domain: String = Domains.get(Environment)
 
-  val SearchServer = propOrElse("SEARCH_SERVER", "http://search-book-api.gdl-local")
+  val SearchServer = propOrElse("SEARCH_SERVER", "elasticsearch://search-book-api.gdl-local:80")
   val SearchRegion = propOrElse("SEARCH_REGION", "eu-central-1")
   val RunWithSignedSearchRequests = propOrElse("RUN_WITH_SIGNED_SEARCH_REQUESTS", "true").toBoolean
   val SearchIndex = propOrElse("SEARCH_INDEX_NAME", "books")
   val SearchDocument = "book"
+  val ElasticSearchIndexMaxResultWindow = 10000
   val DefaultPageSize = 10
   val MaxPageSize = 100
   val IndexBulkSize = 200
@@ -69,6 +70,7 @@ object BookApiProperties extends LazyLogging {
   val ApiDocPath = "/book-api/api-docs"
   val ImagePath = "/image-api/v1/raw"
   val TranslationsPath = "/book-api/v1/translations"
+  val SearchPath = "/book-api/v1/search"
 
   val LoginEndpoint = "https://digitallibrary.eu.auth0.com/authorize"
 
@@ -124,6 +126,8 @@ object BookApiProperties extends LazyLogging {
         }
     }
   }
+
+  def searchIndex(language: LanguageTag): String = s"$SearchIndex-${language.toString}"
 
   def getCloudFrontUrl(env: String, typ: String): String = {
     env match {
