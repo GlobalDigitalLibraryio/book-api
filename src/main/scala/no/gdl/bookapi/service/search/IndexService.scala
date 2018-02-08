@@ -55,11 +55,11 @@ trait IndexService extends LazyLogging {
     }
 
     def indexDocuments(translationList: List[Translation], indexName: String): Try[Int] = {
+      val indexAndType = new IndexAndType(indexName, BookApiProperties.SearchDocument)
       val actions: immutable.Seq[IndexDefinition] = for {translation <- translationList
         availableLanguages: Seq[LanguageTag] = translationRepository.languagesFor(translation.bookId)
         book: Option[domain.Book] = bookRepository.withId(translation.bookId)
         source = write(converterService.toApiBook(Some(translation), availableLanguages, book))
-        indexAndType = new IndexAndType(indexName, BookApiProperties.SearchDocument)
       } yield IndexDefinition(indexAndType, id = Some(translation.id.get.toString), source = Some(source))
 
       esClient.execute(
