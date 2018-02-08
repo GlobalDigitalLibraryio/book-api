@@ -17,7 +17,7 @@ import no.gdl.bookapi.BookApiProperties
 import no.gdl.bookapi.BookApiProperties.{OpdsLanguageParam, OpdsLevelParam}
 import no.gdl.bookapi.model._
 import no.gdl.bookapi.model.api.{Facet, FeedCategory, FeedEntry, SearchResult}
-import no.gdl.bookapi.model.domain.{Paging, Sort}
+import no.gdl.bookapi.model.domain.{Paging, PublishingStatus, Sort}
 import no.gdl.bookapi.repository.{FeedRepository, TranslationRepository}
 import no.gdl.bookapi.service.search.SearchService
 

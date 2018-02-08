@@ -72,7 +72,7 @@ trait IndexBuilderService {
     }
 
     def getLanguages: List[LanguageTag] = {
-      translationRepository.allAvailableLanguages().toList
+      translationRepository.allAvailableLanguagesWithStatus(PublishingStatus.PUBLISHED).toList
     }
   }
 
