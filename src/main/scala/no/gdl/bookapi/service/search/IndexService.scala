@@ -183,7 +183,7 @@ trait IndexService extends LazyLogging {
         getAliases()
       ) match {
         case Failure(failure) => Failure(failure)
-        case Success(response) => Success(response.result.mappings.keys.toSeq.map(_.name))
+        case Success(response) => Success(response.result.mappings.keys.toSeq.map(_.name).filter(name => name.startsWith(BookApiProperties.SearchIndex)))
       }
     }
 
@@ -224,7 +224,6 @@ trait IndexService extends LazyLogging {
     }
 
     def aliasTarget(languageTag: LanguageTag): Try[Option[String]] = {
-
       esClient.execute(
         getAliases(BookApiProperties.searchIndex(languageTag),Nil)
       ) match {

@@ -102,7 +102,7 @@ trait SearchService {
       failure match {
         case Failure(e: GdlSearchException) =>
           e.getFailure.status match {
-            case notFound: Int if notFound == 404 =>
+            case 404 =>
               logger.error(s"Index ${BookApiProperties.SearchIndex} not found. Scheduling a reindex.")
               scheduleIndexDocuments()
               throw new IndexNotFoundException(s"Index ${BookApiProperties.SearchIndex} not found. Scheduling a reindex")
