@@ -11,12 +11,8 @@ import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.BookApiProperties._
 import no.gdl.bookapi.TestData.{LanguageCodeAmharic, LanguageCodeEnglish, LanguageCodeNorwegian}
 import no.gdl.bookapi.model.api.{Facet, SearchResult}
-import no.gdl.bookapi.model.domain.Paging
-import no.gdl.bookapi.{TestEnvironment, UnitSuite}
-import org.mockito.Matchers._
-import no.gdl.bookapi.model.api.{Facet, FeedEntry, SearchResult}
 import no.gdl.bookapi.model.domain.{Paging, PublishingStatus}
-import no.gdl.bookapi.{BookApiProperties, TestData, TestEnvironment, UnitSuite}
+import no.gdl.bookapi.{TestEnvironment, UnitSuite}
 import org.mockito.Matchers.{eq => eqTo, _}
 import org.mockito.Mockito._
 import scalikejdbc.DBSession
@@ -42,9 +38,9 @@ class FeedServiceTest extends UnitSuite with TestEnvironment {
     when(translationRepository.allAvailableLevelsWithStatus(anyObject(), any[Option[LanguageTag]])(any[DBSession])).thenReturn(levels)
 
     val calculatedFeedUrls = feedService.calculateFeeds
-    calculatedFeedUrls.size should be (3)
+    calculatedFeedUrls.size should be (4)
 
-    val expectedFeedUrls = Seq(OpdsNavUrl, OpdsRootUrl, OpdsLevelUrl).map(url =>
+    val expectedFeedUrls = Seq(OpdsRootDefaultLanguageUrl, OpdsNavUrl, OpdsRootUrl, OpdsLevelUrl).map(url =>
       s"${url.replace(OpdsLevelParam, "1").replace(OpdsLanguageParam, LanguageCodeEnglish)}")
 
     expectedFeedUrls.sorted should equal (calculatedFeedUrls.map(_.url).sorted)
@@ -60,6 +56,7 @@ class FeedServiceTest extends UnitSuite with TestEnvironment {
     val calculatedFeedUrls = feedService.calculateFeeds
     val expectedFeeds =
       """
+        |/root.xml
         |/eng/nav.xml
         |/nob/nav.xml
         |/amh/nav.xml

@@ -190,7 +190,7 @@ trait FeedService {
     }
 
     def calculateFeeds: Seq[domain.Feed] = {
-      for {
+      val feeds = for {
         language <- translationRepository.allAvailableLanguagesWithStatus(PublishingStatus.PUBLISHED)
         level <- translationRepository.allAvailableLevelsWithStatus(PublishingStatus.PUBLISHED, Some(language))
         localization = feedLocalizationService.localizationFor(language)
@@ -223,6 +223,15 @@ trait FeedService {
           ))
 
       } yield feed
+      val defaultRootFeed =
+        domain.Feed(
+          id = None,
+          revision = None,
+          url = BookApiProperties.OpdsRootDefaultLanguageUrl,
+          uuid = UUID.randomUUID().toString,
+          title = feedLocalizationService.localizationFor(LanguageTag("eng")).rootTitle,
+          description = None)
+      defaultRootFeed +: feeds
     }
 
     def createOrUpdateFeed(feed: domain.Feed): domain.Feed = {

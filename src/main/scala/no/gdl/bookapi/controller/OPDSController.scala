@@ -18,6 +18,7 @@ import no.gdl.bookapi.model.domain.Paging
 import no.gdl.bookapi.service.{ConverterService, FeedService, ReadService}
 import org.scalatra.NotFound
 
+import scala.util.Try
 import scala.xml.Elem
 
 trait OPDSController {
@@ -25,6 +26,8 @@ trait OPDSController {
   val opdsController: OPDSController
   val dtf: DateTimeFormatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME
   implicit val localDateOrdering: Ordering[LocalDate] = Ordering.by(_.toEpochDay)
+
+  val defaultLanguage = LanguageTag(BookApiProperties.DefaultLanguage)
 
   val defaultPageSize = 15
   val maxPageSize = 100
@@ -46,6 +49,11 @@ trait OPDSController {
       val navFeeds = feedService.feedsForNavigation(LanguageTag(params("lang")))
       val navLastUpdated = navFeeds.map(_.updated).sorted.reverse.headOption
       navigationFeed(feedUpdated = navLastUpdated, feeds = navFeeds)
+    }
+
+    get(BookApiProperties.OpdsRootDefaultLanguageUrl) {
+      val (pagingStatus, books) = feedService.allEntries(defaultLanguage, extractPageAndPageSize())
+      acquisitionFeed(books = books, pagingStatus = pagingStatus)
     }
 
     get(BookApiProperties.OpdsRootUrl) {
@@ -71,7 +79,7 @@ trait OPDSController {
     }
 
     private def acquisitionFeed(feedUpdated: Option[LocalDate] = None, titleArgs: Seq[String] = Seq(), books: => Seq[FeedEntry], pagingStatus: PagingStatus)(implicit request: HttpServletRequest) = {
-      val lang = LanguageTag(params("lang"))
+      val lang = Try(LanguageTag(params("lang"))).getOrElse(defaultLanguage)
       feedService.feedForUrl(request.getRequestURI, lang, feedUpdated, titleArgs, books) match {
         case Some(feed) => render(feed, pagingStatus)
         case None =>

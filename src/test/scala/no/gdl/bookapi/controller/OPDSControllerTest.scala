@@ -10,14 +10,19 @@ package no.gdl.bookapi.controller
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
+import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.model.api.{Feed, FeedEntry}
 import no.gdl.bookapi.model.domain.Paging
 import no.gdl.bookapi.{TestData, TestEnvironment, UnitSuite}
+import org.mockito.Mockito.verify
+import org.scalatra.test.scalatest.ScalatraFunSuite
 
 
-class OPDSControllerTest extends UnitSuite with TestEnvironment {
+class OPDSControllerTest extends UnitSuite with TestEnvironment with ScalatraFunSuite {
   val formatter: DateTimeFormatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME
   lazy val controller = new OPDSController
+
+  addServlet(controller, "/*")
 
   test("that rendering of navigation feeds includes all feeds with correct data") {
     val self: Feed = TestData.Api.DefaultFeed
@@ -175,6 +180,12 @@ class OPDSControllerTest extends UnitSuite with TestEnvironment {
     generated.mkString.contains("rel=\"next\"") should be (false)
     generated.mkString.contains("<link href=\"some-url?page-size=10&amp;page=1\" rel=\"first\"/>") should be (true)
     generated.mkString.contains("<link href=\"some-url?page-size=10&amp;page=1\" rel=\"last\"/>") should be (true)
+  }
+
+  test("that /root.xml defaults to English root feed with default paging") {
+    get("/root.xml") {
+      verify(feedService).allEntries(LanguageTag("eng"), Paging(page = 1, pageSize = 15))
+    }
   }
 
 }
