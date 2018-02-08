@@ -41,7 +41,7 @@ trait FeedRepository {
             f.description -> feed.description
           ).where
             .eq(f.id, existingFeed.id).and
-            .eq(f.revision, f.revision).toSQL.update().apply()
+            .eq(f.revision, existingFeed.revision).toSQL.update().apply()
           if (count != 1) {
             throw new OptimisticLockException()
           } else {
