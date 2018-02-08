@@ -2,14 +2,14 @@ import java.util.Properties
 
 val Scalaversion = "2.12.2"
 val Scalatraversion = "2.5.1-NDLA-3"
-val ScalaLoggingVersion = "3.5.0"
-val Log4JVersion = "2.7"
+val ScalaLoggingVersion = "3.7.2"
+val Log4JVersion = "2.9.1"
 val Jettyversion = "9.2.10.v20150310"
 val AwsSdkversion = "1.11.46"
 val ScalaTestVersion = "3.0.1"
 val MockitoVersion = "1.10.19"
-val Elastic4sVersion = "5.2.8"
-val ElasticsearchVersion = "5.1.1"
+val Elastic4sVersion = "6.1.1"
+val ElasticsearchVersion = "6.0.0"
 val JacksonVersion = "2.7.4"
 val JsoupVersion =  "1.11.2"
 val OpenHtmlPdfVersion = "0.0.1-RC11"
@@ -36,7 +36,7 @@ lazy val book_api = (project in file(".")).
     scalacOptions := Seq("-target:jvm-1.8"),
     libraryDependencies ++= Seq(
       "gdl" %% "network" % "0.10",
-      "gdl" %% "language" % "0.2",
+      "gdl" %% "language" % "0.3",
       "com.typesafe.scala-logging" %% "scala-logging" % ScalaLoggingVersion,
       "com.typesafe" % "config" % "1.3.1",
       "org.apache.logging.log4j" % "log4j-api" % Log4JVersion,
@@ -57,12 +57,11 @@ lazy val book_api = (project in file(".")).
       "com.netaporter" %% "scala-uri" % "0.4.16",
       "org.scalatest" %% "scalatest" % ScalaTestVersion % "test",
       "org.mockito" % "mockito-all" % MockitoVersion % "test",
-      "io.searchbox" % "jest" % "2.0.4",
       "org.elasticsearch" % "elasticsearch" % ElasticsearchVersion,
       "com.sksamuel.elastic4s" %% "elastic4s-core" % Elastic4sVersion,
       "com.sksamuel.elastic4s" %% "elastic4s-http" % Elastic4sVersion,
+      "com.sksamuel.elastic4s" %% "elastic4s-aws" % Elastic4sVersion,
       "org.elasticsearch" % "elasticsearch" % ElasticsearchVersion % "test",
-      "vc.inreach.aws" % "aws-signing-request-interceptor" % "0.0.16",
       "org.jsoup" % "jsoup" % JsoupVersion,
       "coza.opencollab" % "epub-creator" % "1.0.0",
       "com.openhtmltopdf" % "openhtmltopdf-core" % OpenHtmlPdfVersion,

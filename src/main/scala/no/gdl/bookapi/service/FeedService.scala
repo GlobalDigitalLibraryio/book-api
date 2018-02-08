@@ -18,11 +18,12 @@ import no.gdl.bookapi.model._
 import no.gdl.bookapi.model.api.{Facet, FeedEntry, SearchResult}
 import no.gdl.bookapi.model.domain.{Paging, PublishingStatus, Sort}
 import no.gdl.bookapi.repository.{FeedRepository, TranslationRepository}
+import no.gdl.bookapi.service.search.SearchService
 
 import scala.util.Try
 
 trait FeedService {
-  this: FeedRepository with TranslationRepository with ReadService with ConverterService with FeedLocalizationService =>
+  this: FeedRepository with TranslationRepository with ReadService with ConverterService with SearchService with FeedLocalizationService =>
   val feedService: FeedService
 
   sealed trait PagingStatus
@@ -136,27 +137,16 @@ trait FeedService {
     }
 
     def allEntries(language: LanguageTag, paging: Paging): (PagingStatus, Seq[FeedEntry]) = {
-      val searchResult =
-        readService.withLanguageAndStatus(
-        language = language,
-        status = PublishingStatus.PUBLISHED,
-        pageSize = paging.pageSize,
-        page = paging.page,
-        sort = Sort.ByArrivalDateDesc)
+
+      val searchResult = {
+        searchService.searchWithQuery(languageTag = language, None, paging = paging, sort = Sort.ByArrivalDateDesc)
+      }
 
       (searchResultToPagingStatus(searchResult, paging), searchResult.results.map(book => api.FeedEntry(book)))
     }
 
     def entriesForLanguageAndLevel(language: LanguageTag, level: String, paging: Paging): (PagingStatus, Seq[FeedEntry]) = {
-      val searchResult =
-        readService.withLanguageAndLevelAndStatus(
-        language = language,
-        readingLevel = Some(level),
-        pageSize = paging.pageSize,
-        page = paging.page,
-        sort = Sort.ByTitleAsc,
-        status = PublishingStatus.PUBLISHED
-      )
+      val searchResult = searchService.searchWithLevelAndStatus(languageTag = language, readingLevel = Some(level), paging = paging, sort = Sort.ByTitleAsc)
       (searchResultToPagingStatus(searchResult, paging), searchResult.results.map(book => api.FeedEntry(book)))
     }
 

@@ -11,7 +11,6 @@ import java.sql.PreparedStatement
 import java.time.LocalDate
 
 import io.digitallibrary.language.model.LanguageTag
-import no.gdl.bookapi.BookApiProperties
 import no.gdl.bookapi.model.api.OptimisticLockException
 import no.gdl.bookapi.model.domain.{Sort, _}
 import scalikejdbc._
@@ -378,6 +377,29 @@ trait TranslationRepository {
       case (Sort.ByTitleDesc) => sqls.orderBy(t.title).desc
       case (Sort.ByArrivalDateAsc) => sqls.orderBy(t.dateArrived.asc, t.bookId.asc)
       case (Sort.ByArrivalDateDesc) => sqls.orderBy(t.dateArrived.desc, t.bookId.desc)
+    }
+
+    def translationsWithLanguageAndStatus(languageTag: LanguageTag, status: PublishingStatus.Value, limit: Int, offset: Int)(implicit session: DBSession = ReadOnlyAutoSession): List[Translation] = {
+      select(t.result.id)
+        .from(Translation as t)
+        .where
+        .eq(t.language, languageTag.toString())
+        .and
+        .eq(t.publishingStatus, status.toString)
+        .orderBy(t.id)
+        .limit(limit)
+        .offset(offset)
+        .toSQL.map(rs => withId(rs.long(1)).get).list().apply()
+    }
+
+    def numberOfTranslationsWithStatus(languageTag: LanguageTag, status: PublishingStatus.Value)(implicit session: DBSession = ReadOnlyAutoSession): Int = {
+      select(sqls"count(*)")
+        .from(Translation as t)
+        .where
+        .eq(t.language, languageTag.toString())
+        .and
+        .eq(t.publishingStatus, status.toString)
+        .toSQL.map(rs => rs.int(1)).single().apply().getOrElse(0)
     }
   }
 

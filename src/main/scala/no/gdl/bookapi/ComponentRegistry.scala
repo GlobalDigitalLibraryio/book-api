@@ -10,10 +10,11 @@ package no.gdl.bookapi
 
 import io.digitallibrary.network.GdlClient
 import no.gdl.bookapi.controller._
-import no.gdl.bookapi.integration.crowdin.CrowdinClientBuilder
 import no.gdl.bookapi.integration._
+import no.gdl.bookapi.integration.crowdin.CrowdinClientBuilder
 import no.gdl.bookapi.repository._
 import no.gdl.bookapi.service._
+import no.gdl.bookapi.service.search.{IndexBuilderService, IndexService, SearchService}
 import no.gdl.bookapi.service.translation.{MergeService, SupportedLanguageService, TranslationDbService, TranslationService}
 import org.postgresql.ds.PGPoolingDataSource
 import scalikejdbc.{ConnectionPool, DataSourceConnectionPool}
@@ -60,6 +61,10 @@ object ComponentRegistry
   with InTranslationRepository
   with InTranslationFileRepository
   with MergeService
+  with IndexService
+  with IndexBuilderService
+  with SearchService
+  with SearchController
 {
   implicit val swagger = new BookSwagger
 
@@ -85,7 +90,7 @@ object ComponentRegistry
   lazy val writeService = new WriteService
   lazy val converterService = new ConverterService
 
-  lazy val jestClient: NdlaJestClient = JestClientFactory.getClient()
+  lazy val esClient: E4sClient = EsClientFactory.getClient()
   lazy val gdlClient = new GdlClient
   lazy val imageApiClient = new ImageApiClient
   lazy val downloadController = new DownloadController
@@ -116,6 +121,10 @@ object ComponentRegistry
   lazy val inTranslationRepository = new InTranslationRepository
   lazy val inTranslationFileRepository = new InTranslationFileRepository
   lazy val mergeService = new MergeService
+  lazy val indexService = new IndexService
+  lazy val indexBuilderService = new IndexBuilderService
+  lazy val searchService = new SearchService
+  lazy val searchController = new SearchController
 
   // Non-lazy because we want it to fail immediately if something goes wrong
   val feedLocalizationService = new FeedLocalizationService

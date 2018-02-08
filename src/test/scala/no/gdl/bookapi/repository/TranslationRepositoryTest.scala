@@ -231,7 +231,7 @@ class TranslationRepositoryTest extends IntegrationSuite with TestEnvironment wi
     }
   }
 
-  test("that that ByArrivalDate also sorts on id on same date") {
+  test("that ByArrivalDate also sorts on id on same date") {
     withRollback { implicit session =>
       val book1 = addBookDef()
       val book2 = addBookDef()
@@ -311,6 +311,52 @@ class TranslationRepositoryTest extends IntegrationSuite with TestEnvironment wi
       levels.contains("1") should be (false)
       levels.contains("2") should be (false)
       levels.contains("3") should be (true)
+    }
+  }
+
+  test("that translations are fetched correct") {
+    withRollback { implicit session =>
+      val book1 = addBookDef()
+      val book2 = addBookDef()
+
+      addTranslationDef("ext1", "title1", book1.id.get, LanguageTag("eng"))
+      addTranslationDef("ext1", "title1", book1.id.get, LanguageTag("nob"))
+      addTranslationDef("ext1", "title1", book1.id.get, LanguageTag("xho"))
+      addTranslationDef("ext2", "title2", book2.id.get, LanguageTag("nob"))
+      addTranslationDef("ext2", "title2", book2.id.get, LanguageTag("xho"))
+
+      val engTranslations = translationRepository.translationsWithLanguageAndStatus(LanguageTag("eng"), PublishingStatus.PUBLISHED, 10, 0)
+      val nobTranslations = translationRepository.translationsWithLanguageAndStatus(LanguageTag("nob"), PublishingStatus.PUBLISHED,10, 0)
+      val xhoTranslationsWithLimiting = translationRepository.translationsWithLanguageAndStatus(LanguageTag("xho"), PublishingStatus.PUBLISHED, 1, 0)
+
+      engTranslations.length should be(1)
+      nobTranslations.length should be(2)
+      xhoTranslationsWithLimiting.length should be(1)
+    }
+  }
+
+  test("that number of translations is correct") {
+    withRollback { implicit session =>
+      val book1 = addBookDef()
+      val book2 = addBookDef()
+      val book3 = addBookDef()
+
+      addTranslationDef("ext1", "title1", book1.id.get, LanguageTag("eng"))
+      addTranslationDef("ext1", "title1", book1.id.get, LanguageTag("nob"))
+      addTranslationDef("ext1", "title1", book1.id.get, LanguageTag("xho"))
+      addTranslationDef("ext2", "title2", book2.id.get, LanguageTag("eng"))
+      addTranslationDef("ext2", "title2", book2.id.get, LanguageTag("nob"))
+      addTranslationDef("ext3", "title3", book3.id.get, LanguageTag("nob"))
+
+      val nobBooks = translationRepository.numberOfTranslationsWithStatus(LanguageTag("nob"), PublishingStatus.PUBLISHED)
+      val engBooks = translationRepository.numberOfTranslationsWithStatus(LanguageTag("eng"), PublishingStatus.PUBLISHED)
+      val xhoBooks = translationRepository.numberOfTranslationsWithStatus(LanguageTag("xho"), PublishingStatus.PUBLISHED)
+      val sweBooks = translationRepository.numberOfTranslationsWithStatus(LanguageTag("swe"), PublishingStatus.PUBLISHED)
+
+      nobBooks should be(3)
+      engBooks should be(2)
+      xhoBooks should be(1)
+      sweBooks should be(0)
     }
   }
 }

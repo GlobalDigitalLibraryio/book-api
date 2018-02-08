@@ -16,4 +16,5 @@ case class SearchResult[T] (totalCount: Long,
                             language: LanguageTag,
                             results: Seq[T])
 
+case class ReindexResult(totalIndexed: Int, millisUsed: Long)
 

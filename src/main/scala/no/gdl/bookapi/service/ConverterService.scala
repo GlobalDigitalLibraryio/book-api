@@ -214,7 +214,7 @@ trait ConverterService {
     }
 
     def toApiLanguage(languageTag: LanguageTag): api.Language = {
-      api.Language(languageTag.toString, languageTag.displayName)
+      api.Language(languageTag.toString, languageTag.localDisplayName.getOrElse(languageTag.displayName))
     }
 
     def asDomainInTranslation(translationRequest: api.TranslateRequest, crowdinProjectId: String) = domain.InTranslation(

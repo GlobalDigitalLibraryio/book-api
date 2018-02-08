@@ -11,6 +11,8 @@ import java.time.LocalDate
 
 import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.BookApiProperties
+import org.json4s.FieldSerializer
+import org.json4s.FieldSerializer.ignore
 import scalikejdbc._
 
 case class Translation(id: Option[Long],
@@ -61,6 +63,7 @@ object Translation extends SQLSyntaxSupport[Translation] {
   implicit val formats = org.json4s.DefaultFormats
   override val tableName = "translation"
   override val schemaName = Some(BookApiProperties.MetaSchema)
+  val JSonSerializer = FieldSerializer[Translation]()
 
   def apply(t: SyntaxProvider[Translation])(rs: WrappedResultSet): Translation = apply(t.resultName)(rs)
   def apply(t: ResultName[Translation])(rs: WrappedResultSet): Translation = Translation(
