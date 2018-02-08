@@ -216,16 +216,19 @@ trait TranslationRepository {
       translationWithCategories
     }
 
-    def allAvailableLanguages()(implicit session: DBSession = ReadOnlyAutoSession): Seq[LanguageTag] = {
+    def allAvailableLanguagesWithStatus(publishingStatus: PublishingStatus.Value)(implicit session: DBSession = ReadOnlyAutoSession): Seq[LanguageTag] = {
       select(sqls.distinct(t.result.language))
-        .from(Translation as t).toSQL
+        .from(Translation as t)
+          .where.eq(t.publishingStatus, publishingStatus.toString)
+        .toSQL
         .map(rs => LanguageTag(rs.string(1))).list().apply()
     }
 
-    def allAvailableLevels(language: Option[LanguageTag])(implicit session: DBSession = ReadOnlyAutoSession): Seq[String] = {
+    def allAvailableLevelsWithStatus(publishingStatus: PublishingStatus.Value, language: Option[LanguageTag])(implicit session: DBSession = ReadOnlyAutoSession): Seq[String] = {
       select(sqls.distinct(t.result.readingLevel))
         .from(Translation as t)
-        .where(sqls.toAndConditionOpt(
+          .where.eq(t.publishingStatus, publishingStatus.toString)
+          .and(sqls.toAndConditionOpt(
           language.map(lang => sqls.eq(t.language, lang.toString))
         )).orderBy(t.readingLevel).toSQL.map(_.string(1)).list().apply()
     }
