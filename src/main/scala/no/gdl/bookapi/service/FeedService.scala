@@ -61,7 +61,7 @@ trait FeedService {
     }
 
     def facetsForLanguages(currentLanguage: LanguageTag): Seq[Facet] = {
-      readService.listAvailableLanguagesAsLanguageTags.sortBy(_.toString).map(lang => Facet(
+      readService.listAvailablePublishedLanguagesAsLanguageTags.sortBy(_.toString).map(lang => Facet(
         href = s"${
           BookApiProperties.CloudFrontOpds}${BookApiProperties.OpdsNewUrl.url
           .replace(BookApiProperties.OpdsLanguageParam, lang.toString)}",
@@ -80,7 +80,7 @@ trait FeedService {
         group = group,
         isActive = url.endsWith("new.xml"))
         +:
-        readService.listAvailableLevelsForLanguage(Some(currentLanguage))
+        readService.listAvailablePublishedLevelsForLanguage(Some(currentLanguage))
           .sortBy(level => Try(level.toInt).getOrElse(0)).map(readingLevel =>
           Facet(
             href = s"${
@@ -112,7 +112,7 @@ trait FeedService {
           facets = Seq.empty))
 
 
-      val levels: Seq[api.Feed] = readService.listAvailableLevelsForLanguage(Some(language))
+      val levels: Seq[api.Feed] = readService.listAvailablePublishedLevelsForLanguage(Some(language))
         .flatMap(level => {
           val url = levelPath(language, level)
           val levelUpdated = translationRepository.latestArrivalDateFor(language, level)
@@ -214,9 +214,9 @@ trait FeedService {
     }
 
     def calculateFeeds: Seq[domain.Feed] = {
-      val languages = translationRepository.allAvailableLanguages()
+      val languages = translationRepository.allAvailableLanguagesWithStatus(PublishingStatus.PUBLISHED)
       val languageAndLevel = languages.flatMap(lang => {
-        translationRepository.allAvailableLevels(Some(lang)).map(level => (lang, level))
+        translationRepository.allAvailableLevelsWithStatus(PublishingStatus.PUBLISHED, Some(lang)).map(level => (lang, level))
       })
 
       BookApiProperties.OpdsFeeds.flatMap { feedDefinition =>

@@ -259,6 +259,61 @@ class TranslationRepositoryTest extends IntegrationSuite with TestEnvironment wi
     }
   }
 
+  test("that allAvailableLanguagesWithStatus only returns languages where translations with given status exists") {
+    withRollback { implicit session =>
+      val book1 = addBookDef()
+      val book2 = addBookDef()
+      val book3 = addBookDef()
+
+      addTranslationDef("ext1", "a", book1.id.get, LanguageTag("xho"), None, Some(LocalDate.now()), status = PublishingStatus.UNLISTED)
+      addTranslationDef("ext2", "b", book2.id.get, LanguageTag("amh"), None, Some(LocalDate.now()), status = PublishingStatus.PUBLISHED)
+      addTranslationDef("ext3", "c", book3.id.get, LanguageTag("nob"), None, Some(LocalDate.now()), status = PublishingStatus.PUBLISHED)
+
+      val languages = translationRepository.allAvailableLanguagesWithStatus(PublishingStatus.PUBLISHED)
+
+      languages.size should be (2)
+      languages.contains(LanguageTag("xho")) should be (false)
+      languages.contains(LanguageTag("amh")) should be (true)
+      languages.contains(LanguageTag("nob")) should be (true)
+    }
+  }
+
+  test("that allAvailableLevelsWithStatus only returns levels where translations with given status exists") {
+    withRollback { implicit session =>
+      val book1 = addBookDef()
+      val book2 = addBookDef()
+      val book3 = addBookDef()
+
+      addTranslationDef(externalId = "ext1", title = "a", bookId = book1.id.get, language = LanguageTag("xho"), readingLevel = Some("1"), dateArrived = Some(LocalDate.now()), status = PublishingStatus.UNLISTED)
+      addTranslationDef(externalId = "ext2", title = "b", bookId = book2.id.get, language = LanguageTag("xho"), readingLevel = Some("2"), dateArrived = Some(LocalDate.now()), status = PublishingStatus.PUBLISHED)
+      addTranslationDef(externalId = "ext3", title = "c", bookId = book3.id.get, language = LanguageTag("xho"), readingLevel = Some("3"), dateArrived = Some(LocalDate.now()), status = PublishingStatus.PUBLISHED)
+
+      val levels = translationRepository.allAvailableLevelsWithStatus(PublishingStatus.PUBLISHED, None)
+      levels.size should be (2)
+      levels.contains("1") should be (false)
+      levels.contains("2") should be (true)
+      levels.contains("3") should be (true)
+    }
+  }
+
+  test("that allAvailableLevelsWithStatus only returns levels where translations with given status exists for given language") {
+    withRollback { implicit session =>
+      val book1 = addBookDef()
+      val book2 = addBookDef()
+      val book3 = addBookDef()
+
+      addTranslationDef(externalId = "ext1", title = "a", bookId = book1.id.get, language = LanguageTag("xho"), readingLevel = Some("1"), dateArrived = Some(LocalDate.now()), status = PublishingStatus.UNLISTED)
+      addTranslationDef(externalId = "ext2", title = "b", bookId = book2.id.get, language = LanguageTag("nob"), readingLevel = Some("2"), dateArrived = Some(LocalDate.now()), status = PublishingStatus.PUBLISHED)
+      addTranslationDef(externalId = "ext3", title = "c", bookId = book3.id.get, language = LanguageTag("xho"), readingLevel = Some("3"), dateArrived = Some(LocalDate.now()), status = PublishingStatus.PUBLISHED)
+
+      val levels = translationRepository.allAvailableLevelsWithStatus(PublishingStatus.PUBLISHED, Some(LanguageTag("xho")))
+      levels.size should be (1)
+      levels.contains("1") should be (false)
+      levels.contains("2") should be (false)
+      levels.contains("3") should be (true)
+    }
+  }
+
   test("that translations are fetched correct") {
     withRollback { implicit session =>
       val book1 = addBookDef()
