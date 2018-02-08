@@ -34,16 +34,16 @@ trait ReadService {
       })
     }
 
-    def listAvailableLanguages: Seq[api.Language] = {
-      translationRepository.allAvailableLanguages().map(converterService.toApiLanguage).sortBy(_.name)
+    def listAvailablePublishedLanguages: Seq[api.Language] = {
+      translationRepository.allAvailableLanguagesWithStatus(PublishingStatus.PUBLISHED).map(converterService.toApiLanguage).sortBy(_.name)
     }
 
-    def listAvailableLanguagesAsLanguageTags: Seq[LanguageTag] = {
-      translationRepository.allAvailableLanguages()
+    def listAvailablePublishedLanguagesAsLanguageTags: Seq[LanguageTag] = {
+      translationRepository.allAvailableLanguagesWithStatus(PublishingStatus.PUBLISHED)
     }
 
-    def listAvailableLevelsForLanguage(lang: Option[LanguageTag] = None): Seq[String] =
-      translationRepository.allAvailableLevels(lang)
+    def listAvailablePublishedLevelsForLanguage(lang: Option[LanguageTag] = None): Seq[String] =
+      translationRepository.allAvailableLevelsWithStatus(PublishingStatus.PUBLISHED, lang)
 
 
     def withLanguageAndLevelAndStatus(language: LanguageTag, readingLevel: Option[String], status: PublishingStatus.Value, pageSize: Int, page: Int, sort: Sort.Value): api.SearchResult = {

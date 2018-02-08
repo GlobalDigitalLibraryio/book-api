@@ -29,7 +29,7 @@ trait LanguageController {
       responseMessages response500)
 
     get("/", operation(getAllLanguages)) {
-      readService.listAvailableLanguages
+      readService.listAvailablePublishedLanguages
     }
   }
 

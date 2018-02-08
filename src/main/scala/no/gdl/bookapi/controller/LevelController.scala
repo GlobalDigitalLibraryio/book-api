@@ -40,11 +40,11 @@ trait LevelController {
       responseMessages response500)
 
     get("/", operation(getAllLevels)) {
-      readService.listAvailableLevelsForLanguage()
+      readService.listAvailablePublishedLevelsForLanguage()
     }
 
     get("/:lang", operation(getAllLevelsForLanguage)) {
-      readService.listAvailableLevelsForLanguage(Some(LanguageTag(params("lang"))))
+      readService.listAvailablePublishedLevelsForLanguage(Some(LanguageTag(params("lang"))))
     }
   }
 }
