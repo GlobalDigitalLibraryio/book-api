@@ -36,25 +36,33 @@ trait IndexBuilderService {
         var numIndexed = 0
         val start = System.currentTimeMillis()
         getLanguages.foreach(language => {
-          indexService.createSearchIndex(language).flatMap(f = indexName => {
-            val operations = for {
-              numIndexed <- sendToElastic(indexName, language)
-              aliasTarget <- indexService.aliasTarget(language)
-              _ <- indexService.updateAliasTarget(aliasTarget, indexName, language)
-              _ <- indexService.deleteSearchIndex(aliasTarget)
-            } yield numIndexed
-
-            operations match {
-              case Failure(f) =>
-                indexService.deleteSearchIndex(Some(indexName))
-                Failure(f)
-              case Success(totalIndexed) =>
-                Success(numIndexed += totalIndexed)
-            }
-          })
+          indexDocumentsForLanguage(language) match {
+            case Success(reindexResult) => numIndexed += reindexResult.totalIndexed
+            case Failure(f) => Failure(f)
+          }
         })
         Success(ReindexResult(numIndexed, System.currentTimeMillis() - start))
       }
+    }
+
+    def indexDocumentsForLanguage(languageTag: LanguageTag): Try[ReindexResult] = {
+      val start = System.currentTimeMillis()
+      indexService.createSearchIndex(languageTag).flatMap(f = indexName => {
+        val operations = for {
+          numIndexed <- sendToElastic(indexName, languageTag)
+          aliasTarget <- indexService.aliasTarget(languageTag)
+          _ <- indexService.updateAliasTarget(aliasTarget, indexName, languageTag)
+          _ <- indexService.deleteSearchIndex(aliasTarget)
+        } yield numIndexed
+
+        operations match {
+          case Failure(f) =>
+            indexService.deleteSearchIndex(Some(indexName))
+            Failure(f)
+          case Success(totalIndexed) =>
+            Success(ReindexResult(totalIndexed, System.currentTimeMillis() - start))
+        }
+      })
     }
 
     def sendToElastic(indexName: String, languageTag: LanguageTag): Try[Int] = {

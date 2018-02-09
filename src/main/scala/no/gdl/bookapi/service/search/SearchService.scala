@@ -72,7 +72,7 @@ trait SearchService {
       esClient.execute(
         search) match {
         case Success(response) => SearchResult(response.result.totalHits, paging.page, numResults, converterService.toApiLanguage(languageTag), getHits(response.result.hits, languageTag))
-        case Failure(failure) => errorHandler(Failure(failure))
+        case Failure(failure) => errorHandler(languageTag, Failure(failure))
       }
     }
 
@@ -98,25 +98,25 @@ trait SearchService {
       (startAt, pageSize)
     }
 
-    private def errorHandler[T](failure: Failure[T]) = {
+    private def errorHandler[T](languageTag: LanguageTag, failure: Failure[T]) = {
       failure match {
         case Failure(e: GdlSearchException) =>
           e.getFailure.status match {
             case 404 =>
-              logger.error(s"Index ${BookApiProperties.SearchIndex} not found. Scheduling a reindex.")
-              scheduleIndexDocuments()
-              throw new IndexNotFoundException(s"Index ${BookApiProperties.SearchIndex} not found. Scheduling a reindex")
+              logger.error(s"Index ${BookApiProperties.searchIndex(languageTag)} not found. Scheduling a reindex.")
+              scheduleIndexDocuments(languageTag)
+              throw new IndexNotFoundException(s"Index ${BookApiProperties.searchIndex(languageTag)} not found. Scheduling a reindex")
             case _ =>
               logger.error(e.getFailure.error.reason)
-              throw new ElasticsearchException(s"Unable to execute search in ${BookApiProperties.SearchIndex}", e.getFailure.error.reason)
+              throw new ElasticsearchException(s"Unable to execute search in ${BookApiProperties.searchIndex(languageTag)}", e.getFailure.error.reason)
           }
         case Failure(t: Throwable) => throw t
       }
     }
 
-    private def scheduleIndexDocuments(): Unit = {
+    private def scheduleIndexDocuments(languageTag: LanguageTag): Unit = {
       val f = Future {
-        indexBuilderService.indexDocuments
+        indexBuilderService.indexDocumentsForLanguage(languageTag)
       }
 
       f.failed.foreach(t => logger.warn("Unable to create index: " + t.getMessage, t))
