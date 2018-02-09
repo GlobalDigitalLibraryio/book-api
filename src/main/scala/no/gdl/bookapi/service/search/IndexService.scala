@@ -46,7 +46,7 @@ trait IndexService extends LazyLogging {
 
       esClient.execute(
         indexInto(BookApiProperties.searchIndex(translation.language), BookApiProperties.SearchDocument)
-          .id(translation.id.toString)
+          .id(translation.id.get.toString)
           .source(source)
       ) match {
         case Success(_) => Success(translation)
