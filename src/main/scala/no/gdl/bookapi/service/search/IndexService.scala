@@ -46,7 +46,7 @@ trait IndexService extends LazyLogging {
 
       esClient.execute(
         indexInto(BookApiProperties.searchIndex(translation.language), BookApiProperties.SearchDocument)
-          .id(translation.bookId.toString)
+          .id(translation.id.get.toString)
           .source(source)
       ) match {
         case Success(_) => Success(translation)
@@ -60,7 +60,7 @@ trait IndexService extends LazyLogging {
         availableLanguages: Seq[LanguageTag] = translationRepository.languagesFor(translation.bookId)
         book: Option[domain.Book] = bookRepository.withId(translation.bookId)
         source = write(converterService.toApiBook(Some(translation), availableLanguages, book))
-      } yield IndexDefinition(indexAndType, id = Some(translation.bookId.toString), source = Some(source))
+      } yield IndexDefinition(indexAndType, id = Some(translation.id.get.toString), source = Some(source))
 
       esClient.execute(
         bulk(actions).refresh(RefreshPolicy.WAIT_UNTIL)

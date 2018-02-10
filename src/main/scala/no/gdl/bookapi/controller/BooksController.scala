@@ -149,7 +149,7 @@ trait BooksController {
     get("/:lang/similar/:id/?", operation(getSimilar)) {
       searchService.searchSimilar(
         LanguageTag(params("lang")),
-        paramOrDefault("id","0"),
+        long("id"),
         Paging(
           intOrDefault("page", 1).max(1),
           intOrDefault("page-size", 10).min(100).max(1)

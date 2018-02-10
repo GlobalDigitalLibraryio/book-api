@@ -19,6 +19,7 @@ import no.gdl.bookapi.BookApiProperties
 import no.gdl.bookapi.integration.ElasticClient
 import no.gdl.bookapi.model.api.{Book, Error, GdlSearchException, LocalDateSerializer, ResultWindowTooLargeException, SearchResult}
 import no.gdl.bookapi.model.domain.{Paging, Sort}
+import no.gdl.bookapi.repository.TranslationRepository
 import no.gdl.bookapi.service.ConverterService
 import org.elasticsearch.ElasticsearchException
 import org.elasticsearch.index.IndexNotFoundException
@@ -31,7 +32,7 @@ import scala.util.{Failure, Success}
 
 
 trait SearchService {
-  this: ElasticClient with ConverterService with IndexBuilderService with IndexService =>
+  this: ElasticClient with ConverterService with IndexBuilderService with IndexService with TranslationRepository =>
   val searchService: SearchService
 
   class SearchService extends LazyLogging {
@@ -43,9 +44,10 @@ trait SearchService {
     def searchWithLevelAndStatus(languageTag: LanguageTag, readingLevel: Option[String],  paging: Paging, sort: Sort.Value): SearchResult =
       executeSearch(BoolQueryDefinition(), languageTag, None, readingLevel, paging, sort)
 
-    def searchSimilar(languageTag: LanguageTag, bookId: String, paging: Paging, sort: Sort.Value): SearchResult = {
+    def searchSimilar(languageTag: LanguageTag, bookId: Long, paging: Paging, sort: Sort.Value): SearchResult = {
+      val translation = translationRepository.forBookIdAndLanguage(bookId, languageTag)
       val moreLikeThisDefinition = MoreLikeThisQueryDefinition(Seq("readingLevel","language"),
-        likeDocs = Seq(MoreLikeThisItem(BookApiProperties.searchIndex(languageTag), BookApiProperties.SearchDocument, bookId)),
+        likeDocs = Seq(MoreLikeThisItem(BookApiProperties.searchIndex(languageTag), BookApiProperties.SearchDocument, translation.get.id.toString)),
         minDocFreq = Some(2), minTermFreq = Some(1), minShouldMatch = Some("100%"))
       executeSearch(BoolQueryDefinition().should(moreLikeThisDefinition), languageTag, None, None, paging, sort)
     }
