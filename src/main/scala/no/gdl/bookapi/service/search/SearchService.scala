@@ -11,7 +11,7 @@ import com.sksamuel.elastic4s.IndexAndTypes
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http.search.SearchHits
 import com.sksamuel.elastic4s.searches.queries.term.TermQueryDefinition
-import com.sksamuel.elastic4s.searches.queries.{BoolQueryDefinition, QueryStringQueryDefinition}
+import com.sksamuel.elastic4s.searches.queries.{BoolQueryDefinition, MoreLikeThisItem, MoreLikeThisQueryDefinition, QueryStringQueryDefinition}
 import com.sksamuel.elastic4s.searches.sort.{FieldSortDefinition, SortOrder}
 import com.typesafe.scalalogging.LazyLogging
 import io.digitallibrary.language.model.LanguageTag
@@ -42,6 +42,13 @@ trait SearchService {
 
     def searchWithLevelAndStatus(languageTag: LanguageTag, readingLevel: Option[String],  paging: Paging, sort: Sort.Value): SearchResult =
       executeSearch(BoolQueryDefinition(), languageTag, None, readingLevel, paging, sort)
+
+    def searchSimilar(languageTag: LanguageTag, bookId: String, paging: Paging, sort: Sort.Value): SearchResult = {
+      val moreLikeThisDefinition = MoreLikeThisQueryDefinition(Seq("readingLevel","language"),
+        likeDocs = Seq(MoreLikeThisItem(BookApiProperties.searchIndex(languageTag), BookApiProperties.SearchDocument, bookId)),
+        minDocFreq = Some(2), minTermFreq = Some(1), minShouldMatch = Some("100%"))
+      executeSearch(BoolQueryDefinition().should(moreLikeThisDefinition), languageTag, None, None, paging, sort)
+    }
 
     private def executeSearch(boolDefinition: BoolQueryDefinition, languageTag: LanguageTag, query: Option[String], readingLevel: Option[String], paging: Paging, sort: Sort.Value) = {
 

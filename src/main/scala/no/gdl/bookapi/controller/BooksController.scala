@@ -147,12 +147,15 @@ trait BooksController {
     }
 
     get("/:lang/similar/:id/?", operation(getSimilar)) {
-      readService.similarTo(
-        long("id"),
+      searchService.searchSimilar(
         LanguageTag(params("lang")),
-        intOrDefault("page-size", 10).min(100).max(1),
-        intOrDefault("page", 1).max(1),
-        Sort.valueOf(paramOrNone("sort")).getOrElse(Sort.ByIdAsc))
+        paramOrDefault("id","0"),
+        Paging(
+          intOrDefault("page", 1).max(1),
+          intOrDefault("page-size", 10).min(100).max(1)
+        ),
+        Sort.valueOf(paramOrNone("sort")).getOrElse(Sort.ByIdAsc)
+      )
     }
 
     get("/mine/?", operation(getMyBooks)) {
