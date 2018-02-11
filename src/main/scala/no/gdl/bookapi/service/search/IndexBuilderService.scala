@@ -12,11 +12,12 @@ import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.BookApiProperties
 import no.gdl.bookapi.model.domain.{PublishingStatus, ReindexResult, Translation}
 import no.gdl.bookapi.repository.TranslationRepository
+import no.gdl.bookapi.service.translation.SupportedLanguageService
 
 import scala.util.{Failure, Success, Try}
 
 trait IndexBuilderService {
-  this: TranslationRepository with IndexService =>
+  this: TranslationRepository with IndexService with SupportedLanguageService =>
   val indexBuilderService: IndexBuilderService
 
   class IndexBuilderService extends LazyLogging {
@@ -35,8 +36,8 @@ trait IndexBuilderService {
       synchronized {
         var numIndexed = 0
         val start = System.currentTimeMillis()
-        translationRepository.allLanguages.foreach(language => {
-          indexDocumentsForLanguage(language) match {
+        supportedLanguageService.getSupportedLanguages.foreach(language => {
+          indexDocumentsForLanguage(LanguageTag(language.code)) match {
             case Success(reindexResult) => numIndexed += reindexResult.totalIndexed
             case Failure(f) => Failure(f)
           }
