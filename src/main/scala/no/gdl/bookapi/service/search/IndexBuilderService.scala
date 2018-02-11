@@ -35,7 +35,7 @@ trait IndexBuilderService {
       synchronized {
         var numIndexed = 0
         val start = System.currentTimeMillis()
-        getLanguages.foreach(language => {
+        translationRepository.allLanguages.foreach(language => {
           indexDocumentsForLanguage(language) match {
             case Success(reindexResult) => numIndexed += reindexResult.totalIndexed
             case Failure(f) => Failure(f)
@@ -77,10 +77,6 @@ trait IndexBuilderService {
         }
       })
       Success(numIndexed)
-    }
-
-    def getLanguages: List[LanguageTag] = {
-      translationRepository.allAvailableLanguagesWithStatus(PublishingStatus.PUBLISHED).toList
     }
   }
 
