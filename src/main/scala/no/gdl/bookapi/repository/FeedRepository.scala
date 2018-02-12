@@ -26,8 +26,6 @@ trait FeedRepository {
         .map(Feed(f)).single().apply()
     }
 
-    // TODO Change this to "upsert" (on conflict do update), which exists in PostgreSQL >= 9.5
-    // https://www.postgresql.org/docs/devel/static/sql-insert.html
     def addOrUpdate(feed: Feed)(implicit session: DBSession = AutoSession): Feed = {
       val f = Feed.column
       val startRevision = 1
