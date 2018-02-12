@@ -89,10 +89,10 @@ class FeedServiceTest extends UnitSuite with TestEnvironment {
   test("that facetsForLanguage returns facets for languages, with languages alphabetically sorted") {
     when(readService.listAvailablePublishedLanguagesAsLanguageTags).thenReturn(Seq("eng", "hin", "ben", "eng-latn-gb").map(LanguageTag(_)))
     feedService.facetsForLanguages(LanguageTag("eng")) should equal (Seq(
-      Facet("http://local.digitallibrary.io/book-api/opds/ben/root.xml", "Bengali", "Languages", isActive = false),
+      Facet("http://local.digitallibrary.io/book-api/opds/ben/root.xml", LanguageTag("ben").localDisplayName.get, "Languages", isActive = false),
       Facet("http://local.digitallibrary.io/book-api/opds/eng/root.xml", "English", "Languages", isActive = true),
       Facet("http://local.digitallibrary.io/book-api/opds/eng-latn-gb/root.xml", "English (Latin, United Kingdom)", "Languages", isActive = false),
-      Facet("http://local.digitallibrary.io/book-api/opds/hin/root.xml", "Hindi", "Languages", isActive = false))
+      Facet("http://local.digitallibrary.io/book-api/opds/hin/root.xml", LanguageTag("hin").localDisplayName.get, "Languages", isActive = false))
     )
   }
 
