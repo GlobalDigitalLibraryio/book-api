@@ -13,23 +13,23 @@ import scalikejdbc._
 
 trait FeedDef{
   def url: String
-  def titleKey: String
-  def descriptionKey: Option[String]
+  def title: String
+  def description: Option[String]
 }
 
-case class FeedDefinition(url: String, titleKey: String, descriptionKey: Option[String]) extends FeedDef
+case class FeedDefinition(url: String, title: String, description: Option[String]) extends FeedDef
 case class Feed (id: Option[Long],
                  revision: Option[Int],
                  url: String,
                  uuid: String,
-                 titleKey: String,
-                 descriptionKey: Option[String]) extends FeedDef
+                 title: String,
+                 description: Option[String]) extends FeedDef
 
 object Feed extends SQLSyntaxSupport[Feed] {
   implicit val formats: Formats = org.json4s.DefaultFormats
   override val tableName = "feed"
   override val schemaName = Some(BookApiProperties.MetaSchema)
-  override val columns = Seq("id", "revision", "url", "uuid", "title_key", "description_key")
+  override val columns = Seq("id", "revision", "url", "uuid", "title", "description")
 
 
   def apply(feed: SyntaxProvider[Feed])(rs: WrappedResultSet): Feed = apply(feed.resultName)(rs)
@@ -38,7 +38,7 @@ object Feed extends SQLSyntaxSupport[Feed] {
     rs.intOpt(feed.revision),
     rs.string(feed.url),
     rs.string(feed.uuid),
-    rs.string(feed.titleKey),
-    rs.stringOpt(feed.descriptionKey)
+    rs.string(feed.title),
+    rs.stringOpt(feed.description)
   )
 }
