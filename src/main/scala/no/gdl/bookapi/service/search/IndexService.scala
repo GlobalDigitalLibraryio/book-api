@@ -73,7 +73,7 @@ trait IndexService extends LazyLogging {
     }
 
     def createSearchIndex(languageTag: LanguageTag): Try[String] = {
-      logger.info(s"Create index for language: ${languageTag.language.id}")
+      logger.info(s"Create index for language: ${languageTag.toString}")
       createSearchIndexWithName(BookApiProperties.searchIndex(languageTag) + "_" + getTimestamp + "_" + UUID.randomUUID().toString, languageTag)
     }
 
@@ -239,7 +239,7 @@ trait IndexService extends LazyLogging {
     def indexExisting(indexName: String): Try[Boolean] = {
       esClient.execute(indexExists(indexName)) match {
         case Failure(failure) =>
-          logger.error(failure.getLocalizedMessage)
+          logger.error(failure.getMessage)
           Success(false)
         case Success(response) => Success(response.result.isExists)
       }
