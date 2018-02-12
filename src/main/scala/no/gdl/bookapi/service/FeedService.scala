@@ -64,7 +64,7 @@ trait FeedService {
         href = s"${
           BookApiProperties.CloudFrontOpds}${BookApiProperties.OpdsRootUrl
           .replace(BookApiProperties.OpdsLanguageParam, lang.toString)}",
-        title = s"${lang.displayName}",
+        title = s"${lang.localDisplayName.getOrElse(lang.displayName)}",
         group = "Languages",
         isActive = lang == currentLanguage))
     }
