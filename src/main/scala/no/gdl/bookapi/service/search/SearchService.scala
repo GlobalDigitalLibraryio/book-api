@@ -21,12 +21,9 @@ import no.gdl.bookapi.model.api.{Book, Error, GdlSearchException, LocalDateSeria
 import no.gdl.bookapi.model.domain.{Paging, Sort}
 import no.gdl.bookapi.service.ConverterService
 import org.elasticsearch.ElasticsearchException
-import org.elasticsearch.index.IndexNotFoundException
-import org.json4s.{DefaultFormats, Formats}
 import org.json4s.native.Serialization.read
+import org.json4s.{DefaultFormats, Formats}
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
 import scala.util.{Failure, Success}
 
 
@@ -69,9 +66,13 @@ trait SearchService {
         .bool(levelDefinition)
         .sortBy(getSorting(sortDef = sort))
 
-      esClient.execute(
-        search) match {
+      esClient.execute(search) match {
         case Success(response) => SearchResult(response.result.totalHits, paging.page, numResults, converterService.toApiLanguage(languageTag), getHits(response.result.hits, languageTag))
+        case Failure(failure: GdlSearchException) =>
+          failure.getFailure.status match {
+            case 404 => SearchResult(0, paging.page, numResults, converterService.toApiLanguage(languageTag), Seq())
+            case _ => errorHandler(languageTag, Failure(failure))
+          }
         case Failure(failure) => errorHandler(languageTag, Failure(failure))
       }
     }
@@ -101,31 +102,10 @@ trait SearchService {
     private def errorHandler[T](languageTag: LanguageTag, failure: Failure[T]) = {
       failure match {
         case Failure(e: GdlSearchException) =>
-          e.getFailure.status match {
-            case 404 =>
-              logger.error(s"Index ${BookApiProperties.searchIndex(languageTag)} not found. Scheduling a reindex.")
-              scheduleIndexDocuments(languageTag)
-              throw new IndexNotFoundException(s"Index ${BookApiProperties.searchIndex(languageTag)} not found. Scheduling a reindex")
-            case _ =>
-              logger.error(e.getFailure.error.reason)
-              throw new ElasticsearchException(s"Unable to execute search in ${BookApiProperties.searchIndex(languageTag)}", e.getFailure.error.reason)
-          }
+          logger.error(e.getFailure.error.reason)
+          throw new ElasticsearchException(s"Unable to execute search in ${BookApiProperties.searchIndex(languageTag)}", e.getFailure.error.reason)
         case Failure(t: Throwable) => throw t
       }
     }
-
-    private def scheduleIndexDocuments(languageTag: LanguageTag): Unit = {
-      val f = Future {
-        indexBuilderService.indexDocumentsForLanguage(languageTag)
-      }
-
-      f.failed.foreach(t => logger.warn("Unable to create index: " + t.getMessage, t))
-      f.foreach {
-        case Success(reindexResult) => logger.info(s"Completed indexing of ${reindexResult.totalIndexed} documents in ${reindexResult.millisUsed} ms.")
-        case Failure(ex) => logger.warn(ex.getMessage, ex)
-      }
-    }
   }
-
-
 }
