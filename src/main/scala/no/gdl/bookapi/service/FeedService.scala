@@ -103,7 +103,7 @@ trait FeedService {
           api.FeedDefinition(
             id = definition.id.get,
             revision = definition.revision.get,
-            url = s"${BookApiProperties.CloudFrontOpds}${definition.url}",
+            url = s"${BookApiProperties.CloudFrontOpds}${definition.url}?page-size=100",
             uuid = definition.uuid),
           title = localization.navTitle,
           description = None,
@@ -123,7 +123,7 @@ trait FeedService {
               api.FeedDefinition(
                 id = definition.id.get,
                 revision = definition.revision.get,
-                url = s"${BookApiProperties.CloudFrontOpds}${definition.url}",
+                url = s"${BookApiProperties.CloudFrontOpds}${definition.url}?page-size=100",
                 uuid = definition.uuid),
               title = localization.levelTitle(level),
               description = Some(localization.levelDescription),
