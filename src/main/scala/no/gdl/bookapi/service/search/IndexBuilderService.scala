@@ -12,12 +12,11 @@ import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.BookApiProperties
 import no.gdl.bookapi.model.domain.{PublishingStatus, ReindexResult, Translation}
 import no.gdl.bookapi.repository.TranslationRepository
-import no.gdl.bookapi.service.translation.SupportedLanguageService
 
 import scala.util.{Failure, Success, Try}
 
 trait IndexBuilderService {
-  this: TranslationRepository with IndexService with SupportedLanguageService =>
+  this: TranslationRepository with IndexService =>
   val indexBuilderService: IndexBuilderService
 
   class IndexBuilderService extends LazyLogging {
