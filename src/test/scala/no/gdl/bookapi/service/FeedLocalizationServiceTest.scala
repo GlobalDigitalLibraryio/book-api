@@ -10,7 +10,7 @@ class FeedLocalizationServiceTest extends UnitSuite with TestEnvironment {
   test("that Norwegian localization is read properly") {
     val l = feedLocalizationService.localizationFor(LanguageTag("nob"))
     l.rootTitle should equal("Global Digital Library - Bokkatalog")
-    l.navTitle should equal("Global Digital Library - Bokkatalog")
+    l.navTitle should equal("Nye titler")
     l.levelTitle("5") should equal("Nivå 5")
     l.levelDescription should equal("Bøker med angitt lesenivå")
   }
