@@ -215,12 +215,6 @@ trait TranslationRepository {
       translationWithCategories
     }
 
-    def allLanguages(implicit session: DBSession = ReadOnlyAutoSession): List[LanguageTag] = {
-      select(sqls.distinct(t.result.language))
-        .from(Translation as t)
-        .toSQL.map(rs => LanguageTag(rs.string(1))).list().apply()
-    }
-
     def allAvailableLanguagesWithStatus(publishingStatus: PublishingStatus.Value)(implicit session: DBSession = ReadOnlyAutoSession): Seq[LanguageTag] = {
       select(sqls.distinct(t.result.language))
         .from(Translation as t)
