@@ -3,6 +3,7 @@ package no.gdl.bookapi.service
 import com.typesafe.config.{Config, ConfigFactory}
 import com.typesafe.scalalogging.LazyLogging
 import io.digitallibrary.language.model.LanguageTag
+import no.gdl.bookapi.BookApiProperties
 
 trait FeedLocalizationService {
   val feedLocalizationService: FeedLocalizationService
@@ -14,7 +15,7 @@ trait FeedLocalizationService {
 
   class FeedLocalizationService extends LazyLogging {
 
-    private val defaultLanguage: LanguageTag = LanguageTag("eng")
+    private val defaultLanguage: LanguageTag = LanguageTag(BookApiProperties.DefaultLanguage)
 
     private[service] val supportedLanguages: Set[LanguageTag] = Seq(
       defaultLanguage.toString,
