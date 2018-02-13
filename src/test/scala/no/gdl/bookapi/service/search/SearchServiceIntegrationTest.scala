@@ -7,8 +7,9 @@
 
 package no.gdl.bookapi.service.search
 
+import com.sksamuel.elastic4s.http.HttpClient
 import io.digitallibrary.language.model.LanguageTag
-import no.gdl.bookapi.integration.{E4sClient, EsClientFactory}
+import no.gdl.bookapi.integration.E4sClient
 import no.gdl.bookapi.model.domain.{Paging, Sort}
 import no.gdl.bookapi.{TestData, TestEnvironment, UnitSuite}
 import no.gdl.tag.IntegrationTest
@@ -19,7 +20,7 @@ class SearchServiceIntegrationTest extends UnitSuite with TestEnvironment {
 
   override val searchService = new SearchService
   override val indexService = new IndexService
-  override val esClient: E4sClient = E4sClient(EsClientFactory.nonSigningClient("http://localhost:9200")) // Requires running elasticsearch
+  override val esClient: E4sClient = E4sClient(HttpClient("http://localhost:9200")) // Requires running elasticsearch
 
   override def beforeAll(): Unit = {
     when(translationRepository.languagesFor(1)).thenReturn(Seq(LanguageTag(TestData.DefaultLanguage)))
