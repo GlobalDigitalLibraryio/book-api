@@ -18,6 +18,7 @@ import no.gdl.bookapi.model.domain.Paging
 import no.gdl.bookapi.service.{ConverterService, FeedService, ReadService}
 import org.scalatra.NotFound
 
+import scala.util.Try
 import scala.xml.Elem
 
 trait OPDSController {
@@ -26,7 +27,9 @@ trait OPDSController {
   val dtf: DateTimeFormatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME
   implicit val localDateOrdering: Ordering[LocalDate] = Ordering.by(_.toEpochDay)
 
-  val defaultPageSize = 10
+  val defaultLanguage = LanguageTag(BookApiProperties.DefaultLanguage)
+
+  val defaultPageSize = 15
   val maxPageSize = 100
 
   class OPDSController extends GdlController {
@@ -41,26 +44,29 @@ trait OPDSController {
       )
     }
 
-    get(BookApiProperties.OpdsNavUrl.url) {
+    // TODO Issue#200: Remove when not used anymore
+    get(BookApiProperties.OpdsNavUrl) {
       val navFeeds = feedService.feedsForNavigation(LanguageTag(params("lang")))
       val navLastUpdated = navFeeds.map(_.updated).sorted.reverse.headOption
       navigationFeed(feedUpdated = navLastUpdated, feeds = navFeeds)
     }
 
-    get(BookApiProperties.OpdsRootUrl.url) {
+    get(BookApiProperties.OpdsRootDefaultLanguageUrl) {
+      val (pagingStatus, books) = feedService.allEntries(defaultLanguage, extractPageAndPageSize())
+      acquisitionFeed(books = books, pagingStatus = pagingStatus)
+    }
+
+    get(BookApiProperties.OpdsRootUrl) {
       val (pagingStatus, books) = feedService.allEntries(LanguageTag(params("lang")), extractPageAndPageSize())
       acquisitionFeed(books = books, pagingStatus = pagingStatus)
     }
 
-    get(BookApiProperties.OpdsNewUrl.url) {
-      acquisitionFeed(books = feedService.newEntries(LanguageTag(params("lang"))), pagingStatus = OnlyOnePage(extractPageAndPageSize()))
-    }
-
-    get(BookApiProperties.OpdsLevelUrl.url) {
+    get(BookApiProperties.OpdsLevelUrl) {
       val (pagingStatus, books) = feedService.entriesForLanguageAndLevel(LanguageTag(params("lang")), params("lev"), extractPageAndPageSize())
       acquisitionFeed(titleArgs = Seq(params("lev")), books = books, pagingStatus = pagingStatus)
     }
 
+    // TODO Issue#200: Remove when not used anymore
     private def navigationFeed(feedUpdated: Option[LocalDate], feeds: => Seq[Feed])(implicit request: HttpServletRequest) = {
       val lang = LanguageTag(params("lang"))
       val selfOpt = feedService.feedForUrl(request.getRequestURI, lang, feedUpdated, Seq(), Seq())
@@ -73,7 +79,7 @@ trait OPDSController {
     }
 
     private def acquisitionFeed(feedUpdated: Option[LocalDate] = None, titleArgs: Seq[String] = Seq(), books: => Seq[FeedEntry], pagingStatus: PagingStatus)(implicit request: HttpServletRequest) = {
-      val lang = LanguageTag(params("lang"))
+      val lang = Try(LanguageTag(params("lang"))).getOrElse(defaultLanguage)
       feedService.feedForUrl(request.getRequestURI, lang, feedUpdated, titleArgs, books) match {
         case Some(feed) => render(feed, pagingStatus)
         case None =>
@@ -82,6 +88,7 @@ trait OPDSController {
       }
     }
 
+    // TODO Issue#200: Remove when not used anymore
     private[controller] def render(self: Feed, feeds: Seq[Feed]): Elem = {
       <feed xmlns="http://www.w3.org/2005/Atom">
         <id>{self.feedDefinition.uuid}</id>
@@ -128,9 +135,9 @@ trait OPDSController {
                 <link href={s"${feed.feedDefinition.url}?page-size=$currentPageSize&page=${currentPage - 1}"} rel="previous"/>
                 <link href={s"${feed.feedDefinition.url}?page-size=$currentPageSize&page=${currentPage + 1}"} rel="next"/>
                 <link href={s"${feed.feedDefinition.url}?page-size=$currentPageSize&page=$lastPage"} rel="last"/>
-        case OnlyOnePage(Paging(currentPage, currentPageSize)) =>
-                <link href={s"${feed.feedDefinition.url}?page-size=$currentPageSize&page=$currentPage"} rel="first"/>
-                <link href={s"${feed.feedDefinition.url}?page-size=$currentPageSize&page=$currentPage"} rel="last"/>
+        case OnlyOnePage(Paging(_, currentPageSize)) =>
+                <link href={s"${feed.feedDefinition.url}?page-size=$currentPageSize&page=1"} rel="first"/>
+                <link href={s"${feed.feedDefinition.url}?page-size=$currentPageSize&page=1"} rel="last"/>
           }
         }
         {feed.facets.map(facet =>

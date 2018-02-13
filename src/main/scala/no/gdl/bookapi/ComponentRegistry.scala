@@ -50,11 +50,12 @@ object ComponentRegistry
   with PdfService
   with FeedRepository
   with FeedService
+  with FeedLocalizationService
   with FeaturedContentRepository
   with FeaturedContentController
   with TranslationsController
   with SupportedLanguageService
-  with CrowdinClientBuilder 
+  with CrowdinClientBuilder
   with TranslationService
   with TranslationDbService
   with InTranslationRepository
@@ -124,4 +125,7 @@ object ComponentRegistry
   lazy val indexBuilderService = new IndexBuilderService
   lazy val searchService = new SearchService
   lazy val searchController = new SearchController
+
+  // Non-lazy because we want it to fail immediately if something goes wrong
+  val feedLocalizationService = new FeedLocalizationService
 }

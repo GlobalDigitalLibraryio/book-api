@@ -1,0 +1,1 @@
+alter table feed add constraint UNI_FEED_URL unique (url);
