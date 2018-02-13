@@ -19,7 +19,7 @@ class SearchServiceIntegrationTest extends UnitSuite with TestEnvironment {
 
   override val searchService = new SearchService
   override val indexService = new IndexService
-  override val esClient: E4sClient = EsClientFactory.getClient("http://localhost:9200") // Requires running elasticsearch
+  override val esClient: E4sClient = E4sClient(EsClientFactory.nonSigningClient("http://localhost:9200")) // Requires running elasticsearch
 
   override def beforeAll(): Unit = {
     when(translationRepository.languagesFor(1)).thenReturn(Seq(LanguageTag(TestData.DefaultLanguage)))

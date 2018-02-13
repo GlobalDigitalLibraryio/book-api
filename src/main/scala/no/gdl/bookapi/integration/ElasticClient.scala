@@ -47,11 +47,11 @@ object EsClientFactory {
     }
   }
 
-  private def nonSigningClient(searchServer: String): HttpClient = {
+  def nonSigningClient(searchServer: String): HttpClient = {
     HttpClient(ElasticsearchClientUri(searchServer))
   }
 
-  private def signingClient(searchServer: String): HttpClient = {
+  def signingClient(searchServer: String): HttpClient = {
     val awsRegion = Option(Regions.getCurrentRegion).getOrElse(Region.getRegion(Regions.EU_CENTRAL_1)).toString
     setEnv("AWS_DEFAULT_REGION", awsRegion)
     Aws4ElasticClient(searchServer)
