@@ -38,14 +38,14 @@ trait SearchService {
     def searchWithQuery(languageTag: LanguageTag, query: Option[String], paging: Paging, sort: Sort.Value): SearchResult =
       executeSearch(BoolQueryDefinition(), languageTag, query, None, paging, sort)
 
-    def searchWithLevelAndStatus(languageTag: LanguageTag, readingLevel: Option[String],  paging: Paging, sort: Sort.Value): SearchResult =
+    def searchWithLevel(languageTag: LanguageTag, readingLevel: Option[String], paging: Paging, sort: Sort.Value): SearchResult =
       executeSearch(BoolQueryDefinition(), languageTag, None, readingLevel, paging, sort)
 
     def searchSimilar(languageTag: LanguageTag, bookId: Long, paging: Paging, sort: Sort.Value): SearchResult = {
       val translation = translationRepository.forBookIdAndLanguage(bookId, languageTag)
       val moreLikeThisDefinition = MoreLikeThisQueryDefinition(Seq("readingLevel","language"),
-        likeDocs = Seq(MoreLikeThisItem(BookApiProperties.searchIndex(languageTag), BookApiProperties.SearchDocument, translation.get.id.toString)),
-        minDocFreq = Some(2), minTermFreq = Some(1), minShouldMatch = Some("100%"))
+        likeDocs = Seq(MoreLikeThisItem(BookApiProperties.searchIndex(languageTag), BookApiProperties.SearchDocument, translation.get.id.get.toString)),
+        minDocFreq = Some(1), minTermFreq = Some(1), minShouldMatch = Some("100%"))
       executeSearch(BoolQueryDefinition().should(moreLikeThisDefinition), languageTag, None, None, paging, sort)
     }
 
