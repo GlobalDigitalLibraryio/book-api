@@ -52,6 +52,8 @@ object TestData {
       1, 1, Some("external-1"), DefaultUuid, "Title", "Description", None, english, Seq(english, norwegian_bokmal), DefaultLicense, DefaultPublisher,
       Some(Level1), Some(ageRangeDefault), None, None, None, Some(today), Some(yesterday), today, Seq(category1, category2), None, api.Downloads(epub, pdf), Seq(), Seq(DefaultContributor), Seq(ChapterSummary1), supportsTranslation = true)
 
+    val BookInAmharic: api.Book = DefaultBook.copy(language = amharic, availableLanguages = Seq(amharic))
+
     val DefaultFeedDefinition = api.FeedDefinition(1, 1, "some-url", "some-uuid")
     val DefaultFacets = Seq(
       api.Facet("https://opds.test.digitallibrary.io/ben/root.xml", "Bengali", "Languages", isActive = false),
@@ -122,6 +124,8 @@ object TestData {
       contributors = Seq(DefaultContributor),
       categories = Seq(DefaultCategory)
     )
+
+    val AmharicTranslation: domain.Translation = DefaultTranslation.copy(id = Some(2), language = LanguageTag(LanguageCodeAmharic))
 
     val DefaultinTranslation = domain.InTranslation(Some(1), Some(1), Seq("123"), 1, Some(2), LanguageTag("nob"), LanguageTag("eng"), "en", "abc")
     val DefaultInTranslationFile = domain.InTranslationFile(Some(1), Some(1), 1, domain.FileType.CONTENT, Some(3), None, "filename", "fileId", domain.TranslationStatus.IN_PROGRESS, Some("asdfa342"))

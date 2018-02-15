@@ -38,7 +38,7 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
 
   test("that GET / will get books with default language") {
     val result = SearchResult(0, 1, 10, Language("eng", "English"), Seq(TestData.Api.DefaultBook))
-    when(searchService.searchWithLevelAndStatus(LanguageTag(BookApiProperties.DefaultLanguage), Some("1"), Paging(1, 10), Sort.ByIdAsc)).thenReturn(result)
+    when(searchService.searchWithLevel(LanguageTag(BookApiProperties.DefaultLanguage), Some("1"), Paging(1, 10), Sort.ByIdAsc)).thenReturn(result)
 
     get("/?reading-level=1&page-size=10&page=1") {
       status should equal (200)
@@ -52,7 +52,7 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
     val language = TestData.Api.norwegian_bokmal
 
     val result = SearchResult(0, 1, 10, language, Seq(TestData.Api.DefaultBook))
-    when(searchService.searchWithLevelAndStatus(LanguageTag(language.code), Some("2"), Paging(1,10), Sort.ByIdAsc)).thenReturn(result)
+    when(searchService.searchWithLevel(LanguageTag(language.code), Some("2"), Paging(1,10), Sort.ByIdAsc)).thenReturn(result)
 
     get("/nob?reading-level=2&page-size=10&page=1") {
       status should equal (200)
@@ -69,7 +69,7 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
     val secondBook = TestData.Api.DefaultBook.copy(id = 1, title = "This should be last")
 
     val result = SearchResult(2, 1, 10, language, Seq(firstBook, secondBook))
-    when(searchService.searchWithLevelAndStatus(LanguageTag(language.code), Some("2"), Paging(1,10), Sort.ByTitleDesc)).thenReturn(result)
+    when(searchService.searchWithLevel(LanguageTag(language.code), Some("2"), Paging(1,10), Sort.ByTitleDesc)).thenReturn(result)
 
     get("/nob?reading-level=2&page-size=10&page=1&sort=-title") {
       status should equal (200)
