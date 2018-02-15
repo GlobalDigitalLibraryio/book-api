@@ -109,7 +109,7 @@ trait BooksController {
       val sort = Sort.valueOf(paramOrNone("sort")).getOrElse(Sort.ByIdAsc)
       val language = LanguageTag(DefaultLanguage)
 
-      searchService.searchWithLevelAndStatus(language, readingLevel, Paging(page, pageSize), sort)
+      searchService.searchWithLevel(language, readingLevel, Paging(page, pageSize), sort)
     }
 
     get("/:lang/?", operation(getAllBooksInLang)) {
@@ -118,7 +118,7 @@ trait BooksController {
       val readingLevel = params.get("reading-level")
       val sort = Sort.valueOf(paramOrNone("sort")).getOrElse(Sort.ByIdAsc)
 
-      searchService.searchWithLevelAndStatus(LanguageTag(params("lang")), readingLevel, Paging(page, pageSize), sort)
+      searchService.searchWithLevel(LanguageTag(params("lang")), readingLevel, Paging(page, pageSize), sort)
     }
 
     get("/:lang/:id/?", operation(getBook)) {
@@ -147,12 +147,15 @@ trait BooksController {
     }
 
     get("/:lang/similar/:id/?", operation(getSimilar)) {
-      readService.similarTo(
-        long("id"),
+      searchService.searchSimilar(
         LanguageTag(params("lang")),
-        intOrDefault("page-size", 10).min(100).max(1),
-        intOrDefault("page", 1).max(1),
-        Sort.valueOf(paramOrNone("sort")).getOrElse(Sort.ByIdAsc))
+        long("id"),
+        Paging(
+          intOrDefault("page", 1).max(1),
+          intOrDefault("page-size", 10).min(100).max(1)
+        ),
+        Sort.valueOf(paramOrNone("sort")).getOrElse(Sort.ByIdAsc)
+      )
     }
 
     get("/mine/?", operation(getMyBooks)) {

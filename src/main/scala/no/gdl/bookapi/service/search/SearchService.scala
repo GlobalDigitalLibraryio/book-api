@@ -11,7 +11,7 @@ import com.sksamuel.elastic4s.IndexAndTypes
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http.search.SearchHits
 import com.sksamuel.elastic4s.searches.queries.term.TermQueryDefinition
-import com.sksamuel.elastic4s.searches.queries.{BoolQueryDefinition, QueryStringQueryDefinition}
+import com.sksamuel.elastic4s.searches.queries.{BoolQueryDefinition, MoreLikeThisItem, MoreLikeThisQueryDefinition, QueryStringQueryDefinition}
 import com.sksamuel.elastic4s.searches.sort.{FieldSortDefinition, SortOrder}
 import com.typesafe.scalalogging.LazyLogging
 import io.digitallibrary.language.model.LanguageTag
@@ -19,6 +19,7 @@ import no.gdl.bookapi.BookApiProperties
 import no.gdl.bookapi.integration.ElasticClient
 import no.gdl.bookapi.model.api.{Book, Error, GdlSearchException, LocalDateSerializer, ResultWindowTooLargeException, SearchResult}
 import no.gdl.bookapi.model.domain.{Paging, Sort}
+import no.gdl.bookapi.repository.TranslationRepository
 import no.gdl.bookapi.service.ConverterService
 import org.elasticsearch.ElasticsearchException
 import org.json4s.native.Serialization.read
@@ -28,7 +29,7 @@ import scala.util.{Failure, Success}
 
 
 trait SearchService {
-  this: ElasticClient with ConverterService with IndexBuilderService with IndexService =>
+  this: ElasticClient with ConverterService with IndexBuilderService with IndexService with TranslationRepository =>
   val searchService: SearchService
 
   class SearchService extends LazyLogging {
@@ -37,8 +38,16 @@ trait SearchService {
     def searchWithQuery(languageTag: LanguageTag, query: Option[String], paging: Paging, sort: Sort.Value): SearchResult =
       executeSearch(BoolQueryDefinition(), languageTag, query, None, paging, sort)
 
-    def searchWithLevelAndStatus(languageTag: LanguageTag, readingLevel: Option[String],  paging: Paging, sort: Sort.Value): SearchResult =
+    def searchWithLevel(languageTag: LanguageTag, readingLevel: Option[String], paging: Paging, sort: Sort.Value): SearchResult =
       executeSearch(BoolQueryDefinition(), languageTag, None, readingLevel, paging, sort)
+
+    def searchSimilar(languageTag: LanguageTag, bookId: Long, paging: Paging, sort: Sort.Value): SearchResult = {
+      val translation = translationRepository.forBookIdAndLanguage(bookId, languageTag)
+      val moreLikeThisDefinition = MoreLikeThisQueryDefinition(Seq("readingLevel","language"),
+        likeDocs = Seq(MoreLikeThisItem(BookApiProperties.searchIndex(languageTag), BookApiProperties.SearchDocument, translation.get.id.get.toString)),
+        minDocFreq = Some(1), minTermFreq = Some(1), minShouldMatch = Some("100%"))
+      executeSearch(BoolQueryDefinition().should(moreLikeThisDefinition), languageTag, None, None, paging, sort)
+    }
 
     private def executeSearch(boolDefinition: BoolQueryDefinition, languageTag: LanguageTag, query: Option[String], readingLevel: Option[String], paging: Paging, sort: Sort.Value) = {
 

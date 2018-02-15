@@ -40,6 +40,13 @@ trait IndexService extends LazyLogging {
     implicit val formats: Formats = DefaultFormats + LocalDateSerializer
 
     def indexDocument(translation: Translation): Try[Translation] = {
+      indexExisting(BookApiProperties.searchIndex(translation.language)) match {
+        case Success(false) =>
+          val indexName = createSearchIndex(translation.language)
+          updateAliasTarget(None, indexName.get, translation.language)
+        case _ => // Does not matter
+      }
+
       val availableLanguages: Seq[LanguageTag] = translationRepository.languagesFor(translation.bookId)
       val book: Option[domain.Book] = bookRepository.withId(translation.bookId)
       val source = write(converterService.toApiBook(Some(translation), availableLanguages, book))
