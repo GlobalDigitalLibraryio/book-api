@@ -28,7 +28,7 @@ trait ValidationService {
     }
 
     def validContributorType(contributorType: String): Option[ValidationMessage] = {
-      asValidation("contributor.type", s"The contributor.type is not valid. Value must be one of ${ContributorType.values}", Try(ContributorType.valueOf(contributorType)).isSuccess)
+      asValidation("contributor.type", s"The contributor.type is not valid. Value must be one of ${ContributorType.values}", ContributorType.valueOf(contributorType).isSuccess)
     }
 
     def validateFeaturedContent(content: domain.FeaturedContent): Try[domain.FeaturedContent] = {
