@@ -127,7 +127,7 @@ trait ConverterService {
       categories.map(c => api.Category(c.id.get, c.revision.get, c.name))
 
     def toApiContributors(contributors: Seq[domain.Contributor]): Seq[api.Contributor] =
-      contributors.map(c => api.Contributor(c.id.get, c.revision.get, c.`type`, c.person.name))
+      contributors.map(c => api.Contributor(c.id.get, c.revision.get, c.`type`.toString, c.person.name))
 
     def toApiChapterSummary(chapters: Seq[domain.Chapter], bookId: Long, language: LanguageTag): Seq[api.ChapterSummary] = chapters.map(c => toApiChapterSummary(c, bookId, language))
 

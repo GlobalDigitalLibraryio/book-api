@@ -35,7 +35,7 @@ case class Downloads(@(ApiModelProperty@field)(description = "URL to an epub-dow
 @ApiModel(description = "Information about the authors of the current book")
 case class Contributor(@(ApiModelProperty@field)(description = "Id of the author") id: Long,
                        @(ApiModelProperty@field)(description = "The revision of the contributor") revision: Int,
-                       @(ApiModelProperty@field)(description = "The type of the contributor") `type`: String,
+                       @(ApiModelProperty@field)(description = "The type of the contributor", allowableValues = "Author, Illustrator, Translator, Photographer, Contributor") `type`: String,
                        @(ApiModelProperty@field)(description = "Name of the author") name: String)
 
 @ApiModel(description = "Information about the publisher of the current book")

@@ -14,6 +14,7 @@ import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.integration.crowdin.{BookMetaData, TranslatedChapter}
 import no.gdl.bookapi.model._
 import no.gdl.bookapi.model.api.internal.NewTranslatedChapter
+import no.gdl.bookapi.model.domain.ContributorType
 
 object TestData {
   val LanguageCodeNorwegian = "nob"
@@ -84,7 +85,7 @@ object TestData {
     val DefaultChapter = domain.Chapter(Some(1), Some(1), DefaultTranslationId, 1, Some("Default chapter title"), "Chapter-content")
 
     val DefaultPerson = domain.Person(Some(1), Some(1), "Default person name", None)
-    val DefaultContributor = domain.Contributor(Some(1), Some(1), DefaultPerson.id.get, DefaultTranslationId, "Author", DefaultPerson)
+    val DefaultContributor = domain.Contributor(Some(1), Some(1), DefaultPerson.id.get, DefaultTranslationId, ContributorType.Author, DefaultPerson)
 
     val DefaultTranslation: domain.Translation = domain.Translation(
       id = Some(DefaultTranslationId),

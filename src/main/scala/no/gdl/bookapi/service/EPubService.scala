@@ -13,7 +13,7 @@ import coza.opencollab.epub.creator.model.{Content, EpubBook, TocLink}
 import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.integration.ImageApiClient
 import no.gdl.bookapi.model._
-import no.gdl.bookapi.model.domain.{EPubChapter, EPubCss}
+import no.gdl.bookapi.model.domain.{ContributorType, EPubChapter, EPubCss}
 import no.gdl.bookapi.repository.{ChapterRepository, TranslationRepository}
 
 import scala.util.{Failure, Success, Try}
@@ -30,7 +30,7 @@ trait EPubService {
 
     private def buildEPubFor(translation: domain.Translation, chapters: Seq[domain.Chapter]): Try[EpubBook] = {
       Try {
-        val authors = translation.contributors.filter(_.`type` == "Author").map(_.person.name).mkString(", ")
+        val authors = translation.contributors.filter(_.`type` == ContributorType.Author).map(_.person.name).mkString(", ")
         val book = new EpubBook(translation.language.toString, translation.uuid, translation.title, authors)
 
         // Add CSS to ePub

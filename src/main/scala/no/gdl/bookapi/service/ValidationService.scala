@@ -9,7 +9,9 @@ package no.gdl.bookapi.service
 
 import com.typesafe.scalalogging.LazyLogging
 import no.gdl.bookapi.model._
+import no.gdl.bookapi.model.api.internal.NewTranslation
 import no.gdl.bookapi.model.api.{ValidationException, ValidationMessage}
+import no.gdl.bookapi.model.domain.ContributorType
 import org.apache.commons.validator.routines.UrlValidator
 import org.jsoup.Jsoup
 import org.jsoup.safety.Whitelist
@@ -21,6 +23,13 @@ trait ValidationService {
   val validationService: ValidationService
 
   class ValidationService extends LazyLogging {
+    def validateNewTranslation(newTranslation: NewTranslation): Try[NewTranslation] = {
+      collectValidations(newTranslation, newTranslation.contributors.map(x => validContributorType(x.`type`)))
+    }
+
+    def validContributorType(contributorType: String): Option[ValidationMessage] = {
+      asValidation("contributor.type", s"The contributor.type is not valid. Value must be one of ${ContributorType.values}", Try(ContributorType.valueOf(contributorType)).isSuccess)
+    }
 
     def validateFeaturedContent(content: domain.FeaturedContent): Try[domain.FeaturedContent] = {
       collectValidations(content, Seq(
