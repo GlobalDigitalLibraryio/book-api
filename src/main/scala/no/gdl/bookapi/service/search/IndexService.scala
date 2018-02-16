@@ -118,7 +118,7 @@ trait IndexService extends LazyLogging {
         intField("revision"),
         keywordField("externalId"),
         keywordField("uuid") index false,
-        languageField("title", language),
+        languageField("title", language, 2.0),
         languageField("description", language),
         objectField("translatedFrom").fields(
           keywordField("code"),
@@ -179,9 +179,9 @@ trait IndexService extends LazyLogging {
       ))
     }
 
-    private def languageField(fieldName: String, languageTag: LanguageTag) = {
+    private def languageField(fieldName: String, languageTag: LanguageTag, boost: Double = 1.0) = {
       val languageAnalyzer = findByLanguage(languageTag)
-      val languageSupportedField = TextFieldDefinition(fieldName).fielddata(true) analyzer languageAnalyzer.get.analyzer
+      val languageSupportedField = TextFieldDefinition(fieldName).fielddata(true) analyzer languageAnalyzer.get.analyzer boost boost
       languageSupportedField
     }
 
