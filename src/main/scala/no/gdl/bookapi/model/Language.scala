@@ -55,15 +55,15 @@ object Language {
     GdlLanguageAnalyzer(UnknownLanguage, BabelAnalyzer)
   )
 
-  val supportedLanguages = languageAnalyzers.map(_.languageTag)
+  val supportedLanguages: Seq[LanguageTag] = languageAnalyzers.map(_.languageTag)
 
-  def findByLanguage(languageTag: LanguageTag): Option[GdlLanguageAnalyzer] = {
-    def findFirstLanguageMatching(sequence: Seq[GdlLanguageAnalyzer], lang: Seq[LanguageTag]): Option[GdlLanguageAnalyzer] = {
+  def findByLanguage(languageTag: LanguageTag): GdlLanguageAnalyzer = {
+    def findFirstLanguageMatching(sequence: Seq[GdlLanguageAnalyzer], lang: Seq[LanguageTag]): GdlLanguageAnalyzer = {
       lang match {
-        case Nil => sequence.headOption
+        case Nil => sequence.headOption.get
         case head :: tail =>
           sequence.find(_.languageTag == head) match {
-            case Some(x) => Some(x)
+            case Some(x) => x
             case None => findFirstLanguageMatching(sequence, tail)
           }
       }
