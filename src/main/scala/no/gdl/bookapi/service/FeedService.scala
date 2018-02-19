@@ -139,7 +139,7 @@ trait FeedService {
     def allEntries(language: LanguageTag, paging: Paging): (PagingStatus, Seq[FeedEntry]) = {
 
       val searchResult = {
-        searchService.searchWithLevel(languageTag = language, None, paging = paging, sort = Sort.ByIdAsc)
+        searchService.searchWithLevel(languageTag = language, None, paging = paging, sort = Sort.ByArrivalDateDesc)
       }
 
       (searchResultToPagingStatus(searchResult, paging), searchResult.results.map(book => api.FeedEntry(book)))
