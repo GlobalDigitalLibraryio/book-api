@@ -41,25 +41,25 @@ class SearchServiceIntegrationTest extends UnitSuite with TestEnvironment {
   }
 
   test("that search for unknown language gives empty search result") {
-    val searchResult = searchService.searchWithQuery(LanguageTag("aaa"), None, Paging(1,10), Sort.ByIdAsc)
+    val searchResult = searchService.searchWithQuery(LanguageTag("aaa"), None, Paging(1,10))
     searchResult.totalCount should be(0)
   }
 
   test("that search for books in norwegian returns two books") {
-    val searchResult = searchService.searchWithQuery(LanguageTag("nob"), None, Paging(1,10), Sort.ByIdAsc)
+    val searchResult = searchService.searchWithQuery(LanguageTag("nob"), None, Paging(1,10))
     searchResult.totalCount should be(2)
   }
 
   test("that search for books in amharic returns one book") {
-    val searchResult = searchService.searchWithQuery(LanguageTag("amh"), None, Paging(1,10), Sort.ByIdAsc)
+    val searchResult = searchService.searchWithQuery(LanguageTag("amh"), None, Paging(1,10))
     searchResult.totalCount should be(1)
   }
 
   test("that search for title returns expected") {
-    val searchResult = searchService.searchWithQuery(LanguageTag("nob"), Some("nonexisting"), Paging(1,10), Sort.ByIdAsc)
+    val searchResult = searchService.searchWithQuery(LanguageTag("nob"), Some("nonexisting"), Paging(1,10))
     searchResult.totalCount should be(0)
 
-    val searchAgain = searchService.searchWithQuery(LanguageTag("nob"), Some("title"), Paging(1,10), Sort.ByIdAsc)
+    val searchAgain = searchService.searchWithQuery(LanguageTag("nob"), Some("title"), Paging(1,10))
     searchAgain.totalCount should be(2)
     searchAgain.results.head.title should be("Title")
   }
