@@ -62,15 +62,16 @@ trait SearchController {
 
     get("/", operation(searchBooks)) {
       val query = paramOrNone("query")
-
-      searchService.searchWithQuery(languageTag = LanguageTag(DefaultLanguage), query = query, paging = extractPageAndPageSize())
+      val sort = Sort.valueOf(paramOrNone("sort")).getOrElse(Sort.ByRelevance)
+      searchService.searchWithQuery(languageTag = LanguageTag(DefaultLanguage), query = query, paging = extractPageAndPageSize(), sort = sort)
     }
 
     get("/:lang/?", operation(searchBooksForLang)) {
       val readingLevel = params.get("reading-level")
       val query = paramOrNone("query")
+      val sort = Sort.valueOf(paramOrNone("sort")).getOrElse(Sort.ByRelevance)
 
-      searchService.searchWithQuery(LanguageTag(params("lang")), query = query, paging = extractPageAndPageSize())
+      searchService.searchWithQuery(LanguageTag(params("lang")), query = query, paging = extractPageAndPageSize(), sort = sort)
     }
   }
 }

@@ -25,7 +25,7 @@ class SearchControllerTest extends UnitSuite with TestEnvironment with ScalatraF
 
   test("that search without lang searches for english books") {
     val result = SearchResult(0, 1, 10, Language("eng", "English"), Seq(TestData.Api.DefaultBook))
-    when(searchService.searchWithQuery(LanguageTag(BookApiProperties.DefaultLanguage), None, Paging(1,10))).thenReturn(result)
+    when(searchService.searchWithQuery(LanguageTag(BookApiProperties.DefaultLanguage), None, Paging(1,10), Sort.ByRelevance)).thenReturn(result)
 
     get("/") {
       status should equal (200)
@@ -36,7 +36,7 @@ class SearchControllerTest extends UnitSuite with TestEnvironment with ScalatraF
 
   test("that search with lang searches for books in correct lang") {
     val result = SearchResult(0, 1, 10, Language("amh", "Amharic"), Seq(TestData.Api.DefaultBook))
-    when(searchService.searchWithQuery(LanguageTag("amh"), None, Paging(1,1))).thenReturn(result)
+    when(searchService.searchWithQuery(LanguageTag("amh"), None, Paging(1,1), Sort.ByRelevance)).thenReturn(result)
 
     get("/amh/?page-size=1") {
       status should equal (200)
