@@ -104,9 +104,7 @@ trait TranslationService {
                 val toAddLanguage = existingTranslations.find(tr => tr.fromLanguage == fromLanguage)
 
                 val inTranslationTry = (toAddUser, toAddLanguage) match {
-                  case (Some(addUser), _) => {
-                    addUserToTranslation(addUser, person)
-                  }
+                  case (Some(addUser), _) => addUserToTranslation(addUser, person)
                   case (None, Some(addLanguage)) => addTargetLanguageForTranslation(addLanguage, translateRequest, originalBook, crowdinClient)
                   case _ => createTranslation(translateRequest, originalBook, fromLanguage, toLanguage, crowdinClient)
                 }
