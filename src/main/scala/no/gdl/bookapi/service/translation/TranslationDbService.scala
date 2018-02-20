@@ -12,7 +12,7 @@ import io.digitallibrary.language.model.LanguageTag
 import io.digitallibrary.network.AuthUser
 import no.gdl.bookapi.model.api.{DBException, TranslateRequest}
 import no.gdl.bookapi.model.crowdin.CrowdinFile
-import no.gdl.bookapi.model.domain.{InTranslation, InTranslationFile, TranslationStatus}
+import no.gdl.bookapi.model.domain._
 import no.gdl.bookapi.repository.{InTranslationFileRepository, InTranslationRepository, TransactionHandler}
 import no.gdl.bookapi.service.ConverterService
 
@@ -34,24 +34,35 @@ trait TranslationDbService {
 
     def translationWithId(translationId: Long): Option[InTranslation] = inTranslationRepository.withId(translationId)
 
-    def newTranslation(translateRequest: TranslateRequest, crowdinMeta: CrowdinFile, crowdinChapters: Seq[CrowdinFile], crowdinProject: String): Try[InTranslation] = {
-      val persisted = for {
-        newInTranslation <- Try(inTranslationRepository.add(converterService.asDomainInTranslation(translateRequest, crowdinProject)))
-        _ <- Try(inTranslationFileRepository.add(converterService.asDomainInTranslationFile(crowdinMeta, newInTranslation)))
-        _ <- Try(crowdinChapters.map(ch => inTranslationFileRepository.add(converterService.asDomainInTranslationFile(ch, newInTranslation))))
-      } yield newInTranslation
+    def newTranslation(translateRequest: TranslateRequest, translation: Translation, crowdinMeta: CrowdinFile, crowdinChapters: Seq[CrowdinFile], crowdinProject: String): Try[InTranslation] = {
+      inTransaction { implicit session =>
+        val persisted = for {
+          newInTranslation <- Try(inTranslationRepository.add(converterService.asDomainInTranslation(translateRequest, translation, crowdinProject)))
+          _ <- Try(inTranslationFileRepository.add(converterService.asDomainInTranslationFile(crowdinMeta, newInTranslation)))
+          _ <- Try(crowdinChapters.map(ch => inTranslationFileRepository.add(converterService.asDomainInTranslationFile(ch, newInTranslation))))
+        } yield newInTranslation
 
-      persisted match {
-        case Success(x) => Success(x)
-        case Failure(e) => Failure(new DBException(e))
+        persisted match {
+          case Success(x) => Success(x)
+          case Failure(e) => Failure(new DBException(e))
+        }
       }
     }
 
-    def addTranslationWithFiles(inTranslation: InTranslation, files: Seq[InTranslationFile], translateRequest: TranslateRequest): Try[InTranslation] = {
+    def addTranslationWithFiles(inTranslation: InTranslation, files: Seq[InTranslationFile], newTranslation: Translation, translateRequest: TranslateRequest): Try[InTranslation] = {
       inTransaction { implicit session =>
         val persisted = for {
-          persistedTranslation <- Try(inTranslationRepository.add(converterService.asDomainInTranslation(translateRequest, inTranslation.crowdinProjectId)))
-          _ <- Try(files.map(f => f.copy(id = None, revision = None, inTranslationId = persistedTranslation.id.get, translationStatus = TranslationStatus.IN_PROGRESS, etag = None)).map(fh => inTranslationFileRepository.add(fh)))
+          persistedTranslation <- Try(inTranslationRepository.add(converterService.asDomainInTranslation(translateRequest, newTranslation, inTranslation.crowdinProjectId)))
+
+          persistedMetadata <- Try(files.find(_.fileType == FileType.METADATA)
+            .map(_.copy(id = None, revision = None, inTranslationId = persistedTranslation.id.get, translationStatus = TranslationStatus.IN_PROGRESS, etag = None)).map(inTranslationFileRepository.add))
+
+          persistedFiles <- Try(files.flatMap(file => {
+            newTranslation.chapters.find(_.seqNo == file.seqNo).map(chapter => {
+              file.copy(id = None, revision = None, inTranslationId = persistedTranslation.id.get, translationStatus = TranslationStatus.IN_PROGRESS, etag = None, newChapterId = chapter.id)
+            })
+          }).map(inTranslationFileRepository.add))
+
         } yield persistedTranslation
 
         persisted match {
@@ -61,15 +72,11 @@ trait TranslationDbService {
       }
     }
 
-    def addUserToTranslation(inTranslation: InTranslation): Try[InTranslation] = {
-      if (inTranslation.userIds.contains(AuthUser.get.get)) {
-        Success(inTranslation)
-      } else {
-        val newListOfUsers = inTranslation.userIds :+ AuthUser.get.get
-        val toUpdate = inTranslation.copy(userIds = newListOfUsers)
+    def addUserToTranslation(inTranslation: InTranslation, person: Person): Try[InTranslation] = {
+      val newListOfUsers = inTranslation.userIds :+ person.gdlId.get
+      val toUpdate = inTranslation.copy(userIds = newListOfUsers)
 
-        Try(inTranslationRepository.updateTranslation(toUpdate))
-      }
+      Try(inTranslationRepository.updateTranslation(toUpdate))
     }
 
     def updateInTranslationFile(file: InTranslationFile): Try[InTranslationFile] = Try {

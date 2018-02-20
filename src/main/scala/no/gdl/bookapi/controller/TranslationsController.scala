@@ -70,14 +70,7 @@ trait TranslationsController {
       val language = LanguageTag(crowdinLanguage)
       val fileId = params("file_id")
 
-      translationService.updateTranslationStatus(projectIdentifier, language, fileId, TranslationStatus.TRANSLATED).flatMap(inTranslationFile => {
-        val translationFiles = translationService.findAllTranslationFiles(inTranslationFile)
-        if(translationFiles.forall(_.translationStatus == TranslationStatus.TRANSLATED)) {
-          translationService.fetchTranslations(inTranslationFile, translationFiles)
-        } else {
-          Success()
-        }
-      }) match {
+      translationService.fetchTranslatedFile(projectIdentifier, crowdinLanguage, fileId, TranslationStatus.TRANSLATED) match {
         case Success(_) => NoContent()
         case Failure(err) => errorHandler(err)
       }
