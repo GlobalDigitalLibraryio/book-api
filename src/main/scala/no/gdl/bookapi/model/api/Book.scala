@@ -32,11 +32,11 @@ case class CoverPhoto(@(ApiModelProperty@field)(description = "URL to a large ve
 case class Downloads(@(ApiModelProperty@field)(description = "URL to an epub-download") epub: String,
                      @(ApiModelProperty@field)(description = "URL to a pdf-download") pdf: String)
 
-@ApiModel(description = "Information about the authors of the current book")
-case class Contributor(@(ApiModelProperty@field)(description = "Id of the author") id: Long,
+@ApiModel(description = "Information about the contributors of the current book")
+case class Contributor(@(ApiModelProperty@field)(description = "Id of the contributor") id: Long,
                        @(ApiModelProperty@field)(description = "The revision of the contributor") revision: Int,
                        @(ApiModelProperty@field)(description = "The type of the contributor", allowableValues = "Author, Illustrator, Translator, Photographer, Contributor") `type`: String,
-                       @(ApiModelProperty@field)(description = "Name of the author") name: String)
+                       @(ApiModelProperty@field)(description = "Name of the contributor") name: String)
 
 @ApiModel(description = "Information about the publisher of the current book")
 case class Publisher(@(ApiModelProperty@field)(description = "Id of the publisher") id: Long,
