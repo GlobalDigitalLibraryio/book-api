@@ -17,6 +17,11 @@ trait ChapterRepository {
   val chapterRepository: ChapterRepository
 
   class ChapterRepository {
+    def deleteChapter(chapter: Chapter)(implicit session: DBSession = AutoSession): Unit = {
+      val ch = Chapter.column
+      deleteFrom(Chapter).where.eq(ch.id, chapter.id).toSQL.update().apply()
+    }
+
     private val (ch, t) = (Chapter.syntax, Translation.syntax)
 
     def add(newChapter: Chapter)(implicit session: DBSession = AutoSession): Chapter = {

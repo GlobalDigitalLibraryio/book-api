@@ -16,7 +16,7 @@ import io.digitallibrary.network.AuthUser
 import no.gdl.bookapi.controller.NewFeaturedContent
 import no.gdl.bookapi.integration.crowdin.BookMetaData
 import no.gdl.bookapi.model._
-import no.gdl.bookapi.model.api.{FeaturedContentId, NotFoundException}
+import no.gdl.bookapi.model.api.{FeaturedContentId, NotFoundException, TranslateRequest}
 import no.gdl.bookapi.model.api.internal.{NewChapter, NewTranslation}
 import no.gdl.bookapi.model.domain._
 import no.gdl.bookapi.repository._
@@ -49,14 +49,18 @@ trait WriteService {
       translationRepository.update(translationToUpdate)
     }
 
-    def addPersonFromAuthUser(): Try[Person] = {
+    def addPersonFromAuthUser(): Person = {
       val gdlUserId = AuthUser.get
       val personName = AuthUser.getName.getOrElse("Unknown")
 
       personRepository.withGdlId(gdlUserId.get) match {
-        case Some(person) => Try(personRepository.updatePerson(person.copy(name = personName)))
-        case None => Try(personRepository.add(Person(id = None, revision = None, name = personName, gdlId = gdlUserId)))
+        case Some(person) => personRepository.updatePerson(person.copy(name = personName))
+        case None => personRepository.add(Person(id = None, revision = None, name = personName, gdlId = gdlUserId))
       }
+    }
+
+    def addTranslatorToTranslation(translationId: Long, person: Person): Contributor = {
+      contributorRepository.add(Contributor(None, None, person.id.get, translationId, ContributorType.Translator, person))
     }
 
 
@@ -171,7 +175,7 @@ trait WriteService {
       } yield api.internal.BookId(persistedBook.id.get)
     }
 
-    def newTranslationForBook(originalBook: api.Book, inTranslation: InTranslation, metadata: BookMetaData): Try[api.internal.TranslationId] = {
+    def newTranslationForBook(originalBook: api.Book, translateRequest: TranslateRequest): Try[domain.Translation] = {
       translationRepository.forBookIdAndLanguage(originalBook.id, LanguageTag(originalBook.language.code)) match {
         case None => Failure(new NotFoundException())
         case Some(translation) => {
@@ -180,31 +184,44 @@ trait WriteService {
             revision = None,
             externalId = None,
             uuid = UUID.randomUUID().toString,
-            language = inTranslation.toLanguage,
-            translatedFrom = Some(inTranslation.fromLanguage),
-            title = metadata.title,
-            about = metadata.description,
+            language = LanguageTag(translateRequest.toLanguage),
+            translatedFrom = Some(LanguageTag(translateRequest.fromLanguage)),
+            title = originalBook.title,
+            about = originalBook.description,
             publishingStatus = PublishingStatus.UNLISTED)
 
           Try {
             inTransaction { implicit session =>
               val persistedTranslation = translationRepository.add(newTranslation)
 
-              val newPersons = inTranslation.userIds.flatMap(gdlId => personRepository.withGdlId(gdlId))
+              val newPersons = AuthUser.get.flatMap(personRepository.withGdlId)
               val newContributors = newPersons.map(person => Contributor(None, None, person.id.get, persistedTranslation.id.get, ContributorType.Translator, person))
               val copyContributors = translation.contributors.map(contributor => contributor.copy(id = None, revision = None, translationId = persistedTranslation.id.get))
 
               val contributorsToPersist = newContributors ++ copyContributors
+              contributorsToPersist.map(contributor => contributorRepository.add(contributor))
 
-              val persistedContributors = contributorsToPersist.map(contributor => contributorRepository.add(contributor))
-              inTranslationRepository.updateTranslation(inTranslation.copy(newTranslationId = persistedTranslation.id))
+              val persistedChapters = translation.chapters.map(chapterToCopy => {
+                val newChapter = chapterToCopy.copy(
+                  id = None,
+                  revision = None,
+                  translationId = persistedTranslation.id.get)
 
-              api.internal.TranslationId(persistedTranslation.id.get)
+                chapterRepository.add(newChapter)
+              })
+              persistedTranslation.copy(chapters = persistedChapters)
             }
           }
         }
       }
     }
+
+    def deleteTranslation(translation: domain.Translation): Unit = inTransaction { implicit session =>
+      translation.chapters.foreach(chapterRepository.deleteChapter)
+      translation.contributors.foreach(contributorRepository.deleteContributor)
+      translationRepository.deleteTranslation(translation)
+    }
+
 
     def newTranslationForBook(bookId: Long, newTranslation: api.internal.NewTranslation): Try[api.internal.TranslationId] = {
       validationService.validateNewTranslation(newTranslation).map(validNewTranslation => {

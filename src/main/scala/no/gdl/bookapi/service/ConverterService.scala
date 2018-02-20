@@ -217,12 +217,12 @@ trait ConverterService {
       api.Language(languageTag.toString, languageTag.localDisplayName.getOrElse(languageTag.displayName))
     }
 
-    def asDomainInTranslation(translationRequest: api.TranslateRequest, crowdinProjectId: String) = domain.InTranslation(
+    def asDomainInTranslation(translationRequest: api.TranslateRequest, newTranslation: domain.Translation, crowdinProjectId: String) = domain.InTranslation(
       id = None,
       revision = None,
       userIds = Seq(AuthUser.get.get),
       originalTranslationId = translationRequest.bookId,
-      newTranslationId = None,
+      newTranslationId = newTranslation.id,
       fromLanguage = LanguageTag(translationRequest.fromLanguage),
       toLanguage = LanguageTag(translationRequest.toLanguage),
       crowdinToLanguage = translationRequest.toLanguage,
@@ -233,8 +233,8 @@ trait ConverterService {
         revision = None,
         inTranslationId = inTranslation.id.get,
         fileType = file.fileType,
-        originalChapterId = file.sourceId,
-        newChapterId = None,
+        newChapterId = file.sourceId,
+        seqNo = file.seqNo,
         filename = file.addedFile.name,
         crowdinFileId = file.addedFile.fileId.toString,
         translationStatus = TranslationStatus.IN_PROGRESS,

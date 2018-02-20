@@ -12,7 +12,7 @@ import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http.search.SearchHits
 import com.sksamuel.elastic4s.searches.queries.term.TermQueryDefinition
 import com.sksamuel.elastic4s.searches.queries.{BoolQueryDefinition, MoreLikeThisItem, MoreLikeThisQueryDefinition, QueryStringQueryDefinition}
-import com.sksamuel.elastic4s.searches.sort.{FieldSortDefinition, SortOrder}
+import com.sksamuel.elastic4s.searches.sort.{FieldSortDefinition, ScoreSortDefinition, SortOrder}
 import com.typesafe.scalalogging.LazyLogging
 import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.BookApiProperties
@@ -62,7 +62,7 @@ trait SearchService {
 
       val queryDefinition = query match {
         case None => boolDefinition
-        case Some(value) => boolDefinition.should(QueryStringQueryDefinition(value).field("title").field("description"))
+        case Some(value) => boolDefinition.should(QueryStringQueryDefinition(value.toLowerCase).field("description",1.0).field("title",2.0))
       }
 
       val levelDefinition = readingLevel match {
@@ -73,7 +73,7 @@ trait SearchService {
       val search = searchWithType(indexAndTypes)
         .size(numResults).from(startAt)
         .bool(levelDefinition)
-        .sortBy(getSorting(sortDef = sort))
+        .sortBy(getSorting(sort))
 
       esClient.execute(search) match {
         case Success(response) => SearchResult(response.result.totalHits, paging.page, numResults, converterService.toApiLanguage(languageTag), getHits(response.result.hits, languageTag))
@@ -87,6 +87,7 @@ trait SearchService {
     }
 
     private def getSorting(sortDef: Sort.Value) = sortDef match {
+      case (Sort.ByRelevance) => ScoreSortDefinition(order = SortOrder.DESC)
       case (Sort.ByIdAsc) => FieldSortDefinition("id", order = SortOrder.ASC)
       case (Sort.ByIdDesc) => FieldSortDefinition("id", order = SortOrder.DESC)
       case (Sort.ByTitleAsc) => FieldSortDefinition("title", order = SortOrder.ASC)
@@ -96,7 +97,7 @@ trait SearchService {
     }
 
     private def getHits(hits: SearchHits, language: LanguageTag): Seq[Book] = {
-      hits.hits.iterator.toSeq.map(hit => hitAsApiBook(hit.sourceAsString, language))
+      hits.hits.toSeq.map(hit => hitAsApiBook(hit.sourceAsString, language))
     }
 
     private def hitAsApiBook(hit: String, language: LanguageTag): Book = {

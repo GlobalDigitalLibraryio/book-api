@@ -46,5 +46,10 @@ trait ContributorRepository {
         .where.eq(ctb.translationId, translationId).toSQL
         .map(Contributor(ctb, p)).list().apply()
     }
+
+    def deleteContributor(contributor: Contributor)(implicit session: DBSession = AutoSession): Unit = {
+      val ctb = Contributor.column
+      deleteFrom(Contributor).where.eq(ctb.id, contributor.id).toSQL.update().apply()
+    }
   }
 }

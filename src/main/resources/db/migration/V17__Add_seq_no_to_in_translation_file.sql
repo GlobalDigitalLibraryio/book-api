@@ -1,0 +1,1 @@
+ALTER TABLE in_translation_file ADD COLUMN seq_no int default 0, DROP COLUMN original_chapter_id;
