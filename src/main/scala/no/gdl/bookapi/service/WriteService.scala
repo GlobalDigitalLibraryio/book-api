@@ -60,7 +60,7 @@ trait WriteService {
     }
 
     def addTranslatorToTranslation(translationId: Long, person: Person): Contributor = {
-      contributorRepository.add(Contributor(None, None, person.id.get, translationId, "Translator", person))
+      contributorRepository.add(Contributor(None, None, person.id.get, translationId, ContributorType.Translator, person))
     }
 
 
@@ -195,7 +195,7 @@ trait WriteService {
               val persistedTranslation = translationRepository.add(newTranslation)
 
               val newPersons = AuthUser.get.flatMap(personRepository.withGdlId)
-              val newContributors = newPersons.map(person => Contributor(None, None, person.id.get, persistedTranslation.id.get, "Translator", person))
+              val newContributors = newPersons.map(person => Contributor(None, None, person.id.get, persistedTranslation.id.get, ContributorType.Translator, person))
               val copyContributors = translation.contributors.map(contributor => contributor.copy(id = None, revision = None, translationId = persistedTranslation.id.get))
 
               val contributorsToPersist = newContributors ++ copyContributors
@@ -224,71 +224,17 @@ trait WriteService {
 
 
     def newTranslationForBook(bookId: Long, newTranslation: api.internal.NewTranslation): Try[api.internal.TranslationId] = {
-      val domainTranslation = converterService.toDomainTranslation(newTranslation, bookId)
+      validationService.validateNewTranslation(newTranslation).map(validNewTranslation => {
+        val domainTranslation = converterService.toDomainTranslation(validNewTranslation, bookId)
 
-      val categories = newTranslation.categories.map(cat => {
-        categoryRepository.withName(cat.name) match {
-          case Some(category) => category
-          case None => Category(None, None, cat.name)
-        }
-      })
-
-      val contributerToPerson = newTranslation.contributors.map(ctb => {
-        personRepository.withName(ctb.person.name) match {
-          case Some(person) => (ctb, person)
-          case None => (ctb, Person(None, None, ctb.person.name, None))
-        }
-      })
-
-      inTransaction { implicit session =>
-        val persistedCategories = categories.map {
-          case x if x.id.isEmpty => categoryRepository.add(x)
-          case y => y
-        }
-
-        val optPersistedEA = domainTranslation.educationalAlignment.flatMap(ea => {
-          educationalAlignmentRepository.add(ea).id
-        })
-
-        val translation = translationRepository.add(
-          domainTranslation.copy(
-            categoryIds = persistedCategories.map(_.id.get),
-            eaId = optPersistedEA)
-        )
-
-        val persistedContributorsToPersons = contributerToPerson.map {
-          case (ctb, persisted) if persisted.id.isDefined => (ctb, persisted)
-          case (ctb, unpersisted) => (ctb, personRepository.add(unpersisted))
-        }
-
-        val persistedContributors = persistedContributorsToPersons.map { case (ctb, person) => {
-          contributorRepository.add(
-            Contributor(
-              None,
-              None,
-              person.id.get,
-              translation.id.get,
-              ctb.`type`,
-              person))
-        }
-        }
-
-        Success(api.internal.TranslationId(translation.id.get))
-      }
-    }
-
-    def updateTranslationForBook(bookId: Long, translationId: Long, translationReplacement: NewTranslation): Option[Try[api.internal.TranslationId]] = {
-      translationRepository.withId(translationId).map(existing => {
-        val replacement = converterService.toDomainTranslation(translationReplacement, bookId)
-
-        val categories = translationReplacement.categories.map(cat => {
+        val categories = validNewTranslation.categories.map(cat => {
           categoryRepository.withName(cat.name) match {
             case Some(category) => category
             case None => Category(None, None, cat.name)
           }
         })
 
-        val contributerToPerson = translationReplacement.contributors.map(ctb => {
+        val contributerToPerson = validNewTranslation.contributors.map(ctb => {
           personRepository.withName(ctb.person.name) match {
             case Some(person) => (ctb, person)
             case None => (ctb, Person(None, None, ctb.person.name, None))
@@ -301,53 +247,20 @@ trait WriteService {
             case y => y
           }
 
-          val optPersistedEA = (existing.educationalAlignment, replacement.educationalAlignment) match {
-            case (Some(existingEa), Some(replacementEa)) => educationalAlignmentRepository.updateEducationalAlignment(existingEa.copy(
-              alignmentType = replacementEa.alignmentType,
-              educationalFramework = replacementEa.educationalFramework,
-              targetDescription = replacementEa.targetDescription,
-              targetName = replacementEa.targetName,
-              targetUrl = replacementEa.targetUrl)).id
+          val optPersistedEA = domainTranslation.educationalAlignment.flatMap(ea => {
+            educationalAlignmentRepository.add(ea).id
+          })
 
-            case (Some(existingEa), None) =>
-              educationalAlignmentRepository.remove(existingEa.id)
-              None
-            case (None, Some(ea)) => educationalAlignmentRepository.add(ea).id
-            case (None, None) => None
-          }
-
-          val translation = translationRepository.update(
-            existing.copy(
+          val translation = translationRepository.add(
+            domainTranslation.copy(
               categoryIds = persistedCategories.map(_.id.get),
-              eaId = optPersistedEA,
-              title = replacement.title,
-              about = replacement.about,
-              numPages = replacement.numPages,
-              language = replacement.language,
-              datePublished = replacement.datePublished,
-              dateCreated = replacement.dateCreated,
-              coverphoto = replacement.coverphoto,
-              tags = replacement.tags,
-              isBasedOnUrl = replacement.isBasedOnUrl,
-              educationalUse = replacement.educationalUse,
-              educationalRole = replacement.educationalRole,
-              timeRequired = replacement.timeRequired,
-              typicalAgeRange = replacement.typicalAgeRange,
-              readingLevel = replacement.readingLevel,
-              interactivityType = replacement.interactivityType,
-              learningResourceType = replacement.learningResourceType,
-              accessibilityApi = replacement.accessibilityApi,
-              accessibilityControl = replacement.accessibilityControl,
-              accessibilityFeature = replacement.accessibilityFeature,
-              accessibilityHazard = replacement.accessibilityHazard
-            )
+              eaId = optPersistedEA)
           )
 
           val persistedContributorsToPersons = contributerToPerson.map {
             case (ctb, persisted) if persisted.id.isDefined => (ctb, persisted)
             case (ctb, unpersisted) => (ctb, personRepository.add(unpersisted))
           }
-
 
           val persistedContributors = persistedContributorsToPersons.map { case (ctb, person) => {
             contributorRepository.add(
@@ -356,14 +269,106 @@ trait WriteService {
                 None,
                 person.id.get,
                 translation.id.get,
-                ctb.`type`,
+                ContributorType.valueOf(ctb.`type`).get,
                 person))
           }
           }
-          existing.contributors.foreach(contributorRepository.remove)
 
-          Success(api.internal.TranslationId(translation.id.get))
+          api.internal.TranslationId(translation.id.get)
         }
+      })
+    }
+
+    def updateTranslationForBook(bookId: Long, translationId: Long, translationReplacement: NewTranslation): Option[Try[api.internal.TranslationId]] = {
+      translationRepository.withId(translationId).map(existing => {
+        validationService.validateNewTranslation(translationReplacement).map(validTranslationReplacement => {
+          val replacement = converterService.toDomainTranslation(validTranslationReplacement, bookId)
+
+          val categories = validTranslationReplacement.categories.map(cat => {
+            categoryRepository.withName(cat.name) match {
+              case Some(category) => category
+              case None => Category(None, None, cat.name)
+            }
+          })
+
+          val contributerToPerson = validTranslationReplacement.contributors.map(ctb => {
+            personRepository.withName(ctb.person.name) match {
+              case Some(person) => (ctb, person)
+              case None => (ctb, Person(None, None, ctb.person.name, None))
+            }
+          })
+
+          inTransaction { implicit session =>
+            val persistedCategories = categories.map {
+              case x if x.id.isEmpty => categoryRepository.add(x)
+              case y => y
+            }
+
+            val optPersistedEA = (existing.educationalAlignment, replacement.educationalAlignment) match {
+              case (Some(existingEa), Some(replacementEa)) => educationalAlignmentRepository.updateEducationalAlignment(existingEa.copy(
+                alignmentType = replacementEa.alignmentType,
+                educationalFramework = replacementEa.educationalFramework,
+                targetDescription = replacementEa.targetDescription,
+                targetName = replacementEa.targetName,
+                targetUrl = replacementEa.targetUrl)).id
+
+              case (Some(existingEa), None) =>
+                educationalAlignmentRepository.remove(existingEa.id)
+                None
+              case (None, Some(ea)) => educationalAlignmentRepository.add(ea).id
+              case (None, None) => None
+            }
+
+            val translation = translationRepository.update(
+              existing.copy(
+                categoryIds = persistedCategories.map(_.id.get),
+                eaId = optPersistedEA,
+                title = replacement.title,
+                about = replacement.about,
+                numPages = replacement.numPages,
+                language = replacement.language,
+                datePublished = replacement.datePublished,
+                dateCreated = replacement.dateCreated,
+                coverphoto = replacement.coverphoto,
+                tags = replacement.tags,
+                isBasedOnUrl = replacement.isBasedOnUrl,
+                educationalUse = replacement.educationalUse,
+                educationalRole = replacement.educationalRole,
+                timeRequired = replacement.timeRequired,
+                typicalAgeRange = replacement.typicalAgeRange,
+                readingLevel = replacement.readingLevel,
+                interactivityType = replacement.interactivityType,
+                learningResourceType = replacement.learningResourceType,
+                accessibilityApi = replacement.accessibilityApi,
+                accessibilityControl = replacement.accessibilityControl,
+                accessibilityFeature = replacement.accessibilityFeature,
+                accessibilityHazard = replacement.accessibilityHazard
+              )
+            )
+
+            val persistedContributorsToPersons = contributerToPerson.map {
+              case (ctb, persisted) if persisted.id.isDefined => (ctb, persisted)
+              case (ctb, unpersisted) => (ctb, personRepository.add(unpersisted))
+            }
+
+
+            val persistedContributors = persistedContributorsToPersons.map { case (ctb, person) => {
+              contributorRepository.add(
+                Contributor(
+                  None,
+                  None,
+                  person.id.get,
+                  translation.id.get,
+                  ContributorType.valueOf(ctb.`type`).get,
+                  person))
+            }
+            }
+            existing.contributors.foreach(contributorRepository.remove)
+
+            api.internal.TranslationId(translation.id.get)
+          }
+
+        })
       })
     }
   }
