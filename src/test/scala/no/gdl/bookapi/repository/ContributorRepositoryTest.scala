@@ -28,7 +28,7 @@ class ContributorRepositoryTest extends IntegrationSuite with TestEnvironment wi
       val translation = addTranslationDef("external-id", "Some title", book.id.get, LanguageTag("eng"))
       val person = personRepository.add(Person(None, None, "Some person", None))
 
-      val contributor = Contributor(None, None, person.id.get, translation.id.get, "Author", person)
+      val contributor = Contributor(None, None, person.id.get, translation.id.get, ContributorType.Author, person)
 
       val persisted = contributorRepository.add(contributor)
       persisted.id.isDefined should be(true)
@@ -44,8 +44,8 @@ class ContributorRepositoryTest extends IntegrationSuite with TestEnvironment wi
       val person1 = personRepository.add(Person(None, None, "Some person", None))
       val person2 = personRepository.add(Person(None, None, "Some other person", None))
 
-      val contributor1 = Contributor(None, None, person1.id.get, translation.id.get, "Author", person1)
-      val contributor2 = Contributor(None, None, person2.id.get, translation.id.get, "Translator", person2)
+      val contributor1 = Contributor(None, None, person1.id.get, translation.id.get, ContributorType.Author, person1)
+      val contributor2 = Contributor(None, None, person2.id.get, translation.id.get, ContributorType.Translator, person2)
 
       val persisted1 = contributorRepository.add(contributor1)
       val persisted2 = contributorRepository.add(contributor2)

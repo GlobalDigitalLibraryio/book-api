@@ -25,7 +25,7 @@ trait ContributorRepository {
         ctb.revision -> startRevision,
         ctb.personId -> contributor.person.id.get,
         ctb.translationId -> contributor.translationId,
-        ctb.`type` -> contributor.`type`
+        ctb.`type` -> contributor.`type`.toString
       ).toSQL.updateAndReturnGeneratedKey().apply()
 
       contributor.copy(id = Some(id), revision = Some(startRevision))
@@ -45,6 +45,11 @@ trait ContributorRepository {
         .innerJoin(Person as p).on(p.id, ctb.personId)
         .where.eq(ctb.translationId, translationId).toSQL
         .map(Contributor(ctb, p)).list().apply()
+    }
+
+    def deleteContributor(contributor: Contributor)(implicit session: DBSession = AutoSession): Unit = {
+      val ctb = Contributor.column
+      deleteFrom(Contributor).where.eq(ctb.id, contributor.id).toSQL.update().apply()
     }
   }
 }

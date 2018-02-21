@@ -33,4 +33,4 @@ case class DeleteDirectoryResponse(success: Boolean, error: Option[Error]) {
   }
 }
 
-case class CrowdinFile (sourceId: Option[Long], fileType: FileType.Value, addedFile: AddedFile)
+case class CrowdinFile (sourceId: Option[Long], seqNo: Int, fileType: FileType.Value, addedFile: AddedFile)

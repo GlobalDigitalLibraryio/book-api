@@ -370,6 +370,11 @@ trait TranslationRepository {
       }
     }
 
+    def deleteTranslation(translation: Translation)(implicit session: DBSession = AutoSession): Unit = {
+      val t = Translation.column
+      deleteFrom(Translation).where.eq(t.id, translation.id).toSQL.update().apply()
+    }
+
     private def getSorting(sortDef: Sort.Value) = sortDef match {
       case (Sort.ByIdAsc) => sqls.orderBy(t.id).asc
       case (Sort.ByIdDesc) => sqls.orderBy(t.id).desc

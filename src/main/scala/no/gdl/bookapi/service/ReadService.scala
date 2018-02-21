@@ -118,6 +118,10 @@ trait ReadService {
       chapterRepository.chapterForBookWithLanguageAndId(bookId, language, chapterId).map(converterService.toApiChapter)
     }
 
+    def chapterWithId(chapterId: Long): Option[api.Chapter] = {
+      chapterRepository.withId(chapterId).map(converterService.toApiChapter)
+    }
+
     def chapterWithSeqNoForTranslation(translationId: Long, seqno: Long): Option[api.internal.ChapterId] = {
       chapterRepository.forTranslationWithSeqNo(translationId, seqno).flatMap(_.id).map(api.internal.ChapterId)
     }

@@ -29,7 +29,7 @@ trait MergeService {
       val originalChapters = originalBook.chapters.flatMap(chapter => chapterRepository.withId(chapter.id))
 
       translatedChapters.flatMap(
-        chapter => originalChapters.find(_.id.contains(chapter.originalChapterId)).map(
+        chapter => originalChapters.find(_.id.contains(chapter.newChapterId)).map(
           originalChapter => mergeChapterAsNewChapter(originalChapter, chapter)))
     }
 

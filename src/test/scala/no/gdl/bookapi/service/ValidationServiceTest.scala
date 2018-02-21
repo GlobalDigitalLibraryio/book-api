@@ -3,6 +3,7 @@ package no.gdl.bookapi.service
 import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.model.api.{FeaturedContent, Language}
 import no.gdl.bookapi.model.domain
+import no.gdl.bookapi.model.domain.ContributorType
 import no.gdl.bookapi.{TestEnvironment, UnitSuite}
 
 import scala.util.Success
@@ -66,6 +67,15 @@ class ValidationServiceTest extends UnitSuite with TestEnvironment {
 
     assertFails(validUpdatedFC.copy(link = "ftp://something"))
     assertFails(validUpdatedFC.copy(imageUrl = "whatever"))
+  }
+
+  test("that invalid contributor type returns error") {
+    val validationMessage = validationService.validContributorType("invalid")
+    validationMessage.isDefined should be (true)
+  }
+
+  test("that valid contributor type does not return validation message") {
+    validationService.validContributorType(ContributorType.Illustrator.toString) should be (None)
   }
 
 }
