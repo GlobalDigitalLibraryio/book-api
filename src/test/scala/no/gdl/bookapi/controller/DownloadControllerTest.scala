@@ -16,8 +16,8 @@ import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.model.api.LocalDateSerializer
 import no.gdl.bookapi.{TestEnvironment, UnitSuite}
 import org.json4s.{DefaultFormats, Formats}
+import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
-import org.mockito.Matchers.{any, eq => eqTo}
 import org.scalatra.test.scalatest.ScalatraFunSuite
 
 import scala.util.{Failure, Success}

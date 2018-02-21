@@ -11,7 +11,7 @@ import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.integration.crowdin.{CrowdinClient, TranslatedChapter}
 import no.gdl.bookapi.model._
 import no.gdl.bookapi.{TestData, TestEnvironment, UnitSuite}
-import org.mockito.Matchers._
+import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import scalikejdbc.DBSession
 

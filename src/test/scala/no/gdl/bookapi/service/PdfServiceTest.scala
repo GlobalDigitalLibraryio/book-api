@@ -9,8 +9,8 @@ package no.gdl.bookapi.service
 
 import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.{TestData, TestEnvironment, UnitSuite}
+import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
-import org.mockito.Matchers.{any, eq => eqTo}
 import scalikejdbc.DBSession
 
 class PdfServiceTest extends UnitSuite with TestEnvironment {

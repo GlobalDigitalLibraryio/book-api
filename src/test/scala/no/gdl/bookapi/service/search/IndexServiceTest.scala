@@ -15,7 +15,7 @@ import com.sksamuel.elastic4s.http.index.alias.{Alias, IndexAliases}
 import com.sksamuel.elastic4s.http.{HttpExecutable, RequestSuccess}
 import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.{TestData, TestEnvironment, UnitSuite}
-import org.mockito.Matchers.any
+import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 
 import scala.util.{Failure, Success}
