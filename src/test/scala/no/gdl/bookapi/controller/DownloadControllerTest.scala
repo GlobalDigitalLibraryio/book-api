@@ -56,7 +56,7 @@ class DownloadControllerTest extends UnitSuite with TestEnvironment with Scalatr
     when(ePubService.createEPub(LanguageTag("nob"), "123")).thenReturn(Some(Success(book)))
     get("/epub/nob/123.epub") {
       status should equal (200)
-      header.get("Content-Type") should equal (Some("application/octet-stream; charset=UTF-8"))
+      header.get("Content-Type") should equal (Some("application/octet-stream;charset=UTF-8"))
     }
   }
 
@@ -72,7 +72,7 @@ class DownloadControllerTest extends UnitSuite with TestEnvironment with Scalatr
     when(pdfService.createPdf(LanguageTag("nob"), "123")).thenReturn(Some(renderer))
     get("/pdf/nob/123.pdf") {
       status should equal (200)
-      header.get("Content-Type") should equal (Some("application/octet-stream; charset=UTF-8"))
+      header.get("Content-Type") should equal (Some("application/octet-stream;charset=UTF-8"))
     }
   }
 
