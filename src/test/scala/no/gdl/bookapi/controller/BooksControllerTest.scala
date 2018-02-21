@@ -42,7 +42,7 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
 
     get("/?reading-level=1&page-size=10&page=1") {
       status should equal (200)
-      val searchResult = read[SearchResult](body)
+      val searchResult = read[SearchResult[Book]](body)
       searchResult.results.length should be (1)
       searchResult.results.head.uuid should equal(TestData.DefaultUuid)
     }
@@ -56,7 +56,7 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
 
     get("/nob?reading-level=2&page-size=10&page=1") {
       status should equal (200)
-      val searchResult = read[SearchResult](body)
+      val searchResult = read[SearchResult[Book]](body)
       searchResult.results.length should be (1)
       searchResult.results.head.uuid should equal(TestData.Api.DefaultBook.uuid)
     }
@@ -73,7 +73,7 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
 
     get("/nob?reading-level=2&page-size=10&page=1&sort=-title") {
       status should equal (200)
-      val searchResult = read[SearchResult](body)
+      val searchResult = read[SearchResult[Book]](body)
       searchResult.results.length should be (2)
       searchResult.results should equal (Seq(firstBook, secondBook))
     }

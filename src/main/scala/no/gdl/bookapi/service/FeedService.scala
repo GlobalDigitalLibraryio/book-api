@@ -15,7 +15,7 @@ import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.BookApiProperties
 import no.gdl.bookapi.BookApiProperties.OpdsLanguageParam
 import no.gdl.bookapi.model._
-import no.gdl.bookapi.model.api.{Facet, FeedEntry, SearchResult}
+import no.gdl.bookapi.model.api.{Book, Facet, FeedEntry, SearchResult}
 import no.gdl.bookapi.model.domain.{Paging, PublishingStatus, Sort}
 import no.gdl.bookapi.repository.{FeedRepository, TranslationRepository}
 import no.gdl.bookapi.service.search.SearchService
@@ -150,7 +150,7 @@ trait FeedService {
       (searchResultToPagingStatus(searchResult, paging), searchResult.results.map(book => api.FeedEntry(book)))
     }
 
-    def searchResultToPagingStatus(searchResult: SearchResult, paging: Paging): PagingStatus = {
+    def searchResultToPagingStatus(searchResult: SearchResult[Book], paging: Paging): PagingStatus = {
       if (searchResult.totalCount > paging.pageSize) {
         val lastPage = Math.round(Math.ceil(searchResult.totalCount.toFloat / paging.pageSize)).toInt
         if (paging.page == lastPage) {

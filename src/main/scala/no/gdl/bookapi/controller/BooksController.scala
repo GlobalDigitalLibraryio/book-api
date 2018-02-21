@@ -11,7 +11,7 @@ package no.gdl.bookapi.controller
 import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.BookApiProperties.DefaultLanguage
 import no.gdl.bookapi.model.api
-import no.gdl.bookapi.model.api.{Error, ValidationError}
+import no.gdl.bookapi.model.api.{Book, Error, ValidationError}
 import no.gdl.bookapi.model.domain.{Paging, Sort}
 import no.gdl.bookapi.service.search.SearchService
 import no.gdl.bookapi.service.{ConverterService, ReadService}
@@ -33,7 +33,7 @@ trait BooksController {
     val response404 = ResponseMessage(404, "Not found", Some("Error"))
     val response500 = ResponseMessage(500, "Unknown error", Some("Error"))
 
-    private val getAllBooks = (apiOperation[api.SearchResult]("getAllBooks")
+    private val getAllBooks = (apiOperation[api.SearchResult[Book]]("getAllBooks")
       summary s"Returns all books in the default language $DefaultLanguage"
       notes s"Returns a list of books in $DefaultLanguage"
       parameters(
@@ -43,7 +43,7 @@ trait BooksController {
       queryParam[Option[Int]]("reading-level").description("Return only books matching this reading level."))
       responseMessages response500)
 
-    private val getAllBooksInLang = (apiOperation[api.SearchResult]("getAllBooksInLangDoc")
+    private val getAllBooksInLang = (apiOperation[api.SearchResult[Book]]("getAllBooksInLangDoc")
       summary s"Returns all books in the specified language"
       notes s"Returns a list of books in the specified language"
       parameters(
@@ -82,7 +82,7 @@ trait BooksController {
       pathParam[Long]("chapterid").description("Id of the chapter that is to be returned."))
       responseMessages(response400, response404, response500))
 
-    private val getSimilar = (apiOperation[api.SearchResult]("getSimilar")
+    private val getSimilar = (apiOperation[api.SearchResult[Book]]("getSimilar")
       summary "Returns books that are similar to the given id in the given language."
       notes "Returns books that are similar to the given id in the given language."
       parameters(
