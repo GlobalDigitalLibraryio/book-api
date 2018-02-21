@@ -81,8 +81,6 @@ trait SearchService {
         .sortBy(getSorting(sort))
         .highlighting(List(HighlightFieldDefinition("title"), HighlightFieldDefinition("description")))
 
-      println(search.show)
-
       esClient.execute(search) match {
         case Success(response) => SearchResult[B](response.result.totalHits, paging.page, numResults, converterService.toApiLanguage(languageTag), getHits[B](response.result.hits, languageTag))
         case Failure(failure: GdlSearchException) =>
