@@ -88,7 +88,8 @@ trait WriteService {
       chapterRepository.withId(chapterid).map(existing => {
         val updated = chapterRepository.updateChapter(existing.copy(
           title = replacementChapter.title,
-          content = replacementChapter.content))
+          content = replacementChapter.content,
+          chapterType = ChapterType.valueOfOrDefault(replacementChapter.chapterType)))
 
         api.internal.ChapterId(updated.id.get)
       })
@@ -97,13 +98,6 @@ trait WriteService {
     def newChapter(translationId: Long, newChapter: api.internal.NewChapter): Try[api.internal.ChapterId] = {
       for {
         valid <- validationService.validateChapter(converterService.toDomainChapter(newChapter, translationId))
-        persisted <- Try(chapterRepository.add(valid))
-      } yield api.internal.ChapterId(persisted.id.get)
-    }
-
-    def newTranslatedChapter(translationId: Long, newTranslatedChapter: api.internal.NewTranslatedChapter): Try[api.internal.ChapterId] = {
-      for {
-        valid <- validationService.validateChapter(converterService.toDomainChapter(newTranslatedChapter, translationId))
         persisted <- Try(chapterRepository.add(valid))
       } yield api.internal.ChapterId(persisted.id.get)
     }

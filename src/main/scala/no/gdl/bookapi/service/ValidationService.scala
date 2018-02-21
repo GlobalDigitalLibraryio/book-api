@@ -11,7 +11,7 @@ import com.typesafe.scalalogging.LazyLogging
 import no.gdl.bookapi.model._
 import no.gdl.bookapi.model.api.internal.NewTranslation
 import no.gdl.bookapi.model.api.{ValidationException, ValidationMessage}
-import no.gdl.bookapi.model.domain.ContributorType
+import no.gdl.bookapi.model.domain.{ChapterType, ContributorType}
 import org.apache.commons.validator.routines.UrlValidator
 import org.jsoup.Jsoup
 import org.jsoup.safety.Whitelist
