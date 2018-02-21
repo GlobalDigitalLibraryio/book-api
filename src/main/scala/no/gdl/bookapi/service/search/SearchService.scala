@@ -113,12 +113,16 @@ trait SearchService {
       val element = json match {
         case book: Book => book
         case bookHit: BookHit =>
-          (hit.highlight.get("title"), hit.highlight.get("description")) match {
-            case (None, None) => bookHit
-            case (Some(title), None) => bookHit.copy(highlightTitle = Some(title.head))
-            case (None, Some(description)) => bookHit.copy(highlightDescription = Some(description.head))
-            case (Some(title), Some(description)) => bookHit.copy(
-              highlightTitle = Some(title.head), highlightDescription = Some(description.head))
+          if(hit.highlight == null) {
+            bookHit
+          } else {
+            (hit.highlight.get("title"), hit.highlight.get("description")) match {
+              case (None, None) => bookHit
+              case (Some(title), None) => bookHit.copy(highlightTitle = Some(title.head))
+              case (None, Some(description)) => bookHit.copy(highlightDescription = Some(description.head))
+              case (Some(title), Some(description)) => bookHit.copy(
+                highlightTitle = Some(title.head), highlightDescription = Some(description.head))
+            }
           }
       }
       element.asInstanceOf[B]
