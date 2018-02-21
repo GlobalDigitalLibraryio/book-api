@@ -99,6 +99,7 @@ case class Book(@(ApiModelProperty@field)(description = "The id of the book") id
 case class BookHit(@(ApiModelProperty@field)(description = "The id of the book") id: Long,
                    @(ApiModelProperty@field)(description = "The title of the book") title: String,
                    @(ApiModelProperty@field)(description = "Description of the book") description: String,
+                   @(ApiModelProperty@field)(description = "Current language") language: Language,
                    @(ApiModelProperty@field)(description = "Information about reading level") readingLevel: Option[String],
                    @(ApiModelProperty@field)(description = "Cover Photo information") coverPhoto: Option[CoverPhoto],
                    @(ApiModelProperty@field)(description = "The highlighted title of the book") highlightTitle: Option[String],
