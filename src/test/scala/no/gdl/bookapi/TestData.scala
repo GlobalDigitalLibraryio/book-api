@@ -53,6 +53,8 @@ object TestData {
       1, 1, Some("external-1"), DefaultUuid, "Title", "Description", None, english, Seq(english, norwegian_bokmal), DefaultLicense, DefaultPublisher,
       Some(Level1), Some(ageRangeDefault), None, None, None, Some(today), Some(yesterday), today, Seq(category1, category2), None, api.Downloads(epub, pdf), Seq(), Seq(DefaultContributor), Seq(ChapterSummary1), supportsTranslation = true)
 
+    val DefaultBookHit = api.BookHit(1, "Title", "Description", None, None, Some("Title"), Some("Description"))
+
     val BookInAmharic: api.Book = DefaultBook.copy(language = amharic, availableLanguages = Seq(amharic))
 
     val DefaultFeedDefinition = api.FeedDefinition(1, 1, "some-url", "some-uuid")

@@ -11,7 +11,7 @@ package no.gdl.bookapi.service
 import io.digitallibrary.language.model.LanguageTag
 import io.digitallibrary.network.AuthUser
 import no.gdl.bookapi.model._
-import no.gdl.bookapi.model.api.MyBook
+import no.gdl.bookapi.model.api.{Book, MyBook}
 import no.gdl.bookapi.model.domain.{PublishingStatus, Sort}
 import no.gdl.bookapi.repository._
 
@@ -46,7 +46,7 @@ trait ReadService {
       translationRepository.allAvailableLevelsWithStatus(PublishingStatus.PUBLISHED, lang)
 
 
-    def withLanguageAndLevelAndStatus(language: LanguageTag, readingLevel: Option[String], status: PublishingStatus.Value, pageSize: Int, page: Int, sort: Sort.Value): api.SearchResult = {
+    def withLanguageAndLevelAndStatus(language: LanguageTag, readingLevel: Option[String], status: PublishingStatus.Value, pageSize: Int, page: Int, sort: Sort.Value): api.SearchResult[Book] = {
       val searchResult = translationRepository
         .bookIdsWithLanguageAndLevelAndStatus(language, readingLevel, status, pageSize, page, sort)
 
@@ -70,7 +70,7 @@ trait ReadService {
       } yield converterService.toApiMyBook(inTranslation, newTranslation, availableLanguages, book)
     }
 
-    def withLanguageAndStatus(language: LanguageTag, status: PublishingStatus.Value, pageSize: Int, page: Int, sort: Sort.Value): api.SearchResult = {
+    def withLanguageAndStatus(language: LanguageTag, status: PublishingStatus.Value, pageSize: Int, page: Int, sort: Sort.Value): api.SearchResult[Book] = {
       val searchResult = translationRepository.bookIdsWithLanguageAndStatus(language, status, pageSize, page, sort)
       val books = searchResult.results.flatMap(id => withIdAndLanguage(id, language))
 
@@ -90,7 +90,7 @@ trait ReadService {
       converterService.toApiBook(translation, availableLanguages, book)
     }
 
-    def similarTo(bookId: Long, language: LanguageTag, pageSize: Int, page: Int, sort: Sort.Value): api.SearchResult = {
+    def similarTo(bookId: Long, language: LanguageTag, pageSize: Int, page: Int, sort: Sort.Value): api.SearchResult[Book] = {
       withIdAndLanguage(bookId, language) match {
         case None => api.SearchResult(0, page, pageSize, converterService.toApiLanguage(language), Seq())
         case Some(book) =>
