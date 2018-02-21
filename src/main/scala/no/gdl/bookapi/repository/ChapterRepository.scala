@@ -32,7 +32,8 @@ trait ChapterRepository {
         ch.translationId -> newChapter.translationId,
         ch.seqNo -> newChapter.seqNo,
         ch.title -> newChapter.title,
-        ch.content -> newChapter.content
+        ch.content -> newChapter.content,
+        ch.chapterType -> newChapter.chapterType.toString
       ).toSQL.updateAndReturnGeneratedKey().apply()
 
       newChapter.copy(id = Some(id), revision = Some(startRevision))
@@ -45,7 +46,8 @@ trait ChapterRepository {
       val count = update(Chapter).set(
         ch.revision -> nextRevision,
         ch.title -> chapter.title,
-        ch.content -> chapter.content
+        ch.content -> chapter.content,
+        ch.chapterType -> chapter.chapterType.toString
       ).where
         .eq(ch.id, chapter.id).and
         .eq(ch.revision, chapter.revision).toSQL.update().apply()

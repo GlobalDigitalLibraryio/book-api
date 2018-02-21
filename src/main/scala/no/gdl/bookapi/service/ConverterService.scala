@@ -20,7 +20,7 @@ import no.gdl.bookapi.integration.crowdin.CrowdinUtils
 import no.gdl.bookapi.model._
 import no.gdl.bookapi.model.api.internal.{NewChapter, NewEducationalAlignment, NewTranslatedChapter, NewTranslation}
 import no.gdl.bookapi.model.crowdin.CrowdinFile
-import no.gdl.bookapi.model.domain.{FileType, InTranslation, PublishingStatus, TranslationStatus}
+import no.gdl.bookapi.model.domain._
 import no.gdl.bookapi.{BookApiProperties, model}
 
 
@@ -47,16 +47,8 @@ trait ConverterService {
       translationId = translationId,
       seqNo = newChapter.seqNo,
       title = newChapter.title,
-      content = newChapter.content)
-
-    def toDomainChapter(newTranslatedChapter: NewTranslatedChapter, translationId: Long): domain.Chapter = domain.Chapter(
-      id = None,
-      revision = None,
-      translationId = translationId,
-      seqNo = newTranslatedChapter.seqNo,
-      title = newTranslatedChapter.title,
-      content = newTranslatedChapter.content)
-
+      content = newChapter.content,
+      chapterType = ChapterType.valueOfOrDefault(newChapter.chapterType))
 
     def toDomainTranslation(newTranslation: NewTranslation, bookId: Long) = {
       domain.Translation(
