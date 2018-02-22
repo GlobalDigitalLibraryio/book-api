@@ -49,7 +49,7 @@ trait SearchController {
       queryParam[Option[String]]("query").description("Query to search for"))
       responseMessages response500)
 
-    private val searchBooksForLang = (apiOperation[api.SearchResult]("searchBooks")
+    private val searchBooksForLang = (apiOperation[api.SearchResult]("searchBooksForLang")
       summary "Search for books in the provided language"
       notes "Returns a list of books in the provided language"
       parameters(
