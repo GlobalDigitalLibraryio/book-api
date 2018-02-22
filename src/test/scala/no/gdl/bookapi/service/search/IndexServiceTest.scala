@@ -32,9 +32,8 @@ class IndexServiceTest extends UnitSuite with TestEnvironment {
   }
 
   test("that indexing list of translations returns count of translations") {
-    when(translationRepository.languagesFor(1)).thenReturn(Seq(LanguageTag(TestData.DefaultLanguage)))
     when(bookRepository.withId(1)).thenReturn(Some(TestData.Domain.DefaultBook))
-    when(converterService.toApiBook(Some(TestData.Domain.DefaultTranslation), Seq(LanguageTag(TestData.DefaultLanguage)), Some(TestData.Domain.DefaultBook))).thenReturn(Some(TestData.Api.DefaultBook))
+    when(converterService.toApiBookHit(Some(TestData.Domain.DefaultTranslation), Some(TestData.Domain.DefaultBook))).thenReturn(Some(TestData.Api.DefaultBookHit))
     when(esClient.execute(any[IndicesExists])(any[HttpExecutable[IndicesExists,IndexExistsResponse]]))
       .thenReturn(Success(RequestSuccess(200, Some(""), Map(), IndexExistsResponse(true))))
 

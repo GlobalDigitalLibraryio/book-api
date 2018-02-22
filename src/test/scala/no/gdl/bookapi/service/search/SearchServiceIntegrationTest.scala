@@ -86,4 +86,10 @@ class SearchServiceIntegrationTest extends UnitSuite with TestEnvironment {
     val searchResult = searchService.searchSimilar(LanguageTag("nob"), 1, Paging(1,10), Sort.ByIdAsc)
     searchResult.totalCount should be(1)
   }
+
+  test("that search similar for unknown language returns empty") {
+    when(translationRepository.forBookIdAndLanguage(1, LanguageTag("aaa"))).thenReturn(Some(TestData.Domain.DefaultTranslation))
+    val searchResult = searchService.searchSimilar(LanguageTag("aaa"), 1, Paging(1,10), Sort.ByIdAsc)
+    searchResult.totalCount should be(0)
+  }
 }
