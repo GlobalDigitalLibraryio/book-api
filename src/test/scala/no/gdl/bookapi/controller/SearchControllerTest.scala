@@ -9,7 +9,7 @@ package no.gdl.bookapi.controller
 
 import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi._
-import no.gdl.bookapi.model.api.{Language, LocalDateSerializer, SearchResult}
+import no.gdl.bookapi.model.api._
 import no.gdl.bookapi.model.domain.{Paging, Sort}
 import org.json4s.native.Serialization.read
 import org.json4s.{DefaultFormats, Formats}
@@ -24,7 +24,7 @@ class SearchControllerTest extends UnitSuite with TestEnvironment with ScalatraF
   addServlet(controller, "/*")
 
   test("that search without lang searches for english books") {
-    val result = SearchResult(0, 1, 10, Language("eng", "English"), Seq(TestData.Api.DefaultBook))
+    val result = SearchResult(0, 1, 10, Language("eng", "English"), Seq(TestData.Api.DefaultBookHit))
     when(searchService.searchWithQuery(LanguageTag(BookApiProperties.DefaultLanguage), None, Paging(1,10), Sort.ByRelevance)).thenReturn(result)
 
     get("/") {
@@ -35,7 +35,7 @@ class SearchControllerTest extends UnitSuite with TestEnvironment with ScalatraF
   }
 
   test("that search with lang searches for books in correct lang") {
-    val result = SearchResult(0, 1, 10, Language("amh", "Amharic"), Seq(TestData.Api.DefaultBook))
+    val result = SearchResult(0, 1, 10, Language("amh", "Amharic"), Seq(TestData.Api.DefaultBookHit))
     when(searchService.searchWithQuery(LanguageTag("amh"), None, Paging(1,1), Sort.ByRelevance)).thenReturn(result)
 
     get("/amh/?page-size=1") {

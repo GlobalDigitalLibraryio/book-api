@@ -60,6 +60,7 @@ case class NewTranslation(externalId: Option[String],
 
 case class NewChapter(seqNo: Int,
                       title: Option[String],
-                      content: String)
+                      content: String,
+                      chapterType: Option[String])
 
 case class NewTranslatedChapter(seqNo: Int, title: Option[String], content: String, originalChapterId: Long)

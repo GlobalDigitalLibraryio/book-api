@@ -11,7 +11,7 @@ package no.gdl.bookapi.controller
 import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.BookApiProperties.DefaultLanguage
 import no.gdl.bookapi.model.api
-import no.gdl.bookapi.model.api.{Error, ValidationError}
+import no.gdl.bookapi.model.api.{Book, Error, ValidationError}
 import no.gdl.bookapi.model.domain.{Paging, Sort}
 import no.gdl.bookapi.service.search.SearchService
 import no.gdl.bookapi.service.{ConverterService, ReadService}

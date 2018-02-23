@@ -35,36 +35,36 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
   val invalidTestToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwczovL2RpZ2l0YWxsaWJyYXJ5LmlvL2dkbF9hYmMiOiIxMjMiLCJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIn0.5rtcIdtPmH3AF1pwNbNvBMKmulyiEoWZfn1ip9aMzv4"
 
   test("that GET / will get books with default language") {
-    val result = SearchResult(0, 1, 10, Language("eng", "English"), Seq(TestData.Api.DefaultBook))
+    val result = SearchResult(0, 1, 10, Language("eng", "English"), Seq(TestData.Api.DefaultBookHit))
     when(searchService.searchWithLevel(LanguageTag(BookApiProperties.DefaultLanguage), Some("1"), Paging(1, 10), Sort.ByIdAsc)).thenReturn(result)
 
     get("/?reading-level=1&page-size=10&page=1") {
       status should equal (200)
       val searchResult = read[SearchResult](body)
       searchResult.results.length should be (1)
-      searchResult.results.head.uuid should equal(TestData.DefaultUuid)
+      searchResult.results.head.language.code should equal(TestData.DefaultLanguage)
     }
   }
 
   test("that GET /:lang will get books with language") {
     val language = TestData.Api.norwegian_bokmal
 
-    val result = SearchResult(0, 1, 10, language, Seq(TestData.Api.DefaultBook))
+    val result = SearchResult(0, 1, 10, language, Seq(TestData.Api.DefaultBookHit))
     when(searchService.searchWithLevel(LanguageTag(language.code), Some("2"), Paging(1,10), Sort.ByIdAsc)).thenReturn(result)
 
     get("/nob?reading-level=2&page-size=10&page=1") {
       status should equal (200)
       val searchResult = read[SearchResult](body)
       searchResult.results.length should be (1)
-      searchResult.results.head.uuid should equal(TestData.Api.DefaultBook.uuid)
+      searchResult.results.head.language.code should equal(TestData.DefaultLanguage)
     }
   }
 
   test("that GET /:lang will get books with language sorted by title descending") {
     val language = TestData.Api.norwegian_bokmal
 
-    val firstBook = TestData.Api.DefaultBook.copy(id = 2, title = "This should be first")
-    val secondBook = TestData.Api.DefaultBook.copy(id = 1, title = "This should be last")
+    val firstBook = TestData.Api.DefaultBookHit.copy(id = 2, title = "This should be first")
+    val secondBook = TestData.Api.DefaultBookHit.copy(id = 1, title = "This should be last")
 
     val result = SearchResult(2, 1, 10, language, Seq(firstBook, secondBook))
     when(searchService.searchWithLevel(LanguageTag(language.code), Some("2"), Paging(1,10), Sort.ByTitleDesc)).thenReturn(result)

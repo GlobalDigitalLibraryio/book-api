@@ -11,7 +11,7 @@ import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.BookApiProperties
 import no.gdl.bookapi.BookApiProperties.DefaultLanguage
 import no.gdl.bookapi.model.api
-import no.gdl.bookapi.model.api.ValidationError
+import no.gdl.bookapi.model.api.{BookHit, ValidationError}
 import no.gdl.bookapi.model.domain.{Paging, Sort}
 import no.gdl.bookapi.service.ConverterService
 import no.gdl.bookapi.service.search.SearchService
@@ -49,7 +49,7 @@ trait SearchController {
       queryParam[Option[String]]("query").description("Query to search for"))
       responseMessages response500)
 
-    private val searchBooksForLang = (apiOperation[api.SearchResult]("searchBooks")
+    private val searchBooksForLang = (apiOperation[api.SearchResult]("searchBooksForLang")
       summary "Search for books in the provided language"
       notes "Returns a list of books in the provided language"
       parameters(
@@ -67,7 +67,6 @@ trait SearchController {
     }
 
     get("/:lang/?", operation(searchBooksForLang)) {
-      val readingLevel = params.get("reading-level")
       val query = paramOrNone("query")
       val sort = Sort.valueOf(paramOrNone("sort")).getOrElse(Sort.ByRelevance)
 

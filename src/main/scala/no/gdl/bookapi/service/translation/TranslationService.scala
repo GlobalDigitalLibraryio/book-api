@@ -138,13 +138,15 @@ trait TranslationService {
 
     private def createTranslation(translateRequest: TranslateRequest, originalBook: Book, fromLanguage: LanguageTag, toLanguage: String, crowdinClient: CrowdinClient): Try[InTranslation] = {
       writeService.newTranslationForBook(originalBook, translateRequest).flatMap(newTranslation => {
-        val chapters: Seq[Chapter] = newTranslation.chapters.flatMap(ch => readService.chapterWithId(ch.id.get))
+        val chaptersToTranslate: Seq[Chapter] = newTranslation.chapters
+          .filter(_.chapterType != ChapterType.License)
+          .flatMap(ch => readService.chapterWithId(ch.id.get))
 
         val inTranslation = for {
           _ <- crowdinClient.addTargetLanguage(toLanguage)
           directory <- crowdinClient.addDirectoryFor(newTranslation)
           crowdinMeta <- crowdinClient.addBookMetadata(newTranslation)
-          crowdinChapters <- crowdinClient.addChaptersFor(newTranslation, chapters)
+          crowdinChapters <- crowdinClient.addChaptersFor(newTranslation, chaptersToTranslate)
           persistedTranslation <- translationDbService.newTranslation(translateRequest, newTranslation, crowdinMeta, crowdinChapters, crowdinClient.getProjectIdentifier)
         } yield persistedTranslation
 

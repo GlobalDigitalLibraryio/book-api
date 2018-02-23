@@ -20,7 +20,7 @@ import no.gdl.bookapi.integration.crowdin.CrowdinUtils
 import no.gdl.bookapi.model._
 import no.gdl.bookapi.model.api.internal.{NewChapter, NewEducationalAlignment, NewTranslatedChapter, NewTranslation}
 import no.gdl.bookapi.model.crowdin.CrowdinFile
-import no.gdl.bookapi.model.domain.{FileType, InTranslation, PublishingStatus, TranslationStatus}
+import no.gdl.bookapi.model.domain._
 import no.gdl.bookapi.{BookApiProperties, model}
 
 
@@ -47,16 +47,8 @@ trait ConverterService {
       translationId = translationId,
       seqNo = newChapter.seqNo,
       title = newChapter.title,
-      content = newChapter.content)
-
-    def toDomainChapter(newTranslatedChapter: NewTranslatedChapter, translationId: Long): domain.Chapter = domain.Chapter(
-      id = None,
-      revision = None,
-      translationId = translationId,
-      seqNo = newTranslatedChapter.seqNo,
-      title = newTranslatedChapter.title,
-      content = newTranslatedChapter.content)
-
+      content = newChapter.content,
+      chapterType = ChapterType.valueOfOrDefault(newChapter.chapterType))
 
     def toDomainTranslation(newTranslation: NewTranslation, bookId: Long) = {
       domain.Translation(
@@ -180,6 +172,27 @@ trait ConverterService {
         b <- book
         t <- translation
         api <- Some(toApiBookInternal(t, b, availableLanguages))
+      } yield api
+    }
+
+    def toApiBookHit(translation: Option[domain.Translation], book: Option[domain.Book]): Option[api.BookHit] = {
+      def toApiBookHitInternal(translation: domain.Translation, book: domain.Book): api.BookHit = {
+        model.api.BookHit(
+          book.id.get,
+          translation.title,
+          translation.about,
+          toApiLanguage(translation.language),
+          translation.readingLevel,
+          toApiCoverPhoto(translation.coverphoto),
+          None,
+          None
+        )
+      }
+
+      for {
+        b <- book
+        t <- translation
+        api <- Some(toApiBookHitInternal(t, b))
       } yield api
     }
 

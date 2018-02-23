@@ -93,12 +93,22 @@ case class Book(@(ApiModelProperty@field)(description = "The id of the book") id
                 @(ApiModelProperty@field)(description = "Information about the chapters in the book") chapters: Seq[ChapterSummary],
                 @(ApiModelProperty@field)(description = "Indicates if this book can be translated or not") supportsTranslation: Boolean)
 
+@ApiModel(description = "Information about book search hit")
+case class BookHit(@(ApiModelProperty@field)(description = "The id of the book") id: Long,
+                   @(ApiModelProperty@field)(description = "The title of the book") title: String,
+                   @(ApiModelProperty@field)(description = "Description of the book") description: String,
+                   @(ApiModelProperty@field)(description = "Current language") language: Language,
+                   @(ApiModelProperty@field)(description = "Information about reading level") readingLevel: Option[String],
+                   @(ApiModelProperty@field)(description = "Cover Photo information") coverPhoto: Option[CoverPhoto],
+                   @(ApiModelProperty@field)(description = "The highlighted title of the book") highlightTitle: Option[String],
+                   @(ApiModelProperty@field)(description = "The Highlighted description of the book") highlightDescription: Option[String])
+
 @ApiModel(description = "Information about search results")
 case class SearchResult(@(ApiModelProperty@field)(description = "The total number of books matching this query") totalCount: Long,
-                        @(ApiModelProperty@field)(description = "For which page results are shown from") page: Int,
-                        @(ApiModelProperty@field)(description = "The number of results per page") pageSize: Int,
-                        @(ApiModelProperty@field)(description = "The chosen language") language: Language,
-                        @(ApiModelProperty@field)(description = "The results") results: Seq[Book])
+                           @(ApiModelProperty@field)(description = "For which page results are shown from") page: Int,
+                           @(ApiModelProperty@field)(description = "The number of results per page") pageSize: Int,
+                           @(ApiModelProperty@field)(description = "The chosen language") language: Language,
+                           @(ApiModelProperty@field)(description = "The results") results: Seq[BookHit])
 
 @ApiModel(description = "Information about a book that is being translated by a user")
 case class MyBook(@(ApiModelProperty@field)(description = "The id of the book") id: Long,

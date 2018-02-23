@@ -10,7 +10,7 @@ package no.gdl.bookapi.service
 import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.BookApiProperties._
 import no.gdl.bookapi.TestData.{LanguageCodeAmharic, LanguageCodeEnglish, LanguageCodeNorwegian}
-import no.gdl.bookapi.model.api.{Facet, SearchResult}
+import no.gdl.bookapi.model.api.{Book, BookHit, Facet, SearchResult}
 import no.gdl.bookapi.model.domain.{Paging, PublishingStatus}
 import no.gdl.bookapi.{TestEnvironment, UnitSuite}
 import org.mockito.ArgumentMatchers._

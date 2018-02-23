@@ -48,11 +48,13 @@ class SearchServiceIntegrationTest extends UnitSuite with TestEnvironment {
   test("that search for books in norwegian returns two books") {
     val searchResult = searchService.searchWithQuery(LanguageTag("nob"), None, Paging(1,10), Sort.ByRelevance)
     searchResult.totalCount should be(2)
+    searchResult.results.head.language.code should be("nob")
   }
 
   test("that search for books in amharic returns one book") {
     val searchResult = searchService.searchWithQuery(LanguageTag("amh"), None, Paging(1,10), Sort.ByRelevance)
     searchResult.totalCount should be(1)
+    searchResult.results.head.language.code should be("amh")
   }
 
   test("that search for title returns expected") {
@@ -83,5 +85,11 @@ class SearchServiceIntegrationTest extends UnitSuite with TestEnvironment {
     when(translationRepository.forBookIdAndLanguage(1, LanguageTag("nob"))).thenReturn(Some(TestData.Domain.DefaultTranslation))
     val searchResult = searchService.searchSimilar(LanguageTag("nob"), 1, Paging(1,10), Sort.ByIdAsc)
     searchResult.totalCount should be(1)
+  }
+
+  test("that search similar for unknown language returns empty") {
+    when(translationRepository.forBookIdAndLanguage(1, LanguageTag("aaa"))).thenReturn(Some(TestData.Domain.DefaultTranslation))
+    val searchResult = searchService.searchSimilar(LanguageTag("aaa"), 1, Paging(1,10), Sort.ByIdAsc)
+    searchResult.totalCount should be(0)
   }
 }

@@ -14,7 +14,7 @@ import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.integration.crowdin.{BookMetaData, TranslatedChapter}
 import no.gdl.bookapi.model._
 import no.gdl.bookapi.model.api.internal.NewTranslatedChapter
-import no.gdl.bookapi.model.domain.ContributorType
+import no.gdl.bookapi.model.domain.{ChapterType, ContributorType}
 
 object TestData {
   val LanguageCodeNorwegian = "nob"
@@ -53,6 +53,8 @@ object TestData {
       1, 1, Some("external-1"), DefaultUuid, "Title", "Description", None, english, Seq(english, norwegian_bokmal), DefaultLicense, DefaultPublisher,
       Some(Level1), Some(ageRangeDefault), None, None, None, Some(today), Some(yesterday), today, Seq(category1, category2), None, api.Downloads(epub, pdf), Seq(), Seq(DefaultContributor), Seq(ChapterSummary1), supportsTranslation = true)
 
+    val DefaultBookHit = api.BookHit(1, "Title", "Description", norwegian_bokmal, None, None, Some("Title"), Some("Description"))
+
     val BookInAmharic: api.Book = DefaultBook.copy(language = amharic, availableLanguages = Seq(amharic))
 
     val DefaultFeedDefinition = api.FeedDefinition(1, 1, "some-url", "some-uuid")
@@ -84,7 +86,7 @@ object TestData {
       license = DefaultLicense)
 
     val DefaultTranslationId = 1
-    val DefaultChapter = domain.Chapter(Some(1), Some(1), DefaultTranslationId, 1, Some("Default chapter title"), "Chapter-content")
+    val DefaultChapter = domain.Chapter(Some(1), Some(1), DefaultTranslationId, 1, Some("Default chapter title"), "Chapter-content", ChapterType.Content)
 
     val DefaultPerson = domain.Person(Some(1), Some(1), "Default person name", Some("abc-def"))
     val DefaultContributor = domain.Contributor(Some(1), Some(1), DefaultPerson.id.get, DefaultTranslationId, ContributorType.Author, DefaultPerson)

@@ -10,6 +10,7 @@ package no.gdl.bookapi.service.translation
 import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.integration.crowdin.{CrowdinClient, TranslatedChapter}
 import no.gdl.bookapi.model._
+import no.gdl.bookapi.model.domain.ChapterType
 import no.gdl.bookapi.{TestData, TestEnvironment, UnitSuite}
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
@@ -121,6 +122,37 @@ class TranslationServiceTest extends UnitSuite with TestEnvironment {
     response should be a 'Success
   }
 
+  test("that addTranslation filters out chapters of type license before sending to translation") {
+    val crowdinClientMock = mock[CrowdinClient]
+
+    val chapter1 = TestData.Domain.DefaultChapter.copy(id = Some(1), chapterType = ChapterType.Content)
+    val chapter2 = TestData.Domain.DefaultChapter.copy(id = Some(2), chapterType = ChapterType.License)
+    val chapters = Seq(chapter1, chapter2)
+
+    val persistedNewTranslation = TestData.Domain.DefaultTranslation.copy(chapters = chapters)
+
+    when(readService.withIdAndLanguage(any[Long], any[LanguageTag])).thenReturn(Some(TestData.Api.DefaultBook))
+    when(writeService.addPersonFromAuthUser()).thenReturn(TestData.Domain.DefaultPerson)
+    when(supportedLanguageService.getSupportedLanguages).thenReturn(Seq(api.Language("nob", "Norwegian Bokmål")))
+    when(crowdinClientBuilder.forSourceLanguage(any[LanguageTag])).thenReturn(Success(crowdinClientMock))
+    when(translationDbService.translationsForOriginalId(any[Long])).thenReturn(Seq())
+
+    when(writeService.newTranslationForBook(any[api.Book], any[api.TranslateRequest])).thenReturn(Success(persistedNewTranslation))
+    when(readService.chapterWithId(chapter1.id.get)).thenReturn(Some(TestData.Api.Chapter1))
+
+    when(crowdinClientMock.addTargetLanguage(any[String])).thenReturn(Success())
+    when(crowdinClientMock.addDirectoryFor(any[domain.Translation])).thenReturn(Success("created-directory"))
+    when(crowdinClientMock.addBookMetadata(any[domain.Translation])).thenReturn(Success(TestData.Crowdin.DefaultMetadataCrowdinFile))
+    when(crowdinClientMock.addChaptersFor(any[domain.Translation], any[Seq[api.Chapter]])).thenReturn(Success(Seq(TestData.Crowdin.DefaultContentCrowdinFile)))
+
+    when(translationDbService.newTranslation(any[api.TranslateRequest], any[domain.Translation], any[crowdin.CrowdinFile], any[Seq[crowdin.CrowdinFile]], any[String])).thenReturn(Success(TestData.Domain.DefaultinTranslation))
+
+    val response = service.addTranslation(api.TranslateRequest(1, "eng", "nob"))
+    response should be a 'Success
+
+    verify(readService).chapterWithId(chapter1.id.get)
+    verify(readService, never()).chapterWithId(chapter2.id.get)
+  }
 
   test("that addTranslate deletes directory in Crowdin when DB-updates fails") {
     val crowdinClientMock = mock[CrowdinClient]
