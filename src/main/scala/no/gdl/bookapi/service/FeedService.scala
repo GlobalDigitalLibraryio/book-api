@@ -15,15 +15,15 @@ import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.BookApiProperties
 import no.gdl.bookapi.BookApiProperties.OpdsLanguageParam
 import no.gdl.bookapi.model._
-import no.gdl.bookapi.model.api.{Book, Facet, FeedEntry, SearchResult}
+import no.gdl.bookapi.model.api._
 import no.gdl.bookapi.model.domain.{Paging, PublishingStatus, Sort}
-import no.gdl.bookapi.repository.{FeedRepository, TranslationRepository}
+import no.gdl.bookapi.repository.{BookRepository, FeedRepository, TranslationRepository}
 import no.gdl.bookapi.service.search.SearchService
 
 import scala.util.Try
 
 trait FeedService {
-  this: FeedRepository with TranslationRepository with ReadService with ConverterService with SearchService with FeedLocalizationService =>
+  this: FeedRepository with TranslationRepository with BookRepository with ReadService with ConverterService with SearchService with FeedLocalizationService =>
   val feedService: FeedService
 
   sealed trait PagingStatus
@@ -142,15 +142,22 @@ trait FeedService {
         searchService.searchWithLevel(languageTag = language, None, paging = paging, sort = Sort.ByArrivalDateDesc)
       }
 
-      (searchResultToPagingStatus(searchResult, paging), searchResult.results.map(book => api.FeedEntry(book)))
+      (searchResultToPagingStatus(searchResult, paging), searchResult.results.map(book => api.FeedEntry(fromHit(book))))
+    }
+
+    def fromHit(bookHit: BookHit): Book = {
+      val availableLanguages: Seq[LanguageTag] = translationRepository.languagesFor(bookHit.id)
+      val translation = translationRepository.forBookIdAndLanguage(bookHit.id, LanguageTag(bookHit.language.code))
+      val book = bookRepository.withId(bookHit.id)
+      converterService.toApiBook(translation, availableLanguages, book).get
     }
 
     def entriesForLanguageAndLevel(language: LanguageTag, level: String, paging: Paging): (PagingStatus, Seq[FeedEntry]) = {
       val searchResult = searchService.searchWithLevel(languageTag = language, readingLevel = Some(level), paging = paging, sort = Sort.ByTitleAsc)
-      (searchResultToPagingStatus(searchResult, paging), searchResult.results.map(book => api.FeedEntry(book)))
+      (searchResultToPagingStatus(searchResult, paging), searchResult.results.map(book => api.FeedEntry(fromHit(book))))
     }
 
-    def searchResultToPagingStatus(searchResult: SearchResult[Book], paging: Paging): PagingStatus = {
+    def searchResultToPagingStatus(searchResult: SearchResult, paging: Paging): PagingStatus = {
       if (searchResult.totalCount > paging.pageSize) {
         val lastPage = Math.round(Math.ceil(searchResult.totalCount.toFloat / paging.pageSize)).toInt
         if (paging.page == lastPage) {

@@ -175,6 +175,27 @@ trait ConverterService {
       } yield api
     }
 
+    def toApiBookHit(translation: Option[domain.Translation], book: Option[domain.Book]): Option[api.BookHit] = {
+      def toApiBookHitInternal(translation: domain.Translation, book: domain.Book): api.BookHit = {
+        model.api.BookHit(
+          book.id.get,
+          translation.title,
+          translation.about,
+          toApiLanguage(translation.language),
+          translation.readingLevel,
+          toApiCoverPhoto(translation.coverphoto),
+          None,
+          None
+        )
+      }
+
+      for {
+        b <- book
+        t <- translation
+        api <- Some(toApiBookHitInternal(t, b))
+      } yield api
+    }
+
     def toApiMyBook(inTranslation: InTranslation, translation: domain.Translation, availableLanguages: Seq[LanguageTag], book: api.Book): api.MyBook = {
       api.MyBook(
         id = book.id,

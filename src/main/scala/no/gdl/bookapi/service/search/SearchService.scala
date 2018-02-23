@@ -18,7 +18,7 @@ import com.typesafe.scalalogging.LazyLogging
 import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.BookApiProperties
 import no.gdl.bookapi.integration.ElasticClient
-import no.gdl.bookapi.model.api.{Book, BookBase, BookHit, Error, GdlSearchException, LocalDateSerializer, ResultWindowTooLargeException, SearchResult}
+import no.gdl.bookapi.model.api.{BookHit, Error, GdlSearchException, LocalDateSerializer, ResultWindowTooLargeException, SearchResult}
 import no.gdl.bookapi.model.domain.{Paging, Sort}
 import no.gdl.bookapi.repository.TranslationRepository
 import no.gdl.bookapi.service.ConverterService
@@ -35,26 +35,26 @@ trait SearchService {
   class SearchService extends LazyLogging {
     implicit val formats: Formats = DefaultFormats + LocalDateSerializer
 
-    def searchWithQuery(languageTag: LanguageTag, query: Option[String], paging: Paging, sort: Sort.Value): SearchResult[BookHit] =
-      executeSearch[BookHit](BoolQueryDefinition(), languageTag, query, None, paging, sort)
+    def searchWithQuery(languageTag: LanguageTag, query: Option[String], paging: Paging, sort: Sort.Value): SearchResult =
+      executeSearch(BoolQueryDefinition(), languageTag, query, None, paging, sort)
 
-    def searchWithLevel(languageTag: LanguageTag, readingLevel: Option[String], paging: Paging, sort: Sort.Value): SearchResult[Book] =
-      executeSearch[Book](BoolQueryDefinition(), languageTag, None, readingLevel, paging, sort)
+    def searchWithLevel(languageTag: LanguageTag, readingLevel: Option[String], paging: Paging, sort: Sort.Value): SearchResult =
+      executeSearch(BoolQueryDefinition(), languageTag, None, readingLevel, paging, sort)
 
-    def searchSimilar(languageTag: LanguageTag, bookId: Long, paging: Paging, sort: Sort.Value): SearchResult[Book] = {
+    def searchSimilar(languageTag: LanguageTag, bookId: Long, paging: Paging, sort: Sort.Value): SearchResult = {
       val translation = translationRepository.forBookIdAndLanguage(bookId, languageTag)
       translation match {
-        case None => SearchResult[Book](0, paging.page, paging.pageSize, converterService.toApiLanguage(languageTag), Seq())
+        case None => SearchResult(0, paging.page, paging.pageSize, converterService.toApiLanguage(languageTag), Seq())
         case Some(trans) =>
           val moreLikeThisDefinition = MoreLikeThisQueryDefinition(Seq("readingLevel","language"),
             likeDocs = Seq(MoreLikeThisItem(BookApiProperties.searchIndex(languageTag), BookApiProperties.SearchDocument, trans.id.get.toString)),
             minDocFreq = Some(1), minTermFreq = Some(1), minShouldMatch = Some("100%"))
-          executeSearch[Book](BoolQueryDefinition().should(moreLikeThisDefinition), languageTag, None, None, paging, sort)
+          executeSearch(BoolQueryDefinition().should(moreLikeThisDefinition), languageTag, None, None, paging, sort)
       }
     }
 
-    private def executeSearch[B <: BookBase](boolDefinition: BoolQueryDefinition, languageTag: LanguageTag, query: Option[String],
-                                              readingLevel: Option[String], paging: Paging, sort: Sort.Value)(implicit mf: Manifest[B]): SearchResult[B] = {
+    private def executeSearch(boolDefinition: BoolQueryDefinition, languageTag: LanguageTag, query: Option[String],
+                                              readingLevel: Option[String], paging: Paging, sort: Sort.Value): SearchResult = {
 
       val (startAt, numResults) = getStartAtAndNumResults(paging.page, paging.pageSize)
 
@@ -67,7 +67,7 @@ trait SearchService {
 
       val queryDefinition = query match {
         case None => boolDefinition
-        case Some(value) => boolDefinition.should(QueryStringQueryDefinition(value.toLowerCase).field("description",1.0).field("title",2.0))
+        case Some(value) => boolDefinition.should(QueryStringQueryDefinition(value.toLowerCase).field("description",1.0).field("title",1.4))
       }
 
       val levelDefinition = readingLevel match {
@@ -79,13 +79,15 @@ trait SearchService {
         .size(numResults).from(startAt)
         .bool(levelDefinition)
         .sortBy(getSorting(sort))
-        .highlighting(List(HighlightFieldDefinition("title"), HighlightFieldDefinition("description")))
+        .highlighting(List(
+          HighlightFieldDefinition("title", numOfFragments = Some(0)),
+          HighlightFieldDefinition("description", numOfFragments = Some(0))))
 
       esClient.execute(search) match {
-        case Success(response) => SearchResult[B](response.result.totalHits, paging.page, numResults, converterService.toApiLanguage(languageTag), getHits[B](response.result.hits, languageTag))
+        case Success(response) => SearchResult(response.result.totalHits, paging.page, numResults, converterService.toApiLanguage(languageTag), getHits(response.result.hits, languageTag))
         case Failure(failure: GdlSearchException) =>
           failure.getFailure.status match {
-            case 404 => SearchResult[B](0, paging.page, numResults, converterService.toApiLanguage(languageTag), Seq())
+            case 404 => SearchResult(0, paging.page, numResults, converterService.toApiLanguage(languageTag), Seq())
             case _ => errorHandler(languageTag, Failure(failure))
           }
         case Failure(failure) => errorHandler(languageTag, Failure(failure))
@@ -102,24 +104,19 @@ trait SearchService {
       case (Sort.ByArrivalDateDesc) => FieldSortDefinition("dateArrived", order = SortOrder.DESC)
     }
 
-    private def getHits[B <: BookBase](hits: SearchHits, language: LanguageTag)(implicit mf: Manifest[B]): Seq[B] = {
-      hits.hits.toSeq.map(hit => getHit[B](hit))
+    private def getHits(hits: SearchHits, language: LanguageTag): Seq[BookHit] = {
+      hits.hits.toSeq.map(hit => getHit(hit))
     }
 
-    private def getHit[B <: BookBase](hit: SearchHit)(implicit mf: Manifest[B]): B = {
-      val json = read[B](hit.sourceAsString)
-      val element = json match {
-        case book: Book => book
-        case bookHit: BookHit =>
-          (hit.highlightFragments("title"), hit.highlightFragments("description")) match {
-            case (Seq(), Seq()) => bookHit
-            case (Seq(title), Seq()) => bookHit.copy(highlightTitle = Some(title))
-            case (Seq(), Seq(description)) => bookHit.copy(highlightDescription = Some(description))
-            case (Seq(title), Seq(description)) => bookHit.copy(
-              highlightTitle = Some(title), highlightDescription = Some(description))
-          }
+    private def getHit(hit: SearchHit): BookHit = {
+      val json = read[BookHit](hit.sourceAsString)
+      val bookHit = (hit.highlightFragments("title"), hit.highlightFragments("description")) match {
+          case (Seq(), Seq()) => json
+          case (title::_, Seq()) => json.copy(highlightTitle = Some(title))
+          case (Seq(), description::_) => json.copy(highlightDescription = Some(description))
+          case (title::_, description::_) => json.copy(highlightTitle = Some(title), highlightDescription = Some(description))
       }
-      element.asInstanceOf[B]
+      bookHit
     }
 
     private def getStartAtAndNumResults(page: Int, pageSize: Int): (Int, Int) = {
