@@ -20,22 +20,20 @@ class SearchServiceIntegrationTest extends UnitSuite with TestEnvironment {
 
   override val searchService = new SearchService
   override val indexService = new IndexService
-  override val esClient: E4sClient = E4sClient(HttpClient("http://localhost:9200")) // Requires running elasticsearch
+  override val esClient: E4sClient = E4sClient(HttpClient("http://localhost:9200")) // Requires empty running elasticsearch with icu-plugin
 
   override def beforeAll(): Unit = {
-    when(translationRepository.languagesFor(1)).thenReturn(Seq(LanguageTag(TestData.DefaultLanguage)))
     when(bookRepository.withId(1)).thenReturn(Some(TestData.Domain.DefaultBook))
-    when(converterService.toApiBook(Some(TestData.Domain.DefaultTranslation), Seq(LanguageTag(TestData.DefaultLanguage)), Some(TestData.Domain.DefaultBook)))
-      .thenReturn(Some(TestData.Api.DefaultBook))
+    when(converterService.toApiBookHit(Some(TestData.Domain.DefaultTranslation), Some(TestData.Domain.DefaultBook)))
+      .thenReturn(Some(TestData.Api.DefaultBookHit))
     indexService.indexDocument(TestData.Domain.DefaultTranslation)
 
     val additionalTranslation = TestData.Domain.DefaultTranslation.copy(id = Some(2), title = "Different")
-    when(converterService.toApiBook(Some(additionalTranslation), Seq(LanguageTag(TestData.DefaultLanguage)), Some(TestData.Domain.DefaultBook)))
-      .thenReturn(Some(TestData.Api.DefaultBook.copy(id = 2, title = "Different", description = "Title")))
+    when(converterService.toApiBookHit(Some(additionalTranslation), Some(TestData.Domain.DefaultBook)))
+      .thenReturn(Some(TestData.Api.DefaultBookHit.copy(id = 2, title = "Different title", description = "Title")))
     indexService.indexDocument(additionalTranslation)
 
-    when(translationRepository.languagesFor(1)).thenReturn(Seq(LanguageTag(TestData.LanguageCodeAmharic)))
-    when(converterService.toApiBook(Some(TestData.Domain.AmharicTranslation), Seq(LanguageTag(TestData.LanguageCodeAmharic)), Some(TestData.Domain.DefaultBook)))
+    when(converterService.toApiBookHit(Some(TestData.Domain.AmharicTranslation), Some(TestData.Domain.DefaultBook)))
       .thenReturn(Some(TestData.Api.BookInAmharic))
     indexService.indexDocument(TestData.Domain.AmharicTranslation)
   }
@@ -63,14 +61,27 @@ class SearchServiceIntegrationTest extends UnitSuite with TestEnvironment {
 
     val searchByRelevance = searchService.searchWithQuery(LanguageTag("nob"), Some("title"), Paging(1,10), Sort.ByRelevance)
     searchByRelevance.totalCount should be(2)
-    searchByRelevance.results.head.id should be(1)
-    searchByRelevance.results.head.title should be("Title")
+    searchByRelevance.results.head.id should be(2)
+    searchByRelevance.results.head.title should be("Different title")
 
-    val searchByIdDesc = searchService.searchWithQuery(LanguageTag("nob"), Some("title"), Paging(1,10), Sort.ByIdDesc)
+    val searchByIdDesc = searchService.searchWithQuery(LanguageTag("nob"), Some("title"), Paging(1,10), Sort.ByIdAsc)
     searchByIdDesc.totalCount should be(2)
-    searchByIdDesc.results.head.id should be(2)
-    searchByIdDesc.results.head.title should be("Different")
+    searchByIdDesc.results.head.id should be(1)
+    searchByIdDesc.results.head.title should be("Title")
   }
+
+  test("that sort on title gives correct sorting") {
+    val searchByTitleAsc = searchService.searchWithQuery(LanguageTag("nob"), Some("title"), Paging(1,10), Sort.ByTitleAsc)
+    searchByTitleAsc.totalCount should be(2)
+    searchByTitleAsc.results.head.id should be(2)
+    searchByTitleAsc.results.head.title should be("Different title")
+
+    val searchByTitleDesc = searchService.searchWithQuery(LanguageTag("nob"), Some("title"), Paging(1,10), Sort.ByTitleDesc)
+    searchByTitleDesc.totalCount should be(2)
+    searchByTitleDesc.results.head.id should be(1)
+    searchByTitleDesc.results.head.title should be("Title")
+  }
+
 
   test("that search for level returns expected") {
     val searchResult = searchService.searchWithLevel(LanguageTag("nob"), Some("2"), Paging(1,10), Sort.ByIdAsc)
