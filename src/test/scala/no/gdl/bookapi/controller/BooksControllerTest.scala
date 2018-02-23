@@ -44,7 +44,7 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
       status should equal (200)
       val searchResult = read[SearchResult](body)
       searchResult.results.length should be (1)
-      //searchResult.results.head.uuid should equal(TestData.DefaultUuid)
+      searchResult.results.head.language.code should equal(TestData.DefaultLanguage)
     }
   }
 
@@ -58,7 +58,7 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
       status should equal (200)
       val searchResult = read[SearchResult](body)
       searchResult.results.length should be (1)
-      //searchResult.results.head.uuid should equal(TestData.Api.DefaultBook.uuid)
+      searchResult.results.head.language.code should equal(TestData.DefaultLanguage)
     }
   }
 
