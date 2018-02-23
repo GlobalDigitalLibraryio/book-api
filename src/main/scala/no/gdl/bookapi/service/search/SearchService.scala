@@ -98,8 +98,8 @@ trait SearchService {
       case (Sort.ByRelevance) => ScoreSortDefinition(order = SortOrder.DESC)
       case (Sort.ByIdAsc) => FieldSortDefinition("id", order = SortOrder.ASC)
       case (Sort.ByIdDesc) => FieldSortDefinition("id", order = SortOrder.DESC)
-      case (Sort.ByTitleAsc) => FieldSortDefinition("title", order = SortOrder.ASC)
-      case (Sort.ByTitleDesc) => FieldSortDefinition("title", order = SortOrder.DESC)
+      case (Sort.ByTitleAsc) => FieldSortDefinition("title.sort", order = SortOrder.ASC)
+      case (Sort.ByTitleDesc) => FieldSortDefinition("title.sort", order = SortOrder.DESC)
       case (Sort.ByArrivalDateAsc) => FieldSortDefinition("dateArrived", order = SortOrder.ASC)
       case (Sort.ByArrivalDateDesc) => FieldSortDefinition("dateArrived", order = SortOrder.DESC)
     }
