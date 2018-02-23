@@ -184,6 +184,7 @@ trait ConverterService {
           toApiLanguage(translation.language),
           translation.readingLevel,
           toApiCoverPhoto(translation.coverphoto),
+          translation.dateArrived,
           None,
           None
         )
