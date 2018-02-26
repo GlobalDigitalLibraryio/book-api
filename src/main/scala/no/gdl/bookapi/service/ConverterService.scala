@@ -85,7 +85,8 @@ trait ConverterService {
         newTranslation.educationalAlignment.map(toDomainEducationalAlignment),
         chapters = Seq(),
         contributors = Seq(),
-        categories = Seq()
+        categories = Seq(),
+        bookFormat = BookFormat.HTML
       )
     }
 
@@ -164,7 +165,8 @@ trait ConverterService {
           translation.tags,
           toApiContributors(translation.contributors),
           toApiChapterSummary(translation.chapters, translation.bookId, translation.language),
-          supportsTranslation = BookApiProperties.supportsTranslationFrom(translation.language)
+          supportsTranslation = BookApiProperties.supportsTranslationFrom(translation.language) & translation.bookFormat.equals("HTML"),
+          bookFormat = translation.bookFormat.toString
         )
       }
 

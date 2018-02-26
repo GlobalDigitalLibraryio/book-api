@@ -12,7 +12,6 @@ import java.time.LocalDate
 import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.BookApiProperties
 import org.json4s.FieldSerializer
-import org.json4s.FieldSerializer.ignore
 import scalikejdbc._
 
 case class Translation(id: Option[Long],
@@ -48,13 +47,22 @@ case class Translation(id: Option[Long],
                        educationalAlignment: Option[EducationalAlignment] = None,
                        chapters: Seq[Chapter],
                        contributors: Seq[Contributor],
-                       categories: Seq[Category])
+                       categories: Seq[Category],
+                       bookFormat: BookFormat.Value)
 
 object PublishingStatus extends Enumeration {
   val PUBLISHED, UNLISTED = Value
 
   def valueOfOrDefault(s: String): PublishingStatus.Value = {
     PublishingStatus.values.find(_.toString == s.toUpperCase).getOrElse(PUBLISHED)
+  }
+}
+
+object BookFormat extends Enumeration {
+  val HTML, PDF = Value
+
+  def valueOfOrDefault(s: String): BookFormat.Value = {
+    BookFormat.values.find(_.toString == s.toUpperCase).getOrElse(HTML)
   }
 }
 
@@ -99,7 +107,8 @@ object Translation extends SQLSyntaxSupport[Translation] {
     publishingStatus = PublishingStatus.valueOfOrDefault(rs.string(t.publishingStatus)),
     chapters = Seq(),
     contributors = Seq(),
-    categories = Seq()
+    categories = Seq(),
+    bookFormat = BookFormat.valueOfOrDefault(rs.string(t.bookFormat))
   )
 
   def apply(t: ResultName[Translation], ea: ResultName[EducationalAlignment])(rs: WrappedResultSet): Translation = {
