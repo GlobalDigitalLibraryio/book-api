@@ -36,7 +36,8 @@ trait FeedRepository {
           val count = update(Feed).set(
             f.revision -> newRevision,
             f.title -> feed.title,
-            f.description -> feed.description
+            f.description -> feed.description,
+            f.updated -> feed.updated
           ).where
             .eq(f.id, existingFeed.id).and
             .eq(f.revision, existingFeed.revision).toSQL.update().apply()
@@ -51,7 +52,8 @@ trait FeedRepository {
             f.url -> feed.url,
             f.uuid -> feed.uuid,
             f.title -> feed.title,
-            f.description -> feed.description
+            f.description -> feed.description,
+            f.updated -> feed.updated
           ).toSQL.updateAndReturnGeneratedKey().apply()
 
           feed.copy(id = Some(id), revision = Some(startRevision))
