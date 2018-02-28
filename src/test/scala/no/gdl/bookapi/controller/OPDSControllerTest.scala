@@ -35,18 +35,18 @@ class OPDSControllerTest extends UnitSuite with TestEnvironment with ScalatraFun
         <link rel="self" href={self.feedDefinition.url} type="application/atom+xml;profile=opds-catalog;kind=navigation"/>
         <link rel="start" href={self.feedDefinition.url} type="application/atom+xml;profile=opds-catalog;kind=navigation"/>
         <title>{self.title}</title>
-        <updated>{self.updated.atStartOfDay(ZoneId.systemDefault()).format(formatter)}</updated>
+        <updated>{self.updated.format(formatter)}</updated>
         <entry>
           <title>{feed1.title}</title>
           <link rel={feed1.rel.get} href={feed1.feedDefinition.url} type="application/atom+xml;profile=opds-catalog;kind=acquisition"/>
-          <updated>{feed1.updated.atStartOfDay(ZoneId.systemDefault()).format(formatter)}</updated>
+          <updated>{feed1.updated.format(formatter)}</updated>
           <id>{feed1.feedDefinition.uuid}</id>
           <content type="text">{feed1.description.get}</content>
         </entry>
         <entry>
           <title>{feed2.title}</title>
           <link rel="subsection" href={feed2.feedDefinition.url} type="application/atom+xml;profile=opds-catalog;kind=acquisition"/>
-          <updated>{feed2.updated.atStartOfDay(ZoneId.systemDefault()).format(formatter)}</updated>
+          <updated>{feed2.updated.format(formatter)}</updated>
           <id>{feed2.feedDefinition.uuid}</id>
           <content type="text">{feed2.description.get}</content>
         </entry>
@@ -69,7 +69,7 @@ class OPDSControllerTest extends UnitSuite with TestEnvironment with ScalatraFun
       <feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/terms/" xmlns:opds="http://opds-spec.org/2010/catalog" xmlns:lrmi="http://purl.org/dcx/lrmi-terms/">
         <id>{feed.feedDefinition.uuid}</id>
         <title>{feed.title}</title>
-        <updated>{feed.updated.atStartOfDay(ZoneId.systemDefault()).format(formatter)}</updated>
+        <updated>{feed.updated.format(formatter)}</updated>
         <link href={feed.feedDefinition.url} rel="self"/>
         <link href="some-url?page-size=10&amp;page=1" rel="first"/>
         <link href="some-url?page-size=10&amp;page=2" rel="previous"/>

@@ -8,7 +8,6 @@
 package no.gdl.bookapi.repository
 
 import java.sql.PreparedStatement
-import java.time.LocalDate
 
 import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.model.api.OptimisticLockException
@@ -29,18 +28,6 @@ trait TranslationRepository {
       Contributor.syntax,
       Person.syntax,
       Category.syntax)
-
-    def latestArrivalDateFor(language: LanguageTag, readingLevel: String = null)(implicit session: DBSession = ReadOnlyAutoSession): LocalDate = {
-      val levelOpt = Option(readingLevel)
-      select(sqls.max(t.dateArrived))
-        .from(Translation as t)
-        .where.eq(t.language, language.toString)
-        .and(
-          sqls.toAndConditionOpt(levelOpt.map(l => sqls.eq(t.readingLevel, l))))
-        .toSQL
-        .map(_.localDate(1))
-        .single().apply().get
-    }
 
     def languagesFor(id: Long)(implicit session: DBSession = ReadOnlyAutoSession): Seq[LanguageTag] = {
       select(t.result.language)

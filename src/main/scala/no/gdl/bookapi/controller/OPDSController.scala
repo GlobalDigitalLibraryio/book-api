@@ -47,8 +47,7 @@ trait OPDSController {
     // TODO Issue#200: Remove when not used anymore
     get(BookApiProperties.OpdsNavUrl) {
       val navFeeds = feedService.feedsForNavigation(LanguageTag(params("lang")))
-      val navLastUpdated = navFeeds.map(_.updated).sorted.reverse.headOption
-      navigationFeed(feedUpdated = navLastUpdated, feeds = navFeeds)
+      navigationFeed(feeds = navFeeds)
     }
 
     get(BookApiProperties.OpdsRootDefaultLanguageUrl) {
@@ -67,9 +66,9 @@ trait OPDSController {
     }
 
     // TODO Issue#200: Remove when not used anymore
-    private def navigationFeed(feedUpdated: Option[LocalDate], feeds: => Seq[Feed])(implicit request: HttpServletRequest) = {
+    private def navigationFeed(feeds: => Seq[Feed])(implicit request: HttpServletRequest) = {
       val lang = LanguageTag(params("lang"))
-      val selfOpt = feedService.feedForUrl(request.getRequestURI, lang, feedUpdated, Seq(), Seq())
+      val selfOpt = feedService.feedForUrl(request.getRequestURI, lang, Seq(), Seq())
       selfOpt match {
         case Some(self) => render(self, feeds)
         case None =>
@@ -78,9 +77,9 @@ trait OPDSController {
       }
     }
 
-    private def acquisitionFeed(feedUpdated: Option[LocalDate] = None, titleArgs: Seq[String] = Seq(), books: => Seq[FeedEntry], pagingStatus: PagingStatus)(implicit request: HttpServletRequest) = {
+    private def acquisitionFeed(titleArgs: Seq[String] = Seq(), books: => Seq[FeedEntry], pagingStatus: PagingStatus)(implicit request: HttpServletRequest) = {
       val lang = Try(LanguageTag(params("lang"))).getOrElse(defaultLanguage)
-      feedService.feedForUrl(request.getRequestURI, lang, feedUpdated, titleArgs, books) match {
+      feedService.feedForUrl(request.getRequestURI, lang, titleArgs, books) match {
         case Some(feed) => render(feed, pagingStatus)
         case None =>
           contentType = "text/plain"
@@ -99,14 +98,14 @@ trait OPDSController {
               href={self.feedDefinition.url}
               type="application/atom+xml;profile=opds-catalog;kind=navigation"/>
         <title>{self.title}</title>
-        <updated>{self.updated.atStartOfDay(ZoneId.systemDefault()).format(dtf)}</updated>
+        <updated>{self.updated.format(dtf)}</updated>
         {feeds.map(feed =>
           <entry>
             <title>{feed.title}</title>
             <link rel={feed.rel.getOrElse("subsection")}
                   href={feed.feedDefinition.url}
                   type="application/atom+xml;profile=opds-catalog;kind=acquisition"/>
-            <updated>{feed.updated.atStartOfDay(ZoneId.systemDefault()).format(dtf)}</updated>
+            <updated>{feed.updated.format(dtf)}</updated>
             <id>{feed.feedDefinition.uuid}</id>
             {if (feed.description.isDefined) {
               <content type="text">{feed.description.get}</content>
@@ -120,7 +119,7 @@ trait OPDSController {
       <feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/terms/" xmlns:opds="http://opds-spec.org/2010/catalog" xmlns:lrmi="http://purl.org/dcx/lrmi-terms/">
         <id>{feed.feedDefinition.uuid}</id>
         <title>{feed.title}</title>
-        <updated>{feed.updated.atStartOfDay(ZoneId.systemDefault()).format(dtf)}</updated>
+        <updated>{feed.updated.format(dtf)}</updated>
         <link href={feed.feedDefinition.url} rel="self"/>
         {pagingStatus match {
         case MoreAhead(Paging(currentPage, currentPageSize), lastPage) =>
