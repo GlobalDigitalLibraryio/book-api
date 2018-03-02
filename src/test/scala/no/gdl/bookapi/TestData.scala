@@ -7,7 +7,7 @@
 
 package no.gdl.bookapi
 
-import java.time.LocalDate
+import java.time.{LocalDate, ZonedDateTime}
 import java.util.UUID
 
 import io.digitallibrary.language.model.LanguageTag
@@ -68,7 +68,7 @@ object TestData {
       api.Facet("https://opds.test.digitallibrary.io/eng/level2.xml", "Level 2", "Selection", isActive = true),
       api.Facet("https://opds.test.digitallibrary.io/eng/level3.xml", "Level 3", "Selection", isActive = false)
     )
-    val DefaultFeed = api.Feed(DefaultFeedDefinition, "default title", Some("default description"), Some("default-rel"), yesterday, Seq(), DefaultFacets)
+    val DefaultFeed = api.Feed(DefaultFeedDefinition, "default title", Some("default description"), Some("default-rel"), ZonedDateTime.now().minusDays(1), Seq(), DefaultFacets)
     val DefaultFeedEntry = api.FeedEntry(DefaultBook, Seq())
     val DefaultFeedCategory = api.FeedCategory("some-url", "some-title", 1)
   }

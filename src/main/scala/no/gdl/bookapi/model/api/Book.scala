@@ -7,7 +7,7 @@
 
 package no.gdl.bookapi.model.api
 
-import java.time.LocalDate
+import java.time.{LocalDate, ZonedDateTime}
 
 import org.json4s.CustomSerializer
 import org.json4s.JsonAST.{JNull, JString}
@@ -142,7 +142,7 @@ case class Feed(@(ApiModelProperty@field)(description = "Definitions of the feed
                 @(ApiModelProperty@field)(description = "Title of the feed") title: String,
                 @(ApiModelProperty@field)(description = "Description of the feed") description: Option[String],
                 @(ApiModelProperty@field)(description = "rel attribute of each entry's link tag") rel: Option[String],
-                @(ApiModelProperty@field)(description = "When the feed was last updated") updated: LocalDate,
+                @(ApiModelProperty@field)(description = "When the feed was last updated") updated: ZonedDateTime,
                 @(ApiModelProperty@field)(description = "List of feed entries") content: Seq[FeedEntry],
                 @(ApiModelProperty@field)(description = "List of facets, which contain links to other feeds or variants of the current one") facets: Seq[Facet])
 
