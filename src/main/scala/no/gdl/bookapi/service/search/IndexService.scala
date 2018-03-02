@@ -14,7 +14,7 @@ import com.sksamuel.elastic4s.alias.{AddAliasActionDefinition, AliasActionDefini
 import com.sksamuel.elastic4s.analyzers._
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.indexes.IndexDefinition
-import com.sksamuel.elastic4s.mappings.{MappingDefinition, TextFieldDefinition}
+import com.sksamuel.elastic4s.mappings.{KeywordFieldDefinition, MappingDefinition, TextFieldDefinition}
 import com.sksamuel.elastic4s.{IndexAndType, RefreshPolicy}
 import com.typesafe.scalalogging.LazyLogging
 import io.digitallibrary.language.model.LanguageTag
@@ -114,72 +114,27 @@ trait IndexService extends LazyLogging {
       List(mapping(BookApiProperties.SearchDocument) as (
         intField("id"),
         intField("revision"),
-        keywordField("externalId"),
-        keywordField("uuid") index false,
-        languageField("title", language, 2.0),
+        languageField("title", language, 1.4, true),
         languageField("description", language),
-        objectField("translatedFrom").fields(
-          keywordField("code"),
-          keywordField("name")
-        ),
         objectField("language").fields(
           keywordField("code"),
           keywordField("name")
         ),
-        nestedField("availableLanguages").fields(
-          keywordField("code"),
-          keywordField("name")
-        ),
-        objectField("licence").fields(
-          intField("id"),
-          intField("revision"),
-          keywordField("name"),
-          keywordField("description"),
-          keywordField("url")
-        ),
-        objectField("publisher").fields(
-          intField("id"),
-          intField("revision"),
-          keywordField("name")
-        ),
         keywordField("readingLevel"),
-        keywordField("typicalAgeRange"),
-        keywordField("educationalUse"),
-        keywordField("educationalRole"),
-        keywordField("timeRequired"),
-        dateField("datePublished"),
-        dateField("dateCreated"),
         dateField("dateArrived"),
-        nestedField("categories").fields(
-          textField("category")
-        ),
         objectField("coverPhoto").fields(
           textField("large"),
           textField("small")
-        ),
-        objectField("downloads").fields(
-          textField("epub"),
-          textField("pdf")
-        ),
-        nestedField("contributors").fields(
-          intField("id"),
-          intField("revision"),
-          keywordField("type"),
-          textField("name")
-        ),
-        nestedField("chapters").fields(
-          intField("id"),
-          intField("seqNo"),
-          languageField("title", language),
-          textField("url")
-        ),
-        booleanField("supportsTranslation")
+        )
       ))
     }
 
-    private def languageField(fieldName: String, languageTag: LanguageTag, boost: Double = 1.0) = {
+    private def languageField(fieldName: String, languageTag: LanguageTag, boost: Double = 1.0, keepRaw: Boolean = false) = {
       val languageAnalyzer = findByLanguage(languageTag)
-      val languageSupportedField = TextFieldDefinition(fieldName).fielddata(true) analyzer languageAnalyzer.analyzer boost boost
+      val languageSupportedField = keepRaw match {
+        case true => TextFieldDefinition(fieldName).fielddata(true).fields(KeywordFieldDefinition("sort")) analyzer languageAnalyzer.analyzer boost boost
+        case false => TextFieldDefinition(fieldName).fielddata(true) analyzer languageAnalyzer.analyzer boost boost
+      }
       languageSupportedField
     }
 

@@ -7,7 +7,7 @@
 
 package no.gdl.bookapi.service
 
-import java.time.LocalDate
+import java.time.{LocalDate, ZonedDateTime}
 import java.util.UUID
 
 import com.typesafe.scalalogging.LazyLogging
@@ -35,12 +35,7 @@ trait FeedService {
   class FeedService extends LazyLogging {
     implicit val localDateOrdering: Ordering[LocalDate] = Ordering.by(_.toEpochDay)
 
-    def feedForUrl(url: String, language: LanguageTag, feedUpdated: Option[LocalDate], titleArgs: Seq[String], books: => Seq[FeedEntry]): Option[api.Feed] = {
-      val updated = feedUpdated match {
-        case Some(x) => x
-        case None => books.sortBy(_.book.dateArrived).reverse.headOption.map(_.book.dateArrived).getOrElse(LocalDate.now())
-      }
-
+    def feedForUrl(url: String, language: LanguageTag, titleArgs: Seq[String], books: => Seq[FeedEntry]): Option[api.Feed] = {
       val facets = facetsForLanguages(language) ++ facetsForSelections(language, url)
 
       feedRepository.forUrl(url.replace(BookApiProperties.OpdsPath,"")).map(feedDefinition => {
@@ -53,7 +48,7 @@ trait FeedService {
           title = feedDefinition.title,
           description = feedDefinition.description,
           rel = Some("self"),
-          updated = updated,
+          updated = feedDefinition.updated,
           content = books,
           facets = facets)
       })
@@ -97,7 +92,6 @@ trait FeedService {
     def feedsForNavigation(language: LanguageTag): Seq[api.Feed] = {
       val localization = feedLocalizationService.localizationFor(language)
 
-      val justArrivedUpdated = translationRepository.latestArrivalDateFor(language)
       val justArrived = feedRepository.forUrl(rootPath(language)).map(definition =>
         api.Feed(
           api.FeedDefinition(
@@ -108,7 +102,7 @@ trait FeedService {
           title = localization.navTitle,
           description = None,
           rel = Some("http://opds-spec.org/sort/new"),
-          updated = justArrivedUpdated,
+          updated = definition.updated,
           content = Seq.empty,
           facets = Seq.empty))
 
@@ -116,7 +110,6 @@ trait FeedService {
       val levels: Seq[api.Feed] = readService.listAvailablePublishedLevelsForLanguage(Some(language))
         .flatMap(level => {
           val url = levelPath(language, level)
-          val levelUpdated = translationRepository.latestArrivalDateFor(language, level)
 
           feedRepository.forUrl(url).map(definition =>
             api.Feed(
@@ -128,7 +121,7 @@ trait FeedService {
               title = localization.levelTitle(level),
               description = Some(localization.levelDescription),
               rel = None,
-              updated = levelUpdated,
+              updated = definition.updated,
               content = Seq.empty,
               facets = Seq.empty))
         })
@@ -198,7 +191,9 @@ trait FeedService {
             url = BookApiProperties.OpdsRootUrl.replace(OpdsLanguageParam, language.toString),
             uuid = UUID.randomUUID().toString,
             title = localization.rootTitle,
-            description = None),
+            description = None,
+            updated = ZonedDateTime.now()
+          ),
 
           domain.Feed(
             id = None,
@@ -206,7 +201,9 @@ trait FeedService {
             url = BookApiProperties.OpdsNavUrl.replace(OpdsLanguageParam, language.toString),
             uuid = UUID.randomUUID().toString,
             title = localization.navTitle,
-            description = None),
+            description = None,
+            updated = ZonedDateTime.now()
+          ),
 
           domain.Feed(
             id = None,
@@ -216,7 +213,8 @@ trait FeedService {
               .replace(BookApiProperties.OpdsLevelParam, level),
             uuid = UUID.randomUUID().toString,
             title = localization.levelTitle(level),
-            description = Some(localization.levelDescription)
+            description = Some(localization.levelDescription),
+            updated = ZonedDateTime.now()
           ))
 
       } yield feed
@@ -227,7 +225,9 @@ trait FeedService {
           url = BookApiProperties.OpdsRootDefaultLanguageUrl,
           uuid = UUID.randomUUID().toString,
           title = feedLocalizationService.localizationFor(LanguageTag("eng")).rootTitle,
-          description = None)
+          description = None,
+          updated = ZonedDateTime.now()
+        )
       defaultRootFeed +: feeds
     }
 

@@ -7,7 +7,7 @@
 
 package no.gdl.bookapi.model.api
 
-import java.time.LocalDate
+import java.time.{LocalDate, ZonedDateTime}
 
 import org.json4s.CustomSerializer
 import org.json4s.JsonAST.{JNull, JString}
@@ -100,6 +100,7 @@ case class BookHit(@(ApiModelProperty@field)(description = "The id of the book")
                    @(ApiModelProperty@field)(description = "Current language") language: Language,
                    @(ApiModelProperty@field)(description = "Information about reading level") readingLevel: Option[String],
                    @(ApiModelProperty@field)(description = "Cover Photo information") coverPhoto: Option[CoverPhoto],
+                   @(ApiModelProperty@field)(description = "The date when this book arrived to the Global Digital Library (iso-format)") dateArrived: LocalDate,
                    @(ApiModelProperty@field)(description = "The highlighted title of the book") highlightTitle: Option[String],
                    @(ApiModelProperty@field)(description = "The Highlighted description of the book") highlightDescription: Option[String])
 
@@ -140,7 +141,7 @@ case class Feed(@(ApiModelProperty@field)(description = "Definitions of the feed
                 @(ApiModelProperty@field)(description = "Title of the feed") title: String,
                 @(ApiModelProperty@field)(description = "Description of the feed") description: Option[String],
                 @(ApiModelProperty@field)(description = "rel attribute of each entry's link tag") rel: Option[String],
-                @(ApiModelProperty@field)(description = "When the feed was last updated") updated: LocalDate,
+                @(ApiModelProperty@field)(description = "When the feed was last updated") updated: ZonedDateTime,
                 @(ApiModelProperty@field)(description = "List of feed entries") content: Seq[FeedEntry],
                 @(ApiModelProperty@field)(description = "List of facets, which contain links to other feeds or variants of the current one") facets: Seq[Facet])
 

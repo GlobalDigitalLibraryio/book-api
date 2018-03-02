@@ -7,7 +7,7 @@
 
 package no.gdl.bookapi
 
-import java.time.LocalDate
+import java.time.{LocalDate, ZonedDateTime}
 import java.util.UUID
 
 import io.digitallibrary.language.model.LanguageTag
@@ -53,9 +53,9 @@ object TestData {
       1, 1, Some("external-1"), DefaultUuid, "Title", "Description", None, english, Seq(english, norwegian_bokmal), DefaultLicense, DefaultPublisher,
       Some(Level1), Some(ageRangeDefault), None, None, None, Some(today), Some(yesterday), today, Seq(category1, category2), None, api.Downloads(epub, pdf), Seq(), Seq(DefaultContributor), Seq(ChapterSummary1), supportsTranslation = true)
 
-    val DefaultBookHit = api.BookHit(1, "Title", "Description", norwegian_bokmal, None, None, Some("Title"), Some("Description"))
+    val DefaultBookHit = api.BookHit(1, "Title", "Description", norwegian_bokmal, Some("1"), None, today, Some("Title"), Some("Description"))
 
-    val BookInAmharic: api.Book = DefaultBook.copy(language = amharic, availableLanguages = Seq(amharic))
+    val BookInAmharic: api.BookHit = DefaultBookHit.copy(language = amharic)
 
     val DefaultFeedDefinition = api.FeedDefinition(1, 1, "some-url", "some-uuid")
     val DefaultFacets = Seq(
@@ -67,7 +67,7 @@ object TestData {
       api.Facet("https://opds.test.digitallibrary.io/eng/level2.xml", "Level 2", "Selection", isActive = true),
       api.Facet("https://opds.test.digitallibrary.io/eng/level3.xml", "Level 3", "Selection", isActive = false)
     )
-    val DefaultFeed = api.Feed(DefaultFeedDefinition, "default title", Some("default description"), Some("default-rel"), yesterday, Seq(), DefaultFacets)
+    val DefaultFeed = api.Feed(DefaultFeedDefinition, "default title", Some("default description"), Some("default-rel"), ZonedDateTime.now().minusDays(1), Seq(), DefaultFacets)
     val DefaultFeedEntry = api.FeedEntry(DefaultBook, Seq())
     val DefaultFeedCategory = api.FeedCategory("some-url", "some-title", 1)
   }
