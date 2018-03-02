@@ -30,6 +30,7 @@ object BookApiProperties extends LazyLogging {
   val ContactEmail = "christergundersen@ndla.no"
   val Environment = propOrElse("GDL_ENVIRONMENT", "local")
   lazy val Domain: String = Domains.get(Environment)
+  val StorageName = s"$Environment.books.gdl"
 
   val SearchServer = propOrElse("SEARCH_SERVER", "elasticsearch://search-book-api.gdl-local:80")
   val SearchRegion = propOrElse("SEARCH_REGION", "eu-central-1")

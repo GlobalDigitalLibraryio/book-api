@@ -7,17 +7,14 @@
 
 package no.gdl.bookapi.controller
 
-import java.io.OutputStream
 import java.text.SimpleDateFormat
 
-import com.openhtmltopdf.pdfboxout.PdfRendererBuilder
 import coza.opencollab.epub.creator.model.EpubBook
 import io.digitallibrary.language.model.LanguageTag
-import no.gdl.bookapi.model.api.LocalDateSerializer
+import no.gdl.bookapi.model.api.{LocalDateSerializer, PdfStream}
 import no.gdl.bookapi.{TestEnvironment, UnitSuite}
 import org.json4s.{DefaultFormats, Formats}
 import org.mockito.Mockito._
-import org.mockito.Matchers.{any, eq => eqTo}
 import org.scalatra.test.scalatest.ScalatraFunSuite
 
 import scala.util.{Failure, Success}
@@ -67,9 +64,8 @@ class DownloadControllerTest extends UnitSuite with TestEnvironment with Scalatr
   }
 
   test("that get /pdf/nob/123.pdf returns 200 ok") {
-    val renderer = mock[PdfRendererBuilder]
-    when(renderer.toStream(any[OutputStream])).thenReturn(renderer)
-    when(pdfService.createPdf(LanguageTag("nob"), "123")).thenReturn(Some(renderer))
+    val pdfStream = mock[PdfStream]
+    when(pdfService.getPdf(LanguageTag("nob"), "123")).thenReturn(Some(pdfStream))
     get("/pdf/nob/123.pdf") {
       status should equal (200)
       header.get("Content-Type") should equal (Some("application/octet-stream; charset=UTF-8"))
@@ -77,7 +73,7 @@ class DownloadControllerTest extends UnitSuite with TestEnvironment with Scalatr
   }
 
   test("that get /pdf/nob/123.pdf returns 404 when no content found") {
-    when(pdfService.createPdf(LanguageTag("nob"), "123")).thenReturn(None)
+    when(pdfService.getPdf(LanguageTag("nob"), "123")).thenReturn(None)
     get("/pdf/nob/123.pdf") {
       status should equal (404)
     }

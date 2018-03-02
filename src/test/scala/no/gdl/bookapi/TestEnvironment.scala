@@ -9,10 +9,11 @@ package no.gdl.bookapi
 
 import javax.sql
 
+import com.amazonaws.services.s3.AmazonS3
 import io.digitallibrary.network.GdlClient
 import no.gdl.bookapi.controller._
 import no.gdl.bookapi.integration.crowdin.CrowdinClientBuilder
-import no.gdl.bookapi.integration.{DataSource, E4sClient, ElasticClient, ImageApiClient}
+import no.gdl.bookapi.integration._
 import no.gdl.bookapi.repository._
 import no.gdl.bookapi.service._
 import no.gdl.bookapi.service.search.{IndexBuilderService, IndexService, SearchService}
@@ -64,9 +65,11 @@ trait TestEnvironment
     with IndexService
     with SearchService
     with SearchController
+    with AmazonClient
 {
 
   val dataSource = mock[sql.DataSource]
+  val amazonClient = mock[AmazonS3]
 
   val readService = mock[ReadService]
   val writeService = mock[WriteService]

@@ -17,6 +17,7 @@ case class NewBook(license: String,
 case class BookId(id: Long)
 case class TranslationId(id: Long)
 case class ChapterId(id: Long)
+case class UUID(uuid: String)
 
 case class NewPerson(name: String)
 
