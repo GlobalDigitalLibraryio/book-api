@@ -16,8 +16,8 @@ import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.model.api.LocalDateSerializer
 import no.gdl.bookapi.{TestEnvironment, UnitSuite}
 import org.json4s.{DefaultFormats, Formats}
+import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
-import org.mockito.Matchers.{any, eq => eqTo}
 import org.scalatra.test.scalatest.ScalatraFunSuite
 
 import scala.util.{Failure, Success}
@@ -56,7 +56,7 @@ class DownloadControllerTest extends UnitSuite with TestEnvironment with Scalatr
     when(ePubService.createEPub(LanguageTag("nob"), "123")).thenReturn(Some(Success(book)))
     get("/epub/nob/123.epub") {
       status should equal (200)
-      header.get("Content-Type") should equal (Some("application/octet-stream; charset=UTF-8"))
+      header.get("Content-Type") should equal (Some("application/octet-stream;charset=utf-8"))
     }
   }
 
@@ -72,7 +72,7 @@ class DownloadControllerTest extends UnitSuite with TestEnvironment with Scalatr
     when(pdfService.createPdf(LanguageTag("nob"), "123")).thenReturn(Some(renderer))
     get("/pdf/nob/123.pdf") {
       status should equal (200)
-      header.get("Content-Type") should equal (Some("application/octet-stream; charset=UTF-8"))
+      header.get("Content-Type") should equal (Some("application/octet-stream;charset=utf-8"))
     }
   }
 

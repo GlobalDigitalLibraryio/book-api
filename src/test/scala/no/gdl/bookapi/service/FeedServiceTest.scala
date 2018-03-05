@@ -13,7 +13,7 @@ import no.gdl.bookapi.TestData.{LanguageCodeAmharic, LanguageCodeEnglish, Langua
 import no.gdl.bookapi.model.api.{Book, BookHit, Facet, SearchResult}
 import no.gdl.bookapi.model.domain.{Paging, PublishingStatus}
 import no.gdl.bookapi.{TestEnvironment, UnitSuite}
-import org.mockito.Matchers.{eq => eqTo, _}
+import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import scalikejdbc.DBSession
 

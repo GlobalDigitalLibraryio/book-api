@@ -7,7 +7,7 @@ import no.gdl.bookapi.model.api.{FeaturedContent, FeaturedContentId, Language, L
 import no.gdl.bookapi.{BookSwagger, TestEnvironment, UnitSuite}
 import org.json4s.native.Serialization._
 import org.json4s.{DefaultFormats, Formats}
-import org.mockito.Matchers.any
+import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito
 import org.mockito.Mockito.{reset, verify, when}
 import org.scalatest.BeforeAndAfterAll

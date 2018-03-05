@@ -1,13 +1,13 @@
 import java.util.Properties
 
 val Scalaversion = "2.12.2"
-val Scalatraversion = "2.5.1-NDLA-3"
+val Scalatraversion = "2.6.2"
 val ScalaLoggingVersion = "3.7.2"
 val Log4JVersion = "2.9.1"
 val Jettyversion = "9.2.10.v20150310"
 val AwsSdkversion = "1.11.46"
-val ScalaTestVersion = "3.0.1"
-val MockitoVersion = "1.10.19"
+val ScalaTestVersion = "3.0.3"
+val MockitoVersion = "2.7.22"
 val Elastic4sVersion = "6.1.4"
 val ElasticsearchVersion = "6.0.0"
 val JacksonVersion = "2.7.4"
@@ -50,13 +50,13 @@ lazy val book_api = (project in file(".")).
       "org.scalatra" %% "scalatra-scalatest" % Scalatraversion % "test",
       "org.eclipse.jetty" % "jetty-webapp" % Jettyversion % "container;compile",
       "org.eclipse.jetty" % "jetty-plus" % Jettyversion % "container",
-      "org.json4s"   %% "json4s-native" % "3.5.0",
+      "org.json4s"   %% "json4s-native" % "3.5.2",
       "org.scalikejdbc" %% "scalikejdbc" % "3.0.2",
       "org.postgresql" % "postgresql" % "9.4-1201-jdbc4",
       "org.flywaydb" % "flyway-core" % "4.0",
       "com.netaporter" %% "scala-uri" % "0.4.16",
       "org.scalatest" %% "scalatest" % ScalaTestVersion % "test",
-      "org.mockito" % "mockito-all" % MockitoVersion % "test",
+      "org.mockito" % "mockito-core" % MockitoVersion % "test",
       "org.elasticsearch" % "elasticsearch" % ElasticsearchVersion,
       "com.sksamuel.elastic4s" %% "elastic4s-core" % Elastic4sVersion,
       "com.sksamuel.elastic4s" %% "elastic4s-http" % Elastic4sVersion,
@@ -92,6 +92,7 @@ assemblyMergeStrategy in assembly := {
 // will not run unless this line gets commented out or you remove the tag over the test class
 // This should be solved better!
 testOptions in Test += Tests.Argument("-l", "no.gdl.tag.IntegrationTest")
+parallelExecution in Test := false
 
 // Make the docker task depend on the assembly task, which generates a fat JAR file
 docker <<= (docker dependsOn assembly)
