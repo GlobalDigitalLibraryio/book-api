@@ -92,6 +92,7 @@ assemblyMergeStrategy in assembly := {
 // will not run unless this line gets commented out or you remove the tag over the test class
 // This should be solved better!
 testOptions in Test += Tests.Argument("-l", "no.gdl.tag.IntegrationTest")
+parallelExecution in Test := false
 
 // Make the docker task depend on the assembly task, which generates a fat JAR file
 docker <<= (docker dependsOn assembly)
