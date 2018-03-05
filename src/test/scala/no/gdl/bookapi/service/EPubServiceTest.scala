@@ -10,8 +10,8 @@ package no.gdl.bookapi.service
 import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.integration.{DownloadedImage, ImageMetaInformation}
 import no.gdl.bookapi.{TestData, TestEnvironment, UnitSuite}
+import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import org.mockito.Mockito._
-import org.mockito.Matchers.{any, eq => eqTo}
 import scalikejdbc.DBSession
 
 import scala.collection.JavaConverters

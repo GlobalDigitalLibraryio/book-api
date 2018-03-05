@@ -12,7 +12,7 @@ import com.openhtmltopdf.pdfboxout.PdfRendererBuilder
 import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.model.domain.BookFormat
 import no.gdl.bookapi.{TestData, TestEnvironment, UnitSuite}
-import org.mockito.Matchers.{any, eq => eqTo}
+import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
 import scalikejdbc.DBSession
 

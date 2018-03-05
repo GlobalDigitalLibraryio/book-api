@@ -12,11 +12,9 @@ import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi._
 import no.gdl.bookapi.model.api._
 import no.gdl.bookapi.model.domain.{Paging, Sort}
-import no.gdl.bookapi.model.domain.{PublishingStatus, Sort}
-import org.json4s.{DefaultFormats, Formats}
 import org.json4s.native.Serialization._
 import org.json4s.{DefaultFormats, Formats}
-import org.mockito.Matchers._
+import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.scalatra.test.scalatest.ScalatraFunSuite
 
