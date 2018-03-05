@@ -33,6 +33,7 @@ trait DownloadController {
             case None => NotFound(body = Error(Error.NOT_FOUND, s"No book with filename $filename found."))
             case Some(Success(book)) =>
               contentType = "application/octet-stream"
+              response.setHeader("Content-Disposition", s"attachment; filename=${book.getTitle}.epub")
               book.writeToStream(response.getOutputStream)
             case Some(Failure(ex)) =>
               logger.error("Could not generate epub", ex)
@@ -52,6 +53,7 @@ trait DownloadController {
             case None => NotFound(body = Error(Error.NOT_FOUND, s"No book with filename $filename found."))
             case Some(pdf) =>
               contentType = "application/octet-stream"
+              response.setHeader("Content-Disposition", s"attachment; filename=${pdf.fileName}")
               pdf.toOutputStream(response.getOutputStream)
           }
         case _ => NotFound(body = Error(Error.NOT_FOUND, s"No book with filename $filename found."))

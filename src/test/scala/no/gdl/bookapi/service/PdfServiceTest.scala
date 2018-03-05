@@ -45,7 +45,7 @@ class PdfServiceTest extends UnitSuite with TestEnvironment {
     when(readService.chapterForBookWithLanguageAndId(any[Long], any[LanguageTag], any[Long])).thenReturn(Some(TestData.Api.Chapter1))
 
     val pdf = pdfService.getPdf(LanguageTag("eng"), uuid)
-    pdf.get.fileName should be (s"$uuid.pdf")
+    pdf.get.fileName should be ("Default translation title.pdf")
   }
 
   test("that file is fetched from s3") {
@@ -54,6 +54,6 @@ class PdfServiceTest extends UnitSuite with TestEnvironment {
     when(translationRepository.withUuId(uuid)).thenReturn(Some(TestData.Domain.DefaultTranslation.copy(bookFormat = BookFormat.PDF)))
     when(amazonClient.getObject(any[GetObjectRequest])).thenReturn(s3Object)
     val pdf = pdfService.getPdf(LanguageTag("eng"), uuid)
-    pdf.get.fileName should be (s"$uuid.pdf")
+    pdf.get.fileName should be ("Default translation title.pdf")
   }
 }

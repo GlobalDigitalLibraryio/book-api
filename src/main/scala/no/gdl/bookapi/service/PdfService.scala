@@ -63,9 +63,9 @@ trait PdfService {
       translationRepository.withUuId(uuid) match {
         case Some(translation) => translation.bookFormat match {
           case BookFormat.HTML =>
-            Some(Pdf(createPdf(language, uuid).get, s"$uuid.pdf"))
+            Some(Pdf(createPdf(language, uuid).get, s"${translation.title}.pdf"))
           case BookFormat.PDF => getFromS3(uuid) match {
-            case Success(s3Object) => Some(S3Pdf(s3Object, s"$uuid.pdf"))
+            case Success(s3Object) => Some(S3Pdf(s3Object, s"${translation.title}.pdf"))
             case Failure(failure) => None
           }
         }
