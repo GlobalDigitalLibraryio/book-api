@@ -14,10 +14,9 @@ import com.typesafe.scalalogging.LazyLogging
 import io.digitallibrary.language.model.LanguageTag
 import io.digitallibrary.network.AuthUser
 import no.gdl.bookapi.controller.NewFeaturedContent
-import no.gdl.bookapi.integration.crowdin.BookMetaData
 import no.gdl.bookapi.model._
-import no.gdl.bookapi.model.api.{FeaturedContentId, NotFoundException, TranslateRequest}
 import no.gdl.bookapi.model.api.internal.{NewChapter, NewTranslation}
+import no.gdl.bookapi.model.api.{FeaturedContentId, NotFoundException, TranslateRequest}
 import no.gdl.bookapi.model.domain._
 import no.gdl.bookapi.repository._
 
@@ -336,7 +335,8 @@ trait WriteService {
                 accessibilityApi = replacement.accessibilityApi,
                 accessibilityControl = replacement.accessibilityControl,
                 accessibilityFeature = replacement.accessibilityFeature,
-                accessibilityHazard = replacement.accessibilityHazard
+                accessibilityHazard = replacement.accessibilityHazard,
+                bookFormat = replacement.bookFormat
               )
             )
 

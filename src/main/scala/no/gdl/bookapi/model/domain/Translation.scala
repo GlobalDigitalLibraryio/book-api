@@ -105,10 +105,10 @@ object Translation extends SQLSyntaxSupport[Translation] {
     accessibilityHazard = rs.stringOpt(t.accessibilityHazard),
     dateArrived = rs.localDate(t.dateArrived),
     publishingStatus = PublishingStatus.valueOfOrDefault(rs.string(t.publishingStatus)),
+    bookFormat = BookFormat.valueOfOrDefault(rs.string(t.bookFormat)),
     chapters = Seq(),
     contributors = Seq(),
-    categories = Seq(),
-    bookFormat = BookFormat.valueOfOrDefault(rs.string(t.bookFormat))
+    categories = Seq()
   )
 
   def apply(t: ResultName[Translation], ea: ResultName[EducationalAlignment])(rs: WrappedResultSet): Translation = {

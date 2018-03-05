@@ -55,6 +55,7 @@ case class NewTranslation(externalId: Option[String],
                           accessibilityControl: Option[String],
                           accessibilityFeature: Option[String],
                           accessibilityHazard: Option[String],
+                          bookFormat: String,
                           contributors: Seq[NewContributor],
                           categories: Seq[NewCategory],
                           educationalAlignment: Option[NewEducationalAlignment])

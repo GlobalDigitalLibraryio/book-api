@@ -86,7 +86,7 @@ trait ConverterService {
         chapters = Seq(),
         contributors = Seq(),
         categories = Seq(),
-        bookFormat = BookFormat.HTML
+        bookFormat = BookFormat.valueOfOrDefault(newTranslation.bookFormat)
       )
     }
 
@@ -165,7 +165,7 @@ trait ConverterService {
           translation.tags,
           toApiContributors(translation.contributors),
           toApiChapterSummary(translation.chapters, translation.bookId, translation.language),
-          supportsTranslation = BookApiProperties.supportsTranslationFrom(translation.language) & translation.bookFormat.equals("HTML"),
+          supportsTranslation = BookApiProperties.supportsTranslationFrom(translation.language) && translation.bookFormat.equals(BookFormat.HTML),
           bookFormat = translation.bookFormat.toString
         )
       }
