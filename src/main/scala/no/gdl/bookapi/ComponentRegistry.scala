@@ -8,6 +8,10 @@
 
 package no.gdl.bookapi
 
+import com.amazonaws.ClientConfiguration
+import com.amazonaws.client.builder.AwsClientBuilder
+import com.amazonaws.regions.Regions
+import com.amazonaws.services.s3.{AmazonS3, AmazonS3ClientBuilder}
 import io.digitallibrary.network.GdlClient
 import no.gdl.bookapi.controller._
 import no.gdl.bookapi.integration._
@@ -65,6 +69,7 @@ object ComponentRegistry
   with IndexBuilderService
   with SearchService
   with SearchController
+  with AmazonClient
 {
   implicit val swagger = new BookSwagger
 
@@ -78,6 +83,24 @@ object ComponentRegistry
   dataSource.setMaxConnections(BookApiProperties.MetaMaxConnections)
   dataSource.setCurrentSchema(BookApiProperties.MetaSchema)
   ConnectionPool.singleton(new DataSourceConnectionPool(dataSource))
+
+  val amazonClient: AmazonS3 = {
+    val commonClient = AmazonS3ClientBuilder
+      .standard()
+      .withClientConfiguration(
+        new ClientConfiguration()
+          .withTcpKeepAlive(false)
+      )
+
+    (BookApiProperties.Environment match {
+      case "local" =>
+        commonClient
+          .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration("http://minio.gdl-local:9000", Regions.EU_CENTRAL_1.name()))
+          .withPathStyleAccessEnabled(true)
+      case _ =>
+        commonClient.withRegion(Regions.EU_CENTRAL_1)
+    }).build()
+  }
 
   lazy val booksController = new BooksController
   lazy val healthController = new HealthController

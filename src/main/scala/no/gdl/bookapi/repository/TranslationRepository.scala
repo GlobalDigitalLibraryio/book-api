@@ -265,6 +265,7 @@ trait TranslationRepository {
                 ${t.accessibilityControl},
                 ${t.accessibilityFeature},
                 ${t.accessibilityHazard},
+                ${t.bookFormat},
                 ${t.tags},
                 ${t.categoryIds})
               values (
@@ -295,6 +296,7 @@ trait TranslationRepository {
                ${translation.accessibilityControl},
                ${translation.accessibilityFeature},
                ${translation.accessibilityHazard},
+               ${translation.bookFormat.toString},
                ${tagBinder},
                ${categoryBinder})""".updateAndReturnGeneratedKey().apply()
 
@@ -344,6 +346,7 @@ trait TranslationRepository {
         ${t.accessibilityControl} = ${replacement.accessibilityControl},
         ${t.accessibilityFeature} = ${replacement.accessibilityFeature},
         ${t.accessibilityHazard} = ${replacement.accessibilityHazard},
+        ${t.bookFormat} = ${replacement.bookFormat.toString}
         ${t.tags} = ${tagBinder},
         ${t.categoryIds} = ${categoryBinder}
        where ${t.id} = ${replacement.id}

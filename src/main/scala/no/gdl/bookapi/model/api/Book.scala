@@ -29,8 +29,8 @@ case class CoverPhoto(@(ApiModelProperty@field)(description = "URL to a large ve
                       @(ApiModelProperty@field)(description = "URL to a small version of the cover-photo") small: String)
 
 @ApiModel(description = "Information about where to download a copy of the book")
-case class Downloads(@(ApiModelProperty@field)(description = "URL to an epub-download") epub: String,
-                     @(ApiModelProperty@field)(description = "URL to a pdf-download") pdf: String)
+case class Downloads(@(ApiModelProperty@field)(description = "URL to an epub-download") epub: Option[String],
+                     @(ApiModelProperty@field)(description = "URL to a pdf-download") pdf: Option[String])
 
 @ApiModel(description = "Information about the contributors of the current book")
 case class Contributor(@(ApiModelProperty@field)(description = "Id of the contributor") id: Long,
@@ -91,7 +91,8 @@ case class Book(@(ApiModelProperty@field)(description = "The id of the book") id
                 @(ApiModelProperty@field)(description = "Keywords for the book") tags: Seq[String],
                 @(ApiModelProperty@field)(description = "Information about the contributors of this book") contributors: Seq[Contributor],
                 @(ApiModelProperty@field)(description = "Information about the chapters in the book") chapters: Seq[ChapterSummary],
-                @(ApiModelProperty@field)(description = "Indicates if this book can be translated or not") supportsTranslation: Boolean)
+                @(ApiModelProperty@field)(description = "Indicates if this book can be translated or not") supportsTranslation: Boolean,
+                @(ApiModelProperty@field)(description = "The format of the book. PDF or HTML") bookFormat: String)
 
 @ApiModel(description = "Information about book search hit")
 case class BookHit(@(ApiModelProperty@field)(description = "The id of the book") id: Long,

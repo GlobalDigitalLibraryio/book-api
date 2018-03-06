@@ -98,8 +98,7 @@ class OPDSControllerTest extends UnitSuite with TestEnvironment with ScalatraFun
           <published>{entry1.book.dateArrived.atStartOfDay(ZoneId.systemDefault()).format(formatter)}</published>
           <lrmi:educationalAlignment alignmentType="readingLevel" targetName={entry1.book.readingLevel.get}/>
           <summary>{entry1.book.description}</summary>
-          <link href={entry1.book.downloads.epub} type="application/epub+zip" rel="http://opds-spec.org/acquisition/open-access"/>
-          <link href={entry1.book.downloads.pdf} type="application/pdf" rel="http://opds-spec.org/acquisition/open-access"/>
+          <link href={entry1.book.downloads.epub.get} type="application/epub+zip" rel="http://opds-spec.org/acquisition/open-access"/>
         </entry>
         <entry>
           <id>urn:uuid:{entry2.book.uuid}</id>
@@ -114,8 +113,7 @@ class OPDSControllerTest extends UnitSuite with TestEnvironment with ScalatraFun
           <published>{entry2.book.dateArrived.atStartOfDay(ZoneId.systemDefault()).format(formatter)}</published>
           <lrmi:educationalAlignment alignmentType="readingLevel" targetName={entry2.book.readingLevel.get}/>
           <summary>{entry2.book.description}</summary>
-          <link href={entry2.book.downloads.epub} type="application/epub+zip" rel="http://opds-spec.org/acquisition/open-access"/>
-          <link href={entry2.book.downloads.pdf} type="application/pdf" rel="http://opds-spec.org/acquisition/open-access"/>
+          <link href={entry2.book.downloads.epub.get} type="application/epub+zip" rel="http://opds-spec.org/acquisition/open-access"/>
           <link href={entry2.categories.head.url} rel="collection" title={entry2.categories.head.title}/>
       </entry>
       </feed>

@@ -68,7 +68,8 @@ trait RepositoryTestHelpers {
       educationalAlignment = None,
       chapters = Seq(),
       contributors = Seq(),
-      categories = Seq(cat1))
+      categories = Seq(cat1),
+      bookFormat = BookFormat.HTML)
 
     translationRepository.add(translationDef)
   }
