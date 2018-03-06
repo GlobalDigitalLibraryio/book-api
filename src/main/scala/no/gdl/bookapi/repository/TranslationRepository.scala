@@ -346,7 +346,7 @@ trait TranslationRepository {
         ${t.accessibilityControl} = ${replacement.accessibilityControl},
         ${t.accessibilityFeature} = ${replacement.accessibilityFeature},
         ${t.accessibilityHazard} = ${replacement.accessibilityHazard},
-        ${t.bookFormat} = ${replacement.bookFormat.toString}
+        ${t.bookFormat} = ${replacement.bookFormat.toString},
         ${t.tags} = ${tagBinder},
         ${t.categoryIds} = ${categoryBinder}
        where ${t.id} = ${replacement.id}
