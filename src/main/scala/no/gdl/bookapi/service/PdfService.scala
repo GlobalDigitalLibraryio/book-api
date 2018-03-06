@@ -7,7 +7,7 @@
 
 package no.gdl.bookapi.service
 
-import java.io.{ByteArrayOutputStream, InputStream}
+import java.io.{ByteArrayInputStream, ByteArrayOutputStream, InputStream}
 
 import com.amazonaws.services.s3.model.{GetObjectRequest, ObjectMetadata, PutObjectRequest, S3Object}
 import com.openhtmltopdf.extend.FSSupplier
@@ -19,7 +19,6 @@ import no.gdl.bookapi.integration.AmazonClient
 import no.gdl.bookapi.model.api.{NotFoundException, PdfStream}
 import no.gdl.bookapi.model.domain.{BookFormat, PdfCss}
 import no.gdl.bookapi.repository.{BookRepository, TranslationRepository}
-import org.apache.commons.io.IOUtils
 
 import scala.util.{Failure, Success, Try}
 
@@ -38,9 +37,9 @@ trait PdfService {
 
     case class Pdf(pdfRendererBuilder: PdfRendererBuilder, fileName: String) extends PdfStream {
       override def stream: InputStream = {
-        val baos = new ByteArrayOutputStream()
-        pdfRendererBuilder.toStream(baos).run()
-        IOUtils.toInputStream(baos.toString)
+        val out = new ByteArrayOutputStream()
+        pdfRendererBuilder.toStream(out).run()
+        new ByteArrayInputStream(out.toByteArray)
       }
     }
 
@@ -66,7 +65,7 @@ trait PdfService {
             Some(Pdf(createPdf(language, uuid).get, s"${translation.title}.pdf"))
           case BookFormat.PDF => getFromS3(uuid) match {
             case Success(s3Object) => Some(S3Pdf(s3Object, s"${translation.title}.pdf"))
-            case Failure(failure) => None
+            case Failure(_) => None
           }
         }
         case _ => None

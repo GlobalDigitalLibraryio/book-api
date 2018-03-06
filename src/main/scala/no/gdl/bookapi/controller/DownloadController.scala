@@ -10,6 +10,7 @@ package no.gdl.bookapi.controller
 import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.model.api.Error
 import no.gdl.bookapi.service.{EPubService, PdfService, ReadService}
+import org.scalatra.util.UrlCodingUtils
 import org.scalatra.{InternalServerError, NotFound}
 
 import scala.util.{Failure, Success}
@@ -33,7 +34,7 @@ trait DownloadController {
             case None => NotFound(body = Error(Error.NOT_FOUND, s"No book with filename $filename found."))
             case Some(Success(book)) =>
               contentType = "application/octet-stream"
-              response.setHeader("Content-Disposition", s"attachment; filename=${book.getTitle}.epub")
+              response.setHeader("Content-Disposition", s"""attachment; filename="${UrlCodingUtils.urlEncode(book.getTitle)}.epub" """)
               book.writeToStream(response.getOutputStream)
             case Some(Failure(ex)) =>
               logger.error("Could not generate epub", ex)
@@ -53,7 +54,7 @@ trait DownloadController {
             case None => NotFound(body = Error(Error.NOT_FOUND, s"No book with filename $filename found."))
             case Some(pdf) =>
               contentType = "application/octet-stream"
-              response.setHeader("Content-Disposition", s"attachment; filename=${pdf.fileName}")
+              response.setHeader("Content-Disposition", s"""attachment; filename="${UrlCodingUtils.urlEncode(pdf.fileName)}" """)
               pdf.toOutputStream(response.getOutputStream)
           }
         case _ => NotFound(body = Error(Error.NOT_FOUND, s"No book with filename $filename found."))

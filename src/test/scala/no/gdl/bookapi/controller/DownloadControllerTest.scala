@@ -12,7 +12,7 @@ import java.text.SimpleDateFormat
 import coza.opencollab.epub.creator.model.EpubBook
 import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.model.api.{LocalDateSerializer, PdfStream}
-import no.gdl.bookapi.{TestEnvironment, UnitSuite}
+import no.gdl.bookapi.{TestData, TestEnvironment, UnitSuite}
 import org.json4s.{DefaultFormats, Formats}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
@@ -51,6 +51,7 @@ class DownloadControllerTest extends UnitSuite with TestEnvironment with Scalatr
 
   test("that get /epub/nob/123.epub returns with an application/octet-stream when generating is ok") {
     val book = mock[EpubBook]
+    when(book.getTitle).thenReturn(TestData.Api.DefaultBook.title)
     when(ePubService.createEPub(LanguageTag("nob"), "123")).thenReturn(Some(Success(book)))
     get("/epub/nob/123.epub") {
       status should equal (200)
@@ -66,6 +67,7 @@ class DownloadControllerTest extends UnitSuite with TestEnvironment with Scalatr
 
   test("that get /pdf/nob/123.pdf returns 200 ok") {
     val pdfStream = mock[PdfStream]
+    when(pdfStream.fileName).thenReturn(TestData.Api.DefaultBook.title)
     when(pdfService.getPdf(LanguageTag("nob"), "123")).thenReturn(Some(pdfStream))
     get("/pdf/nob/123.pdf") {
       status should equal (200)
