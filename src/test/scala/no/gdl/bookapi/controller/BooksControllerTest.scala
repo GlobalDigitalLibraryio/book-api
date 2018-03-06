@@ -101,7 +101,7 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
     }
   }
 
-  test("that downloads in book is correect") {
+  test("that downloads in book is correct") {
     when(readService.withIdAndLanguage(any[Long], any[LanguageTag])).thenReturn(Some(TestData.Api.DefaultBook))
 
     get("/eng/1") {
