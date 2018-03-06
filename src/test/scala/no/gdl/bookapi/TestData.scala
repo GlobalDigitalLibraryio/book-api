@@ -51,7 +51,7 @@ object TestData {
 
     val DefaultBook = api.Book(
       1, 1, Some("external-1"), DefaultUuid, "Title", "Description", None, english, Seq(english, norwegian_bokmal), DefaultLicense, DefaultPublisher,
-      Some(Level1), Some(ageRangeDefault), None, None, None, Some(today), Some(yesterday), today, Seq(category1, category2), None, api.Downloads(epub, pdf),
+      Some(Level1), Some(ageRangeDefault), None, None, None, Some(today), Some(yesterday), today, Seq(category1, category2), None, api.Downloads(Some(epub), None),
       Seq(), Seq(DefaultContributor), Seq(ChapterSummary1), supportsTranslation = true, bookFormat = BookFormat.HTML.toString)
 
     val DefaultBookHit = api.BookHit(1, "Title", "Description", norwegian_bokmal, Some("1"), None, today, Some("Title"), Some("Description"))

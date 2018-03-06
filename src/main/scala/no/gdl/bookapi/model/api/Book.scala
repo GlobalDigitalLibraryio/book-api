@@ -29,8 +29,8 @@ case class CoverPhoto(@(ApiModelProperty@field)(description = "URL to a large ve
                       @(ApiModelProperty@field)(description = "URL to a small version of the cover-photo") small: String)
 
 @ApiModel(description = "Information about where to download a copy of the book")
-case class Downloads(@(ApiModelProperty@field)(description = "URL to an epub-download") epub: String,
-                     @(ApiModelProperty@field)(description = "URL to a pdf-download") pdf: String)
+case class Downloads(@(ApiModelProperty@field)(description = "URL to an epub-download") epub: Option[String],
+                     @(ApiModelProperty@field)(description = "URL to a pdf-download") pdf: Option[String])
 
 @ApiModel(description = "Information about the contributors of the current book")
 case class Contributor(@(ApiModelProperty@field)(description = "Id of the contributor") id: Long,
