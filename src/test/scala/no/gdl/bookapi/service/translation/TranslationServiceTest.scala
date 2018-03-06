@@ -284,7 +284,7 @@ class TranslationServiceTest extends UnitSuite with TestEnvironment {
     val result = service.fetchTranslatedFile("abc", "nb", "file-id", domain.TranslationStatus.TRANSLATED)
     result should be a 'Failure
 
-    verify(translationRepository, never()).update(any[domain.Translation])
+    verify(translationRepository, never()).updateTranslation(any[domain.Translation])
     verify(translationDbService, never()).updateTranslationStatus(any[domain.InTranslationFile], any[domain.TranslationStatus.Value])
 
   }
@@ -298,7 +298,7 @@ class TranslationServiceTest extends UnitSuite with TestEnvironment {
     when(crowdinClientMock.fetchTranslatedMetaData(any[domain.InTranslationFile], any[String])).thenReturn(Success(TestData.Crowdin.DefaultBookMetaData))
     when(translationRepository.withId(any[Long])(any[DBSession])).thenReturn(Some(TestData.Domain.DefaultTranslation))
 
-    when(translationRepository.update(any[domain.Translation])(any[DBSession])).thenReturn(TestData.Domain.DefaultTranslation)
+    when(translationRepository.updateTranslation(any[domain.Translation])(any[DBSession])).thenReturn(TestData.Domain.DefaultTranslation)
     when(translationDbService.updateTranslationStatus(any[domain.InTranslationFile], any[domain.TranslationStatus.Value])).thenReturn(Success(TestData.Domain.DefaultInTranslationFile))
 
     val result = service.fetchTranslatedFile("abc", "nb", "file-id", domain.TranslationStatus.TRANSLATED)

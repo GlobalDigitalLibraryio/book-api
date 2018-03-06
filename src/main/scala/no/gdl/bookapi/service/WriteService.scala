@@ -45,7 +45,7 @@ trait WriteService {
 
   class WriteService extends LazyLogging {
     def updateTranslation(translationToUpdate: Translation) = {
-      translationRepository.update(translationToUpdate)
+      translationRepository.updateTranslation(translationToUpdate)
     }
 
     def addPersonFromAuthUser(): Person = {
@@ -312,7 +312,7 @@ trait WriteService {
               case (None, None) => None
             }
 
-            val translation = translationRepository.update(
+            val translation = translationRepository.updateTranslation(
               existing.copy(
                 categoryIds = persistedCategories.map(_.id.get),
                 eaId = optPersistedEA,
