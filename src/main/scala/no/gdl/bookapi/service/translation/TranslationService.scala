@@ -74,7 +74,7 @@ trait TranslationService {
             crowdinClient             <- crowdinClientBuilder.forSourceLanguage(inTranslation.fromLanguage)
             translatedMetadata         <- crowdinClient.fetchTranslatedMetaData(file, crowdinToLanguage)
             newTranslation            <- Try(translationRepository.withId(inTranslation.newTranslationId.get).get)
-            originalChapter           <- Try(translationRepository.update(newTranslation.copy(title = translatedMetadata.title, about = translatedMetadata.description)))
+            originalChapter           <- Try(translationRepository.updateTranslation(newTranslation.copy(title = translatedMetadata.title, about = translatedMetadata.description)))
             updatedInTranslationFile  <- translationDbService.updateTranslationStatus(file, status)
           } yield updatedInTranslationFile
         }
