@@ -5,7 +5,7 @@
  * See LICENSE
  */
 
-package no.gdl.tag;
+package io.digitallibrary.tag;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
