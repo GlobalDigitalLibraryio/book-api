@@ -40,6 +40,7 @@ object TestData {
 
     val DefaultLicense = api.License(1, 1, "lisens", Some("beskrivelse"), Some("url"))
     val DefaultPublisher = api.Publisher(1, 1, "Some Publisher")
+    val DefaultSource = "storyweaver"
 
     val category1 = api.Category(1, 1, "category1")
     val category2 = api.Category(2, 1, "category2")
@@ -52,7 +53,7 @@ object TestData {
     val DefaultBook = api.Book(
       1, 1, Some("external-1"), DefaultUuid, "Title", "Description", None, english, Seq(english, norwegian_bokmal), DefaultLicense, DefaultPublisher,
       Some(Level1), Some(ageRangeDefault), None, None, None, Some(today), Some(yesterday), today, Seq(category1, category2), None, api.Downloads(Some(epub), None),
-      Seq(), Seq(DefaultContributor), Seq(ChapterSummary1), supportsTranslation = true, bookFormat = BookFormat.HTML.toString)
+      Seq(), Seq(DefaultContributor), Seq(ChapterSummary1), supportsTranslation = true, bookFormat = BookFormat.HTML.toString, DefaultSource)
 
     val DefaultBookHit = api.BookHit(1, "Title", "Description", norwegian_bokmal, Some("1"), None, today, Some("Title"), Some("Description"))
 
@@ -74,6 +75,7 @@ object TestData {
   }
 
   object Domain {
+    val DefaultSource = "storyweaver"
     val DefaultPublisher = domain.Publisher(Some(1), Some(1), "Default publisher")
     val DefaultLicense = domain.License(Some(1), Some(1), "Default License", Some("Default license description"), Some("http://some.url.com"))
     val DefaultCategory = domain.Category(Some(1), Some(1), "Default Category")
@@ -84,7 +86,8 @@ object TestData {
       publisherId = DefaultPublisher.id.get,
       licenseId = DefaultLicense.id.get,
       publisher = DefaultPublisher,
-      license = DefaultLicense)
+      license = DefaultLicense,
+      source = DefaultSource)
 
     val DefaultTranslationId = 1
     val DefaultChapter = domain.Chapter(Some(1), Some(1), DefaultTranslationId, 1, Some("Default chapter title"), "Chapter-content", ChapterType.Content)

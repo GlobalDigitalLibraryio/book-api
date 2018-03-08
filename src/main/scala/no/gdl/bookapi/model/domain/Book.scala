@@ -16,7 +16,8 @@ case class Book(id: Option[Long],
                 publisherId: Long,
                 licenseId: Long,
                 publisher: Publisher,
-                license: License)
+                license: License,
+                source: String)
 
 object Book extends SQLSyntaxSupport[Book] {
   implicit val formats = org.json4s.DefaultFormats
@@ -33,6 +34,7 @@ object Book extends SQLSyntaxSupport[Book] {
       rs.long(b.publisherId),
       rs.long(b.licenseId),
       Publisher.apply(pub)(rs),
-      License.apply(lic)(rs))
+      License.apply(lic)(rs),
+      rs.string(b.source))
 
 }

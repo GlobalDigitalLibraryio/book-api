@@ -125,7 +125,8 @@ trait WriteService {
                   publisherId = p.id.get,
                   licenseId = validLicense.id.get,
                   publisher = p,
-                  license = validLicense)
+                  license = validLicense,
+                  source = bookReplacement.source)
 
                 bookRepository.updateBook(existingBook)
 
@@ -153,15 +154,16 @@ trait WriteService {
           }
 
           persistedPublisher.flatMap(p => {
-            val newBook = Book(
+            val toAdd = Book(
               id = None,
               revision = None,
               publisherId = p.id.get,
               publisher = p,
               licenseId = validLicense.id.get,
-              license = validLicense)
+              license = validLicense,
+              source = newBook.source)
 
-            Try(bookRepository.add(newBook))
+            Try(bookRepository.add(toAdd))
 
           })
         }
