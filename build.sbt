@@ -76,7 +76,7 @@ lazy val book_api = (project in file(".")).
 unmanagedResourceDirectories in Compile <+= (baseDirectory) {_ / "src/main/webapp"}
 
 assemblyJarName in assembly := "book-api.jar"
-mainClass in assembly := Some("no.gdl.bookapi.JettyLauncher")
+mainClass in assembly := Some("io.digitallibrary.bookapi.JettyLauncher")
 assemblyMergeStrategy in assembly := {
   case "mime.types" => MergeStrategy.filterDistinctLines
   case PathList("org", "joda", "convert", "ToString.class")  => MergeStrategy.first
