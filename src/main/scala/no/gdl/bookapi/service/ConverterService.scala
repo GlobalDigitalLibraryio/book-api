@@ -166,7 +166,8 @@ trait ConverterService {
           toApiContributors(translation.contributors),
           toApiChapterSummary(translation.chapters, translation.bookId, translation.language),
           supportsTranslation = BookApiProperties.supportsTranslationFrom(translation.language) && translation.bookFormat.equals(BookFormat.HTML),
-          bookFormat = translation.bookFormat.toString
+          bookFormat = translation.bookFormat.toString,
+          source = book.source
         )
       }
 

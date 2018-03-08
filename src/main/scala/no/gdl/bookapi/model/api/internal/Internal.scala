@@ -12,7 +12,8 @@ import java.time.LocalDate
 
 
 case class NewBook(license: String,
-                   publisher: String)
+                   publisher: String,
+                   source: String)
 
 case class BookId(id: Long)
 case class TranslationId(id: Long)

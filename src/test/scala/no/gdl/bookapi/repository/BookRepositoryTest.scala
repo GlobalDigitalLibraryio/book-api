@@ -23,7 +23,7 @@ class BookRepositoryTest extends IntegrationSuite with TestEnvironment {
       val publisher = publisherRepository.add(Publisher(None, None, "Publisher Name"))
       val license = licenseRepository.add(License(None, None, "License Name", None, None))
 
-      val book = bookRepository.add(Book(None, None, publisher.id.get, license.id.get, publisher, license))
+      val book = bookRepository.add(Book(None, None, publisher.id.get, license.id.get, publisher, license, "storyweaver"))
 
       val withId = bookRepository.withId(book.id.get)
       withId.head.id should equal (book.id)
