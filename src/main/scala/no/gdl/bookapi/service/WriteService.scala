@@ -14,10 +14,9 @@ import com.typesafe.scalalogging.LazyLogging
 import io.digitallibrary.language.model.LanguageTag
 import io.digitallibrary.network.AuthUser
 import no.gdl.bookapi.controller.NewFeaturedContent
-import no.gdl.bookapi.integration.crowdin.BookMetaData
 import no.gdl.bookapi.model._
-import no.gdl.bookapi.model.api.{FeaturedContentId, NotFoundException, TranslateRequest}
 import no.gdl.bookapi.model.api.internal.{NewChapter, NewTranslation}
+import no.gdl.bookapi.model.api.{FeaturedContentId, NotFoundException, TranslateRequest}
 import no.gdl.bookapi.model.domain._
 import no.gdl.bookapi.repository._
 
@@ -46,7 +45,7 @@ trait WriteService {
 
   class WriteService extends LazyLogging {
     def updateTranslation(translationToUpdate: Translation) = {
-      translationRepository.update(translationToUpdate)
+      translationRepository.updateTranslation(translationToUpdate)
     }
 
     def addPersonFromAuthUser(): Person = {
@@ -126,7 +125,8 @@ trait WriteService {
                   publisherId = p.id.get,
                   licenseId = validLicense.id.get,
                   publisher = p,
-                  license = validLicense)
+                  license = validLicense,
+                  source = bookReplacement.source)
 
                 bookRepository.updateBook(existingBook)
 
@@ -154,15 +154,16 @@ trait WriteService {
           }
 
           persistedPublisher.flatMap(p => {
-            val newBook = Book(
+            val toAdd = Book(
               id = None,
               revision = None,
               publisherId = p.id.get,
               publisher = p,
               licenseId = validLicense.id.get,
-              license = validLicense)
+              license = validLicense,
+              source = newBook.source)
 
-            Try(bookRepository.add(newBook))
+            Try(bookRepository.add(toAdd))
 
           })
         }
@@ -313,7 +314,7 @@ trait WriteService {
               case (None, None) => None
             }
 
-            val translation = translationRepository.update(
+            val translation = translationRepository.updateTranslation(
               existing.copy(
                 categoryIds = persistedCategories.map(_.id.get),
                 eaId = optPersistedEA,
@@ -336,7 +337,8 @@ trait WriteService {
                 accessibilityApi = replacement.accessibilityApi,
                 accessibilityControl = replacement.accessibilityControl,
                 accessibilityFeature = replacement.accessibilityFeature,
-                accessibilityHazard = replacement.accessibilityHazard
+                accessibilityHazard = replacement.accessibilityHazard,
+                bookFormat = replacement.bookFormat
               )
             )
 

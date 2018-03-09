@@ -9,19 +9,20 @@
 package no.gdl.bookapi.controller
 
 import io.digitallibrary.language.model.LanguageTag
-import no.gdl.bookapi.model.api.Error
 import no.gdl.bookapi.model.api.internal.{NewBook, NewChapter, NewTranslation}
+import no.gdl.bookapi.model.api.{Error, ValidationException, ValidationMessage}
 import no.gdl.bookapi.service._
 import no.gdl.bookapi.service.search.{IndexBuilderService, IndexService}
+import org.scalatra.servlet.FileUploadSupport
 import org.scalatra.{Conflict, InternalServerError, NotFound, Ok}
 
 import scala.util.{Failure, Success}
 
 trait InternController {
-  this: WriteService with ReadService with ConverterService with ValidationService with FeedService with IndexBuilderService with IndexService =>
+  this: WriteService with ReadService with ConverterService with ValidationService with FeedService with PdfService with IndexBuilderService with IndexService =>
   val internController: InternController
 
-  class InternController extends GdlController {
+  class InternController extends GdlController with FileUploadSupport{
     post("/book/") {
       val newBook = extract[NewBook](request.body)
 
@@ -117,6 +118,16 @@ trait InternController {
       readService.translationWithExternalId(Some(externalId)) match {
         case Some(x) => x
         case None => NotFound(body = Error(Error.NOT_FOUND, s"No translation for book $bookId with external_id $externalId found"))
+      }
+    }
+
+    post("/translation/:translationid/pdf") {
+      val translationId = long("translationid")
+      val file = fileParams.getOrElse("file", throw new ValidationException(errors = Seq(ValidationMessage("file", "The request must contain a book file"))))
+
+      readService.uuidWithTranslationId(Some(translationId)) match {
+        case Some(uuid) => pdfService.uploadFromStream(file.getInputStream, uuid.uuid, file.contentType.get, file.size)
+        case None => NotFound(body = Error(Error.NOT_FOUND, s"No translation with id $translationId found"))
       }
     }
 

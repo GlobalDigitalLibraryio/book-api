@@ -18,7 +18,7 @@ import no.gdl.bookapi.controller.NewFeaturedContent
 import no.gdl.bookapi.integration.ImageApiClient
 import no.gdl.bookapi.integration.crowdin.CrowdinUtils
 import no.gdl.bookapi.model._
-import no.gdl.bookapi.model.api.internal.{NewChapter, NewEducationalAlignment, NewTranslatedChapter, NewTranslation}
+import no.gdl.bookapi.model.api.internal.{NewChapter, NewEducationalAlignment, NewTranslation}
 import no.gdl.bookapi.model.crowdin.CrowdinFile
 import no.gdl.bookapi.model.domain._
 import no.gdl.bookapi.{BookApiProperties, model}
@@ -85,7 +85,8 @@ trait ConverterService {
         newTranslation.educationalAlignment.map(toDomainEducationalAlignment),
         chapters = Seq(),
         contributors = Seq(),
-        categories = Seq()
+        categories = Seq(),
+        bookFormat = BookFormat.valueOfOrDefault(newTranslation.bookFormat)
       )
     }
 
@@ -164,7 +165,9 @@ trait ConverterService {
           translation.tags,
           toApiContributors(translation.contributors),
           toApiChapterSummary(translation.chapters, translation.bookId, translation.language),
-          supportsTranslation = BookApiProperties.supportsTranslationFrom(translation.language)
+          supportsTranslation = BookApiProperties.supportsTranslationFrom(translation.language) && translation.bookFormat.equals(BookFormat.HTML),
+          bookFormat = translation.bookFormat.toString,
+          source = book.source
         )
       }
 
@@ -212,9 +215,10 @@ trait ConverterService {
 
 
     def toApiDownloads(translation: domain.Translation): api.Downloads = {
-      api.Downloads(
-        epub = s"${BookApiProperties.CloudFrontBooks}/epub/${translation.language}/${translation.uuid}.epub", // TODO: #17 - Download EPub
-        pdf = s"${BookApiProperties.CloudFrontBooks}/pdf/${translation.language}/${translation.uuid}.pdf") // TODO: #17 - Download PDF
+      translation.bookFormat match {
+        case BookFormat.HTML => api.Downloads(epub = Some(s"${BookApiProperties.CloudFrontBooks}/epub/${translation.language}/${translation.uuid}.epub"), pdf = None)
+        case BookFormat.PDF => api.Downloads(pdf = Some(s"${BookApiProperties.CloudFrontBooks}/pdf/${translation.language}/${translation.uuid}.pdf"), epub = None)
+      }
     }
 
     def toApiCoverPhoto(imageIdOpt: Option[Long]): Option[api.CoverPhoto] = {

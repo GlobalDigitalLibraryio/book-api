@@ -37,7 +37,8 @@ trait BookRepository {
         val id = insert.into(Book).namedValues(
           b.revision -> startRevision,
           b.publisherId -> newBook.publisherId,
-          b.licenseId -> newBook.licenseId
+          b.licenseId -> newBook.licenseId,
+          b.source -> newBook.source
         ).toSQL
           .updateAndReturnGeneratedKey()
           .apply()
@@ -53,7 +54,8 @@ trait BookRepository {
         val count = update(Book).set(
           b.revision -> newRevision,
           b.publisherId -> book.publisherId,
-          b.licenseId -> book.licenseId
+          b.licenseId -> book.licenseId,
+          b.source -> book.source
         ).where
           .eq(b.id, book.id).and
           .eq(b.revision, book.revision).toSQL.update().apply()

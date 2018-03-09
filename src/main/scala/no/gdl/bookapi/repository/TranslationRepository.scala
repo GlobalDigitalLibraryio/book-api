@@ -248,73 +248,44 @@ trait TranslationRepository {
         binder = (stmt: PreparedStatement, idx: Int) => stmt.setArray(idx, stmt.getConnection.createArrayOf("text", translation.tags.asJava.toArray))
       )
 
-      val id =
-        sql"""
-              insert into ${Translation.table} (
-                ${t.revision},
-                ${t.bookId},
-                ${t.externalId},
-                ${t.uuid},
-                ${t.title},
-                ${t.about},
-                ${t.numPages},
-                ${t.language},
-                ${t.translatedFrom},
-                ${t.datePublished},
-                ${t.dateCreated},
-                ${t.dateArrived},
-                ${t.publishingStatus},
-                ${t.coverphoto},
-                ${t.isBasedOnUrl},
-                ${t.educationalUse},
-                ${t.educationalRole},
-                ${t.eaId},
-                ${t.timeRequired},
-                ${t.typicalAgeRange},
-                ${t.readingLevel},
-                ${t.interactivityType},
-                ${t.learningResourceType},
-                ${t.accessibilityApi},
-                ${t.accessibilityControl},
-                ${t.accessibilityFeature},
-                ${t.accessibilityHazard},
-                ${t.tags},
-                ${t.categoryIds})
-              values (
-               ${startRevision},
-               ${translation.bookId},
-               ${translation.externalId},
-               ${translation.uuid},
-               ${translation.title},
-               ${translation.about},
-               ${translation.numPages},
-               ${translation.language.toString},
-               ${translation.translatedFrom.map(_.toString)},
-               ${translation.datePublished},
-               ${translation.dateCreated},
-               ${translation.dateArrived},
-               ${translation.publishingStatus.toString},
-               ${translation.coverphoto},
-               ${translation.isBasedOnUrl},
-               ${translation.educationalUse},
-               ${translation.educationalRole},
-               ${translation.eaId},
-               ${translation.timeRequired},
-               ${translation.typicalAgeRange},
-               ${translation.readingLevel},
-               ${translation.interactivityType},
-               ${translation.learningResourceType},
-               ${translation.accessibilityApi},
-               ${translation.accessibilityControl},
-               ${translation.accessibilityFeature},
-               ${translation.accessibilityHazard},
-               ${tagBinder},
-               ${categoryBinder})""".updateAndReturnGeneratedKey().apply()
+      val id = insert.into(Translation)
+        .namedValues(
+          t.revision -> startRevision,
+          t.bookId -> translation.bookId,
+          t.externalId -> translation.externalId,
+          t.uuid -> translation.uuid,
+          t.title -> translation.title,
+          t.about -> translation.about,
+          t.numPages -> translation.numPages,
+          t.language -> translation.language.toString,
+          t.translatedFrom -> translation.translatedFrom.map(_.toString),
+          t.datePublished -> translation.datePublished,
+          t.dateCreated -> translation.dateCreated,
+          t.dateArrived -> translation.dateArrived,
+          t.publishingStatus -> translation.publishingStatus.toString,
+          t.coverphoto -> translation.coverphoto,
+          t.isBasedOnUrl -> translation.isBasedOnUrl,
+          t.educationalUse -> translation.educationalUse,
+          t.educationalRole -> translation.educationalRole,
+          t.eaId -> translation.eaId,
+          t.timeRequired -> translation.timeRequired,
+          t.typicalAgeRange -> translation.typicalAgeRange,
+          t.readingLevel -> translation.readingLevel,
+          t.interactivityType -> translation.interactivityType,
+          t.learningResourceType -> translation.learningResourceType,
+          t.accessibilityApi -> translation.accessibilityApi,
+          t.accessibilityControl -> translation.accessibilityControl,
+          t.accessibilityFeature -> translation.accessibilityFeature,
+          t.accessibilityHazard -> translation.accessibilityHazard,
+          t.bookFormat -> translation.bookFormat.toString,
+          t.tags -> tagBinder,
+          t.categoryIds -> categoryBinder
+        ).toSQL.updateAndReturnGeneratedKey().apply()
 
       translation.copy(id = Some(id), revision = Some(startRevision))
     }
 
-    def update(replacement: Translation)(implicit session: DBSession = AutoSession): Translation = {
+    def updateTranslation(replacement: Translation)(implicit session: DBSession = AutoSession): Translation = {
       import collection.JavaConverters._
 
       val t = Translation.column
@@ -330,38 +301,42 @@ trait TranslationRepository {
         binder = (stmt: PreparedStatement, idx: Int) => stmt.setArray(idx, stmt.getConnection.createArrayOf("text", replacement.tags.asJava.toArray))
       )
 
-      val count =
-        sql"""
-      update ${Translation.table} set
-        ${t.revision} = ${nextRevision},
-        ${t.title} = ${replacement.title},
-        ${t.about} = ${replacement.about},
-        ${t.numPages} = ${replacement.numPages},
-        ${t.language} = ${replacement.language.toString},
-        ${t.translatedFrom} = ${replacement.translatedFrom.map(_.toString)},
-        ${t.datePublished} = ${replacement.datePublished},
-        ${t.dateCreated} = ${replacement.dateCreated},
-        ${t.dateArrived} = ${replacement.dateArrived},
-        ${t.publishingStatus} = ${replacement.publishingStatus.toString},
-        ${t.coverphoto} = ${replacement.coverphoto},
-        ${t.isBasedOnUrl} = ${replacement.isBasedOnUrl},
-        ${t.educationalUse} = ${replacement.educationalUse},
-        ${t.educationalRole} = ${replacement.educationalRole},
-        ${t.eaId} = ${replacement.eaId},
-        ${t.timeRequired} = ${replacement.timeRequired},
-        ${t.typicalAgeRange} = ${replacement.typicalAgeRange},
-        ${t.readingLevel} = ${replacement.readingLevel},
-        ${t.interactivityType} = ${replacement.interactivityType},
-        ${t.learningResourceType} = ${replacement.learningResourceType},
-        ${t.accessibilityApi} = ${replacement.accessibilityApi},
-        ${t.accessibilityControl} = ${replacement.accessibilityControl},
-        ${t.accessibilityFeature} = ${replacement.accessibilityFeature},
-        ${t.accessibilityHazard} = ${replacement.accessibilityHazard},
-        ${t.tags} = ${tagBinder},
-        ${t.categoryIds} = ${categoryBinder}
-       where ${t.id} = ${replacement.id}
-       and ${t.revision} = ${replacement.revision}
-      """.update().apply()
+      val count = update(Translation)
+        .set(
+          t.revision -> nextRevision,
+          t.title -> replacement.title,
+          t.about -> replacement.about,
+          t.numPages -> replacement.numPages,
+          t.language -> replacement.language.toString,
+          t.translatedFrom -> replacement.translatedFrom.map(_.toString),
+          t.datePublished -> replacement.datePublished,
+          t.dateCreated -> replacement.dateCreated,
+          t.dateArrived -> replacement.dateArrived,
+          t.publishingStatus -> replacement.publishingStatus.toString,
+          t.coverphoto -> replacement.coverphoto,
+          t.isBasedOnUrl -> replacement.isBasedOnUrl,
+          t.educationalUse -> replacement.educationalUse,
+          t.educationalRole -> replacement.educationalRole,
+          t.eaId -> replacement.eaId,
+          t.timeRequired -> replacement.timeRequired,
+          t.typicalAgeRange -> replacement.typicalAgeRange,
+          t.readingLevel -> replacement.readingLevel,
+          t.interactivityType -> replacement.interactivityType,
+          t.learningResourceType -> replacement.learningResourceType,
+          t.accessibilityApi -> replacement.accessibilityApi,
+          t.accessibilityControl -> replacement.accessibilityControl,
+          t.accessibilityFeature -> replacement.accessibilityFeature,
+          t.accessibilityHazard -> replacement.accessibilityHazard,
+          t.bookFormat -> replacement.bookFormat.toString,
+          t.tags -> tagBinder,
+          t.categoryIds -> categoryBinder
+        )
+        .where
+        .eq(t.id, replacement.id)
+        .and
+        .eq(t.revision, replacement.revision)
+        .toSQL
+        .update().apply()
 
       if (count != 1) {
         throw new OptimisticLockException()

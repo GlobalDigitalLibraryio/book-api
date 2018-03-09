@@ -90,6 +90,13 @@ trait ReadService {
         .map(api.internal.TranslationId)
     }
 
+    def uuidWithTranslationId(translationId: Option[Long]): Option[api.internal.UUID] = {
+      translationId
+        .flatMap(translationRepository.withId)
+        .map(_.uuid)
+        .map(api.internal.UUID)
+    }
+
     def withExternalId(externalId: Option[String]): Option[api.Book] = {
       externalId.flatMap(translationRepository.withExternalId) match {
         case Some(translation) => converterService.toApiBook(

@@ -1,0 +1,1 @@
+ALTER TABLE translation ADD COLUMN book_format text NOT NULL DEFAULT 'HTML';

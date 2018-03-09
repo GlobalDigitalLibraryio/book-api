@@ -11,7 +11,7 @@ import java.text.SimpleDateFormat
 import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi._
 import no.gdl.bookapi.model.api._
-import no.gdl.bookapi.model.domain.{Paging, Sort}
+import no.gdl.bookapi.model.domain.{BookFormat, Paging, Sort}
 import org.json4s.native.Serialization._
 import org.json4s.{DefaultFormats, Formats}
 import org.mockito.ArgumentMatchers._
@@ -98,6 +98,26 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
       status should equal (200)
       val book = read[Book](body)
       book.uuid should equal (TestData.Api.DefaultBook.uuid)
+    }
+  }
+
+  test("that downloads in book is correct") {
+    when(readService.withIdAndLanguage(any[Long], any[LanguageTag])).thenReturn(Some(TestData.Api.DefaultBook))
+
+    get("/eng/1") {
+      status should equal (200)
+      val book = read[Book](body)
+      book.downloads.epub should be(Some("url-to-epub"))
+      book.downloads.pdf should be(None)
+    }
+
+    when(readService.withIdAndLanguage(any[Long], any[LanguageTag])).thenReturn(Some(TestData.Api.DefaultBook.copy(downloads = Downloads(None, Some("url-to-pdf")))))
+
+    get("/eng/1") {
+      status should equal (200)
+      val book = read[Book](body)
+      book.downloads.epub should be(None)
+      book.downloads.pdf should be(Some("url-to-pdf"))
     }
   }
 

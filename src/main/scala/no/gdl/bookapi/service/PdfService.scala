@@ -7,22 +7,44 @@
 
 package no.gdl.bookapi.service
 
-import java.io.InputStream
+import java.io.{ByteArrayInputStream, ByteArrayOutputStream, InputStream}
 
+import com.amazonaws.services.s3.model.{GetObjectRequest, ObjectMetadata, PutObjectRequest, S3Object}
 import com.openhtmltopdf.extend.FSSupplier
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder
 import com.typesafe.scalalogging.LazyLogging
 import io.digitallibrary.language.model.LanguageTag
-import no.gdl.bookapi.model.domain.PdfCss
+import no.gdl.bookapi.BookApiProperties
+import no.gdl.bookapi.integration.AmazonClient
+import no.gdl.bookapi.model.api.{NotFoundException, PdfStream}
+import no.gdl.bookapi.model.domain.{BookFormat, PdfCss}
 import no.gdl.bookapi.repository.{BookRepository, TranslationRepository}
+
+import scala.util.{Failure, Success, Try}
 
 
 trait PdfService {
-  this: TranslationRepository with BookRepository with ReadService =>
+  this: TranslationRepository with BookRepository with TranslationRepository with ReadService with AmazonClient =>
   val pdfService: PdfService
 
   class PdfService extends LazyLogging {
+
+    case class S3Pdf(s3Object: S3Object, fileName: String) extends PdfStream {
+      override def stream: InputStream = {
+        s3Object.getObjectContent
+      }
+    }
+
+    case class Pdf(pdfRendererBuilder: PdfRendererBuilder, fileName: String) extends PdfStream {
+      override def stream: InputStream = {
+        val out = new ByteArrayOutputStream()
+        pdfRendererBuilder.toStream(out).run()
+        new ByteArrayInputStream(out.toByteArray)
+      }
+    }
+
     case class FontDefinition(fontFile: String, fontName: String)
+
     class NotoFontSupplier(stream: InputStream) extends FSSupplier[InputStream] {
       override def supply(): InputStream = stream
     }
@@ -35,6 +57,20 @@ trait PdfService {
       "ben" -> FontDefinition("/NotoSansBengali-Regular.ttf", "Noto Sans Bengali"),
       "nep" -> FontDefinition("/NotoSansDevanagari-Regular.ttf", "Noto Sans Devanagari")
     )
+
+    def getPdf(language: LanguageTag, uuid: String): Option[PdfStream] = {
+      translationRepository.withUuId(uuid) match {
+        case Some(translation) => translation.bookFormat match {
+          case BookFormat.HTML =>
+            Some(Pdf(createPdf(language, uuid).get, s"${translation.title}.pdf"))
+          case BookFormat.PDF => getFromS3(uuid) match {
+            case Success(s3Object) => Some(S3Pdf(s3Object, s"${translation.title}.pdf"))
+            case Failure(_) => None
+          }
+        }
+        case _ => None
+      }
+    }
 
     def createPdf(language: LanguageTag, uuid: String): Option[PdfRendererBuilder] = {
       translationRepository.withUuId(uuid).map(translation => {
@@ -60,6 +96,21 @@ trait PdfService {
           builder.useFont(new NotoFontSupplier(getClass.getResourceAsStream(font.fontFile)), font.fontName)
         }
       })
+    }
+
+    def getFromS3(uuid: String): Try[S3Object] = {
+      Try(amazonClient.getObject(new GetObjectRequest(BookApiProperties.StorageName, s"$uuid.pdf"))) match {
+        case Success(success) => Success(success)
+        case Failure(_) => Failure(new NotFoundException(s"Pdf with name $uuid.pdf does not exist"))
+      }
+    }
+
+    def uploadFromStream(stream: InputStream, uuid: String, contentType: String, size: Long): Try[String] = {
+      val metadata = new ObjectMetadata()
+      metadata.setContentType(contentType)
+      metadata.setContentLength(size)
+
+      Try(amazonClient.putObject(new PutObjectRequest(BookApiProperties.StorageName, s"$uuid.pdf", stream, metadata))).map(_ => uuid)
     }
   }
 }

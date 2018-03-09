@@ -5,7 +5,7 @@ val Scalatraversion = "2.6.2"
 val ScalaLoggingVersion = "3.7.2"
 val Log4JVersion = "2.9.1"
 val Jettyversion = "9.2.10.v20150310"
-val AwsSdkversion = "1.11.46"
+val AwsSdkversion = "1.11.231"
 val ScalaTestVersion = "3.0.3"
 val MockitoVersion = "2.7.22"
 val Elastic4sVersion = "6.1.4"
@@ -53,6 +53,7 @@ lazy val book_api = (project in file(".")).
       "org.json4s"   %% "json4s-native" % "3.5.2",
       "org.scalikejdbc" %% "scalikejdbc" % "3.0.2",
       "org.postgresql" % "postgresql" % "9.4-1201-jdbc4",
+      "com.amazonaws" % "aws-java-sdk-s3" % AwsSdkversion,
       "org.flywaydb" % "flyway-core" % "4.0",
       "com.netaporter" %% "scala-uri" % "0.4.16",
       "org.scalatest" %% "scalatest" % ScalaTestVersion % "test",
@@ -101,7 +102,7 @@ dockerfile in docker := {
   val artifact = (assemblyOutputPath in assembly).value
   val artifactTargetPath = s"/app/${artifact.name}"
   new Dockerfile {
-    from("java")
+    from("openjdk:8-jre-alpine")
 
     add(artifact, artifactTargetPath)
     entryPoint("java", "-Dorg.scalatra.environment=production", "-jar", artifactTargetPath)

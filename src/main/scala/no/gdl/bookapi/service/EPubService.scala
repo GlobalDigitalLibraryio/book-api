@@ -13,7 +13,8 @@ import coza.opencollab.epub.creator.model.{Content, EpubBook, TocLink}
 import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.integration.ImageApiClient
 import no.gdl.bookapi.model._
-import no.gdl.bookapi.model.domain.{ContributorType, EPubChapter, EPubCss}
+import no.gdl.bookapi.model.api.NotFoundException
+import no.gdl.bookapi.model.domain.{BookFormat, ContributorType, EPubChapter, EPubCss}
 import no.gdl.bookapi.repository.{ChapterRepository, TranslationRepository}
 
 import scala.util.{Failure, Success, Try}
@@ -25,7 +26,11 @@ trait EPubService {
   class EPubService() extends LazyLogging {
     def createEPub(language: LanguageTag, uuid: String): Option[Try[EpubBook]] = {
       translationRepository.withUuId(uuid).map(translation =>
-        buildEPubFor(translation, chapterRepository.chaptersForBookIdAndLanguage(translation.bookId, language)))
+        translation.bookFormat match {
+          case BookFormat.HTML => buildEPubFor(translation, chapterRepository.chaptersForBookIdAndLanguage(translation.bookId, language))
+          case BookFormat.PDF => Failure(new NotFoundException(s"Book ${translation.title} is not an epub book."))
+        }
+      )
     }
 
     private def buildEPubFor(translation: domain.Translation, chapters: Seq[domain.Chapter]): Try[EpubBook] = {

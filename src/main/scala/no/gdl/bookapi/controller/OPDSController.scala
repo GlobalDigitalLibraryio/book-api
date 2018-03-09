@@ -164,8 +164,12 @@ trait OPDSController {
               <link href={feedEntry.book.coverPhoto.get.large} type="image/jpeg" rel="http://opds-spec.org/image"/>
               <link href={feedEntry.book.coverPhoto.get.small} type="image/png" rel="http://opds-spec.org/image/thumbnail"/>
             }}
-            <link href={feedEntry.book.downloads.epub} type="application/epub+zip" rel="http://opds-spec.org/acquisition/open-access"/>
-            <link href={feedEntry.book.downloads.pdf} type="application/pdf" rel="http://opds-spec.org/acquisition/open-access"/>
+            {if(feedEntry.book.downloads.epub.isDefined)
+              <link href={feedEntry.book.downloads.epub.get} type="application/epub+zip" rel="http://opds-spec.org/acquisition/open-access"/>
+            }
+            {if(feedEntry.book.downloads.pdf.isDefined)
+              <link href={feedEntry.book.downloads.pdf.get} type="application/pdf" rel="http://opds-spec.org/acquisition/open-access"/>
+            }
             {feedEntry.categories.sortBy(_.sortOrder).map(category =>
               <link href={category.url} rel="collection" title={category.title}/>
             )}

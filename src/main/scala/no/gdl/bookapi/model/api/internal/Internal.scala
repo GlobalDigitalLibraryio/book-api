@@ -12,11 +12,13 @@ import java.time.LocalDate
 
 
 case class NewBook(license: String,
-                   publisher: String)
+                   publisher: String,
+                   source: String)
 
 case class BookId(id: Long)
 case class TranslationId(id: Long)
 case class ChapterId(id: Long)
+case class UUID(uuid: String)
 
 case class NewPerson(name: String)
 
@@ -54,6 +56,7 @@ case class NewTranslation(externalId: Option[String],
                           accessibilityControl: Option[String],
                           accessibilityFeature: Option[String],
                           accessibilityHazard: Option[String],
+                          bookFormat: String,
                           contributors: Seq[NewContributor],
                           categories: Seq[NewCategory],
                           educationalAlignment: Option[NewEducationalAlignment])
