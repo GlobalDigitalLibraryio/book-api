@@ -188,6 +188,7 @@ trait ConverterService {
           translation.readingLevel,
           toApiCoverPhoto(translation.coverphoto),
           translation.dateArrived,
+          book.source,
           None,
           None
         )

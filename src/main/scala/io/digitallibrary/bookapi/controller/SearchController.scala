@@ -46,7 +46,8 @@ trait SearchController {
       headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
       queryParam[Option[Int]]("page-size").description("Return this many results per page."),
       queryParam[Option[Int]]("page").description("Return results for this page."),
-      queryParam[Option[String]]("query").description("Query to search for"))
+      queryParam[Option[String]]("query").description("Query to search for"),
+      queryParam[Option[String]]("source").description("Filter results by source"))
       responseMessages response500)
 
     private val searchBooksForLang = (apiOperation[api.SearchResult]("searchBooksForLang")
@@ -57,20 +58,33 @@ trait SearchController {
       pathParam[String]("lang").description("Desired language for books specified in BCP-47 format."),
       queryParam[Option[Int]]("page-size").description("Return this many results per page."),
       queryParam[Option[Int]]("page").description("Return results for this page."),
-      queryParam[Option[String]]("query").description("Query to search for"))
+      queryParam[Option[String]]("query").description("Query to search for"),
+      queryParam[Option[String]]("source").description("Filter results by source"))
       responseMessages response500)
 
     get("/", operation(searchBooks)) {
       val query = paramOrNone("query")
+      val source = paramOrNone("source")
       val sort = Sort.valueOf(paramOrNone("sort")).getOrElse(Sort.ByRelevance)
-      searchService.searchWithQuery(languageTag = LanguageTag(DefaultLanguage), query = query, paging = extractPageAndPageSize(), sort = sort)
+      searchService.searchWithQuery(
+        languageTag = LanguageTag(DefaultLanguage),
+        query = query,
+        source = source,
+        paging = extractPageAndPageSize(),
+        sort = sort)
     }
 
     get("/:lang/?", operation(searchBooksForLang)) {
       val query = paramOrNone("query")
+      val source = paramOrNone("source")
       val sort = Sort.valueOf(paramOrNone("sort")).getOrElse(Sort.ByRelevance)
 
-      searchService.searchWithQuery(LanguageTag(params("lang")), query = query, paging = extractPageAndPageSize(), sort = sort)
+      searchService.searchWithQuery(
+        languageTag = LanguageTag(params("lang")),
+        query = query,
+        source = source,
+        paging = extractPageAndPageSize(),
+        sort = sort)
     }
   }
 }
