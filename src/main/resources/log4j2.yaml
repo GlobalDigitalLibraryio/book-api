@@ -10,7 +10,7 @@ Configuration:
 
   Loggers:
     Logger:
-      name: "no.gdl"
+      name: "io.digitallibrary"
       level: info
       additivity: false
       AppenderRef:
