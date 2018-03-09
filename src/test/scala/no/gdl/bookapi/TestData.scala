@@ -55,7 +55,7 @@ object TestData {
       Some(Level1), Some(ageRangeDefault), None, None, None, Some(today), Some(yesterday), today, Seq(category1, category2), None, api.Downloads(Some(epub), None),
       Seq(), Seq(DefaultContributor), Seq(ChapterSummary1), supportsTranslation = true, bookFormat = BookFormat.HTML.toString, DefaultSource)
 
-    val DefaultBookHit = api.BookHit(1, "Title", "Description", norwegian_bokmal, Some("1"), None, today, Some("Title"), Some("Description"))
+    val DefaultBookHit = api.BookHit(1, "Title", "Description", norwegian_bokmal, Some("1"), None, today, DefaultSource, Some("Title"), Some("Description"))
 
     val BookInAmharic: api.BookHit = DefaultBookHit.copy(language = amharic)
 

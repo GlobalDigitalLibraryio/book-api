@@ -35,11 +35,11 @@ trait SearchService {
   class SearchService extends LazyLogging {
     implicit val formats: Formats = DefaultFormats + LocalDateSerializer
 
-    def searchWithQuery(languageTag: LanguageTag, query: Option[String], paging: Paging, sort: Sort.Value): SearchResult =
-      executeSearch(BoolQueryDefinition(), languageTag, query, None, paging, sort)
+    def searchWithQuery(languageTag: LanguageTag, query: Option[String], paging: Paging, sort: Sort.Value, source: Option[String] = None): SearchResult =
+      executeSearch(BoolQueryDefinition(), languageTag, query, None, paging, sort, source)
 
-    def searchWithLevel(languageTag: LanguageTag, readingLevel: Option[String], paging: Paging, sort: Sort.Value): SearchResult =
-      executeSearch(BoolQueryDefinition(), languageTag, None, readingLevel, paging, sort)
+    def searchWithLevel(languageTag: LanguageTag, readingLevel: Option[String], paging: Paging, sort: Sort.Value, source: Option[String] = None): SearchResult =
+      executeSearch(BoolQueryDefinition(), languageTag, None, readingLevel, paging, sort, source)
 
     def searchSimilar(languageTag: LanguageTag, bookId: Long, paging: Paging, sort: Sort.Value): SearchResult = {
       val translation = translationRepository.forBookIdAndLanguage(bookId, languageTag)
@@ -54,7 +54,7 @@ trait SearchService {
     }
 
     private def executeSearch(boolDefinition: BoolQueryDefinition, languageTag: LanguageTag, query: Option[String],
-                                              readingLevel: Option[String], paging: Paging, sort: Sort.Value): SearchResult = {
+                                              readingLevel: Option[String], paging: Paging, sort: Sort.Value, source: Option[String] = None): SearchResult = {
 
       val (startAt, numResults) = getStartAtAndNumResults(paging.page, paging.pageSize)
 
@@ -67,17 +67,17 @@ trait SearchService {
 
       val queryDefinition = query match {
         case None => boolDefinition
-        case Some(value) => boolDefinition.should(QueryStringQueryDefinition(value.toLowerCase).field("description",1.0).field("title",1.4))
+        case Some(value) => boolDefinition.must(QueryStringQueryDefinition(value.toLowerCase).field("description",1.0).field("title",1.4))
       }
 
-      val levelDefinition = readingLevel match {
-        case None => queryDefinition
-        case Some(level) => queryDefinition.filter(Seq(TermQueryDefinition("readingLevel", level)))
-      }
+      val levelFilter = readingLevel.map(TermQueryDefinition("readingLevel", _))
+      val sourceFilter = source.map(TermQueryDefinition("source", _))
+
+      val filteredSearch = queryDefinition.filter(Seq(levelFilter, sourceFilter).flatten)
 
       val search = searchWithType(indexAndTypes)
         .size(numResults).from(startAt)
-        .bool(levelDefinition)
+        .bool(filteredSearch)
         .sortBy(getSorting(sort))
         .highlighting(List(
           HighlightFieldDefinition("title", numOfFragments = Some(0)),

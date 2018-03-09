@@ -23,19 +23,25 @@ class SearchServiceIntegrationTest extends UnitSuite with TestEnvironment {
   override val esClient: E4sClient = E4sClient(HttpClient("http://localhost:9200")) // Requires empty running elasticsearch with icu-plugin
 
   override def beforeAll(): Unit = {
+
     when(bookRepository.withId(1)).thenReturn(Some(TestData.Domain.DefaultBook))
-    when(converterService.toApiBookHit(Some(TestData.Domain.DefaultTranslation), Some(TestData.Domain.DefaultBook)))
-      .thenReturn(Some(TestData.Api.DefaultBookHit))
+
+    when(converterService.toApiBookHit(Some(TestData.Domain.DefaultTranslation), Some(TestData.Domain.DefaultBook))).thenReturn(Some(TestData.Api.DefaultBookHit))
     indexService.indexDocument(TestData.Domain.DefaultTranslation)
 
     val additionalTranslation = TestData.Domain.DefaultTranslation.copy(id = Some(2), title = "Different")
-    when(converterService.toApiBookHit(Some(additionalTranslation), Some(TestData.Domain.DefaultBook)))
-      .thenReturn(Some(TestData.Api.DefaultBookHit.copy(id = 2, title = "Different title", description = "Title")))
+    when(converterService.toApiBookHit(Some(additionalTranslation), Some(TestData.Domain.DefaultBook))).thenReturn(Some(TestData.Api.DefaultBookHit.copy(id = 2, title = "Different title", description = "Title")))
     indexService.indexDocument(additionalTranslation)
 
-    when(converterService.toApiBookHit(Some(TestData.Domain.AmharicTranslation), Some(TestData.Domain.DefaultBook)))
-      .thenReturn(Some(TestData.Api.BookInAmharic))
+    when(converterService.toApiBookHit(Some(TestData.Domain.AmharicTranslation), Some(TestData.Domain.DefaultBook))).thenReturn(Some(TestData.Api.BookInAmharic))
     indexService.indexDocument(TestData.Domain.AmharicTranslation)
+
+    val bookWithDifferentSource = TestData.Domain.DefaultBook.copy(source = "some_unknown_source")
+    val translationWithDifferentSource = TestData.Domain.DefaultTranslation.copy(id = Some(3), bookId = 2, title = "Some stuff here...", language = LanguageTag("eng"))
+    val bookHitWithDifferentSource = TestData.Api.DefaultBookHit.copy(id = 3, title = "Some stuff here...", source = "some_unknown_source", language = TestData.Api.english)
+    when(bookRepository.withId(2)).thenReturn(Some(bookWithDifferentSource))
+    when(converterService.toApiBookHit(Some(translationWithDifferentSource), Some(bookWithDifferentSource))).thenReturn(Some(bookHitWithDifferentSource))
+    indexService.indexDocument(translationWithDifferentSource)
   }
 
   test("that search for unknown language gives empty search result") {
@@ -102,5 +108,23 @@ class SearchServiceIntegrationTest extends UnitSuite with TestEnvironment {
     when(translationRepository.forBookIdAndLanguage(1, LanguageTag("aaa"))).thenReturn(Some(TestData.Domain.DefaultTranslation))
     val searchResult = searchService.searchSimilar(LanguageTag("aaa"), 1, Paging(1,10), Sort.ByIdAsc)
     searchResult.totalCount should be(0)
+  }
+
+  test("that filtering on source only returns book with given source") {
+    when(translationRepository.forBookIdAndLanguage(3, LanguageTag("eng"))).thenReturn(Some(TestData.Domain.DefaultTranslation))
+    val searchResult = searchService.searchWithQuery(LanguageTag("eng"), None, Paging(1,10), Sort.ByIdAsc, source = Some("some_unknown_source"))
+    searchResult.totalCount should be (1)
+  }
+
+  test("that filtering on source and combined search only gives hit on correct book") {
+    when(translationRepository.forBookIdAndLanguage(2, LanguageTag("nob"))).thenReturn(Some(TestData.Domain.DefaultTranslation))
+    val searchResult = searchService.searchWithQuery(LanguageTag("nob"), Some("different"), Paging(1,10), Sort.ByIdAsc, source = Some("storyweaver"))
+    searchResult.totalCount should be (1)
+  }
+
+  test("that filtering on source and combined search gives no hits if source is incorrect") {
+    when(translationRepository.forBookIdAndLanguage(2, LanguageTag("nob"))).thenReturn(Some(TestData.Domain.DefaultTranslation))
+    val searchResult = searchService.searchWithQuery(LanguageTag("nob"), Some("different"), Paging(1,10), Sort.ByIdAsc, source = Some("bookdash"))
+    searchResult.totalCount should be (0)
   }
 }
