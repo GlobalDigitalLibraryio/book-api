@@ -1,6 +1,6 @@
 /*
  * Part of GDL book_api.
- * Copyright (C) 2017 Global Digital Library
+ * Copyright (C) 2018 Global Digital Library
  *
  * See LICENSE
  */
@@ -19,7 +19,7 @@ trait CategoriesController {
   val categoriesController: CategoriesController
 
   class CategoriesController(implicit val swagger: Swagger) extends GdlController with SwaggerSupport {
-    protected val applicationDescription = "TODO"
+    protected val applicationDescription = "API for getting a hierarchy of categories and reading levels of published books."
 
     val defaultLanguage = LanguageTag(BookApiProperties.DefaultLanguage)
 

@@ -1,6 +1,6 @@
 /*
  * Part of GDL book_api.
- * Copyright (C) 2017 Global Digital Library
+ * Copyright (C) 2018 Global Digital Library
  *
  * See LICENSE
  */
