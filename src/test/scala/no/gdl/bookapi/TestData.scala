@@ -13,6 +13,7 @@ import java.util.UUID
 import io.digitallibrary.language.model.LanguageTag
 import no.gdl.bookapi.integration.crowdin.{BookMetaData, TranslatedChapter}
 import no.gdl.bookapi.model._
+import no.gdl.bookapi.model.api.Category
 import no.gdl.bookapi.model.api.internal.NewTranslatedChapter
 import no.gdl.bookapi.model.domain.{BookFormat, ChapterType, ContributorType}
 
@@ -55,7 +56,18 @@ object TestData {
       Some(Level1), Some(ageRangeDefault), None, None, None, Some(today), Some(yesterday), today, Seq(category1, category2), None, api.Downloads(Some(epub), None),
       Seq(), Seq(DefaultContributor), Seq(ChapterSummary1), supportsTranslation = true, bookFormat = BookFormat.HTML.toString, DefaultSource)
 
-    val DefaultBookHit = api.BookHit(1, "Title", "Description", norwegian_bokmal, Some("1"), None, today, Some("Title"), Some("Description"))
+    val DefaultBookHit = api.BookHit(
+      id = 1,
+      title = "Title",
+      description = "Description",
+      language = norwegian_bokmal,
+      readingLevel = Some("1"),
+      categories = Seq(
+        Category(1, 1, "some-category")),
+      coverPhoto = None,
+      dateArrived = today,
+      highlightTitle = Some("Title"),
+      highlightDescription = Some("Description"))
 
     val BookInAmharic: api.BookHit = DefaultBookHit.copy(language = amharic)
 

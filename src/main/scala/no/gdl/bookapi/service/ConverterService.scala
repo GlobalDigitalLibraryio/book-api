@@ -181,15 +181,16 @@ trait ConverterService {
     def toApiBookHit(translation: Option[domain.Translation], book: Option[domain.Book]): Option[api.BookHit] = {
       def toApiBookHitInternal(translation: domain.Translation, book: domain.Book): api.BookHit = {
         model.api.BookHit(
-          book.id.get,
-          translation.title,
-          translation.about,
-          toApiLanguage(translation.language),
-          translation.readingLevel,
-          toApiCoverPhoto(translation.coverphoto),
-          translation.dateArrived,
-          None,
-          None
+          id = book.id.get,
+          title = translation.title,
+          description = translation.about,
+          language = toApiLanguage(translation.language),
+          readingLevel = translation.readingLevel,
+          categories = toApiCategories(translation.categories),
+          coverPhoto = toApiCoverPhoto(translation.coverphoto),
+          dateArrived = translation.dateArrived,
+          highlightTitle = None,
+          highlightDescription = None
         )
       }
 

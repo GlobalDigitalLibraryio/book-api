@@ -43,7 +43,7 @@ case class Publisher(@(ApiModelProperty@field)(description = "Id of the publishe
                      @(ApiModelProperty@field)(description = "The revision of the publisher") revision: Int,
                      @(ApiModelProperty@field)(description = "Name of the publisher") name: String)
 
-@ApiModel(description = "Information about a category of a current book")
+@ApiModel(description = "Information about a category of a book")
 case class Category(@(ApiModelProperty@field)(description = "Id for the category") id: Long,
                     @(ApiModelProperty@field)(description = "The revision of the category") revision: Int,
                     @(ApiModelProperty@field)(description = "Name of the category") name: String)
@@ -101,6 +101,7 @@ case class BookHit(@(ApiModelProperty@field)(description = "The id of the book")
                    @(ApiModelProperty@field)(description = "Description of the book") description: String,
                    @(ApiModelProperty@field)(description = "Current language") language: Language,
                    @(ApiModelProperty@field)(description = "Information about reading level") readingLevel: Option[String],
+                   @(ApiModelProperty@field)(description = "Information about categories") categories: Seq[Category],
                    @(ApiModelProperty@field)(description = "Cover Photo information") coverPhoto: Option[CoverPhoto],
                    @(ApiModelProperty@field)(description = "The date when this book arrived to the Global Digital Library (iso-format)") dateArrived: LocalDate,
                    @(ApiModelProperty@field)(description = "The highlighted title of the book") highlightTitle: Option[String],
