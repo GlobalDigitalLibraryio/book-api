@@ -13,6 +13,7 @@ import no.gdl.bookapi.service.ReadService
 import org.scalatra.swagger.{ResponseMessage, Swagger, SwaggerSupport}
 
 
+// TODO #221 Remove this when no longer used
 trait LevelController {
   this: ReadService =>
   val levelController: LevelController

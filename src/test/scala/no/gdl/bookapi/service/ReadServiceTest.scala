@@ -8,10 +8,9 @@
 package no.gdl.bookapi.service
 
 import io.digitallibrary.language.model.LanguageTag
-import no.gdl.bookapi.model.domain.{PublishingStatus, SearchResult, Sort}
+import no.gdl.bookapi.model.domain.PublishingStatus
 import no.gdl.bookapi.{TestData, TestEnvironment, UnitSuite}
 import org.mockito.Mockito._
-import org.mockito.Matchers._
 
 class ReadServiceTest extends UnitSuite with TestEnvironment {
   override val readService = new ReadService
@@ -22,5 +21,11 @@ class ReadServiceTest extends UnitSuite with TestEnvironment {
     when(converterService.toApiLanguage(LanguageTag(TestData.LanguageCodeEnglish))).thenReturn(TestData.Api.english)
 
     readService.listAvailablePublishedLanguages should equal(Seq(TestData.Api.amharic, TestData.Api.english))
+  }
+
+  test("that listAvailablePublishedCategoriesForLanguage creates a map from categories to reading levels") {
+    when(translationRepository.allAvailableCategoriesAndReadingLevelsWithStatus(PublishingStatus.PUBLISHED, LanguageTag(TestData.LanguageCodeEnglish)))
+      .thenReturn(Seq(("category1", "level1"), ("category1", "level3"), ("category2", "level1")))
+    readService.listAvailablePublishedCategoriesForLanguage(LanguageTag(TestData.LanguageCodeEnglish)) should equal(Map("category2" -> List("level1"), "category1" -> List("level1", "level3")))
   }
 }
