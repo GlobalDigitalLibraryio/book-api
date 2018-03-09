@@ -35,7 +35,7 @@ trait RepositoryTestHelpers {
                         categoryName: Option[String] = None)(implicit session: DBSession = AutoSession): Translation = {
     val category: Category = categoryName match {
       case Some(name) => categoryRepository.withName(name).getOrElse(categoryRepository.add(Category(None, None, name)))
-      case None => categoryRepository.add(Category(None, None, "some-category"))
+      case None => categoryRepository.withName("some-category").getOrElse(categoryRepository.add(Category(None, None, "some-category")))
     }
 
     val translationDef = Translation(
