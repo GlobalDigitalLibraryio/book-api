@@ -35,11 +35,11 @@ trait SearchService {
   class SearchService extends LazyLogging {
     implicit val formats: Formats = DefaultFormats + LocalDateSerializer
 
-    def searchWithQuery(languageTag: LanguageTag, query: Option[String], paging: Paging, sort: Sort.Value, source: Option[String] = None): SearchResult =
-      executeSearch(BoolQueryDefinition(), languageTag, query, None, paging, sort, source)
+    def searchWithQuery(languageTag: LanguageTag, query: Option[String], source: Option[String], paging: Paging, sort: Sort.Value): SearchResult =
+      executeSearch(BoolQueryDefinition(), languageTag, query, None, source, paging, sort)
 
-    def searchWithLevel(languageTag: LanguageTag, readingLevel: Option[String], paging: Paging, sort: Sort.Value, source: Option[String] = None): SearchResult =
-      executeSearch(BoolQueryDefinition(), languageTag, None, readingLevel, paging, sort, source)
+    def searchWithLevel(languageTag: LanguageTag, readingLevel: Option[String], source: Option[String], paging: Paging, sort: Sort.Value): SearchResult =
+      executeSearch(BoolQueryDefinition(), languageTag, None, readingLevel, source, paging, sort)
 
     def searchSimilar(languageTag: LanguageTag, bookId: Long, paging: Paging, sort: Sort.Value): SearchResult = {
       val translation = translationRepository.forBookIdAndLanguage(bookId, languageTag)
@@ -49,12 +49,12 @@ trait SearchService {
           val moreLikeThisDefinition = MoreLikeThisQueryDefinition(Seq("readingLevel","language"),
             likeDocs = Seq(MoreLikeThisItem(BookApiProperties.searchIndex(languageTag), BookApiProperties.SearchDocument, trans.id.get.toString)),
             minDocFreq = Some(1), minTermFreq = Some(1), minShouldMatch = Some("100%"))
-          executeSearch(BoolQueryDefinition().should(moreLikeThisDefinition), languageTag, None, None, paging, sort)
+          executeSearch(BoolQueryDefinition().should(moreLikeThisDefinition), languageTag, None, None, None, paging, sort)
       }
     }
 
     private def executeSearch(boolDefinition: BoolQueryDefinition, languageTag: LanguageTag, query: Option[String],
-                                              readingLevel: Option[String], paging: Paging, sort: Sort.Value, source: Option[String] = None): SearchResult = {
+                                              readingLevel: Option[String], source: Option[String], paging: Paging, sort: Sort.Value): SearchResult = {
 
       val (startAt, numResults) = getStartAtAndNumResults(paging.page, paging.pageSize)
 
