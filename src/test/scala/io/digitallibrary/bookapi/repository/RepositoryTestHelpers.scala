@@ -22,7 +22,7 @@ trait RepositoryTestHelpers {
     val publisher = publisherRepository.add(Publisher(None, None, "Publisher Name"))
     val license = licenseRepository.add(License(None, None, "License Name", None, None))
 
-    bookRepository.add(Book(None, None, publisher.id.get, license.id.get, publisher, license))
+    bookRepository.add(Book(None, None, publisher.id.get, license.id.get, publisher, license, "storyweaver"))
   }
 
   def addTranslationDef(externalId: String,
