@@ -31,8 +31,12 @@ trait RepositoryTestHelpers {
                         language: LanguageTag,
                         readingLevel: Option[String] = None,
                         dateArrived: Option[LocalDate] = None,
-                        status: PublishingStatus.Value = PublishingStatus.PUBLISHED)(implicit session: DBSession = AutoSession): Translation = {
-    val cat1 = categoryRepository.add(Category(None, None, "some-category"))
+                        status: PublishingStatus.Value = PublishingStatus.PUBLISHED,
+                        categoryName: Option[String] = None)(implicit session: DBSession = AutoSession): Translation = {
+    val category: Category = categoryName match {
+      case Some(name) => categoryRepository.withName(name).getOrElse(categoryRepository.add(Category(None, None, name)))
+      case None => categoryRepository.withName("some-category").getOrElse(categoryRepository.add(Category(None, None, "some-category")))
+    }
 
     val translationDef = Translation(
       id = None,
@@ -49,7 +53,7 @@ trait RepositoryTestHelpers {
       dateCreated = Some(LocalDate.now()),
       dateArrived = dateArrived.getOrElse(LocalDate.now()),
       publishingStatus = status,
-      categoryIds = Seq(cat1.id.get),
+      categoryIds = Seq(category.id.get),
       coverphoto = None,
       tags = Seq("tag1", "tag2"),
       isBasedOnUrl = None,
@@ -68,7 +72,7 @@ trait RepositoryTestHelpers {
       educationalAlignment = None,
       chapters = Seq(),
       contributors = Seq(),
-      categories = Seq(cat1),
+      categories = Seq(category),
       bookFormat = BookFormat.HTML)
 
     translationRepository.add(translationDef)

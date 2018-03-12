@@ -314,6 +314,29 @@ class TranslationRepositoryTest extends IntegrationSuite with TestEnvironment wi
     }
   }
 
+  test("that allAvailableCategoriesAndReadingLevelsWithStatus returns a list of tuples, containing category and reading level") {
+    withRollback { implicit session =>
+      val book1 = addBookDef()
+      val book2 = addBookDef()
+      val book3 = addBookDef()
+      val book4 = addBookDef()
+      val book5 = addBookDef()
+
+      addTranslationDef(categoryName = Some("category1"), externalId = "ext1", title = "a", bookId = book1.id.get, language = LanguageTag("xho"), readingLevel = Some("level1"), dateArrived = Some(LocalDate.now()), status = PublishingStatus.UNLISTED)
+      addTranslationDef(categoryName = Some("category1"), externalId = "ext2", title = "b", bookId = book2.id.get, language = LanguageTag("xho"), readingLevel = Some("level2"), dateArrived = Some(LocalDate.now()), status = PublishingStatus.PUBLISHED)
+      addTranslationDef(categoryName = Some("category2"), externalId = "ext3", title = "c", bookId = book3.id.get, language = LanguageTag("xho"), readingLevel = Some("level3"), dateArrived = Some(LocalDate.now()), status = PublishingStatus.PUBLISHED)
+      addTranslationDef(categoryName = Some("category1"), externalId = "ext4", title = "d", bookId = book4.id.get, language = LanguageTag("xho"), readingLevel = Some("level3"), dateArrived = Some(LocalDate.now()), status = PublishingStatus.PUBLISHED)
+      addTranslationDef(categoryName = Some("category3"), externalId = "ext5", title = "e", bookId = book5.id.get, language = LanguageTag("eng"), readingLevel = Some("level1"), dateArrived = Some(LocalDate.now()), status = PublishingStatus.PUBLISHED)
+
+      val result = translationRepository.allAvailableCategoriesAndReadingLevelsWithStatus(PublishingStatus.PUBLISHED, LanguageTag("xho"))
+      result.toSet should equal (Set(
+        ("category1", "level2"),
+        ("category2", "level3"),
+        ("category1", "level3")
+      ))
+    }
+  }
+
   test("that translations are fetched correct") {
     withRollback { implicit session =>
       val book1 = addBookDef()
