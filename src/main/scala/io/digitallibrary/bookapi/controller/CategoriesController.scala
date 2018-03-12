@@ -5,12 +5,12 @@
  * See LICENSE
  */
 
-package no.gdl.bookapi.controller
+package io.digitallibrary.bookapi.controller
 
+import io.digitallibrary.bookapi.BookApiProperties
+import io.digitallibrary.bookapi.service.ReadService
+import io.digitallibrary.bookapi.model.api
 import io.digitallibrary.language.model.LanguageTag
-import no.gdl.bookapi.BookApiProperties
-import no.gdl.bookapi.model.api
-import no.gdl.bookapi.service.ReadService
 import org.scalatra.swagger.{ResponseMessage, Swagger, SwaggerSupport}
 
 

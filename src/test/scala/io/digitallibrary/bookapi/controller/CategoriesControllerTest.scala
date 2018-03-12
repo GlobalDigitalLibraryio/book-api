@@ -5,10 +5,10 @@
  * See LICENSE
  */
 
-package no.gdl.bookapi.controller
+package io.digitallibrary.bookapi.controller
 
+import io.digitallibrary.bookapi.{BookSwagger, TestEnvironment, UnitSuite}
 import io.digitallibrary.language.model.LanguageTag
-import no.gdl.bookapi.{BookSwagger, TestEnvironment, UnitSuite}
 import org.mockito.Mockito.{verify, when}
 import org.scalatra.test.scalatest.ScalatraFunSuite
 
