@@ -84,6 +84,7 @@ object BookApiProperties extends LazyLogging {
   lazy val MetaSchema = prop(PropertyKeys.MetaSchemaKey)
   val MetaInitialConnections = 3
   val MetaMaxConnections = 20
+  lazy val DBConnectionUrl = s"jdbc:postgresql://$MetaServer:$MetaPort/$MetaResource"
   val CorrelationIdKey = "correlationID"
   val CorrelationIdHeader = "X-Correlation-ID"
 

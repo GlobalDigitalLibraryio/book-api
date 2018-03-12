@@ -12,7 +12,7 @@ import com.amazonaws.ClientConfiguration
 import com.amazonaws.client.builder.AwsClientBuilder
 import com.amazonaws.regions.Regions
 import com.amazonaws.services.s3.{AmazonS3, AmazonS3ClientBuilder}
-import io.digitallibrary.network.GdlClient
+import com.zaxxer.hikari.HikariDataSource
 import io.digitallibrary.bookapi.controller._
 import io.digitallibrary.bookapi.integration._
 import io.digitallibrary.bookapi.integration.crowdin.CrowdinClientBuilder
@@ -20,7 +20,7 @@ import io.digitallibrary.bookapi.repository._
 import io.digitallibrary.bookapi.service._
 import io.digitallibrary.bookapi.service.search.{IndexBuilderService, IndexService, SearchService}
 import io.digitallibrary.bookapi.service.translation.{MergeService, SupportedLanguageService, TranslationDbService, TranslationService}
-import org.postgresql.ds.PGPoolingDataSource
+import io.digitallibrary.network.GdlClient
 import scalikejdbc.{ConnectionPool, DataSourceConnectionPool}
 
 object ComponentRegistry
@@ -74,15 +74,12 @@ object ComponentRegistry
 {
   implicit val swagger = new BookSwagger
 
-  lazy val dataSource = new PGPoolingDataSource()
-  dataSource.setUser(BookApiProperties.MetaUserName)
+  lazy val dataSource = new HikariDataSource()
+  dataSource.setJdbcUrl(BookApiProperties.DBConnectionUrl)
+  dataSource.setUsername(BookApiProperties.MetaUserName)
   dataSource.setPassword(BookApiProperties.MetaPassword)
-  dataSource.setDatabaseName(BookApiProperties.MetaResource)
-  dataSource.setServerName(BookApiProperties.MetaServer)
-  dataSource.setPortNumber(BookApiProperties.MetaPort)
-  dataSource.setInitialConnections(BookApiProperties.MetaInitialConnections)
-  dataSource.setMaxConnections(BookApiProperties.MetaMaxConnections)
-  dataSource.setCurrentSchema(BookApiProperties.MetaSchema)
+  dataSource.setMaximumPoolSize(BookApiProperties.MetaMaxConnections)
+  dataSource.setSchema(BookApiProperties.MetaSchema)
   ConnectionPool.singleton(new DataSourceConnectionPool(dataSource))
 
   val amazonClient: AmazonS3 = {
