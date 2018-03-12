@@ -132,8 +132,9 @@ trait FeedService {
     def allEntries(language: LanguageTag, paging: Paging): (PagingStatus, Seq[FeedEntry]) = {
 
       val searchResult = {
-        searchService.searchWithLevel(
+        searchService.searchWithCategoryAndLevel(
           languageTag = language,
+          category = None,
           readingLevel = None,
           source = None,
           paging = paging,
@@ -151,8 +152,9 @@ trait FeedService {
     }
 
     def entriesForLanguageAndLevel(language: LanguageTag, level: String, paging: Paging): (PagingStatus, Seq[FeedEntry]) = {
-      val searchResult = searchService.searchWithLevel(
+      val searchResult = searchService.searchWithCategoryAndLevel(
         languageTag = language,
+        category = None,
         readingLevel = Some(level),
         source = None,
         paging = paging,
