@@ -26,7 +26,7 @@ trait CategoriesController {
     registerModel[api.Error]
     val response500 = ResponseMessage(500, "Unknown error", Some("Error"))
 
-    private val getCategoriesForLanguage = (apiOperation[Map[String, Seq[String]]]("getCategoriesForLanguage")
+    private val getCategoriesForLanguage = (apiOperation[Map[String, Set[String]]]("getCategoriesForLanguage")
       summary "Returns a hierarchy of categories and reading levels of books available in given language"
       description "Returns a hierarchy of categories and reading levels of books available in given language"
       parameters(

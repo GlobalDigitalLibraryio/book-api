@@ -29,7 +29,7 @@ class CategoriesControllerTest extends UnitSuite with TestEnvironment with Scala
   }
 
   test("that /eng returns 200 ok with empty result set for language with no books") {
-    when(readService.listAvailablePublishedCategoriesForLanguage(LanguageTag("eng"))).thenReturn(Map.empty[String, Seq[String]])
+    when(readService.listAvailablePublishedCategoriesForLanguage(LanguageTag("eng"))).thenReturn(Map.empty[String, Set[String]])
     get("/eng") {
       status should equal(200)
       body should equal("{}")
