@@ -130,52 +130,78 @@ trait ConverterService {
       chapter.title,
       s"${Domain}${BookApiProperties.ApiPath}/${language.toString}/${bookId}/chapters/${chapter.id.get}")
 
-    def toApiChapter(chapter: domain.Chapter): api.Chapter = api.Chapter(
-      chapter.id.get,
-      chapter.revision.get,
-      chapter.seqNo,
-      chapter.title,
-      contentConverter.toApiContent(chapter.content))
+    def toApiChapter(chapter: domain.Chapter, convertContent: Boolean = true): api.Chapter = {
+      val chaptercontent = if (convertContent) contentConverter.toApiContent(chapter.content) else chapter.content
+      api.Chapter(
+        chapter.id.get,
+        chapter.revision.get,
+        chapter.seqNo,
+        chapter.title,
+        chaptercontent)
+    }
 
-    def toApiBook(translation: Option[domain.Translation], availableLanguages: Seq[LanguageTag], book: Option[domain.Book]): Option[api.Book] = {
-      def toApiBookInternal(translation: domain.Translation, book: domain.Book, availableLanguages: Seq[LanguageTag]): api.Book = {
-        model.api.Book(
-          book.id.get,
-          book.revision.get,
-          translation.externalId,
-          translation.uuid,
-          translation.title,
-          translation.about,
-          translation.translatedFrom.map(toApiLanguage),
-          toApiLanguage(translation.language),
-          availableLanguages.map(toApiLanguage).sortBy(_.name),
-          toApiLicense(book.license),
-          toApiPublisher(book.publisher),
-          translation.readingLevel,
-          translation.typicalAgeRange,
-          translation.educationalUse,
-          translation.educationalRole,
-          translation.timeRequired,
-          translation.datePublished,
-          translation.dateCreated,
-          translation.dateArrived,
-          toApiCategories(translation.categories),
-          toApiCoverPhoto(translation.coverphoto),
-          toApiDownloads(translation),
-          translation.tags,
-          toApiContributors(translation.contributors),
-          toApiChapterSummary(translation.chapters, translation.bookId, translation.language),
+    def toInternalApiBook(translation: domain.Translation, availableLanguages: Seq[LanguageTag], book: domain.Book): api.internal.Book = {
+        model.api.internal.Book(
+          id = book.id.get,
+          revision = book.revision.get,
+          externalId = translation.externalId,
+          uuid = translation.uuid,
+          title = translation.title,
+          description = translation.about,
+          translatedFrom = translation.translatedFrom.map(toApiLanguage),
+          language = toApiLanguage(translation.language),
+          availableLanguages = availableLanguages.map(toApiLanguage).sortBy(_.name),
+          license = toApiLicense(book.license),
+          publisher = toApiPublisher(book.publisher),
+          readingLevel = translation.readingLevel,
+          typicalAgeRange = translation.typicalAgeRange,
+          educationalUse = translation.educationalUse,
+          educationalRole = translation.educationalRole,
+          timeRequired = translation.timeRequired,
+          datePublished = translation.datePublished,
+          dateCreated = translation.dateCreated,
+          dateArrived = translation.dateArrived,
+          categories = toApiCategories(translation.categories),
+          coverPhoto = toApiInternalCoverPhoto(translation.coverphoto),
+          downloads = toApiDownloads(translation),
+          tags = translation.tags,
+          contributors = toApiContributors(translation.contributors),
+          chapters = translation.chapters.map(toApiChapter(_, convertContent = false)),
           supportsTranslation = BookApiProperties.supportsTranslationFrom(translation.language) && translation.bookFormat.equals(BookFormat.HTML),
           bookFormat = translation.bookFormat.toString,
-          source = book.source
-        )
-      }
+          source = book.source)
+    }
 
-      for {
-        b <- book
-        t <- translation
-        api <- Some(toApiBookInternal(t, b, availableLanguages))
-      } yield api
+    def toApiBook(translation: domain.Translation, availableLanguages: Seq[LanguageTag], book: domain.Book): api.Book = {
+        model.api.Book(
+          id = book.id.get,
+          revision = book.revision.get,
+          externalId = translation.externalId,
+          uuid = translation.uuid,
+          title = translation.title,
+          description = translation.about,
+          translatedFrom = translation.translatedFrom.map(toApiLanguage),
+          language = toApiLanguage(translation.language),
+          availableLanguages = availableLanguages.map(toApiLanguage).sortBy(_.name),
+          license = toApiLicense(book.license),
+          publisher = toApiPublisher(book.publisher),
+          readingLevel = translation.readingLevel,
+          typicalAgeRange = translation.typicalAgeRange,
+          educationalUse = translation.educationalUse,
+          educationalRole = translation.educationalRole,
+          timeRequired = translation.timeRequired,
+          datePublished = translation.datePublished,
+          dateCreated = translation.dateCreated,
+          dateArrived = translation.dateArrived,
+          categories = toApiCategories(translation.categories),
+          coverPhoto = toApiCoverPhoto(translation.coverphoto),
+          downloads = toApiDownloads(translation),
+          tags = translation.tags,
+          contributors = toApiContributors(translation.contributors),
+          chapters = toApiChapterSummary(translation.chapters, translation.bookId, translation.language),
+          supportsTranslation = BookApiProperties.supportsTranslationFrom(translation.language) && translation.bookFormat.equals(BookFormat.HTML),
+          bookFormat = translation.bookFormat.toString,
+          source = book.source)
     }
 
     def toApiBookHit(translation: Option[domain.Translation], book: Option[domain.Book]): Option[api.BookHit] = {
@@ -232,6 +258,8 @@ trait ConverterService {
           api.CoverPhoto(large, small)
         })
     }
+
+    def toApiInternalCoverPhoto(imageIdOpt: Option[Long]): Option[api.internal.CoverPhoto] = imageIdOpt.map(api.internal.CoverPhoto)
 
     def toApiLanguage(languageTag: LanguageTag): api.Language = {
       api.Language(languageTag.toString, languageTag.localDisplayName.getOrElse(languageTag.displayName))
