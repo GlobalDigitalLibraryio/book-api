@@ -60,19 +60,17 @@ trait ReadService {
     }
 
     def withIdAndLanguage(bookId: Long, language: LanguageTag): Option[api.Book] = {
-      val translation = translationRepository.forBookIdAndLanguage(bookId, language)
-      val availableLanguages: Seq[LanguageTag] = translationRepository.languagesFor(bookId)
-      val book: Option[domain.Book] = bookRepository.withId(bookId)
-
-      converterService.toApiBook(translation, availableLanguages, book)
+      for {
+        translation <- translationRepository.forBookIdAndLanguage(bookId, language)
+        book <- bookRepository.withId(bookId)
+      } yield converterService.toApiBook(translation, translationRepository.languagesFor(bookId), book)
     }
 
     def withIdAndLanguageForExport(bookId: Long, language: LanguageTag): Option[api.internal.Book] = {
-      val translation = translationRepository.forBookIdAndLanguage(bookId, language)
-      val availableLanguages: Seq[LanguageTag] = translationRepository.languagesFor(bookId)
-      val book: Option[domain.Book] = bookRepository.withId(bookId)
-
-      converterService.toInternalApiBook(translation, availableLanguages, book)
+      for {
+        translation <- translationRepository.forBookIdAndLanguage(bookId, language)
+        book <- bookRepository.withId(bookId)
+      } yield converterService.toInternalApiBook(translation, translationRepository.languagesFor(bookId), book)
     }
 
     def chaptersForIdAndLanguage(bookId: Long, language: LanguageTag): Seq[api.ChapterSummary] = {
@@ -107,11 +105,8 @@ trait ReadService {
 
     def withExternalId(externalId: Option[String]): Option[api.Book] = {
       externalId.flatMap(translationRepository.withExternalId) match {
-        case Some(translation) => converterService.toApiBook(
-          Option(translation),
-          translationRepository.languagesFor(translation.bookId),
-          bookRepository.withId(translation.bookId))
-
+        case Some(translation) => bookRepository.withId(translation.bookId).map(book =>
+          converterService.toApiBook(translation, translationRepository.languagesFor(translation.bookId), book))
         case None => None
       }
     }

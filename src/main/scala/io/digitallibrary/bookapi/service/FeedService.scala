@@ -144,10 +144,12 @@ trait FeedService {
     }
 
     def fromHit(bookHit: BookHit): Book = {
-      val availableLanguages: Seq[LanguageTag] = translationRepository.languagesFor(bookHit.id)
-      val translation = translationRepository.forBookIdAndLanguage(bookHit.id, LanguageTag(bookHit.language.code))
-      val book = bookRepository.withId(bookHit.id)
-      converterService.toApiBook(translation, availableLanguages, book).get
+      val book = for {
+        translation <- translationRepository.forBookIdAndLanguage(bookHit.id, LanguageTag(bookHit.language.code))
+        book <- bookRepository.withId(bookHit.id)
+      } yield converterService.toApiBook(translation, translationRepository.languagesFor(bookHit.id), book)
+
+      book.get
     }
 
     def entriesForLanguageAndLevel(language: LanguageTag, level: String, paging: Paging): (PagingStatus, Seq[FeedEntry]) = {
