@@ -7,7 +7,7 @@
 
 import javax.servlet.ServletContext
 
-import no.gdl.bookapi.{ComponentRegistry, BookApiProperties}
+import io.digitallibrary.bookapi.{ComponentRegistry, BookApiProperties}
 import org.scalatra.LifeCycle
 
 class ScalatraBootstrap extends LifeCycle {
