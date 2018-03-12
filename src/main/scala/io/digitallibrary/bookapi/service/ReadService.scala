@@ -63,16 +63,24 @@ trait ReadService {
       converterService.toApiBook(translation, availableLanguages, book)
     }
 
+    def withIdAndLanguageForExport(bookId: Long, language: LanguageTag): Option[api.internal.Book] = {
+      val translation = translationRepository.forBookIdAndLanguage(bookId, language)
+      val availableLanguages: Seq[LanguageTag] = translationRepository.languagesFor(bookId)
+      val book: Option[domain.Book] = bookRepository.withId(bookId)
+
+      converterService.toInternalApiBook(translation, availableLanguages, book)
+    }
+
     def chaptersForIdAndLanguage(bookId: Long, language: LanguageTag): Seq[api.ChapterSummary] = {
       chapterRepository.chaptersForBookIdAndLanguage(bookId, language).map(c => converterService.toApiChapterSummary(c, bookId, language))
     }
 
     def chapterForBookWithLanguageAndId(bookId: Long, language: LanguageTag, chapterId: Long): Option[api.Chapter] = {
-      chapterRepository.chapterForBookWithLanguageAndId(bookId, language, chapterId).map(converterService.toApiChapter)
+      chapterRepository.chapterForBookWithLanguageAndId(bookId, language, chapterId).map(converterService.toApiChapter(_))
     }
 
     def chapterWithId(chapterId: Long): Option[api.Chapter] = {
-      chapterRepository.withId(chapterId).map(converterService.toApiChapter)
+      chapterRepository.withId(chapterId).map(converterService.toApiChapter(_))
     }
 
     def chapterWithSeqNoForTranslation(translationId: Long, seqno: Long): Option[api.internal.ChapterId] = {

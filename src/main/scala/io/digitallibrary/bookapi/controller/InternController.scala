@@ -33,6 +33,16 @@ trait InternController {
       }
     }
 
+    get("/book/:lang/:id") {
+      val language = LanguageTag(params("lang"))
+      val bookId = long("id")
+
+      readService.withIdAndLanguageForExport(bookId, language) match {
+        case Some(x) => x
+        case None => NotFound(body = Error(Error.NOT_FOUND, s"No book with id $bookId and language $language found"))
+      }
+    }
+
     put("/book/:id") {
       val bookId = long("id")
       val bookReplacement = extract[NewBook](request.body)
