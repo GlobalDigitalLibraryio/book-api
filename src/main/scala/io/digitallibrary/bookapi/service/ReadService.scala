@@ -20,9 +20,9 @@ trait ReadService {
 
   class ReadService {
 
-    def listAvailablePublishedCategoriesForLanguage(language: LanguageTag): Map[String, Seq[String]] = {
+    def listAvailablePublishedCategoriesForLanguage(language: LanguageTag): Map[String, Set[String]] = {
       translationRepository.allAvailableCategoriesAndReadingLevelsWithStatus(PublishingStatus.PUBLISHED, language)
-        .groupBy(_._1).mapValues(_.map(_._2))
+        .groupBy(_._1).mapValues(_.map(_._2).toSet)
     }
 
     def featuredContentForLanguage(tag: LanguageTag): Seq[api.FeaturedContent] = {
