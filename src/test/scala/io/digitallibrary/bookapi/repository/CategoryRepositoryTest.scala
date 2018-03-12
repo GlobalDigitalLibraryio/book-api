@@ -33,19 +33,4 @@ class CategoryRepositoryTest extends IntegrationSuite with TestEnvironment {
     withName should be(None)
   }
 
-  test("That withName returns the first occurence of category with that name") {
-    withRollback { implicit session =>
-      val testName = s"Some-category-${System.currentTimeMillis()}"
-      val categoryDef = Category(None, None, testName)
-
-      val cat1 = categoryRepository.add(categoryDef)
-      val cat2 = categoryRepository.add(categoryDef)
-      val cat3 = categoryRepository.add(categoryDef)
-
-      val withName = categoryRepository.withName(testName)
-      withName.isDefined should be(true)
-      withName.head.id.isDefined should be(true)
-      withName.head.id.get should equal(cat1.id.get)
-    }
-  }
 }

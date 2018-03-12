@@ -8,13 +8,13 @@
 
 package io.digitallibrary.bookapi.controller
 
-import io.digitallibrary.language.model.LanguageTag
 import io.digitallibrary.bookapi.BookApiProperties.DefaultLanguage
 import io.digitallibrary.bookapi.model.api
-import io.digitallibrary.bookapi.model.api.{Book, Error, ValidationError}
+import io.digitallibrary.bookapi.model.api.{Error, ValidationError}
 import io.digitallibrary.bookapi.model.domain.{Paging, Sort}
 import io.digitallibrary.bookapi.service.search.SearchService
 import io.digitallibrary.bookapi.service.{ConverterService, ReadService}
+import io.digitallibrary.language.model.LanguageTag
 import org.scalatra._
 import org.scalatra.swagger.{ResponseMessage, Swagger, SwaggerSupport}
 
