@@ -46,7 +46,6 @@ object TestDBMigrator {
     datasource.setDatabaseName(BookApiProperties.MetaResource)
     datasource.setServerName(BookApiProperties.MetaServer)
     datasource.setPortNumber(BookApiProperties.MetaPort)
-    datasource.setInitialConnections(BookApiProperties.MetaInitialConnections)
     datasource.setMaxConnections(BookApiProperties.MetaMaxConnections)
     datasource.setCurrentSchema(BookApiProperties.MetaSchema)
 
