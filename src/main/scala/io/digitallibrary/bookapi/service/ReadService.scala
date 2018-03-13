@@ -10,7 +10,7 @@ package io.digitallibrary.bookapi.service
 
 import io.digitallibrary.language.model.LanguageTag
 import io.digitallibrary.bookapi.model._
-import io.digitallibrary.bookapi.model.domain.{PublishingStatus, Sort}
+import io.digitallibrary.bookapi.model.domain.{Category, PublishingStatus, Sort}
 import io.digitallibrary.bookapi.repository._
 
 trait ReadService {
@@ -20,9 +20,8 @@ trait ReadService {
 
   class ReadService {
 
-    def listAvailablePublishedCategoriesForLanguage(language: LanguageTag): Map[String, Set[String]] = {
+    def listAvailablePublishedCategoriesForLanguage(language: LanguageTag): Map[Category, Set[String]] = {
       translationRepository.allAvailableCategoriesAndReadingLevelsWithStatus(PublishingStatus.PUBLISHED, language)
-        .groupBy(_._1).mapValues(_.map(_._2).toSet)
     }
 
     def featuredContentForLanguage(tag: LanguageTag): Seq[api.FeaturedContent] = {

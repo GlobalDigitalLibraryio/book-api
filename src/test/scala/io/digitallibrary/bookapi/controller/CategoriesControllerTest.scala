@@ -7,6 +7,7 @@
 
 package io.digitallibrary.bookapi.controller
 
+import io.digitallibrary.bookapi.model.domain.Category
 import io.digitallibrary.bookapi.{BookSwagger, TestEnvironment, UnitSuite}
 import io.digitallibrary.language.model.LanguageTag
 import org.mockito.Mockito.{verify, when}
@@ -29,10 +30,10 @@ class CategoriesControllerTest extends UnitSuite with TestEnvironment with Scala
   }
 
   test("that /eng returns 200 ok with empty result set for language with no books") {
-    when(readService.listAvailablePublishedCategoriesForLanguage(LanguageTag("eng"))).thenReturn(Map.empty[String, Set[String]])
+    when(readService.listAvailablePublishedCategoriesForLanguage(LanguageTag("eng"))).thenReturn(Map.empty[Category, Set[String]])
     get("/eng") {
       status should equal(200)
-      body should equal("{}")
+      body should equal("[]")
     }
     verify(readService).listAvailablePublishedCategoriesForLanguage(LanguageTag("eng"))
   }
