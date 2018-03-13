@@ -329,11 +329,10 @@ class TranslationRepositoryTest extends IntegrationSuite with TestEnvironment wi
       addTranslationDef(categoryName = Some("category3"), externalId = "ext5", title = "e", bookId = book5.id.get, language = LanguageTag("eng"), readingLevel = Some("level1"), dateArrived = Some(LocalDate.now()), status = PublishingStatus.PUBLISHED)
 
       val result = translationRepository.allAvailableCategoriesAndReadingLevelsWithStatus(PublishingStatus.PUBLISHED, LanguageTag("xho"))
-      result.toSet should equal (Set(
-        ("category1", "level2"),
-        ("category2", "level3"),
-        ("category1", "level3")
-      ))
+      result.keySet.map(_.name) should equal(Set("category1", "category2"))
+      result.map{case (category, readingLevels) => category.name -> readingLevels} should equal (Map(
+        "category1" -> Set("level2", "level3"),
+        "category2" -> Set("level3")))
     }
   }
 

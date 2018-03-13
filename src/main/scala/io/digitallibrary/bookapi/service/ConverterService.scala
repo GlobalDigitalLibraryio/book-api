@@ -29,7 +29,6 @@ trait ConverterService {
   val converterService: ConverterService
 
   class ConverterService extends LazyLogging {
-
     def toFeaturedContent(newFeaturedContent: NewFeaturedContent): domain.FeaturedContent = {
       domain.FeaturedContent(
         id = None,
