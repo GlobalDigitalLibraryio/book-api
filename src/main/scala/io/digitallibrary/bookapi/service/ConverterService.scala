@@ -118,9 +118,6 @@ trait ConverterService {
     def toApiCategories(categories: Seq[domain.Category]): Seq[api.Category] =
       categories.map(c => api.Category(c.id.get, c.revision.get, c.name))
 
-    def toApiCategory(category: domain.Category): api.Category =
-      api.Category(category.id.get, category.revision.get, category.name)
-
     def toApiContributors(contributors: Seq[domain.Contributor]): Seq[api.Contributor] =
       contributors.map(c => api.Contributor(c.id.get, c.revision.get, c.`type`.toString, c.person.name))
 

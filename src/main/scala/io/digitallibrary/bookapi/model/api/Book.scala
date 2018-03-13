@@ -48,9 +48,8 @@ case class Category(@(ApiModelProperty@field)(description = "Id for the category
                     @(ApiModelProperty@field)(description = "The revision of the category") revision: Int,
                     @(ApiModelProperty@field)(description = "Name of the category") name: String)
 
-@ApiModel(description = "Information about a category and the reading levels available within this category")
-case class CategoryAndReadingLevels(@(ApiModelProperty@field)(description = "The category") category: Category,
-                                    @(ApiModelProperty@field)(description = "A list of reading levels available within the category") readingLevels: Set[String])
+@ApiModel(description = "Information about the reading levels available within a category")
+case class ReadingLevels(@(ApiModelProperty@field)(description = "A list of reading levels available within the category") readingLevels: Set[String])
 
 @ApiModel(description = "Information about a chapter in a book")
 case class ChapterSummary(@(ApiModelProperty@field)(description = "Id for the chapter") id: Long,
