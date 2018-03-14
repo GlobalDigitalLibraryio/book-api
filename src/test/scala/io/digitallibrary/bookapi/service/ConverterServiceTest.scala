@@ -23,7 +23,7 @@ class ConverterServiceTest extends UnitSuite with TestEnvironment {
 
     val downloads = service.toApiDownloads(translation)
     downloads.epub should equal(Some("http://local.digitallibrary.io/book-api/download/epub/eng/12345.epub"))
-    downloads.pdf should equal(None)
+    downloads.pdf should equal(Some("http://local.digitallibrary.io/book-api/download/pdf/eng/12345.pdf"))
 
     when(translation.bookFormat).thenReturn(BookFormat.PDF)
     val download2 = service.toApiDownloads(translation)

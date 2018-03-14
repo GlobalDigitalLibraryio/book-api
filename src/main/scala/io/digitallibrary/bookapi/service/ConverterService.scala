@@ -243,7 +243,9 @@ trait ConverterService {
 
     def toApiDownloads(translation: domain.Translation): api.Downloads = {
       translation.bookFormat match {
-        case BookFormat.HTML => api.Downloads(epub = Some(s"${BookApiProperties.CloudFrontBooks}/epub/${translation.language}/${translation.uuid}.epub"), pdf = None)
+        case BookFormat.HTML => api.Downloads(
+          epub = Some(s"${BookApiProperties.CloudFrontBooks}/epub/${translation.language}/${translation.uuid}.epub"),
+          pdf = Some(s"${BookApiProperties.CloudFrontBooks}/pdf/${translation.language}/${translation.uuid}.pdf"))
         case BookFormat.PDF => api.Downloads(pdf = Some(s"${BookApiProperties.CloudFrontBooks}/pdf/${translation.language}/${translation.uuid}.pdf"), epub = None)
       }
     }
