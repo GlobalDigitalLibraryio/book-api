@@ -62,7 +62,8 @@ case class Chapter(@(ApiModelProperty@field)(description = "Id for the chapter")
                    @(ApiModelProperty@field)(description = "The revision of the chapter") revision: Int,
                    @(ApiModelProperty@field)(description = "The sequence number of the chapter") seqNo: Int,
                    @(ApiModelProperty@field)(description = "Title of the chapter") title: Option[String],
-                   @(ApiModelProperty@field)(description = "The HTML content of the chapter") content: String)
+                   @(ApiModelProperty@field)(description = "The HTML content of the chapter") content: String,
+                   @(ApiModelProperty@field)(description = "Indicates type of chapter. One of Content, License, Cover, BackCover") chapterType: String)
 
 @ApiModel(description = "Information about a language")
 case class Language(@(ApiModelProperty@field)(description = "ISO 639-2 code") code: String,

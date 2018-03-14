@@ -136,7 +136,8 @@ trait ConverterService {
         chapter.revision.get,
         chapter.seqNo,
         chapter.title,
-        chaptercontent)
+        chaptercontent,
+        chapter.chapterType.toString)
     }
 
     def toInternalApiBook(translation: domain.Translation, availableLanguages: Seq[LanguageTag], book: domain.Book): api.internal.Book = {
