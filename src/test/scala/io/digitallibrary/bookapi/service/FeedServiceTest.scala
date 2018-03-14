@@ -60,7 +60,7 @@ class FeedServiceTest extends UnitSuite with TestEnvironment {
       Category(None, None, "cat2") -> Set("decodable")
     )
     val englishCategoriesAndLevels = Map(
-      Category(None, None, "cat1") -> Set("1", "2"),
+      Category(None, None, "cat1") -> Set("1", "2")
     )
 
     when(translationRepository.allAvailableLanguagesWithStatus(PublishingStatus.PUBLISHED)).thenReturn(languages)
