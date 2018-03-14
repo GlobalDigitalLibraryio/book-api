@@ -8,9 +8,9 @@
 package io.digitallibrary.bookapi.service
 
 import io.digitallibrary.bookapi.BookApiProperties._
-import io.digitallibrary.bookapi.TestData.{LanguageCodeAmharic, LanguageCodeEnglish, LanguageCodeNorwegian}
+import io.digitallibrary.bookapi.TestData.{LanguageCodeEnglish, LanguageCodeNorwegian}
 import io.digitallibrary.bookapi.model.api.{Facet, SearchResult}
-import io.digitallibrary.bookapi.model.domain.{Paging, PublishingStatus}
+import io.digitallibrary.bookapi.model.domain.{Category, Paging, PublishingStatus}
 import io.digitallibrary.bookapi.{TestEnvironment, UnitSuite}
 import io.digitallibrary.language.model.LanguageTag
 import org.mockito.ArgumentMatchers._
@@ -24,34 +24,48 @@ class FeedServiceTest extends UnitSuite with TestEnvironment {
   val defaultFeedLocalization = FeedLocalization(
     rootTitle = "Root title",
     navTitle = "Nav title",
+    categoriesTitle = "Categories",
+    categoriesDescription = "Here are the descriptions",
+    categoryTitle = _ => "Some category",
     levelTitle = level => s"Level $level",
     levelDescription = "Level description"
   )
 
   when(feedLocalizationService.localizationFor(any[LanguageTag])).thenReturn(defaultFeedLocalization)
 
-  test("that calculateFeeds returns correct urls for one language and one level") {
+  test("that calculateFeeds returns correct urls for one language, one category and one level") {
     val languages = Seq(LanguageTag(LanguageCodeEnglish))
-    val levels = Seq("1")
+    val levels = Map(
+      Category(None, None, "cat1") -> Set("1")
+    )
 
     when(translationRepository.allAvailableLanguagesWithStatus(PublishingStatus.PUBLISHED)).thenReturn(languages)
-    when(translationRepository.allAvailableLevelsWithStatus(anyObject(), any[Option[LanguageTag]])(any[DBSession])).thenReturn(levels)
+    when(translationRepository.allAvailableCategoriesAndReadingLevelsWithStatus(anyObject(), any[LanguageTag])(any[DBSession])).thenReturn(levels)
 
     val calculatedFeedUrls = feedService.calculateFeeds
-    calculatedFeedUrls.size should be (4)
+    calculatedFeedUrls.size should be (5)
 
-    val expectedFeedUrls = Seq(OpdsRootDefaultLanguageUrl, OpdsNavUrl, OpdsRootUrl, OpdsLevelUrl).map(url =>
-      s"${url.replace(OpdsLevelParam, "1").replace(OpdsLanguageParam, LanguageCodeEnglish)}")
+    val expectedFeedUrls = Seq(OpdsRootDefaultLanguageUrl, OpdsNavUrl, OpdsRootDefaultLanguageUrl, OpdsCategoryAndLevelUrl).map(url =>
+      s"${url.replace(OpdsLevelParam, "1")
+        .replace(OpdsCategoryParam, "cat1")
+        .replace(OpdsLanguageParam, LanguageCodeEnglish)}")
 
-    expectedFeedUrls.sorted should equal (calculatedFeedUrls.map(_.url).sorted)
+    calculatedFeedUrls.map(_.url).sorted should equal (Seq("/eng/category/cat1/level/1.xml", "/eng/category/cat1/root.xml", "/eng/nav.xml", "/eng/root.xml", "/root.xml").sorted)
   }
 
   test("that calculateFeedUrls calculates correct of feeds for multiple languages and levels") {
-    val languages = Seq(LanguageTag(LanguageCodeEnglish), LanguageTag(LanguageCodeNorwegian), LanguageTag(LanguageCodeAmharic))
-    val levels = Seq("1", "2", "3", "read-aloud", "decodable")
+    val languages = Seq(LanguageTag(LanguageCodeEnglish), LanguageTag(LanguageCodeNorwegian))
+    val norwegianCategoriesAndLevels = Map(
+      Category(None, None, "cat1") -> Set("1", "2"),
+      Category(None, None, "cat2") -> Set("decodable")
+    )
+    val englishCategoriesAndLevels = Map(
+      Category(None, None, "cat1") -> Set("1", "2"),
+    )
 
     when(translationRepository.allAvailableLanguagesWithStatus(PublishingStatus.PUBLISHED)).thenReturn(languages)
-    when(translationRepository.allAvailableLevelsWithStatus(anyObject(), any[Option[LanguageTag]])(any[DBSession])).thenReturn(levels)
+    when(translationRepository.allAvailableCategoriesAndReadingLevelsWithStatus(PublishingStatus.PUBLISHED, LanguageTag(LanguageCodeNorwegian))).thenReturn(norwegianCategoriesAndLevels)
+    when(translationRepository.allAvailableCategoriesAndReadingLevelsWithStatus(PublishingStatus.PUBLISHED, LanguageTag(LanguageCodeEnglish))).thenReturn(englishCategoriesAndLevels)
 
     val calculatedFeedUrls = feedService.calculateFeeds
     val expectedFeeds =
@@ -59,25 +73,16 @@ class FeedServiceTest extends UnitSuite with TestEnvironment {
         |/root.xml
         |/eng/nav.xml
         |/nob/nav.xml
-        |/amh/nav.xml
         |/eng/root.xml
         |/nob/root.xml
-        |/amh/root.xml
-        |/eng/level/1.xml
-        |/eng/level/2.xml
-        |/eng/level/3.xml
-        |/eng/level/read-aloud.xml
-        |/eng/level/decodable.xml
-        |/nob/level/1.xml
-        |/nob/level/2.xml
-        |/nob/level/3.xml
-        |/nob/level/read-aloud.xml
-        |/nob/level/decodable.xml
-        |/amh/level/1.xml
-        |/amh/level/2.xml
-        |/amh/level/3.xml
-        |/amh/level/read-aloud.xml
-        |/amh/level/decodable.xml
+        |/nob/category/cat1/root.xml
+        |/nob/category/cat2/root.xml
+        |/nob/category/cat1/level/1.xml
+        |/nob/category/cat1/level/2.xml
+        |/nob/category/cat2/level/decodable.xml
+        |/eng/category/cat1/root.xml
+        |/eng/category/cat1/level/1.xml
+        |/eng/category/cat1/level/2.xml
       """
       .stripMargin.trim.split("\n").toSet
 
@@ -85,7 +90,7 @@ class FeedServiceTest extends UnitSuite with TestEnvironment {
   }
 
   test("that levelPath returns expected path for language and level") {
-    feedService.levelPath(LanguageTag("amh"), "1") should equal ("/amh/level/1.xml")
+    feedService.levelPath(LanguageTag("amh"), "cat1", "1") should equal ("/amh/category/cat1/level/1.xml")
   }
 
   test("that justArrivedPath returns expected path for language") {
@@ -102,15 +107,15 @@ class FeedServiceTest extends UnitSuite with TestEnvironment {
     )
   }
 
-  test("that facetsForSelections returns facets for reading levels, with reading levels numerically sorted and new arrivals at the top") {
+  test("that facetsForReadingLevels returns facets for reading levels, with reading levels numerically sorted and new arrivals at the top") {
     val language = LanguageTag("eng")
     when(readService.listAvailablePublishedLevelsForLanguage(Some(language))).thenReturn(Seq("4", "1", "3", "2"))
-    feedService.facetsForSelections(language, "http://local.digitallibrary.io/book-api/opds/eng/3.xml") should equal (Seq(
+    feedService.facetsForReadingLevels(language, "cat1", Some("3")) should equal (Seq(
       Facet("http://local.digitallibrary.io/book-api/opds/eng/root.xml", "New arrivals", "Selection", isActive = false),
-      Facet("http://local.digitallibrary.io/book-api/opds/eng/level/1.xml", "Level 1", "Selection", isActive = false),
-      Facet("http://local.digitallibrary.io/book-api/opds/eng/level/2.xml", "Level 2", "Selection", isActive = false),
-      Facet("http://local.digitallibrary.io/book-api/opds/eng/level/3.xml", "Level 3", "Selection", isActive = true),
-      Facet("http://local.digitallibrary.io/book-api/opds/eng/level/4.xml", "Level 4", "Selection", isActive = false)
+      Facet("http://local.digitallibrary.io/book-api/opds/eng/category/cat1/level/1.xml", "Level 1", "Selection", isActive = false),
+      Facet("http://local.digitallibrary.io/book-api/opds/eng/category/cat1/level/2.xml", "Level 2", "Selection", isActive = false),
+      Facet("http://local.digitallibrary.io/book-api/opds/eng/category/cat1/level/3.xml", "Level 3", "Selection", isActive = true),
+      Facet("http://local.digitallibrary.io/book-api/opds/eng/category/cat1/level/4.xml", "Level 4", "Selection", isActive = false)
     ))
   }
 

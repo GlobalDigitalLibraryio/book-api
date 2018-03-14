@@ -30,5 +30,15 @@ class FeedLocalizationServiceTest extends UnitSuite with TestEnvironment {
     } yield assert(language, localization, level)
   }
 
+  test("that all category title functions can be run") {
+    def assert(language: LanguageTag, localization: FeedLocalization, category: String) = {
+      val title = localization.categoryTitle(category)
+      withClue(s"Category title for ${language.toString} should be nonempty") { title.nonEmpty should be(true) }
+    }
+    for {
+      (language, localization) <- feedLocalizationService.localizationMap
+      category <- Seq("library_books", "classroom_books")
+    } yield assert(language, localization, category)
+  }
 
 }

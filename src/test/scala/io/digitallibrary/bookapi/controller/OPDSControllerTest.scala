@@ -10,10 +10,10 @@ package io.digitallibrary.bookapi.controller
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
-import io.digitallibrary.language.model.LanguageTag
 import io.digitallibrary.bookapi.model.api.{Feed, FeedEntry}
 import io.digitallibrary.bookapi.model.domain.Paging
 import io.digitallibrary.bookapi.{TestData, TestEnvironment, UnitSuite}
+import io.digitallibrary.language.model.LanguageTag
 import org.mockito.Mockito.verify
 import org.scalatra.test.scalatest.ScalatraFunSuite
 
