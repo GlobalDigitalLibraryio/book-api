@@ -13,12 +13,12 @@ import com.amazonaws.services.s3.model.{GetObjectRequest, ObjectMetadata, PutObj
 import com.openhtmltopdf.extend.FSSupplier
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder
 import com.typesafe.scalalogging.LazyLogging
-import io.digitallibrary.language.model.LanguageTag
 import io.digitallibrary.bookapi.BookApiProperties
 import io.digitallibrary.bookapi.integration.AmazonClient
 import io.digitallibrary.bookapi.model.api.{NotFoundException, PdfStream}
 import io.digitallibrary.bookapi.model.domain.{BookFormat, PdfCss}
 import io.digitallibrary.bookapi.repository.{BookRepository, TranslationRepository}
+import io.digitallibrary.language.model.LanguageTag
 
 import scala.util.{Failure, Success, Try}
 
@@ -35,7 +35,7 @@ trait PdfService {
       }
     }
 
-    case class Pdf(pdfRendererBuilder: PdfRendererBuilder, fileName: String) extends PdfStream {
+    case class RBPdf(pdfRendererBuilder: PdfRendererBuilder, fileName: String) extends PdfStream {
       override def stream: InputStream = {
         val out = new ByteArrayOutputStream()
         pdfRendererBuilder.toStream(out).run()
@@ -50,19 +50,28 @@ trait PdfService {
     }
 
     val DefaultFont = FontDefinition("/NotoSans-Regular.ttf", "Noto Sans")
+    val fonts = Map(
+      "ethiopic" -> FontDefinition("/NotoSansEthiopic.ttf", "Noto Sans Ethiopic"),
+      "devangari" -> FontDefinition("/NotoSansDevanagari-Regular.ttf", "Noto Sans Devanagari"),
+      "bengali" -> FontDefinition("/NotoSansBengali-Regular.ttf", "Noto Sans Bengali"),
+      "khmer" -> FontDefinition("/NotoSansKhmer-Regular.ttf", "Noto Sans Khmer"),
+      "tamil" -> FontDefinition("/NotoSansTamil-Regular.ttf", "Noto Sans Tamil")
+    )
     val fontDefinitions = Map(
-      "amh" -> FontDefinition("/NotoSansEthiopic.ttf", "Noto Sans Ethiopic"),
-      "mar" -> FontDefinition("/NotoSansDevanagari-Regular.ttf", "Noto Sans Devanagari"),
-      "hin" -> FontDefinition("/NotoSansDevanagari-Regular.ttf", "Noto Sans Devanagari"),
-      "ben" -> FontDefinition("/NotoSansBengali-Regular.ttf", "Noto Sans Bengali"),
-      "nep" -> FontDefinition("/NotoSansDevanagari-Regular.ttf", "Noto Sans Devanagari")
+      "amh" -> fonts("ethiopic"),
+      "mar" -> fonts("devangari"),
+      "hin" -> fonts("devangari"),
+      "ben" -> fonts("bengali"),
+      "nep" -> fonts("devangari"),
+      "khm" -> fonts("khmer"),
+      "tam" -> fonts("tamil")
     )
 
     def getPdf(language: LanguageTag, uuid: String): Option[PdfStream] = {
       translationRepository.withUuId(uuid) match {
         case Some(translation) => translation.bookFormat match {
           case BookFormat.HTML =>
-            Some(Pdf(createPdf(language, uuid).get, s"${translation.title}.pdf"))
+            Some(RBPdf(createPdf(language, uuid).get, s"${translation.title}.pdf"))
           case BookFormat.PDF => getFromS3(uuid) match {
             case Success(s3Object) => Some(S3Pdf(s3Object, s"${translation.title}.pdf"))
             case Failure(_) => None
