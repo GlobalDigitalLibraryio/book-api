@@ -9,7 +9,7 @@
 package io.digitallibrary.bookapi.controller
 
 import io.digitallibrary.language.model.LanguageTag
-import io.digitallibrary.bookapi.model.api.internal.{NewBook, NewChapter, NewTranslation}
+import io.digitallibrary.bookapi.model.api.internal.{Book, NewBook, NewChapter, NewTranslation}
 import io.digitallibrary.bookapi.model.api.{Error, ValidationException, ValidationMessage}
 import io.digitallibrary.bookapi.service._
 import io.digitallibrary.bookapi.service.search.{IndexBuilderService, IndexService}
@@ -19,7 +19,7 @@ import org.scalatra.{Conflict, InternalServerError, NotFound, Ok}
 import scala.util.{Failure, Success}
 
 trait InternController {
-  this: WriteService with ReadService with ConverterService with ValidationService with FeedService with PdfService with IndexBuilderService with IndexService =>
+  this: WriteService with ReadService with ConverterService with ValidationService with FeedService with PdfService with IndexBuilderService with IndexService with ImportService =>
   val internController: InternController
 
   class InternController extends GdlController with FileUploadSupport{
@@ -41,6 +41,11 @@ trait InternController {
         case Some(x) => x
         case None => NotFound(body = Error(Error.NOT_FOUND, s"No book with id $bookId and language $language found"))
       }
+    }
+
+    post("/import/book/") {
+      val newBook = extract[Book](request.body)
+      importService.importBook(newBook)
     }
 
     put("/book/:id") {

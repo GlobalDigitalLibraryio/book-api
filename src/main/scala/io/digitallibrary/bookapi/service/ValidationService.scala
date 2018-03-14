@@ -76,6 +76,13 @@ trait ValidationService {
       }
     }
 
+    def validateCategory(category: Option[domain.Category]): Try[domain.Category] = {
+      category match {
+        case None => Failure(new ValidationException(errors = Seq(ValidationMessage("categories", "Unknown category"))))
+        case Some(x) => Success(x)
+      }
+    }
+
     def validateChapter(chapter: domain.Chapter): Try[domain.Chapter] = {
       val validTitle = chapter.title.flatMap(title => containsNoHtml("title", title))
       val validContent = if (chapter.content.isEmpty) Some(ValidationMessage("content", "Missing content")) else None

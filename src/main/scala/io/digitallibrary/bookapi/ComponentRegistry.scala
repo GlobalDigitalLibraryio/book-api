@@ -71,6 +71,7 @@ object ComponentRegistry
   with SearchController
   with CategoriesController
   with AmazonClient
+  with ImportService
 {
   implicit val swagger = new BookSwagger
 
@@ -147,6 +148,7 @@ object ComponentRegistry
   lazy val searchService = new SearchService
   lazy val searchController = new SearchController
   lazy val categoriesController = new CategoriesController
+  lazy val importService = new ImportService
 
   // Non-lazy because we want it to fail immediately if something goes wrong
   val feedLocalizationService = new FeedLocalizationService

@@ -18,6 +18,7 @@ import io.digitallibrary.bookapi.controller.NewFeaturedContent
 import io.digitallibrary.bookapi.integration.ImageApiClient
 import io.digitallibrary.bookapi.integration.crowdin.CrowdinUtils
 import io.digitallibrary.bookapi.model._
+import io.digitallibrary.bookapi.model.api.internal
 import io.digitallibrary.bookapi.model.api.internal.{NewChapter, NewEducationalAlignment, NewTranslation}
 import io.digitallibrary.bookapi.model.crowdin.CrowdinFile
 import io.digitallibrary.bookapi.model.domain._
@@ -29,6 +30,57 @@ trait ConverterService {
   val converterService: ConverterService
 
   class ConverterService extends LazyLogging {
+
+    def toDomainChapter(chapter: api.Chapter, translationId: Long): domain.Chapter = {
+      domain.Chapter(
+        id = None,
+        revision = None,
+        translationId = translationId,
+        seqNo = chapter.seqNo,
+        title = chapter.title,
+        content = chapter.content,
+        chapterType = ChapterType.valueOf(chapter.chapterType).get)
+    }
+
+    def toDomainTranslation(newBook: internal.Book, persistedBook: Book, categories: Seq[Category]): domain.Translation = {
+      domain.Translation(
+        id = None,
+        revision = None,
+        bookId = persistedBook.id.get,
+        externalId = None,
+        uuid = UUID.randomUUID().toString,
+        title = newBook.title,
+        about = newBook.description,
+        numPages = None,
+        language = LanguageTag(newBook.language.code),
+        translatedFrom = newBook.translatedFrom.map(tf => LanguageTag(tf.code)),
+        datePublished = newBook.datePublished,
+        dateCreated = newBook.dateCreated,
+        categoryIds = categories.map(_.id.get),
+        coverphoto = newBook.coverPhoto.map(_.imageApiId),
+        tags = newBook.tags,
+        isBasedOnUrl = None,
+        educationalUse = newBook.educationalUse,
+        educationalRole = newBook.educationalRole,
+        eaId = None,
+        timeRequired = newBook.timeRequired,
+        typicalAgeRange = newBook.typicalAgeRange,
+        readingLevel = newBook.readingLevel,
+        interactivityType = None,
+        learningResourceType = None,
+        accessibilityApi = None,
+        accessibilityControl = None,
+        accessibilityFeature = None,
+        accessibilityHazard = None,
+        dateArrived = newBook.dateArrived,
+        publishingStatus = PublishingStatus.PUBLISHED,
+        educationalAlignment = None,
+        chapters = Seq(),
+        contributors = Seq(),
+        categories = categories,
+        bookFormat = BookFormat.valueOfOrDefault(newBook.bookFormat)
+      )
+    }
 
     def toFeaturedContent(newFeaturedContent: NewFeaturedContent): domain.FeaturedContent = {
       domain.FeaturedContent(
@@ -137,7 +189,8 @@ trait ConverterService {
         chapter.revision.get,
         chapter.seqNo,
         chapter.title,
-        chaptercontent)
+        chaptercontent,
+        chapter.chapterType.toString)
     }
 
     def toInternalApiBook(translation: domain.Translation, availableLanguages: Seq[LanguageTag], book: domain.Book): api.internal.Book = {
