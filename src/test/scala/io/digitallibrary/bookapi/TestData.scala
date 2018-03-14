@@ -49,7 +49,7 @@ object TestData {
     val DefaultContributor = api.Contributor(1, 1, "type", "contributorname")
 
     val ChapterSummary1 = api.ChapterSummary(1, 1, Some("Title"), "some-url")
-    val Chapter1 = api.Chapter(1, 1, 1, Some("Title"), "Content")
+    val Chapter1 = api.Chapter(1, 1, 1, Some("Title"), "Content", "Content")
 
     val DefaultBook = api.Book(
       1, 1, Some("external-1"), DefaultUuid, "Title", "Description", None, english, Seq(english, norwegian_bokmal), DefaultLicense, DefaultPublisher,
