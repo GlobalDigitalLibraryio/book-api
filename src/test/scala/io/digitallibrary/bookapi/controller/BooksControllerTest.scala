@@ -8,10 +8,10 @@
 package io.digitallibrary.bookapi.controller
 import java.text.SimpleDateFormat
 
-import io.digitallibrary.language.model.LanguageTag
 import io.digitallibrary.bookapi._
 import io.digitallibrary.bookapi.model.api._
-import io.digitallibrary.bookapi.model.domain.{BookFormat, Paging, Sort}
+import io.digitallibrary.bookapi.model.domain.{Paging, Sort}
+import io.digitallibrary.language.model.LanguageTag
 import org.json4s.native.Serialization._
 import org.json4s.{DefaultFormats, Formats}
 import org.mockito.ArgumentMatchers._
@@ -36,7 +36,7 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
 
   test("that GET / will get books with default language") {
     val result = SearchResult(0, 1, 10, Language("eng", "English"), Seq(TestData.Api.DefaultBookHit))
-    when(searchService.searchWithLevel(LanguageTag(BookApiProperties.DefaultLanguage), Some("1"), None, Paging(1, 10), Sort.ByIdAsc)).thenReturn(result)
+    when(searchService.searchWithCategoryAndLevel(languageTag = LanguageTag(BookApiProperties.DefaultLanguage), category = None, readingLevel = Some("1"), source = None, paging = Paging(1, 10), sort = Sort.ByIdAsc)).thenReturn(result)
 
     get("/?reading-level=1&page-size=10&page=1") {
       status should equal (200)
@@ -50,7 +50,7 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
     val language = TestData.Api.norwegian_bokmal
 
     val result = SearchResult(0, 1, 10, language, Seq(TestData.Api.DefaultBookHit))
-    when(searchService.searchWithLevel(LanguageTag(language.code), Some("2"), None, Paging(1,10), Sort.ByIdAsc)).thenReturn(result)
+    when(searchService.searchWithCategoryAndLevel(languageTag = LanguageTag(language.code), category = None, readingLevel = Some("2"), source = None, paging = Paging(1, 10), sort = Sort.ByIdAsc)).thenReturn(result)
 
     get("/nob?reading-level=2&page-size=10&page=1") {
       status should equal (200)
@@ -67,7 +67,7 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
     val secondBook = TestData.Api.DefaultBookHit.copy(id = 1, title = "This should be last")
 
     val result = SearchResult(2, 1, 10, language, Seq(firstBook, secondBook))
-    when(searchService.searchWithLevel(LanguageTag(language.code), Some("2"), None, Paging(1,10), Sort.ByTitleDesc)).thenReturn(result)
+    when(searchService.searchWithCategoryAndLevel(languageTag = LanguageTag(language.code), category = None, readingLevel = Some("2"), source = None, paging = Paging(1, 10), sort = Sort.ByTitleDesc)).thenReturn(result)
 
     get("/nob?reading-level=2&page-size=10&page=1&sort=-title") {
       status should equal (200)

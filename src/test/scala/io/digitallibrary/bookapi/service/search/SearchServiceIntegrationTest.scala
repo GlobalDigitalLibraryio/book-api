@@ -90,10 +90,10 @@ class SearchServiceIntegrationTest extends UnitSuite with TestEnvironment {
 
 
   test("that search for level returns expected") {
-    val searchResult = searchService.searchWithLevel(LanguageTag("nob"), Some("2"), None, Paging(1,10), Sort.ByIdAsc)
+    val searchResult = searchService.searchWithCategoryAndLevel(languageTag = LanguageTag("nob"), category = None, readingLevel = Some("2"), source = None, paging = Paging(1, 10), sort = Sort.ByIdAsc)
     searchResult.totalCount should be(0)
 
-    val searchAgain = searchService.searchWithLevel(LanguageTag("nob"), Some("1"), None, Paging(1,10), Sort.ByIdAsc)
+    val searchAgain = searchService.searchWithCategoryAndLevel(languageTag = LanguageTag("nob"), category = None, readingLevel = Some("1"), source = None, paging = Paging(1, 10), sort = Sort.ByIdAsc)
     searchAgain.totalCount should be(2)
     searchAgain.results.head.readingLevel should be(Some("1"))
   }
