@@ -7,12 +7,12 @@
 
 package io.digitallibrary.bookapi.service
 
-import io.digitallibrary.language.model.LanguageTag
 import io.digitallibrary.bookapi.BookApiProperties._
 import io.digitallibrary.bookapi.TestData.{LanguageCodeAmharic, LanguageCodeEnglish, LanguageCodeNorwegian}
-import io.digitallibrary.bookapi.model.api.{Book, BookHit, Facet, SearchResult}
+import io.digitallibrary.bookapi.model.api.{Facet, SearchResult}
 import io.digitallibrary.bookapi.model.domain.{Paging, PublishingStatus}
 import io.digitallibrary.bookapi.{TestEnvironment, UnitSuite}
+import io.digitallibrary.language.model.LanguageTag
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import scalikejdbc.DBSession
@@ -48,7 +48,7 @@ class FeedServiceTest extends UnitSuite with TestEnvironment {
 
   test("that calculateFeedUrls calculates correct of feeds for multiple languages and levels") {
     val languages = Seq(LanguageTag(LanguageCodeEnglish), LanguageTag(LanguageCodeNorwegian), LanguageTag(LanguageCodeAmharic))
-    val levels = Seq("1", "2", "3")
+    val levels = Seq("1", "2", "3", "read-aloud", "decodable")
 
     when(translationRepository.allAvailableLanguagesWithStatus(PublishingStatus.PUBLISHED)).thenReturn(languages)
     when(translationRepository.allAvailableLevelsWithStatus(anyObject(), any[Option[LanguageTag]])(any[DBSession])).thenReturn(levels)
@@ -63,15 +63,21 @@ class FeedServiceTest extends UnitSuite with TestEnvironment {
         |/eng/root.xml
         |/nob/root.xml
         |/amh/root.xml
-        |/eng/level1.xml
-        |/eng/level2.xml
-        |/eng/level3.xml
-        |/nob/level1.xml
-        |/nob/level2.xml
-        |/nob/level3.xml
-        |/amh/level1.xml
-        |/amh/level2.xml
-        |/amh/level3.xml
+        |/eng/level/1.xml
+        |/eng/level/2.xml
+        |/eng/level/3.xml
+        |/eng/level/read-aloud.xml
+        |/eng/level/decodable.xml
+        |/nob/level/1.xml
+        |/nob/level/2.xml
+        |/nob/level/3.xml
+        |/nob/level/read-aloud.xml
+        |/nob/level/decodable.xml
+        |/amh/level/1.xml
+        |/amh/level/2.xml
+        |/amh/level/3.xml
+        |/amh/level/read-aloud.xml
+        |/amh/level/decodable.xml
       """
       .stripMargin.trim.split("\n").toSet
 
@@ -79,7 +85,7 @@ class FeedServiceTest extends UnitSuite with TestEnvironment {
   }
 
   test("that levelPath returns expected path for language and level") {
-    feedService.levelPath(LanguageTag("amh"), "1") should equal ("/amh/level1.xml")
+    feedService.levelPath(LanguageTag("amh"), "1") should equal ("/amh/level/1.xml")
   }
 
   test("that justArrivedPath returns expected path for language") {
@@ -99,12 +105,12 @@ class FeedServiceTest extends UnitSuite with TestEnvironment {
   test("that facetsForSelections returns facets for reading levels, with reading levels numerically sorted and new arrivals at the top") {
     val language = LanguageTag("eng")
     when(readService.listAvailablePublishedLevelsForLanguage(Some(language))).thenReturn(Seq("4", "1", "3", "2"))
-    feedService.facetsForSelections(language, "http://local.digitallibrary.io/book-api/opds/eng/level3.xml") should equal (Seq(
+    feedService.facetsForSelections(language, "http://local.digitallibrary.io/book-api/opds/eng/3.xml") should equal (Seq(
       Facet("http://local.digitallibrary.io/book-api/opds/eng/root.xml", "New arrivals", "Selection", isActive = false),
-      Facet("http://local.digitallibrary.io/book-api/opds/eng/level1.xml", "Level 1", "Selection", isActive = false),
-      Facet("http://local.digitallibrary.io/book-api/opds/eng/level2.xml", "Level 2", "Selection", isActive = false),
-      Facet("http://local.digitallibrary.io/book-api/opds/eng/level3.xml", "Level 3", "Selection", isActive = true),
-      Facet("http://local.digitallibrary.io/book-api/opds/eng/level4.xml", "Level 4", "Selection", isActive = false)
+      Facet("http://local.digitallibrary.io/book-api/opds/eng/level/1.xml", "Level 1", "Selection", isActive = false),
+      Facet("http://local.digitallibrary.io/book-api/opds/eng/level/2.xml", "Level 2", "Selection", isActive = false),
+      Facet("http://local.digitallibrary.io/book-api/opds/eng/level/3.xml", "Level 3", "Selection", isActive = true),
+      Facet("http://local.digitallibrary.io/book-api/opds/eng/level/4.xml", "Level 4", "Selection", isActive = false)
     ))
   }
 

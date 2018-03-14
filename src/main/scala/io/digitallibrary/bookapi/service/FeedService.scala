@@ -84,7 +84,7 @@ trait FeedService {
               .replace(BookApiProperties.OpdsLevelParam, readingLevel)}",
             title = localization.levelTitle(readingLevel),
             group = group,
-            isActive = url.endsWith(s"level$readingLevel.xml"))
+            isActive = url.endsWith(s"$readingLevel.xml"))
         ))
     }
 
