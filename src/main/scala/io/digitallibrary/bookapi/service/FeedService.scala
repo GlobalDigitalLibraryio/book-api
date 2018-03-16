@@ -86,11 +86,12 @@ trait FeedService {
     }
 
     def facetsForCategories(currentLanguage: LanguageTag, currentCategory: Option[String]): Seq[Facet] = {
+      val localization = feedLocalizationService.localizationFor(currentLanguage)
       readService.listAvailablePublishedCategoriesForLanguage(currentLanguage).keys.toList.map(category => Facet(
         href = s"${BookApiProperties.CloudFrontOpds}${BookApiProperties.OpdsCategoryUrl
           .replace(BookApiProperties.OpdsLanguageParam, currentLanguage.toString)
           .replace(BookApiProperties.OpdsCategoryParam, category.name)}",
-        title = s"${category.name}",
+        title = localization.categoryTitle(category.name),
         group = "Category",
         isActive = currentCategory.contains(category.name)
       )
