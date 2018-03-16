@@ -103,8 +103,10 @@ trait FeedService {
       val group = "Selection"
       (Facet(
         href = s"${
-          BookApiProperties.CloudFrontOpds}${BookApiProperties.OpdsRootUrl
-          .replace(BookApiProperties.OpdsLanguageParam, currentLanguage.toString)}",
+          BookApiProperties.CloudFrontOpds}${BookApiProperties.OpdsCategoryUrl
+          .replace(BookApiProperties.OpdsLanguageParam, currentLanguage.toString)
+          .replace(BookApiProperties.OpdsCategoryParam, currentCategory)
+        }",
         title = s"New arrivals",
         group = group,
         isActive = currentReadingLevel.isEmpty)
