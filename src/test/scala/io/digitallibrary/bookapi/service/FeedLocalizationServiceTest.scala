@@ -11,7 +11,7 @@ class FeedLocalizationServiceTest extends UnitSuite with TestEnvironment {
     val l = feedLocalizationService.localizationFor(LanguageTag("nob"))
     l.rootTitle should equal("Global Digital Library - Bokkatalog")
     l.navTitle should equal("Nye titler")
-    l.levelTitle("5") should equal("Nivå 5")
+    l.levelTitle("4") should equal("Nivå 4")
     l.levelDescription should equal("Bøker med angitt lesenivå")
   }
 
@@ -20,11 +20,25 @@ class FeedLocalizationServiceTest extends UnitSuite with TestEnvironment {
   }
 
   test("that all level title functions can be run") {
-    feedLocalizationService.localizationMap.foreach { case (language, localization) =>
-      val levelTitle = localization.levelTitle("123")
-      withClue(s"Level title for ${language.toString} should be nonempty") { levelTitle.nonEmpty should be(true) }
-      withClue(s"Level title for ${language.toString} should contain 123") { levelTitle.contains("123") should be(true) }
+    def assert(language: LanguageTag, localization: FeedLocalization, level: String) = {
+      val title = localization.levelTitle(level)
+      withClue(s"Level title for ${language.toString} should be nonempty") { title.nonEmpty should be(true) }
     }
+    for {
+      (language, localization) <- feedLocalizationService.localizationMap
+      level <- Seq("1", "2", "3", "4", "read-aloud", "decodable")
+    } yield assert(language, localization, level)
+  }
+
+  test("that all category title functions can be run") {
+    def assert(language: LanguageTag, localization: FeedLocalization, category: String) = {
+      val title = localization.categoryTitle(category)
+      withClue(s"Category title for ${language.toString} should be nonempty") { title.nonEmpty should be(true) }
+    }
+    for {
+      (language, localization) <- feedLocalizationService.localizationMap
+      category <- Seq("library_books", "classroom_books")
+    } yield assert(language, localization, category)
   }
 
 }

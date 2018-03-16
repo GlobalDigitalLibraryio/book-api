@@ -10,6 +10,9 @@ trait FeedLocalizationService {
 
   case class FeedLocalization(rootTitle: String,
                               navTitle: String,
+                              categoriesTitle: String,
+                              categoriesDescription: String,
+                              categoryTitle: String => String,
                               levelTitle: String => String,
                               levelDescription: String)
 
@@ -32,11 +35,13 @@ trait FeedLocalizationService {
           value
       }
 
-      val levelFormatString = getNonEmptyString("level_feed_title")
       FeedLocalization(
         rootTitle = getNonEmptyString("opds_root_title"),
         navTitle = getNonEmptyString("opds_nav_title"),
-        levelTitle = level => levelFormatString.replace("{0}", level),
+        categoriesTitle = getNonEmptyString("opds_categories_title"),
+        categoriesDescription = getNonEmptyString("opds_categories_description"),
+        categoryTitle = category => getNonEmptyString(s"category_feed_title_$category"),
+        levelTitle = level => getNonEmptyString(s"level_feed_title_$level"),
         levelDescription = getNonEmptyString("level_feed_description"))
     }
 
