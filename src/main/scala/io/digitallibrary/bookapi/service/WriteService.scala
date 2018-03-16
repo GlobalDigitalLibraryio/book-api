@@ -19,6 +19,7 @@ import io.digitallibrary.bookapi.model.api.internal.{NewChapter, NewTranslation}
 import io.digitallibrary.bookapi.model.api.{FeaturedContentId, NotFoundException, TranslateRequest}
 import io.digitallibrary.bookapi.model.domain._
 import io.digitallibrary.bookapi.repository._
+import io.digitallibrary.bookapi.service.search.IndexService
 
 import scala.util.{Failure, Success, Try}
 
@@ -28,6 +29,7 @@ trait WriteService {
     with ConverterService
     with ValidationService
     with ReadService
+    with IndexService
     with BookRepository
     with CategoryRepository
     with ChapterRepository
@@ -268,7 +270,7 @@ trait WriteService {
                 person))
           }
           }
-
+          indexService.indexDocument(translation)
           api.internal.TranslationId(translation.id.get)
         }
       })
@@ -361,6 +363,7 @@ trait WriteService {
             }
             existing.contributors.foreach(contributorRepository.remove)
 
+            indexService.indexDocument(translation)
             api.internal.TranslationId(translation.id.get)
           }
 
