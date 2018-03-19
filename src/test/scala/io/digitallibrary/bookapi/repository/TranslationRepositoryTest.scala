@@ -54,7 +54,7 @@ class TranslationRepositoryTest extends IntegrationSuite with TestEnvironment wi
       addTranslationDef("ext8", "Title 4 - nob", book4.id.get, LanguageTag("nob"))
 
       val searchResult = translationRepository.bookIdsWithLanguageAndStatus(LanguageTag("eng"), PublishingStatus.PUBLISHED, 10, 1, Sort.ByIdAsc)
-      searchResult.language.toString should equal("eng")
+      searchResult.language.toString should equal("en")
       searchResult.results.length should be(2)
       searchResult.results.sorted should equal(Seq(book1.id.get, book2.id.get))
     }
@@ -71,7 +71,7 @@ class TranslationRepositoryTest extends IntegrationSuite with TestEnvironment wi
       addTranslationDef("ext3", "Title 2 - eng", book3.id.get, LanguageTag("eng"), status = PublishingStatus.UNLISTED)
 
       val searchResult = translationRepository.bookIdsWithLanguageAndStatus(LanguageTag("eng"), PublishingStatus.PUBLISHED, 10, 1, Sort.ByIdAsc)
-      searchResult.language.toString should equal("eng")
+      searchResult.language.toString should equal("en")
       searchResult.results.length should be(2)
       searchResult.results.sorted should equal(Seq(book1.id.get, book2.id.get))
     }
@@ -104,7 +104,7 @@ class TranslationRepositoryTest extends IntegrationSuite with TestEnvironment wi
       addTranslationDef("ext1", "title 1", book1.id.get, LanguageTag("amh"))
       addTranslationDef("ext1", "title 1", book1.id.get, LanguageTag("swa"))
 
-      translationRepository.languagesFor(book1.id.get).map(_.toString).sorted should equal(Seq("amh", "eng", "nob", "swa"))
+      translationRepository.languagesFor(book1.id.get).map(_.toString).sorted should equal(Seq("am", "en", "nb", "sw"))
     }
   }
 
