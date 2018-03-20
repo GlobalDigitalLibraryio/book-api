@@ -175,20 +175,9 @@ object CrowdinUtils {
 
   def directoryName(id: Long, title: String) = {
     // The following are invalid characters at Crowdin: \ / : * ? " < > |
-    val substitutions = Map(
-      ' '  -> '-',
-      '\\' -> '-',
-      '/'  -> '-',
-      ':'  -> '-',
-      '*'  -> '-',
-      '?'  -> '-',
-      '"'  -> '-',
-      '<'  -> '-',
-      '>'  -> '-',
-      '|'  -> '-'
-    )
+    val substitutions = " \\/:*?\"<>|".toSet
+    val validTitle = title.map(c => if (substitutions.contains(c)) '-' else c)
 
-    val validTitle = title.map(c => substitutions.getOrElse(c, c))
     s"$id-$validTitle"
   }
 
