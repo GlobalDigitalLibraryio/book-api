@@ -48,6 +48,11 @@ trait InternController {
       importService.importBook(newBook)
     }
 
+    post("/import/translation/:book_id/") {
+      val newBook = extract[Book](request.body)
+      importService.importBookAsTranslation(newBook, long("book_id"))
+    }
+
     put("/book/:id") {
       val bookId = long("id")
       val bookReplacement = extract[NewBook](request.body)

@@ -31,6 +31,7 @@ trait ConverterService {
 
   class ConverterService extends LazyLogging {
 
+
     def toDomainChapter(chapter: api.Chapter, translationId: Long): domain.Chapter = {
       domain.Chapter(
         id = None,
@@ -42,12 +43,45 @@ trait ConverterService {
         chapterType = ChapterType.valueOf(chapter.chapterType).get)
     }
 
+    def mergeChapter(existing: domain.Chapter, replacement: api.Chapter): domain.Chapter = {
+      existing.copy(
+        seqNo = replacement.seqNo,
+        title = replacement.title,
+        content = replacement.content,
+        chapterType = ChapterType.valueOf(replacement.chapterType).get
+      )
+    }
+
+    def mergeTranslation(existingTranslation: Translation, newBook: internal.Book, categories: Seq[Category]): domain.Translation = {
+      existingTranslation.copy(
+        externalId = newBook.externalId,
+        title = newBook.title,
+        about = newBook.description,
+        language = LanguageTag(newBook.language.code),
+        translatedFrom = newBook.translatedFrom.map(tf => LanguageTag(tf.code)),
+        datePublished = newBook.datePublished,
+        dateCreated = newBook.dateCreated,
+        categoryIds = categories.map(_.id.get),
+        coverphoto = newBook.coverPhoto.map(_.imageApiId),
+        tags = newBook.tags,
+        educationalUse = newBook.educationalUse,
+        educationalRole = newBook.educationalRole,
+        timeRequired = newBook.timeRequired,
+        typicalAgeRange = newBook.typicalAgeRange,
+        readingLevel = newBook.readingLevel,
+        dateArrived = newBook.dateArrived,
+        publishingStatus = PublishingStatus.PUBLISHED,
+        categories = categories,
+        bookFormat = BookFormat.valueOfOrDefault(newBook.bookFormat)
+      )
+    }
+
     def toDomainTranslation(newBook: internal.Book, persistedBook: Book, categories: Seq[Category]): domain.Translation = {
       domain.Translation(
         id = None,
         revision = None,
         bookId = persistedBook.id.get,
-        externalId = None,
+        externalId = newBook.externalId,
         uuid = UUID.randomUUID().toString,
         title = newBook.title,
         about = newBook.description,
