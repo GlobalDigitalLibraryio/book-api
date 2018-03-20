@@ -173,7 +173,14 @@ object CrowdinUtils {
     s"https://crowdin.com/project/$crowdinProjectId/$toLanguage#/${directoryNameFor(book)}"
 
 
-  def directoryName(id: Long, title: String) = s"$id-${title.replace(" ", "-")}"
+  def directoryName(id: Long, title: String) = {
+    // The following are invalid characters at Crowdin: \ / : * ? " < > |
+    val substitutions = " \\/:*?\"<>|".toSet
+    val validTitle = title.map(c => if (substitutions.contains(c)) '-' else c)
+
+    s"$id-$validTitle"
+  }
+
   def directoryNameFor(book: Book): String = directoryName(book.id, book.title)
   def directoryNameFor(translation: Translation): String = directoryName(translation.bookId, translation.title)
 
