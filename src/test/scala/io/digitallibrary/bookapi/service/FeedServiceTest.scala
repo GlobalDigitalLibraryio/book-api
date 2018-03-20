@@ -50,7 +50,7 @@ class FeedServiceTest extends UnitSuite with TestEnvironment {
         .replace(OpdsCategoryParam, "cat1")
         .replace(OpdsLanguageParam, LanguageCodeEnglish)}")
 
-    calculatedFeedUrls.map(_.url).sorted should equal (Seq("/eng/category/cat1/level/1.xml", "/eng/category/cat1/root.xml", "/eng/nav.xml", "/eng/root.xml", "/root.xml").sorted)
+    calculatedFeedUrls.map(_.url).sorted should equal (Seq("/en/category/cat1/level/1.xml", "/en/category/cat1/root.xml", "/en/nav.xml", "/en/root.xml", "/root.xml").sorted)
   }
 
   test("that calculateFeedUrls calculates correct of feeds for multiple languages and levels") {
@@ -71,18 +71,18 @@ class FeedServiceTest extends UnitSuite with TestEnvironment {
     val expectedFeeds =
       """
         |/root.xml
-        |/eng/nav.xml
-        |/nob/nav.xml
-        |/eng/root.xml
-        |/nob/root.xml
-        |/nob/category/cat1/root.xml
-        |/nob/category/cat2/root.xml
-        |/nob/category/cat1/level/1.xml
-        |/nob/category/cat1/level/2.xml
-        |/nob/category/cat2/level/decodable.xml
-        |/eng/category/cat1/root.xml
-        |/eng/category/cat1/level/1.xml
-        |/eng/category/cat1/level/2.xml
+        |/en/nav.xml
+        |/nb/nav.xml
+        |/en/root.xml
+        |/nb/root.xml
+        |/nb/category/cat1/root.xml
+        |/nb/category/cat2/root.xml
+        |/nb/category/cat1/level/1.xml
+        |/nb/category/cat1/level/2.xml
+        |/nb/category/cat2/level/decodable.xml
+        |/en/category/cat1/root.xml
+        |/en/category/cat1/level/1.xml
+        |/en/category/cat1/level/2.xml
       """
       .stripMargin.trim.split("\n").toSet
 
@@ -90,20 +90,20 @@ class FeedServiceTest extends UnitSuite with TestEnvironment {
   }
 
   test("that levelPath returns expected path for language and level") {
-    feedService.levelPath(LanguageTag("amh"), "cat1", "1") should equal ("/amh/category/cat1/level/1.xml")
+    feedService.levelPath(LanguageTag("amh"), "cat1", "1") should equal ("/am/category/cat1/level/1.xml")
   }
 
   test("that justArrivedPath returns expected path for language") {
-    feedService.rootPath(LanguageTag("amh")) should equal ("/amh/root.xml")
+    feedService.rootPath(LanguageTag("amh")) should equal ("/am/root.xml")
   }
 
   test("that facetsForLanguage returns facets for languages, with languages alphabetically sorted") {
     when(readService.listAvailablePublishedLanguagesAsLanguageTags).thenReturn(Seq("eng", "hin", "ben", "eng-latn-gb").map(LanguageTag(_)))
     feedService.facetsForLanguages(LanguageTag("eng")) should equal (Seq(
-      Facet("http://local.digitallibrary.io/book-api/opds/ben/root.xml", LanguageTag("ben").localDisplayName.get, "Languages", isActive = false),
-      Facet("http://local.digitallibrary.io/book-api/opds/eng/root.xml", "English", "Languages", isActive = true),
-      Facet("http://local.digitallibrary.io/book-api/opds/eng-latn-gb/root.xml", "English (Latin, United Kingdom)", "Languages", isActive = false),
-      Facet("http://local.digitallibrary.io/book-api/opds/hin/root.xml", LanguageTag("hin").localDisplayName.get, "Languages", isActive = false))
+      Facet("http://local.digitallibrary.io/book-api/opds/bn/root.xml", LanguageTag("ben").localDisplayName.get, "Languages", isActive = false),
+      Facet("http://local.digitallibrary.io/book-api/opds/en/root.xml", "English", "Languages", isActive = true),
+      Facet("http://local.digitallibrary.io/book-api/opds/en-latn-gb/root.xml", "English (Latin, United Kingdom)", "Languages", isActive = false),
+      Facet("http://local.digitallibrary.io/book-api/opds/hi/root.xml", LanguageTag("hin").localDisplayName.get, "Languages", isActive = false))
     )
   }
 
@@ -111,11 +111,11 @@ class FeedServiceTest extends UnitSuite with TestEnvironment {
     val language = LanguageTag("eng")
     when(readService.listAvailablePublishedLevelsForLanguage(Some(language))).thenReturn(Seq("4", "1", "3", "2"))
     feedService.facetsForReadingLevels(language, "cat1", Some("3")) should equal (Seq(
-      Facet("http://local.digitallibrary.io/book-api/opds/eng/category/cat1/root.xml", "New arrivals", "Selection", isActive = false),
-      Facet("http://local.digitallibrary.io/book-api/opds/eng/category/cat1/level/1.xml", "Level 1", "Selection", isActive = false),
-      Facet("http://local.digitallibrary.io/book-api/opds/eng/category/cat1/level/2.xml", "Level 2", "Selection", isActive = false),
-      Facet("http://local.digitallibrary.io/book-api/opds/eng/category/cat1/level/3.xml", "Level 3", "Selection", isActive = true),
-      Facet("http://local.digitallibrary.io/book-api/opds/eng/category/cat1/level/4.xml", "Level 4", "Selection", isActive = false)
+      Facet("http://local.digitallibrary.io/book-api/opds/en/category/cat1/root.xml", "New arrivals", "Selection", isActive = false),
+      Facet("http://local.digitallibrary.io/book-api/opds/en/category/cat1/level/1.xml", "Level 1", "Selection", isActive = false),
+      Facet("http://local.digitallibrary.io/book-api/opds/en/category/cat1/level/2.xml", "Level 2", "Selection", isActive = false),
+      Facet("http://local.digitallibrary.io/book-api/opds/en/category/cat1/level/3.xml", "Level 3", "Selection", isActive = true),
+      Facet("http://local.digitallibrary.io/book-api/opds/en/category/cat1/level/4.xml", "Level 4", "Selection", isActive = false)
     ))
   }
 

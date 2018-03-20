@@ -37,7 +37,7 @@ class IndexServiceTest extends UnitSuite with TestEnvironment {
     when(esClient.execute(any[IndicesExists])(any[HttpExecutable[IndicesExists,IndexExistsResponse]]))
       .thenReturn(Success(RequestSuccess(200, Some(""), Map(), IndexExistsResponse(true))))
 
-    val count = service.indexDocuments(List(TestData.Domain.DefaultTranslation), "books-nob")
+    val count = service.indexDocuments(List(TestData.Domain.DefaultTranslation), "books-nb")
     count should be(Success(1))
   }
 
@@ -46,36 +46,36 @@ class IndexServiceTest extends UnitSuite with TestEnvironment {
       .thenReturn(Success(RequestSuccess(200, Some(""), Map(), IndexExistsResponse(false))))
 
     val indexName = service.createSearchIndex(LanguageTag(TestData.DefaultLanguage))
-    indexName.get should startWith("books-nob")
+    indexName.get should startWith("books-nb")
   }
 
   test("that index does and does not exist") {
     when(esClient.execute(any[IndicesExists])(any[HttpExecutable[IndicesExists,IndexExistsResponse]]))
       .thenReturn(Success(RequestSuccess(200, Some(""), Map(), IndexExistsResponse(true))))
 
-    val exists = service.indexExisting("books-nob")
+    val exists = service.indexExisting("books-nb")
     exists should be(Success(true))
 
     when(esClient.execute(any[IndicesExists])(any[HttpExecutable[IndicesExists,IndexExistsResponse]]))
       .thenReturn(Success(RequestSuccess(200, Some(""), Map(), IndexExistsResponse(false))))
 
-    val notexists = service.indexExisting("books-nob")
+    val notexists = service.indexExisting("books-nb")
     notexists should be(Success(false))
   }
 
   test("that index is correct for alias") {
     when(esClient.execute(any[GetAliasesDefinition])(any[HttpExecutable[GetAliasesDefinition,IndexAliases]]))
-      .thenReturn(Success(RequestSuccess(200, Some(""), Map(), IndexAliases(Map(Index("books-nob_timestamp_uuid") -> Seq(Alias("books-nob")))))))
+      .thenReturn(Success(RequestSuccess(200, Some(""), Map(), IndexAliases(Map(Index("books-nb_timestamp_uuid") -> Seq(Alias("books-nb")))))))
 
     val alias = service.aliasTarget(LanguageTag(TestData.DefaultLanguage))
-    alias.get should be(Some("books-nob_timestamp_uuid"))
+    alias.get should be(Some("books-nb_timestamp_uuid"))
   }
 
   test("that alias for index is updated") {
     when(esClient.execute(any[IndicesExists])(any[HttpExecutable[IndicesExists,IndexExistsResponse]]))
       .thenReturn(Success(RequestSuccess(200, Some(""), Map(), IndexExistsResponse(true))))
 
-    val updated = service.updateAliasTarget(Some("index-nob_1"), "index-nob_2", LanguageTag(TestData.DefaultLanguage))
+    val updated = service.updateAliasTarget(Some("index-nb_1"), "index-nb_2", LanguageTag(TestData.DefaultLanguage))
     updated should be(Success())
   }
 

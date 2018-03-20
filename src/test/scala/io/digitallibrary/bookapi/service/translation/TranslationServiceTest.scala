@@ -186,7 +186,7 @@ class TranslationServiceTest extends UnitSuite with TestEnvironment {
     when(translationDbService.fileForCrowdinProjectWithFileIdAndLanguage(any[String], any[String], any[LanguageTag])).thenReturn(None)
     val result = service.updateTranslationStatus("abc", LanguageTag("nob"), "123", domain.TranslationStatus.TRANSLATED)
     result should be a 'Failure
-    result.failed.get.getMessage should equal (s"No translation for project abc, language nob and file_id 123")
+    result.failed.get.getMessage should equal (s"No translation for project abc, language nb and file_id 123")
   }
 
   test("that updateTranslationStatus returns a Success when update ok") {
