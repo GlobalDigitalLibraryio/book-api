@@ -153,6 +153,7 @@ trait OPDSController {
         {feed.facets.map(facet =>
           <link rel="http://opds-spec.org/facet" href={facet.href} title={facet.title} opds:facetGroup={facet.group} opds:activeFacet={facet.isActive.toString}/>)
         }
+
         {feed.content.map(feedEntry =>
           <entry>
             <id>urn:uuid:{feedEntry.book.uuid}</id>
