@@ -35,28 +35,30 @@ trait BooksController {
 
     private val getAllBooks = (apiOperation[api.SearchResult]("getAllBooks")
       summary s"Returns all books in the default language $DefaultLanguage"
-      notes s"Returns a list of books in $DefaultLanguage"
+      description s"Returns a list of books in $DefaultLanguage"
       parameters(
       headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
       queryParam[Option[Int]]("page-size").description("Return this many results per page."),
       queryParam[Option[Int]]("page").description("Return results for this page."),
-      queryParam[Option[Int]]("reading-level").description("Return only books matching this reading level."))
+      queryParam[Option[Int]]("reading-level").description("Return only books matching this reading level."),
+      queryParam[Option[String]]("sort").description(s"Sorts result based on parameter. Possible values: ${Sort.values.mkString(",")}; Default value: ${Sort.ByIdAsc}"))
       responseMessages response500)
 
     private val getAllBooksInLang = (apiOperation[api.SearchResult]("getAllBooksInLangDoc")
       summary s"Returns all books in the specified language"
-      notes s"Returns a list of books in the specified language"
+      description s"Returns a list of books in the specified language"
       parameters(
       headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
       pathParam[String]("lang").description("Desired language for books specified in ISO 639-2 format."),
       queryParam[Option[Int]]("page-size").description("Return this many results per page."),
       queryParam[Option[Int]]("page").description("Return results for this page."),
-      queryParam[Option[Int]]("reading-level").description("Return only books matching this reading level."))
+      queryParam[Option[Int]]("reading-level").description("Return only books matching this reading level."),
+      queryParam[Option[String]]("sort").description(s"Sorts result based on parameter. Possible values: ${Sort.values.mkString(",")}; Default value: ${Sort.ByIdAsc}"))
       responseMessages response500)
 
     private val getBook = (apiOperation[Option[api.Book]]("getBookInLanguageDoc")
       summary "Returns metadata about a book for the given language"
-      notes "Returns a book in the given language"
+      description "Returns a book in the given language"
       parameters(
       headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
       pathParam[String]("lang").description("Desired language for books specified in ISO 639-2 format"),
@@ -65,7 +67,7 @@ trait BooksController {
 
     private val getChapters = (apiOperation[Seq[api.ChapterSummary]]("getChapters")
       summary "Returns metadata about the chapters for a given book in the given language"
-      notes "Returns metadata about the chapters for a given book in the given language"
+      description "Returns metadata about the chapters for a given book in the given language"
       parameters(
       headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
       pathParam[String]("lang").description("Desired language for books specified in ISO 639-2 format"),
@@ -74,7 +76,7 @@ trait BooksController {
 
     private val getChapter = (apiOperation[Option[api.Chapter]]("getChapter")
       summary "Returns metadata and content for the given chapter in the given language for the given book."
-      notes "Returns metadata and content for the given chapter in the given language for the given book."
+      description "Returns metadata and content for the given chapter in the given language for the given book."
       parameters(
       headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
       pathParam[String]("lang").description("Desired language for books specified in ISO 639-2 format"),
@@ -84,21 +86,22 @@ trait BooksController {
 
     private val getSimilar = (apiOperation[api.SearchResult]("getSimilar")
       summary "Returns books that are similar to the given id in the given language."
-      notes "Returns books that are similar to the given id in the given language."
+      description "Returns books that are similar to the given id in the given language."
       parameters(
       headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
       pathParam[String]("lang").description("Desired language for books specified in ISO 639-2 format"),
-      pathParam[Long]("id").description("Id of the book to find similar for."))
+      pathParam[Long]("id").description("Id of the book to find similar for."),
+      queryParam[Option[String]]("sort").description(s"Sorts result based on parameter. Possible values: ${Sort.values.mkString(",")}; Default value: ${Sort.ByIdAsc}"))
       responseMessages(response400, response404, response500))
 
     private val getMyBooks = (apiOperation[Seq[api.MyBook]]("getMyBooks")
       summary s"Returns all the books for the logged in user."
-      notes s"Returns a list of books for the logged in user."
+      description s"Returns a list of books for the logged in user."
       parameters(
       headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
       queryParam[Option[Int]]("page-size").description("Return this many results per page."),
       queryParam[Option[Int]]("page").description("Return results for this page."),
-      queryParam[Option[String]]("sort").description("Sorting order for the books."))
+      queryParam[Option[String]]("sort").description(s"Sorts result based on parameter. Possible values: ${Sort.values.mkString(",")}; Default value: ${Sort.ByIdAsc}"))
       responseMessages (response403, response500)
       authorizations "oauth2")
 
