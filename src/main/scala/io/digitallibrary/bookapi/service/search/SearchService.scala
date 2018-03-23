@@ -11,7 +11,7 @@ import com.sksamuel.elastic4s.IndexAndTypes
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http.search.{SearchHit, SearchHits}
 import com.sksamuel.elastic4s.searches.HighlightFieldDefinition
-import com.sksamuel.elastic4s.searches.queries.term.TermQueryDefinition
+import com.sksamuel.elastic4s.searches.queries.term.{TermQueryDefinition, TermsQueryDefinition}
 import com.sksamuel.elastic4s.searches.queries.{BoolQueryDefinition, MoreLikeThisItem, MoreLikeThisQueryDefinition, QueryStringQueryDefinition}
 import com.sksamuel.elastic4s.searches.sort.{FieldSortDefinition, ScoreSortDefinition, SortOrder}
 import com.typesafe.scalalogging.LazyLogging
@@ -36,10 +36,10 @@ trait SearchService {
     implicit val formats: Formats = DefaultFormats + LocalDateSerializer
 
     def searchWithQuery(languageTag: LanguageTag, query: Option[String], source: Option[String], paging: Paging, sort: Sort.Value): SearchResult =
-      executeSearch(boolDefinition = BoolQueryDefinition(), languageTag = languageTag, query = query, category = None, readingLevel = None, source = source, paging = paging, sort = sort)
+      executeSearch(boolDefinition = BoolQueryDefinition(), languageTag = languageTag, query = query, categories = Seq(), readingLevel = None, source = source, paging = paging, sort = sort)
 
     def searchWithCategoryAndLevel(languageTag: LanguageTag, category: Option[String], readingLevel: Option[String], source: Option[String], paging: Paging, sort: Sort.Value): SearchResult =
-      executeSearch(boolDefinition = BoolQueryDefinition(), languageTag = languageTag, query = None, category = category, readingLevel = readingLevel, source = source, paging = paging, sort = sort)
+      executeSearch(boolDefinition = BoolQueryDefinition(), languageTag = languageTag, query = None, categories = category.toSeq, readingLevel = readingLevel, source = source, paging = paging, sort = sort)
 
     def searchSimilar(languageTag: LanguageTag, bookId: Long, paging: Paging, sort: Sort.Value): SearchResult = {
       val translation = translationRepository.forBookIdAndLanguage(bookId, languageTag)
@@ -49,12 +49,12 @@ trait SearchService {
           val moreLikeThisDefinition = MoreLikeThisQueryDefinition(Seq("readingLevel","language"),
             likeDocs = Seq(MoreLikeThisItem(BookApiProperties.searchIndex(languageTag), BookApiProperties.SearchDocument, trans.id.get.toString)),
             minDocFreq = Some(1), minTermFreq = Some(1), minShouldMatch = Some("100%"))
-          executeSearch(boolDefinition = BoolQueryDefinition().should(moreLikeThisDefinition), languageTag = languageTag, query = None, category = None, readingLevel = None, source = None, paging = paging, sort = sort)
+          executeSearch(boolDefinition = BoolQueryDefinition().must(moreLikeThisDefinition), languageTag = languageTag, query = None, categories = trans.categories.map(_.name), readingLevel = None, source = None, paging = paging, sort = sort)
       }
     }
 
     private def executeSearch(boolDefinition: BoolQueryDefinition, languageTag: LanguageTag, query: Option[String],
-                              category: Option[String], readingLevel: Option[String], source: Option[String], paging: Paging, sort: Sort.Value): SearchResult = {
+                              categories: Seq[String], readingLevel: Option[String], source: Option[String], paging: Paging, sort: Sort.Value): SearchResult = {
 
       val (startAt, numResults) = getStartAtAndNumResults(paging.page, paging.pageSize)
 
@@ -70,7 +70,11 @@ trait SearchService {
         case Some(value) => boolDefinition.must(QueryStringQueryDefinition(value.toLowerCase).field("description",1.0).field("title",1.4))
       }
 
-      val categoryFilter = category.map(TermQueryDefinition("categories.name", _))
+      val categoryFilter = categories match {
+        case head :: tail => Some(TermsQueryDefinition("categories.name", head :: tail))
+        case _ => None
+      }
+
       val levelFilter = readingLevel.map(TermQueryDefinition("readingLevel", _))
       val sourceFilter = source.map(TermQueryDefinition("source", _))
 

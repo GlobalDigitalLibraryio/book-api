@@ -37,7 +37,7 @@ class SearchServiceIntegrationTest extends UnitSuite with TestEnvironment {
     indexService.indexDocument(TestData.Domain.AmharicTranslation)
 
     val bookWithDifferentSource = TestData.Domain.DefaultBook.copy(source = "some_unknown_source")
-    val translationWithDifferentSource = TestData.Domain.DefaultTranslation.copy(id = Some(3), bookId = 2, title = "Some stuff here...", language = LanguageTag("eng"))
+    val translationWithDifferentSource = TestData.Domain.DefaultTranslation.copy(id = Some(3), bookId = 2, title = "Some stuff here...", language = LanguageTag("en"))
     val bookHitWithDifferentSource = TestData.Api.DefaultBookHit.copy(id = 3, title = "Some stuff here...", source = "some_unknown_source", language = TestData.Api.english)
     when(bookRepository.withId(2)).thenReturn(Some(bookWithDifferentSource))
     when(converterService.toApiBookHit(Some(translationWithDifferentSource), Some(bookWithDifferentSource))).thenReturn(Some(bookHitWithDifferentSource))
@@ -50,39 +50,39 @@ class SearchServiceIntegrationTest extends UnitSuite with TestEnvironment {
   }
 
   test("that search for books in norwegian returns two books") {
-    val searchResult = searchService.searchWithQuery(LanguageTag("nob"), None, None, Paging(1,10), Sort.ByRelevance)
+    val searchResult = searchService.searchWithQuery(LanguageTag("nb"), None, None, Paging(1,10), Sort.ByRelevance)
     searchResult.totalCount should be(2)
-    searchResult.results.head.language.code should be("nob")
+    searchResult.results.head.language.code should be("nb")
   }
 
   test("that search for books in amharic returns one book") {
-    val searchResult = searchService.searchWithQuery(LanguageTag("amh"), None, None, Paging(1,10), Sort.ByRelevance)
+    val searchResult = searchService.searchWithQuery(LanguageTag("am"), None, None, Paging(1,10), Sort.ByRelevance)
     searchResult.totalCount should be(1)
-    searchResult.results.head.language.code should be("amh")
+    searchResult.results.head.language.code should be("am")
   }
 
   test("that search for title returns expected") {
-    val searchResult = searchService.searchWithQuery(LanguageTag("nob"), Some("nonexisting"), None, Paging(1,10), Sort.ByRelevance)
+    val searchResult = searchService.searchWithQuery(LanguageTag("nb"), Some("nonexisting"), None, Paging(1,10), Sort.ByRelevance)
     searchResult.totalCount should be(0)
 
-    val searchByRelevance = searchService.searchWithQuery(LanguageTag("nob"), Some("title"), None, Paging(1,10), Sort.ByRelevance)
+    val searchByRelevance = searchService.searchWithQuery(LanguageTag("nb"), Some("title"), None, Paging(1,10), Sort.ByRelevance)
     searchByRelevance.totalCount should be(2)
     searchByRelevance.results.head.id should be(2)
     searchByRelevance.results.head.title should be("Different title")
 
-    val searchByIdDesc = searchService.searchWithQuery(LanguageTag("nob"), Some("title"), None, Paging(1,10), Sort.ByIdAsc)
+    val searchByIdDesc = searchService.searchWithQuery(LanguageTag("nb"), Some("title"), None, Paging(1,10), Sort.ByIdAsc)
     searchByIdDesc.totalCount should be(2)
     searchByIdDesc.results.head.id should be(1)
     searchByIdDesc.results.head.title should be("Title")
   }
 
   test("that sort on title gives correct sorting") {
-    val searchByTitleAsc = searchService.searchWithQuery(LanguageTag("nob"), Some("title"), None, Paging(1,10), Sort.ByTitleAsc)
+    val searchByTitleAsc = searchService.searchWithQuery(LanguageTag("nb"), Some("title"), None, Paging(1,10), Sort.ByTitleAsc)
     searchByTitleAsc.totalCount should be(2)
     searchByTitleAsc.results.head.id should be(2)
     searchByTitleAsc.results.head.title should be("Different title")
 
-    val searchByTitleDesc = searchService.searchWithQuery(LanguageTag("nob"), Some("title"), None, Paging(1,10), Sort.ByTitleDesc)
+    val searchByTitleDesc = searchService.searchWithQuery(LanguageTag("nb"), Some("title"), None, Paging(1,10), Sort.ByTitleDesc)
     searchByTitleDesc.totalCount should be(2)
     searchByTitleDesc.results.head.id should be(1)
     searchByTitleDesc.results.head.title should be("Title")
@@ -90,17 +90,17 @@ class SearchServiceIntegrationTest extends UnitSuite with TestEnvironment {
 
 
   test("that search for level returns expected") {
-    val searchResult = searchService.searchWithCategoryAndLevel(languageTag = LanguageTag("nob"), category = None, readingLevel = Some("2"), source = None, paging = Paging(1, 10), sort = Sort.ByIdAsc)
+    val searchResult = searchService.searchWithCategoryAndLevel(languageTag = LanguageTag("nb"), category = None, readingLevel = Some("2"), source = None, paging = Paging(1, 10), sort = Sort.ByIdAsc)
     searchResult.totalCount should be(0)
 
-    val searchAgain = searchService.searchWithCategoryAndLevel(languageTag = LanguageTag("nob"), category = None, readingLevel = Some("1"), source = None, paging = Paging(1, 10), sort = Sort.ByIdAsc)
+    val searchAgain = searchService.searchWithCategoryAndLevel(languageTag = LanguageTag("nb"), category = None, readingLevel = Some("1"), source = None, paging = Paging(1, 10), sort = Sort.ByIdAsc)
     searchAgain.totalCount should be(2)
     searchAgain.results.head.readingLevel should be(Some("1"))
   }
 
   test("that search similar for norwegian returns one book") {
-    when(translationRepository.forBookIdAndLanguage(1, LanguageTag("nob"))).thenReturn(Some(TestData.Domain.DefaultTranslation))
-    val searchResult = searchService.searchSimilar(LanguageTag("nob"), 1, Paging(1,10), Sort.ByIdAsc)
+    when(translationRepository.forBookIdAndLanguage(1, LanguageTag("nb"))).thenReturn(Some(TestData.Domain.DefaultTranslation))
+    val searchResult = searchService.searchSimilar(LanguageTag("nb"), 1, Paging(1,10), Sort.ByIdAsc)
     searchResult.totalCount should be(1)
   }
 
@@ -111,20 +111,20 @@ class SearchServiceIntegrationTest extends UnitSuite with TestEnvironment {
   }
 
   test("that filtering on source only returns book with given source") {
-    when(translationRepository.forBookIdAndLanguage(3, LanguageTag("eng"))).thenReturn(Some(TestData.Domain.DefaultTranslation))
-    val searchResult = searchService.searchWithQuery(LanguageTag("eng"), None, Some("some_unknown_source"), Paging(1,10), Sort.ByIdAsc)
+    when(translationRepository.forBookIdAndLanguage(3, LanguageTag("en"))).thenReturn(Some(TestData.Domain.DefaultTranslation))
+    val searchResult = searchService.searchWithQuery(LanguageTag("en"), None, Some("some_unknown_source"), Paging(1,10), Sort.ByIdAsc)
     searchResult.totalCount should be (1)
   }
 
   test("that filtering on source and combined search only gives hit on correct book") {
-    when(translationRepository.forBookIdAndLanguage(2, LanguageTag("nob"))).thenReturn(Some(TestData.Domain.DefaultTranslation))
-    val searchResult = searchService.searchWithQuery(LanguageTag("nob"), Some("different"), Some("storyweaver"), Paging(1,10), Sort.ByIdAsc)
+    when(translationRepository.forBookIdAndLanguage(2, LanguageTag("nb"))).thenReturn(Some(TestData.Domain.DefaultTranslation))
+    val searchResult = searchService.searchWithQuery(LanguageTag("nb"), Some("different"), Some("storyweaver"), Paging(1,10), Sort.ByIdAsc)
     searchResult.totalCount should be (1)
   }
 
   test("that filtering on source and combined search gives no hits if source is incorrect") {
-    when(translationRepository.forBookIdAndLanguage(2, LanguageTag("nob"))).thenReturn(Some(TestData.Domain.DefaultTranslation))
-    val searchResult = searchService.searchWithQuery(LanguageTag("nob"), Some("different"), Some("bookdash"), Paging(1,10), Sort.ByIdAsc)
+    when(translationRepository.forBookIdAndLanguage(2, LanguageTag("nb"))).thenReturn(Some(TestData.Domain.DefaultTranslation))
+    val searchResult = searchService.searchWithQuery(LanguageTag("nb"), Some("different"), Some("bookdash"), Paging(1,10), Sort.ByIdAsc)
     searchResult.totalCount should be (0)
   }
 }
