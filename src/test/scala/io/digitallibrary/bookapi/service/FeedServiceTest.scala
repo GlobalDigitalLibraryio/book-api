@@ -56,11 +56,11 @@ class FeedServiceTest extends UnitSuite with TestEnvironment {
   test("that calculateFeedUrls calculates correct of feeds for multiple languages and levels") {
     val languages = Seq(LanguageTag(LanguageCodeEnglish), LanguageTag(LanguageCodeNorwegian))
     val norwegianCategoriesAndLevels = Map(
-      Category(None, None, "cat1") -> Set("1", "2"),
-      Category(None, None, "cat2") -> Set("decodable")
+      Category(None, None, "library_books") -> Set("1", "2"),
+      Category(None, None, "classroom_books") -> Set("decodable")
     )
     val englishCategoriesAndLevels = Map(
-      Category(None, None, "cat1") -> Set("1", "2")
+      Category(None, None, "library_books") -> Set("1", "2")
     )
 
     when(translationRepository.allAvailableLanguagesWithStatus(PublishingStatus.PUBLISHED)).thenReturn(languages)
@@ -75,14 +75,14 @@ class FeedServiceTest extends UnitSuite with TestEnvironment {
         |/nb/nav.xml
         |/en/root.xml
         |/nb/root.xml
-        |/nb/category/cat1/root.xml
-        |/nb/category/cat2/root.xml
-        |/nb/category/cat1/level/1.xml
-        |/nb/category/cat1/level/2.xml
-        |/nb/category/cat2/level/decodable.xml
-        |/en/category/cat1/root.xml
-        |/en/category/cat1/level/1.xml
-        |/en/category/cat1/level/2.xml
+        |/nb/category/library_books/root.xml
+        |/nb/category/classroom_books/root.xml
+        |/nb/category/library_books/level/1.xml
+        |/nb/category/library_books/level/2.xml
+        |/nb/category/classroom_books/level/decodable.xml
+        |/en/category/library_books/root.xml
+        |/en/category/library_books/level/1.xml
+        |/en/category/library_books/level/2.xml
       """
       .stripMargin.trim.split("\n").toSet
 
@@ -141,6 +141,19 @@ class FeedServiceTest extends UnitSuite with TestEnvironment {
     val searchResult = mock[SearchResult]
     when(searchResult.totalCount).thenReturn(23)
     feedService.searchResultToPagingStatus(searchResult, Paging(1, 25)) should equal (OnlyOnePage(Paging(1, 25)))
+  }
+
+  test("that facetsForCategories are sorted so that library books comes first") {
+    val language = LanguageTag("eng")
+    val categoriesAndLevels = Map(
+      Category(None, None, "classroom_books") -> Set("decodable"),
+      Category(None, None, "library_books") -> Set("1", "2")
+    )
+    when(readService.listAvailablePublishedCategoriesForLanguage(language)).thenReturn(categoriesAndLevels)
+    feedService.facetsForCategories(language, currentCategory = None) should equal (Seq(
+      Facet("http://local.digitallibrary.io/book-api/opds/en/category/library_books/root.xml", "Some category", "Category", isActive = false),
+      Facet("http://local.digitallibrary.io/book-api/opds/en/category/classroom_books/root.xml", "Some category", "Category", isActive = false),
+    ))
   }
 
 }
