@@ -288,7 +288,7 @@ class TranslationRepositoryTest extends IntegrationSuite with TestEnvironment wi
       addTranslationDef(externalId = "ext2", title = "b", bookId = book2.id.get, language = LanguageTag("xho"), readingLevel = Some("2"), dateArrived = Some(LocalDate.now()), status = PublishingStatus.PUBLISHED)
       addTranslationDef(externalId = "ext3", title = "c", bookId = book3.id.get, language = LanguageTag("xho"), readingLevel = Some("3"), dateArrived = Some(LocalDate.now()), status = PublishingStatus.PUBLISHED)
 
-      val levels = translationRepository.allAvailableLevelsWithStatus(PublishingStatus.PUBLISHED, None)
+      val levels = translationRepository.allAvailableLevelsWithStatus(PublishingStatus.PUBLISHED, None, None)
       levels.size should be (2)
       levels.contains("1") should be (false)
       levels.contains("2") should be (true)
@@ -306,7 +306,7 @@ class TranslationRepositoryTest extends IntegrationSuite with TestEnvironment wi
       addTranslationDef(externalId = "ext2", title = "b", bookId = book2.id.get, language = LanguageTag("nob"), readingLevel = Some("2"), dateArrived = Some(LocalDate.now()), status = PublishingStatus.PUBLISHED)
       addTranslationDef(externalId = "ext3", title = "c", bookId = book3.id.get, language = LanguageTag("xho"), readingLevel = Some("3"), dateArrived = Some(LocalDate.now()), status = PublishingStatus.PUBLISHED)
 
-      val levels = translationRepository.allAvailableLevelsWithStatus(PublishingStatus.PUBLISHED, Some(LanguageTag("xho")))
+      val levels = translationRepository.allAvailableLevelsWithStatus(PublishingStatus.PUBLISHED, Some(LanguageTag("xho")), None)
       levels.size should be (1)
       levels.contains("1") should be (false)
       levels.contains("2") should be (false)
