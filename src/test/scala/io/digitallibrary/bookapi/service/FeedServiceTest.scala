@@ -152,7 +152,7 @@ class FeedServiceTest extends UnitSuite with TestEnvironment {
     when(readService.listAvailablePublishedCategoriesForLanguage(language)).thenReturn(categoriesAndLevels)
     feedService.facetsForCategories(language, currentCategory = None) should equal (Seq(
       Facet("http://local.digitallibrary.io/book-api/opds/en/category/library_books/root.xml", "Some category", "Category", isActive = false),
-      Facet("http://local.digitallibrary.io/book-api/opds/en/category/classroom_books/root.xml", "Some category", "Category", isActive = false),
+      Facet("http://local.digitallibrary.io/book-api/opds/en/category/classroom_books/root.xml", "Some category", "Category", isActive = false)
     ))
   }
 
