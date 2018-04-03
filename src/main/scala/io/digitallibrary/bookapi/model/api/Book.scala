@@ -165,7 +165,7 @@ case class FeedEntry(@(ApiModelProperty@field)(description = "The book associate
 
 @ApiModel(description = "Information about a feed category in an opds-feed")
 case class FeedCategory(@(ApiModelProperty@field)(description = "The url to the category feed") url: String,
-                        @(ApiModelProperty@field)(description = "The title for this cateogry feed") title: String,
+                        @(ApiModelProperty@field)(description = "The title for this category feed") title: String,
                         @(ApiModelProperty@field)(description = "The sort order for this category") sortOrder: Int = 100)
 
 @ApiModel(description = "Id of featured content")

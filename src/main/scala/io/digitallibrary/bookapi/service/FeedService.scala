@@ -176,14 +176,16 @@ trait FeedService {
           sort = Sort.ByArrivalDateDesc)
       }
 
-      (searchResultToPagingStatus(searchResult, paging), searchResult.results.map(book => api.FeedEntry(fromHit(book))))
+      (searchResultToPagingStatus(searchResult, paging), searchResult.results.map(book => api.FeedEntry(fromHit(book, feedLocalizationService.localizationFor(language)))))
     }
 
-    def fromHit(bookHit: BookHit): Book = {
+    def fromHit(bookHit: BookHit, feedLocalization: FeedLocalization): Book = {
       val book = for {
         translation <- translationRepository.forBookIdAndLanguage(bookHit.id, LanguageTag(bookHit.language.code))
         book <- bookRepository.withId(bookHit.id)
-      } yield converterService.toApiBook(translation, translationRepository.languagesFor(bookHit.id), book)
+        apiBook = converterService.toApiBook(translation, translationRepository.languagesFor(bookHit.id), book)
+        apiBookWithLocalizedReadingLevel = apiBook.copy(readingLevel = apiBook.readingLevel.map(feedLocalization.levelTitle))
+      } yield apiBookWithLocalizedReadingLevel
 
       book.get
     }
@@ -197,7 +199,7 @@ trait FeedService {
         paging = paging,
         sort = Sort.ByTitleAsc)
 
-      (searchResultToPagingStatus(searchResult, paging), searchResult.results.map(book => api.FeedEntry(fromHit(book))))
+      (searchResultToPagingStatus(searchResult, paging), searchResult.results.map(book => api.FeedEntry(fromHit(book, feedLocalizationService.localizationFor(language)))))
     }
 
     def entriesForLanguageCategoryAndLevel(language: LanguageTag, category: String, level: String, paging: Paging): (PagingStatus, Seq[FeedEntry]) = {
@@ -209,7 +211,7 @@ trait FeedService {
         paging = paging,
         sort = Sort.ByTitleAsc)
 
-      (searchResultToPagingStatus(searchResult, paging), searchResult.results.map(book => api.FeedEntry(fromHit(book))))
+      (searchResultToPagingStatus(searchResult, paging), searchResult.results.map(book => api.FeedEntry(fromHit(book, feedLocalizationService.localizationFor(language)))))
     }
 
     def searchResultToPagingStatus(searchResult: SearchResult, paging: Paging): PagingStatus = {
