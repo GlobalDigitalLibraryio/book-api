@@ -23,7 +23,6 @@ class FeedServiceTest extends UnitSuite with TestEnvironment {
 
   val defaultFeedLocalization = FeedLocalization(
     rootTitle = "Root title",
-    navTitle = "Nav title",
     categoriesTitle = "Categories",
     categoriesDescription = "Here are the descriptions",
     categoryTitle = _ => "Some category",
@@ -43,14 +42,14 @@ class FeedServiceTest extends UnitSuite with TestEnvironment {
     when(translationRepository.allAvailableCategoriesAndReadingLevelsWithStatus(anyObject(), any[LanguageTag])(any[DBSession])).thenReturn(levels)
 
     val calculatedFeedUrls = feedService.calculateFeeds
-    calculatedFeedUrls.size should be (5)
+    calculatedFeedUrls.size should be (4)
 
-    val expectedFeedUrls = Seq(OpdsRootDefaultLanguageUrl, OpdsNavUrl, OpdsRootDefaultLanguageUrl, OpdsCategoryAndLevelUrl).map(url =>
+    val expectedFeedUrls = Seq(OpdsRootDefaultLanguageUrl, OpdsRootDefaultLanguageUrl, OpdsCategoryAndLevelUrl).map(url =>
       s"${url.replace(OpdsLevelParam, "1")
         .replace(OpdsCategoryParam, "cat1")
         .replace(OpdsLanguageParam, LanguageCodeEnglish)}")
 
-    calculatedFeedUrls.map(_.url).sorted should equal (Seq("/en/category/cat1/level/1.xml", "/en/category/cat1/root.xml", "/en/nav.xml", "/en/root.xml", "/root.xml").sorted)
+    calculatedFeedUrls.map(_.url).sorted should equal (Seq("/en/category/cat1/level/1.xml", "/en/category/cat1/root.xml", "/en/root.xml", "/root.xml").sorted)
   }
 
   test("that calculateFeedUrls calculates correct of feeds for multiple languages and levels") {
@@ -71,8 +70,6 @@ class FeedServiceTest extends UnitSuite with TestEnvironment {
     val expectedFeeds =
       """
         |/root.xml
-        |/en/nav.xml
-        |/nb/nav.xml
         |/en/root.xml
         |/nb/root.xml
         |/nb/category/cat1/root.xml
@@ -87,14 +84,6 @@ class FeedServiceTest extends UnitSuite with TestEnvironment {
       .stripMargin.trim.split("\n").toSet
 
     calculatedFeedUrls.map(f => f.url).toSet should equal(expectedFeeds)
-  }
-
-  test("that levelPath returns expected path for language and level") {
-    feedService.levelPath(LanguageTag("amh"), "cat1", "1") should equal ("/am/category/cat1/level/1.xml")
-  }
-
-  test("that justArrivedPath returns expected path for language") {
-    feedService.rootPath(LanguageTag("amh")) should equal ("/am/root.xml")
   }
 
   test("that facetsForLanguage returns facets for languages, with languages alphabetically sorted") {

@@ -9,7 +9,6 @@ trait FeedLocalizationService {
   val feedLocalizationService: FeedLocalizationService
 
   case class FeedLocalization(rootTitle: String,
-                              navTitle: String,
                               categoriesTitle: String,
                               categoriesDescription: String,
                               categoryTitle: String => String,
@@ -37,7 +36,6 @@ trait FeedLocalizationService {
 
       FeedLocalization(
         rootTitle = getNonEmptyString("opds_root_title"),
-        navTitle = getNonEmptyString("opds_nav_title"),
         categoriesTitle = getNonEmptyString("opds_categories_title"),
         categoriesDescription = getNonEmptyString("opds_categories_description"),
         categoryTitle = category => getNonEmptyString(s"category_feed_title_$category"),

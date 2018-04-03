@@ -33,7 +33,6 @@ trait FeedService {
   case class MoreInBothDirections(currentPaging: Paging, lastPage: Int) extends PagingStatus
 
   sealed trait FeedType
-  case object NavigationFeed extends FeedType
   case class RootFeed(language: LanguageTag) extends FeedType
   case class CategoryFeed(language: LanguageTag, category: String) extends FeedType
   case class LevelFeed(language: LanguageTag, category: String, level: String) extends FeedType
@@ -56,7 +55,6 @@ trait FeedService {
           facetsForLanguages(language) ++
             facetsForCategories(language, Some(category)) ++
             facetsForReadingLevels(currentLanguage = language, currentCategory = category, Some(level))
-        case NavigationFeed => Seq.empty
       }
 
       feedRepository.forUrl(url.replace(BookApiProperties.OpdsPath,"")).map(feedDefinition => {
@@ -125,45 +123,6 @@ trait FeedService {
         ))
     }
 
-    // TODO Issue#200: Remove when not used anymore
-    def feedsForNavigation(language: LanguageTag): Seq[api.Feed] = {
-      val localization = feedLocalizationService.localizationFor(language)
-
-      val justArrived = feedRepository.forUrl(rootPath(language)).map(definition =>
-        api.Feed(
-          api.FeedDefinition(
-            id = definition.id.get,
-            revision = definition.revision.get,
-            url = s"${BookApiProperties.CloudFrontOpds}${definition.url}?page-size=100",
-            uuid = definition.uuid),
-          title = localization.navTitle,
-          description = None,
-          rel = Some("http://opds-spec.org/sort/new"),
-          updated = definition.updated,
-          content = Seq.empty,
-          facets = Seq.empty))
-
-      val categoriesAndLevels = for {
-        (category: domain.Category, levels: Set[String]) <- translationRepository.allAvailableCategoriesAndReadingLevelsWithStatus(PublishingStatus.PUBLISHED, language)
-        level <- levels
-        url = levelPath(language, category.name, level)
-      } yield feedRepository.forUrl(url).map(definition =>
-          api.Feed(
-            api.FeedDefinition(
-              id = definition.id.get,
-              revision = definition.revision.get,
-              url = s"${BookApiProperties.CloudFrontOpds}${definition.url}?page-size=100",
-              uuid = definition.uuid),
-            title = localization.levelTitle(level),
-            description = Some(localization.levelDescription),
-            rel = None,
-            updated = definition.updated,
-            content = Seq.empty,
-            facets = Seq.empty))
-
-      Seq(justArrived).flatten ++ categoriesAndLevels.flatten
-    }
-
     def allEntries(language: LanguageTag, paging: Paging): (PagingStatus, Seq[FeedEntry]) = {
 
       val searchResult = {
@@ -229,16 +188,6 @@ trait FeedService {
       }
     }
 
-    // TODO Issue#200: Remove when not used anymore
-    def rootPath(language: LanguageTag): String = s"${BookApiProperties.OpdsRootUrl}"
-      .replace(BookApiProperties.OpdsLanguageParam, language.toString)
-
-    // TODO Issue#200: Remove when not used anymore
-    def levelPath(language: LanguageTag, category: String, level: String): String = s"${BookApiProperties.OpdsCategoryAndLevelUrl}"
-      .replace(BookApiProperties.OpdsLanguageParam, language.toString)
-      .replace(BookApiProperties.OpdsCategoryParam, category)
-      .replace(BookApiProperties.OpdsLevelParam, level)
-
     def generateFeeds(): Seq[api.FeedDefinition] = {
       val feeds = calculateFeeds.map(createOrUpdateFeed)
       feeds.map(feed => api.FeedDefinition(feed.id.get, feed.revision.get, feed.url, feed.uuid))
@@ -273,16 +222,6 @@ trait FeedService {
           ),
 
           categoryFeed,
-
-          domain.Feed(
-            id = None,
-            revision = None,
-            url = BookApiProperties.OpdsNavUrl.replace(OpdsLanguageParam, language.toString),
-            uuid = UUID.randomUUID().toString,
-            title = localization.navTitle,
-            description = None,
-            updated = ZonedDateTime.now()
-          ),
 
           domain.Feed(
             id = None,
