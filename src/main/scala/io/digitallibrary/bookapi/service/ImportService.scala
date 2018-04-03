@@ -2,6 +2,7 @@ package io.digitallibrary.bookapi.service
 
 import com.typesafe.scalalogging.LazyLogging
 import io.digitallibrary.bookapi.model._
+import io.digitallibrary.bookapi.model.api.{ValidationException, ValidationMessage}
 import io.digitallibrary.bookapi.repository._
 import scalikejdbc.{AutoSession, DBSession}
 
@@ -33,34 +34,32 @@ trait ImportService {
     }
 
     private def addBook(book: api.internal.Book): Try[api.internal.TranslationId] = {
-      logger.info(s"IMPORTING ${book.title} (${book.externalId})")
       inTransaction { implicit session =>
         for {
-          license               <- validLicense(book)
-          publisher             <- validPublisher(book)
-          persistedPublisher    <- persistPublisher(publisher)
-          persistedBook         <- persistBook(book, license, persistedPublisher)
-          persistedTranslation  <- persistTranslation(persistedBook, book)
-          _                     <- persistChapters(book, persistedTranslation)
+          license <- validLicense(book)
+          publisher <- validPublisher(book)
+          persistedPublisher <- persistPublisher(publisher)
+          persistedBook <- persistBook(book, license, persistedPublisher)
+          persistedTranslation <- persistTranslation(persistedBook, book)
+          _ <- persistChapters(book, persistedTranslation)
         } yield api.internal.TranslationId(persistedTranslation.id.get)
       }
     }
 
     private def updateBook(book: api.internal.Book, existingTranslation: domain.Translation): Try[api.internal.TranslationId] = {
-      logger.info(s"UPDATING ${book.title} (${book.externalId})")
       if (inTranslationRepository.forOriginalId(book.id).nonEmpty) {
-        Failure(new RuntimeException("We do not support updating books that are currently being translated...."))
+        Failure(new RuntimeException(s"Book with id ${book.id} is currently being translated. Cannot update at the moment."))
       } else {
         bookRepository.withId(existingTranslation.bookId) match {
-          case None => Failure(new RuntimeException("Cannot find original book"))
-          case Some(originalBook) => {
+          case None => Failure(new api.NotFoundException(s"The book with id ${existingTranslation.bookId} was not found. Cannot update."))
+          case Some(originalBook) => inTransaction { implicit session =>
             for {
-              license              <- validLicense(book)
-              publisher            <- validPublisher(book)
-              persistedPublisher   <- persistPublisher(publisher)
-              persistedBook        <- persistBookUpdate(originalBook, book, license, persistedPublisher)
+              license <- validLicense(book)
+              publisher <- validPublisher(book)
+              persistedPublisher <- persistPublisher(publisher)
+              persistedBook <- persistBookUpdate(originalBook, book, license, persistedPublisher)
               persistedTranslation <- persistTranslationUpdate(persistedBook, existingTranslation, book)
-              _                    <- persistChapterUpdates(book, persistedTranslation)
+              _ <- persistChapterUpdates(book, persistedTranslation)
             } yield api.internal.TranslationId(persistedTranslation.id.get)
 
           }
@@ -68,15 +67,33 @@ trait ImportService {
       }
     }
 
-    def importBookAsTranslation(book: api.internal.Book, bookId: Long): Try[api.internal.TranslationId] = {
+    def importBookAsTranslation(newTranslation: api.internal.Book, bookId: Long): Try[api.internal.TranslationId] = {
       bookRepository.withId(bookId) match {
-        case None => Failure(new RuntimeException("TODO - Finner ikke boken"))
-        case Some(persistedBook) => inTransaction { implicit session =>
-          for {
-            persistedTranslation  <- persistTranslation(persistedBook, book)
-            _                     <- persistChapters(book, persistedTranslation)
-          } yield api.internal.TranslationId(persistedTranslation.id.get)
+        case None => Failure(new api.NotFoundException(s"The book with id $bookId was not found. Cannot update."))
+        case Some(book) => {
+          newTranslation.externalId.flatMap(translationRepository.withExternalId) match {
+            case None => addBookAsTranslation(newTranslation, book)
+            case Some(existingTranslation) => updateBookAsTranslation(newTranslation, existingTranslation, book)
+          }
         }
+      }
+    }
+
+    def addBookAsTranslation(newTranslation: api.internal.Book, book: domain.Book): Try[api.internal.TranslationId] = {
+      inTransaction { implicit session =>
+        for {
+          persistedTranslation <- persistTranslation(book, newTranslation)
+          _ <- persistChapters(newTranslation, persistedTranslation)
+        } yield api.internal.TranslationId(persistedTranslation.id.get)
+      }
+    }
+
+    def updateBookAsTranslation(newTranslation: api.internal.Book, existingTranslation: domain.Translation, book: domain.Book): Try[api.internal.TranslationId] = {
+      inTransaction { implicit session =>
+        for {
+          persistedTranslation <- persistTranslationUpdate(book, existingTranslation, newTranslation)
+          _ <- persistChapterUpdates(newTranslation, existingTranslation)
+        } yield api.internal.TranslationId(persistedTranslation.id.get)
       }
     }
 
@@ -88,7 +105,7 @@ trait ImportService {
       }
     }
 
-    private def persistChapterUpdates(book: api.internal.Book, translation: domain.Translation)(implicit session: DBSession = AutoSession): Try[Seq[domain.Chapter]] = {
+    def persistChapterUpdates(book: api.internal.Book, translation: domain.Translation)(implicit session: DBSession = AutoSession): Try[Seq[domain.Chapter]] = {
       Try {
         book.chapters.map(toUpdate => {
           chapterRepository.forTranslationWithSeqNo(translation.id.get, toUpdate.seqNo) match {
@@ -101,24 +118,24 @@ trait ImportService {
 
     private def persistTranslation(persistedBook: domain.Book, newBook: api.internal.Book)(implicit session: DBSession = AutoSession): Try[domain.Translation] = {
       for {
-          validCategories <- validCategories(newBook)
-          domainTranslation <- Success(converterService.toDomainTranslation(newBook, persistedBook, validCategories))
-          persistedTranslation <- Try(translationRepository.add(domainTranslation))
-          persistedContributors <- persistContributors(newBook.contributors, persistedTranslation)
-        } yield persistedTranslation.copy(contributors = persistedContributors)
-    }
-
-
-    def persistTranslationUpdate(persistedBook: domain.Book, existingTranslation: domain.Translation, book: api.internal.Book): Try[domain.Translation] = {
-      for {
-        validCategories <- validCategories(book)
-        domainTranslation <- Success(converterService.mergeTranslation(existingTranslation, book, validCategories))
-        persistedTranslation <- Try(translationRepository.updateTranslation(domainTranslation))
-        persistedContributors <- persistContributorsUpdate(persistedTranslation, book)
+        validCategories <- validCategories(newBook)
+        domainTranslation <- Success(converterService.toDomainTranslation(newBook, persistedBook, validCategories))
+        persistedTranslation <- Try(translationRepository.add(domainTranslation))
+        persistedContributors <- persistContributors(newBook.contributors, persistedTranslation)
       } yield persistedTranslation.copy(contributors = persistedContributors)
     }
 
-    private def persistContributors(contributors: Seq[api.Contributor], translation: domain.Translation)(implicit session: DBSession = AutoSession): Try[Seq[domain.Contributor]] = {
+
+    def persistTranslationUpdate(persistedBook: domain.Book, existingTranslation: domain.Translation, newTranslation: api.internal.Book): Try[domain.Translation] = {
+      for {
+        validCategories <- validCategories(newTranslation)
+        domainTranslation <- Success(converterService.mergeTranslation(existingTranslation, newTranslation, validCategories))
+        persistedTranslation <- Try(translationRepository.updateTranslation(domainTranslation))
+        persistedContributors <- persistContributorsUpdate(persistedTranslation, newTranslation)
+      } yield persistedTranslation.copy(contributors = persistedContributors)
+    }
+
+    def persistContributors(contributors: Seq[api.Contributor], translation: domain.Translation)(implicit session: DBSession = AutoSession): Try[Seq[domain.Contributor]] = {
       Try(
         contributors.map(contributor => {
           val person: domain.Person = personRepository.withName(contributor.name) match {
@@ -141,47 +158,49 @@ trait ImportService {
       } yield toKeep ++ addedContributors
     }
 
-    private def validCategories(book: api.internal.Book): Try[Seq[domain.Category]] = {
-      val validCategories = book.categories.flatMap(cat => categoryRepository.withName(cat.name))
-      if(validCategories.lengthCompare(book.categories.size) != 0) {
-        Failure(new RuntimeException("adsfasdf"))
-      } else {
-        Success(validCategories)
+    def validCategories(book: api.internal.Book): Try[Seq[domain.Category]] = {
+      val possibleCategories = book.categories.map(cat => {
+        categoryRepository.withName(cat.name) match {
+          case Some(category) => Right(category)
+          case None => Left(ValidationMessage("categories", s"${cat.name} is not a valid category."))
+        }
+      })
 
+      possibleCategories.filter(_.isLeft).map(_.left.get) match {
+        case first :: rest => Failure(new ValidationException(errors = first :: rest))
+        case _ => Success(possibleCategories.map(_.right.get))
       }
     }
 
     private def persistBook(book: api.internal.Book, license: domain.License, publisher: domain.Publisher)(implicit session: DBSession = AutoSession): Try[domain.Book] = {
-      val toPersist = domain.Book(
-        id = None,
-        revision = None,
-        publisherId = publisher.id.get,
-        publisher = publisher,
-        licenseId = license.id.get,
-        license = license,
-        source = book.source)
-
-      Try(bookRepository.add(toPersist))
+      Try(
+        bookRepository.add(
+          domain.Book(
+            id = None,
+            revision = None,
+            publisherId = publisher.id.get,
+            publisher = publisher,
+            licenseId = license.id.get,
+            license = license,
+            source = book.source)))
 
     }
 
     def persistBookUpdate(originalBook: domain.Book, book: api.internal.Book, license: domain.License, persistedPubliser: domain.Publisher): Try[domain.Book] = {
-      val toPersist = originalBook.copy(
-        publisherId = persistedPubliser.id.get,
-        publisher = persistedPubliser,
-        licenseId = license.id.get,
-        license = license,
-        source = book.source
-      )
-
-      bookRepository.updateBook(toPersist)
+      bookRepository.updateBook(
+        originalBook.copy(
+          publisherId = persistedPubliser.id.get,
+          publisher = persistedPubliser,
+          licenseId = license.id.get,
+          license = license,
+          source = book.source))
     }
 
     private def validLicense(book: api.internal.Book): Try[domain.License] = {
       validationService.validateLicense(licenseRepository.withName(book.license.name))
     }
 
-    private def persistPublisher(publisher: domain.Publisher)(implicit session: DBSession = AutoSession): Try[domain.Publisher] = {
+    def persistPublisher(publisher: domain.Publisher)(implicit session: DBSession = AutoSession): Try[domain.Publisher] = {
       publisher.id match {
         case None => Try(publisherRepository.add(publisher))
         case Some(_) => Success(publisher)
@@ -198,4 +217,5 @@ trait ImportService {
     }
 
   }
+
 }

@@ -31,7 +31,7 @@ trait ContributorRepository {
       contributor.copy(id = Some(id), revision = Some(startRevision))
     }
 
-    def remove(contributor: Contributor)(implicit session: DBSession = ReadOnlyAutoSession): Unit = {
+    def remove(contributor: Contributor)(implicit session: DBSession = AutoSession): Unit = {
       val ctb = Contributor.column
       delete
         .from(Contributor)
@@ -45,11 +45,6 @@ trait ContributorRepository {
         .innerJoin(Person as p).on(p.id, ctb.personId)
         .where.eq(ctb.translationId, translationId).toSQL
         .map(Contributor(ctb, p)).list().apply()
-    }
-
-    def deleteContributor(contributor: Contributor)(implicit session: DBSession = AutoSession): Unit = {
-      val ctb = Contributor.column
-      deleteFrom(Contributor).where.eq(ctb.id, contributor.id).toSQL.update().apply()
     }
   }
 }

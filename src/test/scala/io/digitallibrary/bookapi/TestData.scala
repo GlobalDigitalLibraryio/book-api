@@ -13,8 +13,8 @@ import java.util.UUID
 import io.digitallibrary.language.model.LanguageTag
 import io.digitallibrary.bookapi.integration.crowdin.{BookMetaData, TranslatedChapter}
 import io.digitallibrary.bookapi.model._
-import io.digitallibrary.bookapi.model.api.Category
-import io.digitallibrary.bookapi.model.api.internal.NewTranslatedChapter
+import io.digitallibrary.bookapi.model.api._
+import io.digitallibrary.bookapi.model.api.internal.{CoverPhoto, NewTranslatedChapter}
 import io.digitallibrary.bookapi.model.domain.{BookFormat, ChapterType, ContributorType}
 
 object TestData {
@@ -46,7 +46,7 @@ object TestData {
     val category1 = api.Category(1, 1, "category1")
     val category2 = api.Category(2, 1, "category2")
 
-    val DefaultContributor = api.Contributor(1, 1, "type", "contributorname")
+    val DefaultContributor = api.Contributor(1, 1, ContributorType.Author.toString, "contributorname")
 
     val ChapterSummary1 = api.ChapterSummary(1, 1, Some("Title"), "some-url")
     val Chapter1 = api.Chapter(1, 1, 1, Some("Title"), "Content", "Content")
@@ -162,6 +162,36 @@ object TestData {
 
   object Internal {
     val DefaultNewTranslatedChapter = NewTranslatedChapter(1, Some("title"), "Some content", 1)
+    val DefaultInternalBook = api.internal.Book(
+      id = 1,
+      revision = 1,
+      externalId = Some("1"),
+      uuid = "some-uuid",
+      title = "Some title",
+      description = "Some description",
+      translatedFrom = None,
+      language = api.Language("nb", "Norsk Bokmål"),
+      availableLanguages = Seq(),
+      license = Api.DefaultLicense,
+      publisher = Api.DefaultPublisher,
+      readingLevel = Some("1"),
+      typicalAgeRange = None,
+      educationalUse = None,
+      educationalRole = None,
+      timeRequired = None,
+      datePublished = None,
+      dateCreated = None,
+      dateArrived = today,
+      categories = Seq(),
+      coverPhoto = None,
+      downloads = api.Downloads(None, None),
+      tags = Seq(),
+      contributors = Seq(Api.DefaultContributor),
+      chapters = Seq(),
+      supportsTranslation = false,
+      bookFormat = BookFormat.HTML.toString,
+      source = "storyweaver"
+    )
   }
 
 }
