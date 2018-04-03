@@ -56,4 +56,13 @@ class PdfServiceTest extends UnitSuite with TestEnvironment {
     val pdf = pdfService.getPdf(LanguageTag("eng"), uuid)
     pdf.get.fileName should be ("Default translation title.pdf")
   }
+
+  test("that correct font is recognized") {
+    pdfService.fontDefinitions.get(LanguageTag("amh")) should equal (Some(pdfService.FontDefinition("/NotoSansEthiopic.ttf", "Noto Sans Ethiopic")))
+    pdfService.fontDefinitions.get(LanguageTag("am")) should equal (Some(pdfService.FontDefinition("/NotoSansEthiopic.ttf", "Noto Sans Ethiopic")))
+    pdfService.fontDefinitions.get(LanguageTag("km")) should equal (Some(pdfService.FontDefinition("/NotoSansKhmer-Regular.ttf", "Noto Sans Khmer")))
+    pdfService.fontDefinitions.get(LanguageTag("khm")) should equal (Some(pdfService.FontDefinition("/NotoSansKhmer-Regular.ttf", "Noto Sans Khmer")))
+    pdfService.fontDefinitions.get(LanguageTag("nob")) should be (None)
+
+  }
 }

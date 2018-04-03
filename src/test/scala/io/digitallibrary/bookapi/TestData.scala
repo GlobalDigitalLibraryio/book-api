@@ -18,9 +18,9 @@ import io.digitallibrary.bookapi.model.api.internal.{CoverPhoto, NewTranslatedCh
 import io.digitallibrary.bookapi.model.domain.{BookFormat, ChapterType, ContributorType}
 
 object TestData {
-  val LanguageCodeNorwegian = "nob"
-  val LanguageCodeEnglish = "eng"
-  val LanguageCodeAmharic = "amh"
+  val LanguageCodeNorwegian = "nb"
+  val LanguageCodeEnglish = "en"
+  val LanguageCodeAmharic = "am"
 
   val DefaultUuid = UUID.randomUUID().toString
   val DefaultLanguage = LanguageCodeNorwegian
@@ -64,7 +64,7 @@ object TestData {
       readingLevel = Some("1"),
       categories = Seq(
         Category
-        (1, 1, "some-category")),
+        (1, 1, "library_books")),
       coverPhoto = None,
       dateArrived = today,
       source = DefaultSource,
@@ -92,7 +92,7 @@ object TestData {
     val DefaultSource = "storyweaver"
     val DefaultPublisher = domain.Publisher(Some(1), Some(1), "Default publisher")
     val DefaultLicense = domain.License(Some(1), Some(1), "Default License", Some("Default license description"), Some("http://some.url.com"))
-    val DefaultCategory = domain.Category(Some(1), Some(1), "Default Category")
+    val DefaultCategory = domain.Category(Some(1), Some(1), "library_books")
 
     val DefaultBook = domain.Book(
       id = Some(1),
@@ -149,7 +149,7 @@ object TestData {
 
     val AmharicTranslation: domain.Translation = DefaultTranslation.copy(id = Some(2), language = LanguageTag(LanguageCodeAmharic))
 
-    val DefaultinTranslation = domain.InTranslation(Some(1), Some(1), Seq("123"), 1, Some(2), LanguageTag("nob"), LanguageTag("eng"), "en", "abc")
+    val DefaultinTranslation = domain.InTranslation(Some(1), Some(1), Seq("123"), 1, Some(2), LanguageTag("nb"), LanguageTag("en"), "en", "abc")
     val DefaultInTranslationFile = domain.InTranslationFile(Some(1), Some(1), 1, domain.FileType.CONTENT, Some(1), 0, "filename", "fileId", domain.TranslationStatus.IN_PROGRESS, Some("asdfa342"))
   }
 

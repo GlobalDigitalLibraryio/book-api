@@ -219,17 +219,18 @@ trait TranslationRepository {
         )).orderBy(t.readingLevel).toSQL.map(_.string(1)).list().apply()
     }
 
-    def allAvailableCategoriesAndReadingLevelsWithStatus(publishingStatus: PublishingStatus.Value, language: LanguageTag)(implicit session: DBSession = ReadOnlyAutoSession): Seq[(String, String)] = {
-      select(cat.name, t.readingLevel)
+    def allAvailableCategoriesAndReadingLevelsWithStatus(publishingStatus: PublishingStatus.Value, language: LanguageTag)(implicit session: DBSession = ReadOnlyAutoSession): Map[Category, Set[String]] = {
+      select(cat.id, cat.revision, cat.name, t.readingLevel)
         .from(Category as cat)
         .innerJoin(Translation as t)
         .on(sqls"${cat.id} = any(${t.categoryIds})")
         .where.eq(t.publishingStatus, publishingStatus.toString)
         .and.eq(t.language, language.toString)
         .toSQL
-        .map(rs => (rs.string(1), rs.string(2)))
+        .map(rs => (Category(id = rs.longOpt(1), revision = rs.intOpt(2), name = rs.string(3)), rs.string(4)))
         .list()
         .apply()
+        .groupBy(_._1).mapValues(_.map(_._2).toSet)
     }
 
     def add(translation: Translation)(implicit session: DBSession = AutoSession): Translation = {

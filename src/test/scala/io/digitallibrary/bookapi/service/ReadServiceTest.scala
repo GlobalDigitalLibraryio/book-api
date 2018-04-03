@@ -23,9 +23,4 @@ class ReadServiceTest extends UnitSuite with TestEnvironment {
     readService.listAvailablePublishedLanguages should equal(Seq(TestData.Api.amharic, TestData.Api.english))
   }
 
-  test("that listAvailablePublishedCategoriesForLanguage creates a map from categories to reading levels") {
-    when(translationRepository.allAvailableCategoriesAndReadingLevelsWithStatus(PublishingStatus.PUBLISHED, LanguageTag(TestData.LanguageCodeEnglish)))
-      .thenReturn(Seq(("category1", "level1"), ("category1", "level3"), ("category2", "level1"), ("category1", "level3")))
-    readService.listAvailablePublishedCategoriesForLanguage(LanguageTag(TestData.LanguageCodeEnglish)) should equal(Map("category2" -> Set("level1"), "category1" -> Set("level1", "level3")))
-  }
 }

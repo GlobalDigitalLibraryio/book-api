@@ -12,7 +12,7 @@ val Elastic4sVersion = "6.1.4"
 val ElasticsearchVersion = "6.0.0"
 val JacksonVersion = "2.7.4"
 val JsoupVersion =  "1.11.2"
-val OpenHtmlPdfVersion = "0.0.1-RC11"
+val OpenHtmlPdfVersion = "0.0.1-RC12"
 
 val appProperties = settingKey[Properties]("The application properties")
 
@@ -36,7 +36,7 @@ lazy val book_api = (project in file(".")).
     scalacOptions := Seq("-target:jvm-1.8"),
     libraryDependencies ++= Seq(
       "gdl" %% "network" % "0.10",
-      "gdl" %% "language" % "0.4",
+      "gdl" %% "language" % "0.5",
       "com.typesafe.scala-logging" %% "scala-logging" % ScalaLoggingVersion,
       "com.typesafe" % "config" % "1.3.1",
       "org.apache.logging.log4j" % "log4j-api" % Log4JVersion,

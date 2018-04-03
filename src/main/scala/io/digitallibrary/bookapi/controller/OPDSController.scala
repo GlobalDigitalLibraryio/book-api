@@ -52,23 +52,34 @@ trait OPDSController {
 
     get(BookApiProperties.OpdsRootDefaultLanguageUrl) {
       val (pagingStatus, books) = feedService.allEntries(defaultLanguage, extractPageAndPageSize())
-      acquisitionFeed(books = books, pagingStatus = pagingStatus)
+      acquisitionFeed(books, RootFeed(defaultLanguage), pagingStatus)
     }
 
     get(BookApiProperties.OpdsRootUrl) {
-      val (pagingStatus, books) = feedService.allEntries(LanguageTag(params("lang")), extractPageAndPageSize())
-      acquisitionFeed(books = books, pagingStatus = pagingStatus)
+      val lang = LanguageTag(params("lang"))
+      val (pagingStatus, books) = feedService.allEntries(lang, extractPageAndPageSize())
+      acquisitionFeed(books, RootFeed(lang), pagingStatus)
     }
 
-    get(BookApiProperties.OpdsLevelUrl) {
-      val (pagingStatus, books) = feedService.entriesForLanguageAndLevel(LanguageTag(params("lang")), params("lev"), extractPageAndPageSize())
-      acquisitionFeed(titleArgs = Seq(params("lev")), books = books, pagingStatus = pagingStatus)
+    get(BookApiProperties.OpdsCategoryUrl) {
+      val lang = LanguageTag(params("lang"))
+      val category = params("category")
+      val (pagingStatus, books) = feedService.entriesForLanguageAndCategory(lang, category, extractPageAndPageSize())
+      acquisitionFeed(books, CategoryFeed(lang, category), pagingStatus)
+    }
+
+    get(BookApiProperties.OpdsCategoryAndLevelUrl) {
+      val lang = LanguageTag(params("lang"))
+      val category = params("category")
+      val level = params("lev")
+      val (pagingStatus, books) = feedService.entriesForLanguageCategoryAndLevel(language = lang, category = category, level = level, paging = extractPageAndPageSize())
+      acquisitionFeed(books, LevelFeed(lang, category, level), pagingStatus)
     }
 
     // TODO Issue#200: Remove when not used anymore
     private def navigationFeed(feeds: => Seq[Feed])(implicit request: HttpServletRequest) = {
       val lang = LanguageTag(params("lang"))
-      val selfOpt = feedService.feedForUrl(request.getRequestURI, lang, Seq(), Seq())
+      val selfOpt = feedService.feedForUrl(request.getRequestURI, NavigationFeed, Seq())
       selfOpt match {
         case Some(self) => render(self, feeds)
         case None =>
@@ -77,9 +88,9 @@ trait OPDSController {
       }
     }
 
-    private def acquisitionFeed(titleArgs: Seq[String] = Seq(), books: => Seq[FeedEntry], pagingStatus: PagingStatus)(implicit request: HttpServletRequest) = {
+    private def acquisitionFeed(books: => Seq[FeedEntry], feedType: FeedType, pagingStatus: PagingStatus)(implicit request: HttpServletRequest) = {
       val lang = Try(LanguageTag(params("lang"))).getOrElse(defaultLanguage)
-      feedService.feedForUrl(request.getRequestURI, lang, titleArgs, books) match {
+      feedService.feedForUrl(request.getRequestURI, feedType, books) match {
         case Some(feed) => render(feed, pagingStatus)
         case None =>
           contentType = "text/plain"
@@ -142,6 +153,7 @@ trait OPDSController {
         {feed.facets.map(facet =>
           <link rel="http://opds-spec.org/facet" href={facet.href} title={facet.title} opds:facetGroup={facet.group} opds:activeFacet={facet.isActive.toString}/>)
         }
+
         {feed.content.map(feedEntry =>
           <entry>
             <id>urn:uuid:{feedEntry.book.uuid}</id>

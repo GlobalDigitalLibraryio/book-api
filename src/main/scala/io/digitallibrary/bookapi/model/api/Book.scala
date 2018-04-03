@@ -48,6 +48,9 @@ case class Category(@(ApiModelProperty@field)(description = "Id for the category
                     @(ApiModelProperty@field)(description = "The revision of the category") revision: Int,
                     @(ApiModelProperty@field)(description = "Name of the category") name: String)
 
+@ApiModel(description = "Information about the reading levels available within a category")
+case class ReadingLevels(@(ApiModelProperty@field)(description = "A list of reading levels available within the category") readingLevels: Set[String])
+
 @ApiModel(description = "Information about a chapter in a book")
 case class ChapterSummary(@(ApiModelProperty@field)(description = "Id for the chapter") id: Long,
                           @(ApiModelProperty@field)(description = "The sequence number of the chapter") seqNo: Int,
@@ -162,7 +165,7 @@ case class FeedEntry(@(ApiModelProperty@field)(description = "The book associate
 
 @ApiModel(description = "Information about a feed category in an opds-feed")
 case class FeedCategory(@(ApiModelProperty@field)(description = "The url to the category feed") url: String,
-                        @(ApiModelProperty@field)(description = "The title for this cateogry feed") title: String,
+                        @(ApiModelProperty@field)(description = "The title for this category feed") title: String,
                         @(ApiModelProperty@field)(description = "The sort order for this category") sortOrder: Int = 100)
 
 @ApiModel(description = "Id of featured content")
