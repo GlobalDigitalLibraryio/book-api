@@ -10,7 +10,7 @@ package io.digitallibrary.bookapi.controller
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
-import io.digitallibrary.bookapi.model.api.{Feed, FeedEntry}
+import io.digitallibrary.bookapi.model.api.FeedEntry
 import io.digitallibrary.bookapi.model.domain.Paging
 import io.digitallibrary.bookapi.{TestData, TestEnvironment, UnitSuite}
 import io.digitallibrary.language.model.LanguageTag
@@ -23,41 +23,6 @@ class OPDSControllerTest extends UnitSuite with TestEnvironment with ScalatraFun
   lazy val controller = new OPDSController
 
   addServlet(controller, "/*")
-
-  test("that rendering of navigation feeds includes all feeds with correct data") {
-    val self: Feed = TestData.Api.DefaultFeed
-    val feed1 = TestData.Api.DefaultFeed.copy(title = "Feed 1")
-    val feed2 = TestData.Api.DefaultFeed.copy(title = "Feed 2", rel = None)
-
-    val expectedXml =
-      <feed xmlns="http://www.w3.org/2005/Atom">
-        <id>{self.feedDefinition.uuid}</id>
-        <link rel="self" href={self.feedDefinition.url} type="application/atom+xml;profile=opds-catalog;kind=navigation"/>
-        <link rel="start" href={self.feedDefinition.url} type="application/atom+xml;profile=opds-catalog;kind=navigation"/>
-        <title>{self.title}</title>
-        <updated>{self.updated.format(formatter)}</updated>
-        <entry>
-          <title>{feed1.title}</title>
-          <link rel={feed1.rel.get} href={feed1.feedDefinition.url} type="application/atom+xml;profile=opds-catalog;kind=acquisition"/>
-          <updated>{feed1.updated.format(formatter)}</updated>
-          <id>{feed1.feedDefinition.uuid}</id>
-          <content type="text">{feed1.description.get}</content>
-        </entry>
-        <entry>
-          <title>{feed2.title}</title>
-          <link rel="subsection" href={feed2.feedDefinition.url} type="application/atom+xml;profile=opds-catalog;kind=acquisition"/>
-          <updated>{feed2.updated.format(formatter)}</updated>
-          <id>{feed2.feedDefinition.uuid}</id>
-          <content type="text">{feed2.description.get}</content>
-        </entry>
-      </feed>
-
-    val generated = controller.render(self, Seq(feed1, feed2))
-    val toCheck = generated.mkString.replaceAll("\\s", "")
-    val expected = expectedXml.mkString.replaceAll("\\s", "")
-
-    toCheck should equal (expected)
-  }
 
   test("that rendering of acquisition feeds includes all books with correct data") {
     val entry1: FeedEntry = TestData.Api.DefaultFeedEntry

@@ -50,7 +50,6 @@ object BookApiProperties extends LazyLogging {
   val OpdsLevelParam = ":lev"
 
   val OpdsRootDefaultLanguageUrl = s"/root.xml"
-  val OpdsNavUrl = s"/$OpdsLanguageParam/nav.xml"
   val OpdsRootUrl = s"/$OpdsLanguageParam/root.xml"
   val OpdsCategoryUrl = s"/$OpdsLanguageParam/category/$OpdsCategoryParam/root.xml"
   val OpdsCategoryAndLevelUrl = s"/$OpdsLanguageParam/category/$OpdsCategoryParam/level/$OpdsLevelParam.xml"
