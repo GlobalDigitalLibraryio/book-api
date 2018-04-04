@@ -14,7 +14,7 @@ import javax.servlet.http.HttpServletRequest
 import io.digitallibrary.language.model.LanguageTag
 import io.digitallibrary.bookapi.BookApiProperties
 import io.digitallibrary.bookapi.model.api.{Feed, FeedEntry}
-import io.digitallibrary.bookapi.model.domain.Paging
+import io.digitallibrary.bookapi.model.domain.{ContributorType, Paging}
 import io.digitallibrary.bookapi.service.{ConverterService, FeedService, ReadService}
 import org.scalatra.NotFound
 
@@ -113,9 +113,16 @@ trait OPDSController {
             <id>urn:uuid:{feedEntry.book.uuid}</id>
             <title>{feedEntry.book.title}</title>
             {feedEntry.book.contributors.map(contrib =>
-              <author>
-                <name>{contrib.name}</name>
-              </author>
+              ContributorType.valueOf(contrib.`type`).toOption match {
+                case Some(ContributorType.Author) =>
+                  <author>
+                    <name>{contrib.name}</name>
+                  </author>
+                case _ =>
+                  <contributor type={contrib.`type`}>
+                    <name>{contrib.name}</name>
+                  </contributor>
+              }
             )}
             <dc:license>{feedEntry.book.license.description.getOrElse(feedEntry.book.license.name)}</dc:license>
             <dc:publisher>{feedEntry.book.publisher.name}</dc:publisher>

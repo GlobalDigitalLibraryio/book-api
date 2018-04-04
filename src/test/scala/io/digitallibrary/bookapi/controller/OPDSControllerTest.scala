@@ -54,8 +54,17 @@ class OPDSControllerTest extends UnitSuite with TestEnvironment with ScalatraFun
           <id>urn:uuid:{entry1.book.uuid}</id>
           <title>{entry1.book.title}</title>
           <author>
-            <name>{entry1.book.contributors.head.name}</name>
+            <name>Author Authorson</name>
           </author>
+          <author>
+            <name>Co Author</name>
+          </author>
+          <contributor type="Photographer">
+            <name>PhotoGrapher</name>
+          </contributor>
+          <contributor type="Illustrator">
+            <name>IlluStrator</name>
+          </contributor>
           <dc:license>{entry1.book.license.description.get}</dc:license>
           <dc:publisher>{entry1.book.publisher.name}</dc:publisher>
           <updated>{entry1.book.dateArrived.atStartOfDay(ZoneId.systemDefault()).format(formatter)}</updated>
@@ -69,8 +78,17 @@ class OPDSControllerTest extends UnitSuite with TestEnvironment with ScalatraFun
           <id>urn:uuid:{entry2.book.uuid}</id>
           <title>{entry2.book.title}</title>
           <author>
-            <name>{entry2.book.contributors.head.name}</name>
+            <name>Author Authorson</name>
           </author>
+          <author>
+            <name>Co Author</name>
+          </author>
+          <contributor type="Photographer">
+            <name>PhotoGrapher</name>
+          </contributor>
+          <contributor type="Illustrator">
+            <name>IlluStrator</name>
+          </contributor>
           <dc:license>{entry2.book.license.description.get}</dc:license>
           <dc:publisher>{entry2.book.publisher.name}</dc:publisher>
           <updated>{entry2.book.dateArrived.atStartOfDay(ZoneId.systemDefault()).format(formatter)}</updated>

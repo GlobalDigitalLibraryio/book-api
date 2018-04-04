@@ -46,15 +46,42 @@ object TestData {
     val category1 = api.Category(1, 1, "category1")
     val category2 = api.Category(2, 1, "category2")
 
-    val DefaultContributor = api.Contributor(1, 1, "type", "contributorname")
+    val author1 = api.Contributor(1, 1, ContributorType.Author.toString, "Author Authorson")
+    val author2 = api.Contributor(2, 1, ContributorType.Author.toString, "Co Author")
+    val photographer = api.Contributor(3, 1, ContributorType.Photographer.toString, "Photo Grapher")
+    val illustrator = api.Contributor(4, 1, ContributorType.Illustrator.toString, "Illu Strator")
 
     val ChapterSummary1 = api.ChapterSummary(1, 1, Some("Title"), "some-url")
     val Chapter1 = api.Chapter(1, 1, 1, Some("Title"), "Content", "Content")
 
     val DefaultBook = api.Book(
-      1, 1, Some("external-1"), DefaultUuid, "Title", "Description", None, english, Seq(english, norwegian_bokmal), DefaultLicense, DefaultPublisher,
-      Some(Level1), Some(ageRangeDefault), None, None, None, Some(today), Some(yesterday), today, Seq(category1, category2), None, api.Downloads(Some(epub), None),
-      Seq(), Seq(DefaultContributor), Seq(ChapterSummary1), supportsTranslation = true, bookFormat = BookFormat.HTML.toString, DefaultSource)
+      id = 1,
+      revision = 1,
+      externalId = Some("external-1"),
+      uuid = DefaultUuid,
+      title = "Title",
+      description = "Description",
+      translatedFrom = None, language = english,
+      availableLanguages = Seq(english, norwegian_bokmal),
+      license = DefaultLicense,
+      publisher = DefaultPublisher,
+      readingLevel = Some(Level1),
+      typicalAgeRange = Some(ageRangeDefault),
+      educationalUse = None,
+      educationalRole = None,
+      timeRequired = None,
+      datePublished = Some(today),
+      dateCreated = Some(yesterday),
+      dateArrived = today,
+      categories = Seq(category1, category2),
+      coverPhoto = None,
+      downloads = api.Downloads(Some(epub), None),
+      tags = Seq(),
+      contributors = Seq(author1, author2, photographer, illustrator),
+      chapters = Seq(ChapterSummary1),
+      supportsTranslation = true,
+      bookFormat = BookFormat.HTML.toString,
+      source = DefaultSource)
 
     val DefaultBookHit = api.BookHit(
       id = 1,
