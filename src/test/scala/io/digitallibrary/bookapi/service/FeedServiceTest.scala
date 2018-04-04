@@ -89,10 +89,10 @@ class FeedServiceTest extends UnitSuite with TestEnvironment {
   test("that facetsForLanguage returns facets for languages, with languages alphabetically sorted") {
     when(readService.listAvailablePublishedLanguagesAsLanguageTags).thenReturn(Seq("eng", "hin", "ben", "eng-latn-gb").map(LanguageTag(_)))
     feedService.facetsForLanguages(LanguageTag("eng")) should equal (Seq(
-      Facet("http://local.digitallibrary.io/book-api/opds/bn/root.xml", LanguageTag("ben").localDisplayName.get, "Languages", isActive = false),
-      Facet("http://local.digitallibrary.io/book-api/opds/en/root.xml", "English", "Languages", isActive = true),
-      Facet("http://local.digitallibrary.io/book-api/opds/en-latn-gb/root.xml", "English (Latin, United Kingdom)", "Languages", isActive = false),
-      Facet("http://local.digitallibrary.io/book-api/opds/hi/root.xml", LanguageTag("hin").localDisplayName.get, "Languages", isActive = false))
+      Facet("http://local.digitallibrary.io/book-api/opds/v1/bn/root.xml", LanguageTag("ben").localDisplayName.get, "Languages", isActive = false),
+      Facet("http://local.digitallibrary.io/book-api/opds/v1/en/root.xml", "English", "Languages", isActive = true),
+      Facet("http://local.digitallibrary.io/book-api/opds/v1/en-latn-gb/root.xml", "English (Latin, United Kingdom)", "Languages", isActive = false),
+      Facet("http://local.digitallibrary.io/book-api/opds/v1/hi/root.xml", LanguageTag("hin").localDisplayName.get, "Languages", isActive = false))
     )
   }
 
@@ -100,11 +100,11 @@ class FeedServiceTest extends UnitSuite with TestEnvironment {
     val language = LanguageTag("eng")
     when(readService.listAvailablePublishedLevelsForLanguage(Some(language))).thenReturn(Seq("4", "1", "3", "2"))
     feedService.facetsForReadingLevels(language, "cat1", Some("3")) should equal (Seq(
-      Facet("http://local.digitallibrary.io/book-api/opds/en/category/cat1/root.xml", "New arrivals", "Selection", isActive = false),
-      Facet("http://local.digitallibrary.io/book-api/opds/en/category/cat1/level/1.xml", "Level 1", "Selection", isActive = false),
-      Facet("http://local.digitallibrary.io/book-api/opds/en/category/cat1/level/2.xml", "Level 2", "Selection", isActive = false),
-      Facet("http://local.digitallibrary.io/book-api/opds/en/category/cat1/level/3.xml", "Level 3", "Selection", isActive = true),
-      Facet("http://local.digitallibrary.io/book-api/opds/en/category/cat1/level/4.xml", "Level 4", "Selection", isActive = false)
+      Facet("http://local.digitallibrary.io/book-api/opds/v1/en/category/cat1/root.xml", "New arrivals", "Selection", isActive = false),
+      Facet("http://local.digitallibrary.io/book-api/opds/v1/en/category/cat1/level/1.xml", "Level 1", "Selection", isActive = false),
+      Facet("http://local.digitallibrary.io/book-api/opds/v1/en/category/cat1/level/2.xml", "Level 2", "Selection", isActive = false),
+      Facet("http://local.digitallibrary.io/book-api/opds/v1/en/category/cat1/level/3.xml", "Level 3", "Selection", isActive = true),
+      Facet("http://local.digitallibrary.io/book-api/opds/v1/en/category/cat1/level/4.xml", "Level 4", "Selection", isActive = false)
     ))
   }
 

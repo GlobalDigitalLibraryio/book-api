@@ -75,13 +75,13 @@ object TestData {
 
     val DefaultFeedDefinition = api.FeedDefinition(1, 1, "some-url", "some-uuid")
     val DefaultFacets = Seq(
-      api.Facet("https://opds.test.digitallibrary.io/ben/root.xml", "Bengali", "Languages", isActive = false),
-      api.Facet("https://opds.test.digitallibrary.io/eng/root.xml", "English", "Languages", isActive = true),
-      api.Facet("https://opds.test.digitallibrary.io/hin/root.xml", "Hindu", "Languages", isActive = false),
-      api.Facet("https://opds.test.digitallibrary.io/eng/root.xml", "New arrivals", "Selection", isActive = false),
-      api.Facet("https://opds.test.digitallibrary.io/eng/level1.xml", "Level 1", "Selection", isActive = false),
-      api.Facet("https://opds.test.digitallibrary.io/eng/level2.xml", "Level 2", "Selection", isActive = true),
-      api.Facet("https://opds.test.digitallibrary.io/eng/level3.xml", "Level 3", "Selection", isActive = false)
+      api.Facet("https://opds.test.digitallibrary.io/v1/ben/root.xml", "Bengali", "Languages", isActive = false),
+      api.Facet("https://opds.test.digitallibrary.io/v1/eng/root.xml", "English", "Languages", isActive = true),
+      api.Facet("https://opds.test.digitallibrary.io/v1/hin/root.xml", "Hindu", "Languages", isActive = false),
+      api.Facet("https://opds.test.digitallibrary.io/v1/eng/root.xml", "New arrivals", "Selection", isActive = false),
+      api.Facet("https://opds.test.digitallibrary.io/v1/eng/level1.xml", "Level 1", "Selection", isActive = false),
+      api.Facet("https://opds.test.digitallibrary.io/v1/eng/level2.xml", "Level 2", "Selection", isActive = true),
+      api.Facet("https://opds.test.digitallibrary.io/v1/eng/level3.xml", "Level 3", "Selection", isActive = false)
     )
     val DefaultFeed = api.Feed(DefaultFeedDefinition, "default title", Some("default description"), Some("default-rel"), ZonedDateTime.now().minusDays(1), Seq(), DefaultFacets)
     val DefaultFeedEntry = api.FeedEntry(DefaultBook, Seq())

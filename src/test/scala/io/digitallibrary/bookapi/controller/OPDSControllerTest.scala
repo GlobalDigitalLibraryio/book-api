@@ -41,14 +41,14 @@ class OPDSControllerTest extends UnitSuite with TestEnvironment with ScalatraFun
         <link href="some-url?page-size=10&amp;page=4" rel="next"/>
         <link href="some-url?page-size=10&amp;page=10" rel="last"/>
 
-        <link rel="http://opds-spec.org/facet" href="https://opds.test.digitallibrary.io/ben/root.xml" title="Bengali" opds:facetGroup="Languages" opds:activeFacet="false"/>
-        <link rel="http://opds-spec.org/facet" href="https://opds.test.digitallibrary.io/eng/root.xml" title="English" opds:facetGroup="Languages" opds:activeFacet="true"/>
-        <link rel="http://opds-spec.org/facet" href="https://opds.test.digitallibrary.io/hin/root.xml" title="Hindu" opds:facetGroup="Languages" opds:activeFacet="false"/>
+        <link rel="http://opds-spec.org/facet" href="https://opds.test.digitallibrary.io/v1/ben/root.xml" title="Bengali" opds:facetGroup="Languages" opds:activeFacet="false"/>
+        <link rel="http://opds-spec.org/facet" href="https://opds.test.digitallibrary.io/v1/eng/root.xml" title="English" opds:facetGroup="Languages" opds:activeFacet="true"/>
+        <link rel="http://opds-spec.org/facet" href="https://opds.test.digitallibrary.io/v1/hin/root.xml" title="Hindu" opds:facetGroup="Languages" opds:activeFacet="false"/>
 
-        <link rel="http://opds-spec.org/facet" href="https://opds.test.digitallibrary.io/eng/root.xml" title="New arrivals" opds:facetGroup="Selection" opds:activeFacet="false"/>
-        <link rel="http://opds-spec.org/facet" href="https://opds.test.digitallibrary.io/eng/level1.xml" title="Level 1" opds:facetGroup="Selection" opds:activeFacet="false"/>
-        <link rel="http://opds-spec.org/facet" href="https://opds.test.digitallibrary.io/eng/level2.xml" title="Level 2" opds:facetGroup="Selection" opds:activeFacet="true"/>
-        <link rel="http://opds-spec.org/facet" href="https://opds.test.digitallibrary.io/eng/level3.xml" title="Level 3" opds:facetGroup="Selection" opds:activeFacet="false"/>
+        <link rel="http://opds-spec.org/facet" href="https://opds.test.digitallibrary.io/v1/eng/root.xml" title="New arrivals" opds:facetGroup="Selection" opds:activeFacet="false"/>
+        <link rel="http://opds-spec.org/facet" href="https://opds.test.digitallibrary.io/v1/eng/level1.xml" title="Level 1" opds:facetGroup="Selection" opds:activeFacet="false"/>
+        <link rel="http://opds-spec.org/facet" href="https://opds.test.digitallibrary.io/v1/eng/level2.xml" title="Level 2" opds:facetGroup="Selection" opds:activeFacet="true"/>
+        <link rel="http://opds-spec.org/facet" href="https://opds.test.digitallibrary.io/v1/eng/level3.xml" title="Level 3" opds:facetGroup="Selection" opds:activeFacet="false"/>
 
         <entry>
           <id>urn:uuid:{entry1.book.uuid}</id>
