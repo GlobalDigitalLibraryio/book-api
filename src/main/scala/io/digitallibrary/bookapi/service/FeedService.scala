@@ -85,7 +85,7 @@ trait FeedService {
 
     def facetsForCategories(currentLanguage: LanguageTag, currentCategory: Option[String]): Seq[Facet] = {
       val localization = feedLocalizationService.localizationFor(currentLanguage)
-      readService.listAvailablePublishedCategoriesForLanguage(currentLanguage).keys.toList.map(category => Facet(
+      readService.listAvailablePublishedCategoriesForLanguage(currentLanguage).keys.toList.sortWith(categorySort).map(category => Facet(
         href = s"${BookApiProperties.CloudFrontOpds}${BookApiProperties.OpdsCategoryUrl
           .replace(BookApiProperties.OpdsLanguageParam, currentLanguage.toString)
           .replace(BookApiProperties.OpdsCategoryParam, category.name)}",
@@ -94,6 +94,14 @@ trait FeedService {
         isActive = currentCategory.contains(category.name)
       )
       )
+    }
+
+    def categorySort(c1: domain.Category, c2: domain.Category): Boolean = {
+      if (c1.name == "library_books") {
+        true
+      } else {
+        c1.name.compareTo(c2.name) < 0
+      }
     }
 
     def facetsForReadingLevels(currentLanguage: LanguageTag, currentCategory: String, currentReadingLevel: Option[String]): Seq[Facet] = {
