@@ -89,11 +89,15 @@ trait ImportService {
     }
 
     def updateBookAsTranslation(newTranslation: api.internal.Book, existingTranslation: domain.Translation, book: domain.Book): Try[api.internal.TranslationId] = {
-      inTransaction { implicit session =>
-        for {
-          persistedTranslation <- persistTranslationUpdate(book, existingTranslation, newTranslation)
-          _ <- persistChapterUpdates(newTranslation, existingTranslation)
-        } yield api.internal.TranslationId(persistedTranslation.id.get)
+      if(inTranslationRepository.forOriginalId(existingTranslation.bookId).exists(_.fromLanguage == existingTranslation.language)) {
+        Failure(new RuntimeException(s"Book with id ${book.id} is currently being translated. Cannot update at the moment."))
+      } else {
+        inTransaction { implicit session =>
+          for {
+            persistedTranslation <- persistTranslationUpdate(book, existingTranslation, newTranslation)
+            _ <- persistChapterUpdates(newTranslation, existingTranslation)
+          } yield api.internal.TranslationId(persistedTranslation.id.get)
+        }
       }
     }
 
