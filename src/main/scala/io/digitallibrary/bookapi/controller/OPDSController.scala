@@ -14,7 +14,7 @@ import javax.servlet.http.HttpServletRequest
 import io.digitallibrary.language.model.LanguageTag
 import io.digitallibrary.bookapi.BookApiProperties
 import io.digitallibrary.bookapi.model.api.{Feed, FeedEntry}
-import io.digitallibrary.bookapi.model.domain.Paging
+import io.digitallibrary.bookapi.model.domain.{ContributorType, Paging}
 import io.digitallibrary.bookapi.service.{ConverterService, FeedService, ReadService}
 import org.scalatra.NotFound
 
@@ -44,12 +44,6 @@ trait OPDSController {
       )
     }
 
-    // TODO Issue#200: Remove when not used anymore
-    get(BookApiProperties.OpdsNavUrl) {
-      val navFeeds = feedService.feedsForNavigation(LanguageTag(params("lang")))
-      navigationFeed(feeds = navFeeds)
-    }
-
     get(BookApiProperties.OpdsRootDefaultLanguageUrl) {
       val (pagingStatus, books) = feedService.allEntries(defaultLanguage, extractPageAndPageSize())
       acquisitionFeed(books, RootFeed(defaultLanguage), pagingStatus)
@@ -76,18 +70,6 @@ trait OPDSController {
       acquisitionFeed(books, LevelFeed(lang, category, level), pagingStatus)
     }
 
-    // TODO Issue#200: Remove when not used anymore
-    private def navigationFeed(feeds: => Seq[Feed])(implicit request: HttpServletRequest) = {
-      val lang = LanguageTag(params("lang"))
-      val selfOpt = feedService.feedForUrl(request.getRequestURI, NavigationFeed, Seq())
-      selfOpt match {
-        case Some(self) => render(self, feeds)
-        case None =>
-          contentType = "text/plain"
-          NotFound(body = s"No books available for language $lang.")
-      }
-    }
-
     private def acquisitionFeed(books: => Seq[FeedEntry], feedType: FeedType, pagingStatus: PagingStatus)(implicit request: HttpServletRequest) = {
       val lang = Try(LanguageTag(params("lang"))).getOrElse(defaultLanguage)
       feedService.feedForUrl(request.getRequestURI, feedType, books) match {
@@ -96,34 +78,6 @@ trait OPDSController {
           contentType = "text/plain"
           NotFound(body = s"No books available for language $lang.")
       }
-    }
-
-    // TODO Issue#200: Remove when not used anymore
-    private[controller] def render(self: Feed, feeds: Seq[Feed]): Elem = {
-      <feed xmlns="http://www.w3.org/2005/Atom">
-        <id>{self.feedDefinition.uuid}</id>
-        <link rel="self"
-              href={self.feedDefinition.url}
-              type="application/atom+xml;profile=opds-catalog;kind=navigation"/>
-        <link rel="start"
-              href={self.feedDefinition.url}
-              type="application/atom+xml;profile=opds-catalog;kind=navigation"/>
-        <title>{self.title}</title>
-        <updated>{self.updated.format(dtf)}</updated>
-        {feeds.map(feed =>
-          <entry>
-            <title>{feed.title}</title>
-            <link rel={feed.rel.getOrElse("subsection")}
-                  href={feed.feedDefinition.url}
-                  type="application/atom+xml;profile=opds-catalog;kind=acquisition"/>
-            <updated>{feed.updated.format(dtf)}</updated>
-            <id>{feed.feedDefinition.uuid}</id>
-            {if (feed.description.isDefined) {
-              <content type="text">{feed.description.get}</content>
-            }}
-          </entry>
-        )}
-      </feed>
     }
 
     private[controller] def render(feed: Feed, pagingStatus: PagingStatus): Elem = {
@@ -159,9 +113,16 @@ trait OPDSController {
             <id>urn:uuid:{feedEntry.book.uuid}</id>
             <title>{feedEntry.book.title}</title>
             {feedEntry.book.contributors.map(contrib =>
-              <author>
-                <name>{contrib.name}</name>
-              </author>
+              ContributorType.valueOf(contrib.`type`).toOption match {
+                case Some(ContributorType.Author) =>
+                  <author>
+                    <name>{contrib.name}</name>
+                  </author>
+                case _ =>
+                  <contributor type={contrib.`type`}>
+                    <name>{contrib.name}</name>
+                  </contributor>
+              }
             )}
             <dc:license>{feedEntry.book.license.description.getOrElse(feedEntry.book.license.name)}</dc:license>
             <dc:publisher>{feedEntry.book.publisher.name}</dc:publisher>

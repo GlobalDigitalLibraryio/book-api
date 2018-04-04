@@ -21,8 +21,8 @@ class FeaturedContentControllerTest extends UnitSuite with TestEnvironment with 
     override def dateFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS")
   } + LocalDateSerializer
 
-  val validTestToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwczovL2RpZ2l0YWxsaWJyYXJ5LmlvL2dkbF9pZCI6IjEyMyIsInN1YiI6IjEyMzQ1Njc4OTAiLCJuYW1lIjoiSm9obiBEb2UiLCJzY29wZSI6ImJvb2stYXBpLWxvY2FsOmZlYXR1cmVkQ29udGVudEFkbWluIn0.WZVQtbwoJSqfGF2tCRyBV1BxUdBqJE1OAcsTUCxvrQk"
-  val invalidTestToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwczovL2RpZ2l0YWxsaWJyYXJ5LmlvL2dkbF9pZCI6IjEyMyIsInN1YiI6IjEyMzQ1Njc4OTAiLCJuYW1lIjoiSm9obiBEb2UiLCJzY29wZSI6ImJvb2stYXBpLWxvY2FsOndyb25nS2luZE9mUm9sZSJ9.OiMYUIE0UsHRKAuoCBu6EIL0tHGGnmdpwTlt4iq273c"
+  val validTestToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwczovL2RpZ2l0YWxsaWJyYXJ5LmlvL2dkbF9pZCI6IjEyMyIsInN1YiI6IjEyMzQ1Njc4OTAiLCJuYW1lIjoiSm9obiBEb2UiLCJzY29wZSI6ImJvb2tzLWxvY2FsOmZlYXR1cmVkIn0.lvUkAaez_uJzxFG4GJeXxKOdmMdqN3oNJttMYsozkzs"
+  val invalidTestToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwczovL2RpZ2l0YWxsaWJyYXJ5LmlvL2dkbF9pZCI6IjEyMyIsInN1YiI6IjEyMzQ1Njc4OTAiLCJuYW1lIjoiSm9obiBEb2UiLCJzY29wZSI6ImJvb2tzLWxvY2FsOndyb25nS2luZE9mUm9sZSJ9.ixzLjZaS3EdTrbRk2UDDe-QTQpsy9hqLlgJnopsT0YI"
 
   val mockData = Seq(FeaturedContent(1, 1, Language(code = "eng", name = "English"), "", "", "", ""))
 

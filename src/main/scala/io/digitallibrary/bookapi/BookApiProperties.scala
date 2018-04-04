@@ -24,8 +24,7 @@ object BookApiProperties extends LazyLogging {
   val SecretsFile = "book-api.secrets"
   val CrowdinProjectsKey = "CROWDIN_PROJECTS"
 
-  // TODO Consider more generic role name
-  val FeaturedContentAdminRole = "book-api:featuredContentAdmin"
+  val FeaturedContentAdminRole = "books:featured"
   val ApplicationPort = propOrElse("APPLICATION_PORT", "80").toInt
   val ContactEmail = "christergundersen@ndla.no"
   val Environment = propOrElse("GDL_ENVIRONMENT", "local")
@@ -50,7 +49,6 @@ object BookApiProperties extends LazyLogging {
   val OpdsLevelParam = ":lev"
 
   val OpdsRootDefaultLanguageUrl = s"/root.xml"
-  val OpdsNavUrl = s"/$OpdsLanguageParam/nav.xml"
   val OpdsRootUrl = s"/$OpdsLanguageParam/root.xml"
   val OpdsCategoryUrl = s"/$OpdsLanguageParam/category/$OpdsCategoryParam/root.xml"
   val OpdsCategoryAndLevelUrl = s"/$OpdsLanguageParam/category/$OpdsCategoryParam/level/$OpdsLevelParam.xml"

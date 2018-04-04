@@ -15,7 +15,7 @@ import io.digitallibrary.bookapi.repository._
 
 trait ReadService {
   this: ConverterService with BookRepository with ChapterRepository with TranslationRepository with InTranslationRepository
-  with FeaturedContentRepository =>
+  with FeaturedContentRepository with CategoryRepository =>
   val readService: ReadService
 
   class ReadService {
@@ -45,8 +45,11 @@ trait ReadService {
       translationRepository.allAvailableLanguagesWithStatus(PublishingStatus.PUBLISHED)
     }
 
-    def listAvailablePublishedLevelsForLanguage(lang: Option[LanguageTag] = None): Seq[String] =
-      translationRepository.allAvailableLevelsWithStatus(PublishingStatus.PUBLISHED, lang)
+    def listAvailablePublishedLevelsForLanguage(lang: Option[LanguageTag] = None, category: Option[String] = None): Seq[String] = {
+      val cat = category.flatMap(categoryRepository.withName)
+      translationRepository.allAvailableLevelsWithStatus(PublishingStatus.PUBLISHED, lang, cat)
+    }
+
 
     def forUserWithLanguage(userId: String, pageSize: Int, page: Int, sort: Sort.Value): Seq[api.MyBook] = {
       val inTranslationForUser = inTranslationRepository.inTranslationForUser(userId)

@@ -44,8 +44,8 @@ class ImportServiceTest extends UnitSuite with TestEnvironment {
 
 
   test("that persistContributors adds persons with new names") {
-    val existingPersonContributor = TestData.Api.DefaultContributor
-    val nonExistingPersonContributor = TestData.Api.DefaultContributor.copy(name = "Does not exist")
+    val existingPersonContributor = TestData.Api.author1
+    val nonExistingPersonContributor = TestData.Api.author1.copy(name = "Does not exist")
 
     val contributors: Seq[Contributor] = Seq(existingPersonContributor, nonExistingPersonContributor)
     val translation: Translation = TestData.Domain.DefaultTranslation
@@ -74,7 +74,7 @@ class ImportServiceTest extends UnitSuite with TestEnvironment {
 
   test("that persistContributorsUpdate adds contributors that are part of book") {
     val translation = TestData.Domain.DefaultTranslation.copy(contributors = Seq())
-    val book = TestData.Internal.DefaultInternalBook.copy(contributors = Seq(TestData.Api.DefaultContributor))
+    val book = TestData.Internal.DefaultInternalBook.copy(contributors = Seq(TestData.Api.author1))
 
     when(personRepository.withName(anyString())(any[DBSession])).thenReturn(Some(TestData.Domain.DefaultPerson))
     when(contributorRepository.add(any[domain.Contributor])(any[DBSession])).thenReturn(TestData.Domain.DefaultContributor)
