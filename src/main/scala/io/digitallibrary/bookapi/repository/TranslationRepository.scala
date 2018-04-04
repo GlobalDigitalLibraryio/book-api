@@ -210,10 +210,12 @@ trait TranslationRepository {
         .map(rs => LanguageTag(rs.string(1))).list().apply()
     }
 
-    def allAvailableLevelsWithStatus(publishingStatus: PublishingStatus.Value, language: Option[LanguageTag])(implicit session: DBSession = ReadOnlyAutoSession): Seq[String] = {
+    def allAvailableLevelsWithStatus(publishingStatus: PublishingStatus.Value, language: Option[LanguageTag], category: Option[Category])(implicit session: DBSession = ReadOnlyAutoSession): Seq[String] = {
       select(sqls.distinct(t.result.readingLevel))
         .from(Translation as t)
           .where.eq(t.publishingStatus, publishingStatus.toString)
+          .and(sqls.toAndConditionOpt(
+            category.map(c => sqls"${c.id} = any(${t.categoryIds})")))
           .and(sqls.toAndConditionOpt(
           language.map(lang => sqls.eq(t.language, lang.toString))
         )).orderBy(t.readingLevel).toSQL.map(_.string(1)).list().apply()

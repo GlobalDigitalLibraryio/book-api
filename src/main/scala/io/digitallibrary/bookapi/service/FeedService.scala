@@ -117,7 +117,7 @@ trait FeedService {
         group = group,
         isActive = currentReadingLevel.isEmpty)
         +:
-        readService.listAvailablePublishedLevelsForLanguage(Some(currentLanguage))
+        readService.listAvailablePublishedLevelsForLanguage(Some(currentLanguage), Some(currentCategory))
           .sortBy(level => Try(level.toInt).getOrElse(0)).map(readingLevel =>
           Facet(
             href = s"${
