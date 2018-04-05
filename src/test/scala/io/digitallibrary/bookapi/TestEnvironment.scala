@@ -67,6 +67,7 @@ trait TestEnvironment
     with SearchController
     with AmazonClient
     with CategoriesController
+    with ImportService
 {
 
   val dataSource = mock[sql.DataSource]
@@ -119,6 +120,7 @@ trait TestEnvironment
   val searchService = mock[SearchService]
   val searchController = mock[SearchController]
   val categoriesController = mock[CategoriesController]
+  val importService = mock[ImportService]
 
   def resetMocks() = {
     Mockito.reset(
@@ -162,7 +164,8 @@ trait TestEnvironment
       inTranslationRepository,
       inTranslationFileRepository,
       mergeService,
-      categoriesController
+      categoriesController,
+      importService
     )
   }
 }

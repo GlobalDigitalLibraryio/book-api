@@ -215,7 +215,7 @@ trait WriteService {
 
     def deleteTranslation(translation: domain.Translation): Unit = inTransaction { implicit session =>
       translation.chapters.foreach(chapterRepository.deleteChapter)
-      translation.contributors.foreach(contributorRepository.deleteContributor)
+      translation.contributors.foreach(contributorRepository.remove)
       translationRepository.deleteTranslation(translation)
     }
 
