@@ -123,7 +123,7 @@ trait ImportService {
     private def persistTranslation(persistedBook: domain.Book, newBook: api.internal.Book)(implicit session: DBSession = AutoSession): Try[domain.Translation] = {
       for {
         validCategories <- validCategories(newBook)
-        domainTranslation <- Success(converterService.toDomainTranslation(newBook, persistedBook, validCategories))
+        domainTranslation = converterService.toDomainTranslation(newBook, persistedBook, validCategories)
         persistedTranslation <- Try(translationRepository.add(domainTranslation))
         persistedContributors <- persistContributors(newBook.contributors, persistedTranslation)
       } yield persistedTranslation.copy(contributors = persistedContributors)
@@ -152,8 +152,7 @@ trait ImportService {
     }
 
     def persistContributorsUpdate(persistedTranslation: domain.Translation, book: api.internal.Book)(implicit session: DBSession = AutoSession): Try[Seq[domain.Contributor]] = {
-      val toDelete = persistedTranslation.contributors.filterNot(ctb => book.contributors.exists(tf => tf.`type` == ctb.`type`.toString && tf.name == ctb.person.name))
-      val toKeep = persistedTranslation.contributors.filter(ctb => book.contributors.exists(tf => tf.`type` == ctb.`type`.toString && tf.name == ctb.person.name))
+      val (toKeep, toDelete) = persistedTranslation.contributors.partition(ctb => book.contributors.exists(tf => tf.`type` == ctb.`type`.toString && tf.name == ctb.person.name))
       val toAdd = book.contributors.filterNot(newCtb => persistedTranslation.contributors.exists(ctb => ctb.`type`.toString == newCtb.`type` && ctb.person.name == newCtb.name))
 
       for {
