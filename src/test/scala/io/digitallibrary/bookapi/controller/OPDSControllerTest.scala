@@ -164,7 +164,7 @@ class OPDSControllerTest extends UnitSuite with TestEnvironment with ScalatraFun
   }
 
   test("that /root.xml defaults to English root feed with default paging") {
-    get("/root.xml") {
+    get("/v1/root.xml") {
       verify(feedService).allEntries(LanguageTag("eng"), Paging(page = 1, pageSize = 15))
     }
   }
