@@ -43,7 +43,7 @@ object BookApiProperties extends LazyLogging {
 
   val DefaultLanguage = "eng"
 
-  val OpdsPath = "/book-api/opds"
+  val OpdsPath = "/book-api/opds/v1"
   val OpdsLanguageParam = ":lang"
   val OpdsCategoryParam = ":category"
   val OpdsLevelParam = ":lev"
