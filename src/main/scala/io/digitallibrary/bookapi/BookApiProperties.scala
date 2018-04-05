@@ -43,15 +43,15 @@ object BookApiProperties extends LazyLogging {
 
   val DefaultLanguage = "eng"
 
-  val OpdsPath = "/book-api/opds/v1"
+  val OpdsPath = "/book-api/opds"
   val OpdsLanguageParam = ":lang"
   val OpdsCategoryParam = ":category"
   val OpdsLevelParam = ":lev"
 
-  val OpdsRootDefaultLanguageUrl = s"/root.xml"
-  val OpdsRootUrl = s"/$OpdsLanguageParam/root.xml"
-  val OpdsCategoryUrl = s"/$OpdsLanguageParam/category/$OpdsCategoryParam/root.xml"
-  val OpdsCategoryAndLevelUrl = s"/$OpdsLanguageParam/category/$OpdsCategoryParam/level/$OpdsLevelParam.xml"
+  val OpdsRootDefaultLanguageUrl = s"/v1/root.xml"
+  val OpdsRootUrl = s"/v1/$OpdsLanguageParam/root.xml"
+  val OpdsCategoryUrl = s"/v1/$OpdsLanguageParam/category/$OpdsCategoryParam/root.xml"
+  val OpdsCategoryAndLevelUrl = s"/v1/$OpdsLanguageParam/category/$OpdsCategoryParam/level/$OpdsLevelParam.xml"
 
   val DownloadPath = "/book-api/download"
   val Books = "books"

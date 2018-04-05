@@ -49,7 +49,7 @@ class FeedServiceTest extends UnitSuite with TestEnvironment {
         .replace(OpdsCategoryParam, "cat1")
         .replace(OpdsLanguageParam, LanguageCodeEnglish)}")
 
-    calculatedFeedUrls.map(_.url).sorted should equal (Seq("/en/category/cat1/level/1.xml", "/en/category/cat1/root.xml", "/en/root.xml", "/root.xml").sorted)
+    calculatedFeedUrls.map(_.url).sorted should equal (Seq("/v1/en/category/cat1/level/1.xml", "/v1/en/category/cat1/root.xml", "/v1/en/root.xml", "/v1/root.xml").sorted)
   }
 
   test("that calculateFeedUrls calculates correct of feeds for multiple languages and levels") {
@@ -69,17 +69,17 @@ class FeedServiceTest extends UnitSuite with TestEnvironment {
     val calculatedFeedUrls = feedService.calculateFeeds
     val expectedFeeds =
       """
-        |/root.xml
-        |/en/root.xml
-        |/nb/root.xml
-        |/nb/category/library_books/root.xml
-        |/nb/category/classroom_books/root.xml
-        |/nb/category/library_books/level/1.xml
-        |/nb/category/library_books/level/2.xml
-        |/nb/category/classroom_books/level/decodable.xml
-        |/en/category/library_books/root.xml
-        |/en/category/library_books/level/1.xml
-        |/en/category/library_books/level/2.xml
+        |/v1/root.xml
+        |/v1/en/root.xml
+        |/v1/nb/root.xml
+        |/v1/nb/category/library_books/root.xml
+        |/v1/nb/category/classroom_books/root.xml
+        |/v1/nb/category/library_books/level/1.xml
+        |/v1/nb/category/library_books/level/2.xml
+        |/v1/nb/category/classroom_books/level/decodable.xml
+        |/v1/en/category/library_books/root.xml
+        |/v1/en/category/library_books/level/1.xml
+        |/v1/en/category/library_books/level/2.xml
       """
       .stripMargin.trim.split("\n").toSet
 
