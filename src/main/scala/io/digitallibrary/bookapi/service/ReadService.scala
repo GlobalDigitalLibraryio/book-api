@@ -10,7 +10,7 @@ package io.digitallibrary.bookapi.service
 
 import io.digitallibrary.language.model.LanguageTag
 import io.digitallibrary.bookapi.model._
-import io.digitallibrary.bookapi.model.domain.{Category, PublishingStatus, Sort}
+import io.digitallibrary.bookapi.model.domain.{Category, PublishingStatus, Sort, Translation}
 import io.digitallibrary.bookapi.repository._
 
 trait ReadService {
@@ -60,6 +60,9 @@ trait ReadService {
         book <- withIdAndLanguage(newTranslation.bookId, inTranslation.fromLanguage)
       } yield converterService.toApiMyBook(inTranslation, newTranslation, availableLanguages, book)
     }
+
+    def translationWithIdAndLanguage(bookId: Long, language: LanguageTag): Option[Translation] =
+      translationRepository.forBookIdAndLanguage(bookId, language)
 
     def withIdAndLanguage(bookId: Long, language: LanguageTag): Option[api.Book] = {
       for {

@@ -65,6 +65,17 @@ trait BooksController {
       pathParam[Long]("id").description("Id of the book that is to be returned."))
       responseMessages(response400, response404, response500))
 
+    private val updateBook = (apiOperation[Option[api.Book]]("updateBook")
+      summary "Updates the metadata of a book."
+      description "Updates the metadata of a book."
+      parameters(
+      headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
+      pathParam[String]("lang").description("The language of the book specified in ISO 639-2 format"),
+      pathParam[Long]("id").description("Id of the book to be updated."),
+      bodyParam[api.Book].description("JSON body"))
+      authorizations "oauth2"
+      responseMessages(response400, response404, response500))
+
     private val getChapters = (apiOperation[Seq[api.ChapterSummary]]("getChapters")
       summary "Returns metadata about the chapters for a given book in the given language"
       description "Returns metadata about the chapters for a given book in the given language"
@@ -158,6 +169,25 @@ trait BooksController {
         case Some(x) => x
         case None => NotFound(body = Error(Error.NOT_FOUND, s"No book with id $id and language $lang found"))
       }
+    }
+
+    put("/:lang/:id/?", operation(updateBook)) {
+
+      assertHasRole(RoleWithWriteAccess)
+
+      val id = long("id")
+      val lang = LanguageTag(params("lang"))
+
+      val updatedBook = extract[api.Book](request.body)
+
+      readService.translationWithIdAndLanguage(id, lang) match {
+        case Some(existingBook) => writeService.updateTranslation(existingBook.copy(
+          title = updatedBook.title,
+          about = updatedBook.description
+        ))
+        case None => NotFound(body = Error(Error.NOT_FOUND, s"No book with id $id and language $lang found"))
+      }
+
     }
 
     get("/:lang/:id/chapters/?", operation(getChapters)) {

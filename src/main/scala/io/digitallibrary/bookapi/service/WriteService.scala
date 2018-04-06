@@ -46,6 +46,7 @@ trait WriteService {
   val writeService: WriteService
 
   class WriteService extends LazyLogging {
+
     def updateTranslation(translationToUpdate: Translation) = {
       translationRepository.updateTranslation(translationToUpdate)
     }

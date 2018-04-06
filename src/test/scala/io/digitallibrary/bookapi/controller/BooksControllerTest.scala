@@ -102,6 +102,77 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
     }
   }
 
+  test("that PUT /:lang/:id updates book, with only certain fields modified") {
+    when(readService.translationWithIdAndLanguage(any[Long], any[LanguageTag])).thenReturn(Some(TestData.Domain.DefaultTranslation))
+
+    val payload = """{
+      |	"id": 1,
+      |	"revision": 1,
+      |	"externalId": "1002-anaya-s-thumb",
+      |	"uuid": "d251aa7a-bba7-47ca-9702-e829dc18cfb9",
+      |	"title": "new title",
+      |	"description": "new description",
+      |	"language": {
+      |		"code": "en",
+      |		"name": "English"
+      |	},
+      |	"availableLanguages": [
+      |		{
+      |			"code": "en",
+      |			"name": "English"
+      |		}
+      |	],
+      |	"license": {
+      |		"id": 1,
+      |		"revision": 1,
+      |		"name": "cc-by-4.0",
+      |		"description": "Attribution 4.0 International (CC BY 4.0)",
+      |		"url": "https://creativecommons.org/licenses/by/4.0/"
+      |	},
+      |	"publisher": {
+      |		"id": 1,
+      |		"revision": 1,
+      |		"name": "Pratham Books"
+      |	},
+      |	"readingLevel": "2",
+      |	"typicalAgeRange": "8-10",
+      |	"educationalUse": "reading",
+      |	"educationalRole": "learner",
+      |	"timeRequired": "PT10M",
+      |	"datePublished": "2015-11-13",
+      |	"dateCreated": "2018-01-08",
+      |	"dateArrived": "2018-02-08",
+      |	"categories": [
+      |		{
+      |			"id": 4,
+      |			"revision": 1,
+      |			"name": "library_books"
+      |		}
+      |	],
+      |	"coverPhoto": {
+      |		"large": "http://local.digitallibrary.io/image-api/raw/f51fb826a78e25dd5910a610cfd4a2ce.jpg",
+      |		"small": "http://local.digitallibrary.io/image-api/raw/f51fb826a78e25dd5910a610cfd4a2ce.jpg?width=200"
+      |	},
+      |	"downloads": {
+      |		"epub": "http://local.digitallibrary.io/book-api/download/epub/en/d251aa7a-bba7-47ca-9702-e829dc18cfb9.epub",
+      |		"pdf": "http://local.digitallibrary.io/book-api/download/pdf/en/d251aa7a-bba7-47ca-9702-e829dc18cfb9.pdf"
+      |	},
+      |	"tags": [],
+      |	"contributors": [
+      |	],
+      |	"chapters": [
+      |	],
+      |	"supportsTranslation": false,
+      |	"bookFormat": "HTML",
+      |	"source": "storyweaver"
+      |}""".stripMargin.getBytes
+
+    put("/eng/1", payload, headers = Seq(("Authorization", s"Bearer $validTestTokenWithWriteRole"))) {
+      status should equal (200)
+      verify(writeService).updateTranslation(TestData.Domain.DefaultTranslation.copy(title = "new title", about = "new description"))
+    }
+  }
+
   test("that downloads in book is correct") {
     when(readService.withIdAndLanguage(any[Long], any[LanguageTag])).thenReturn(Some(TestData.Api.DefaultBook))
 
