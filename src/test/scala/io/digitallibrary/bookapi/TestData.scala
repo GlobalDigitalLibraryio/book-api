@@ -10,12 +10,12 @@ package io.digitallibrary.bookapi
 import java.time.{LocalDate, ZonedDateTime}
 import java.util.UUID
 
-import io.digitallibrary.language.model.LanguageTag
 import io.digitallibrary.bookapi.integration.crowdin.{BookMetaData, TranslatedChapter}
 import io.digitallibrary.bookapi.model._
 import io.digitallibrary.bookapi.model.api._
-import io.digitallibrary.bookapi.model.api.internal.{CoverPhoto, NewTranslatedChapter}
+import io.digitallibrary.bookapi.model.api.internal.NewTranslatedChapter
 import io.digitallibrary.bookapi.model.domain.{BookFormat, ChapterType, ContributorType}
+import io.digitallibrary.language.model.LanguageTag
 
 object TestData {
   val LanguageCodeNorwegian = "nb"
@@ -131,7 +131,7 @@ object TestData {
       source = DefaultSource)
 
     val DefaultTranslationId = 1
-    val DefaultChapter = domain.Chapter(Some(1), Some(1), DefaultTranslationId, 1, Some("Default chapter title"), "Chapter-content", ChapterType.Content)
+    val DefaultChapter = domain.Chapter(id = Some(1), revision = Some(1), translationId = DefaultTranslationId, seqNo = 1, title = Some("Default chapter title"), content = "Chapter-content", chapterType = ChapterType.Content)
 
     val DefaultPerson = domain.Person(Some(1), Some(1), "Default person name", Some("abc-def"))
     val DefaultContributor = domain.Contributor(Some(1), Some(1), DefaultPerson.id.get, DefaultTranslationId, ContributorType.Author, DefaultPerson)

@@ -79,6 +79,10 @@ trait ReadService {
       chapterRepository.chaptersForBookIdAndLanguage(bookId, language).map(c => converterService.toApiChapterSummary(c, bookId, language))
     }
 
+    def domainChapterForBookWithLanguageAndId(bookId: Long, language: LanguageTag, chapterId: Long): Option[domain.Chapter] = {
+      chapterRepository.chapterForBookWithLanguageAndId(bookId, language, chapterId)
+    }
+
     def chapterForBookWithLanguageAndId(bookId: Long, language: LanguageTag, chapterId: Long): Option[api.Chapter] = {
       chapterRepository.chapterForBookWithLanguageAndId(bookId, language, chapterId).map(converterService.toApiChapter(_))
     }

@@ -32,6 +32,7 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
   addServlet(controller, "/*")
 
   val validTestToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwczovL2RpZ2l0YWxsaWJyYXJ5LmlvL2dkbF9pZCI6IjEyMyIsInN1YiI6IjEyMzQ1Njc4OTAiLCJuYW1lIjoiSm9obiBEb2UifQ.e3BKK_gLxWQwJhFX6SppNchM_eSwu82yKghVx2P3yMY"
+  val validTestTokenWithWriteRole = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwczovL2RpZ2l0YWxsaWJyYXJ5LmlvL2dkbF9pZCI6IjEyMyIsInN1YiI6IjEyMzQ1Njc4OTAiLCJuYW1lIjoiSm9obiBEb2UiLCJzY29wZSI6ImJvb2tzLWxvY2FsOndyaXRlIn0.RNLeTpQogFoHRgwz5bJN2INvszK-YSgiJS4yatJvvFs"
   val invalidTestToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwczovL2RpZ2l0YWxsaWJyYXJ5LmlvL2dkbF9hYmMiOiIxMjMiLCJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIn0.5rtcIdtPmH3AF1pwNbNvBMKmulyiEoWZfn1ip9aMzv4"
 
   test("that GET / will get books with default language") {
@@ -134,6 +135,59 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
       status should equal (200)
       val chapter = read[Chapter](body)
       chapter.title should equal (TestData.Api.Chapter1.title)
+    }
+  }
+
+  test("that PUT /:lang/:bookid/chapters/:chapterid demands valid token") {
+    val payload =
+      """
+        | { "id": 1,
+        |   "revision": 1,
+        |   "translationId": 1,
+        |   "seqNo": 1,
+        |   "title": "my title",
+        |   "content": "my updated content",
+        |   "chapterType": "CONTENT"
+        | }
+      """.stripMargin.getBytes
+    put("/eng/1/chapters/1", payload, headers = Seq(("Authorization", s"Bearer $invalidTestToken"))) {
+      status should equal (403)
+    }
+  }
+
+  test("that PUT /:lang/:bookid/chapters/:chapterid demands write role") {
+    val payload =
+      """
+        | { "id": 1,
+        |   "revision": 1,
+        |   "translationId": 1,
+        |   "seqNo": 1,
+        |   "title": "my title",
+        |   "content": "my updated content",
+        |   "chapterType": "CONTENT"
+        | }
+      """.stripMargin.getBytes
+    put("/eng/1/chapters/1", payload, headers = Seq(("Authorization", s"Bearer $validTestToken"))) {
+      status should equal (403)
+    }
+  }
+
+  test("that PUT /:lang/:bookid/chapters/:chapterid changes only chapter content") {
+    when(readService.domainChapterForBookWithLanguageAndId(any[Long], any[LanguageTag], any[Long])).thenReturn(Some(TestData.Domain.DefaultChapter))
+    val payload =
+      """
+        | { "id": 1,
+        |   "revision": 1,
+        |   "translationId": 1,
+        |   "seqNo": 1,
+        |   "title": "my title",
+        |   "content": "my updated content",
+        |   "chapterType": "CONTENT"
+        | }
+      """.stripMargin.getBytes
+    put("/eng/1/chapters/1", payload, headers = Seq(("Authorization", s"Bearer $validTestTokenWithWriteRole"))) {
+      status should equal (200)
+      verify(writeService).updateChapter(TestData.Domain.DefaultChapter.copy(content = "my updated content"))
     }
   }
 
