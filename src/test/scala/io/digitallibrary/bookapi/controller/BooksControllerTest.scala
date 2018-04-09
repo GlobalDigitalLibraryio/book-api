@@ -32,6 +32,7 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
   addServlet(controller, "/*")
 
   val validTestToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwczovL2RpZ2l0YWxsaWJyYXJ5LmlvL2dkbF9pZCI6IjEyMyIsInN1YiI6IjEyMzQ1Njc4OTAiLCJuYW1lIjoiSm9obiBEb2UifQ.e3BKK_gLxWQwJhFX6SppNchM_eSwu82yKghVx2P3yMY"
+  val validTestTokenWithWriteRole = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwczovL2RpZ2l0YWxsaWJyYXJ5LmlvL2dkbF9pZCI6IjEyMyIsInN1YiI6IjEyMzQ1Njc4OTAiLCJuYW1lIjoiSm9obiBEb2UiLCJzY29wZSI6ImJvb2tzLWxvY2FsOndyaXRlIn0.RNLeTpQogFoHRgwz5bJN2INvszK-YSgiJS4yatJvvFs"
   val invalidTestToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwczovL2RpZ2l0YWxsaWJyYXJ5LmlvL2dkbF9hYmMiOiIxMjMiLCJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIn0.5rtcIdtPmH3AF1pwNbNvBMKmulyiEoWZfn1ip9aMzv4"
 
   test("that GET / will get books with default language") {
@@ -101,6 +102,77 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
     }
   }
 
+  test("that PUT /:lang/:id updates book, with only certain fields modified") {
+    when(readService.translationWithIdAndLanguage(any[Long], any[LanguageTag])).thenReturn(Some(TestData.Domain.DefaultTranslation))
+
+    val payload = """{
+      |	"id": 1,
+      |	"revision": 1,
+      |	"externalId": "1002-anaya-s-thumb",
+      |	"uuid": "d251aa7a-bba7-47ca-9702-e829dc18cfb9",
+      |	"title": "new title",
+      |	"description": "new description",
+      |	"language": {
+      |		"code": "en",
+      |		"name": "English"
+      |	},
+      |	"availableLanguages": [
+      |		{
+      |			"code": "en",
+      |			"name": "English"
+      |		}
+      |	],
+      |	"license": {
+      |		"id": 1,
+      |		"revision": 1,
+      |		"name": "cc-by-4.0",
+      |		"description": "Attribution 4.0 International (CC BY 4.0)",
+      |		"url": "https://creativecommons.org/licenses/by/4.0/"
+      |	},
+      |	"publisher": {
+      |		"id": 1,
+      |		"revision": 1,
+      |		"name": "Pratham Books"
+      |	},
+      |	"readingLevel": "2",
+      |	"typicalAgeRange": "8-10",
+      |	"educationalUse": "reading",
+      |	"educationalRole": "learner",
+      |	"timeRequired": "PT10M",
+      |	"datePublished": "2015-11-13",
+      |	"dateCreated": "2018-01-08",
+      |	"dateArrived": "2018-02-08",
+      |	"categories": [
+      |		{
+      |			"id": 4,
+      |			"revision": 1,
+      |			"name": "library_books"
+      |		}
+      |	],
+      |	"coverPhoto": {
+      |		"large": "http://local.digitallibrary.io/image-api/raw/f51fb826a78e25dd5910a610cfd4a2ce.jpg",
+      |		"small": "http://local.digitallibrary.io/image-api/raw/f51fb826a78e25dd5910a610cfd4a2ce.jpg?width=200"
+      |	},
+      |	"downloads": {
+      |		"epub": "http://local.digitallibrary.io/book-api/download/epub/en/d251aa7a-bba7-47ca-9702-e829dc18cfb9.epub",
+      |		"pdf": "http://local.digitallibrary.io/book-api/download/pdf/en/d251aa7a-bba7-47ca-9702-e829dc18cfb9.pdf"
+      |	},
+      |	"tags": [],
+      |	"contributors": [
+      |	],
+      |	"chapters": [
+      |	],
+      |	"supportsTranslation": false,
+      |	"bookFormat": "HTML",
+      |	"source": "storyweaver"
+      |}""".stripMargin.getBytes
+
+    put("/eng/1", payload, headers = Seq(("Authorization", s"Bearer $validTestTokenWithWriteRole"))) {
+      status should equal (200)
+      verify(writeService).updateTranslation(TestData.Domain.DefaultTranslation.copy(title = "new title", about = "new description"))
+    }
+  }
+
   test("that downloads in book is correct") {
     when(readService.withIdAndLanguage(any[Long], any[LanguageTag])).thenReturn(Some(TestData.Api.DefaultBook))
 
@@ -134,6 +206,59 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
       status should equal (200)
       val chapter = read[Chapter](body)
       chapter.title should equal (TestData.Api.Chapter1.title)
+    }
+  }
+
+  test("that PUT /:lang/:bookid/chapters/:chapterid demands valid token") {
+    val payload =
+      """
+        | { "id": 1,
+        |   "revision": 1,
+        |   "translationId": 1,
+        |   "seqNo": 1,
+        |   "title": "my title",
+        |   "content": "my updated content",
+        |   "chapterType": "CONTENT"
+        | }
+      """.stripMargin.getBytes
+    put("/eng/1/chapters/1", payload, headers = Seq(("Authorization", s"Bearer $invalidTestToken"))) {
+      status should equal (403)
+    }
+  }
+
+  test("that PUT /:lang/:bookid/chapters/:chapterid demands write role") {
+    val payload =
+      """
+        | { "id": 1,
+        |   "revision": 1,
+        |   "translationId": 1,
+        |   "seqNo": 1,
+        |   "title": "my title",
+        |   "content": "my updated content",
+        |   "chapterType": "CONTENT"
+        | }
+      """.stripMargin.getBytes
+    put("/eng/1/chapters/1", payload, headers = Seq(("Authorization", s"Bearer $validTestToken"))) {
+      status should equal (403)
+    }
+  }
+
+  test("that PUT /:lang/:bookid/chapters/:chapterid changes only chapter content") {
+    when(readService.domainChapterForBookWithLanguageAndId(any[Long], any[LanguageTag], any[Long])).thenReturn(Some(TestData.Domain.DefaultChapter))
+    val payload =
+      """
+        | { "id": 1,
+        |   "revision": 1,
+        |   "translationId": 1,
+        |   "seqNo": 1,
+        |   "title": "my title",
+        |   "content": "my updated content",
+        |   "chapterType": "CONTENT"
+        | }
+      """.stripMargin.getBytes
+    put("/eng/1/chapters/1", payload, headers = Seq(("Authorization", s"Bearer $validTestTokenWithWriteRole"))) {
+      status should equal (200)
+      verify(writeService).updateChapter(TestData.Domain.DefaultChapter.copy(content = "my updated content"))
     }
   }
 

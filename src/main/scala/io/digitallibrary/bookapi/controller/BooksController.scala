@@ -8,18 +8,18 @@
 
 package io.digitallibrary.bookapi.controller
 
-import io.digitallibrary.bookapi.BookApiProperties.DefaultLanguage
+import io.digitallibrary.bookapi.BookApiProperties.{DefaultLanguage, RoleWithWriteAccess}
 import io.digitallibrary.bookapi.model.api
-import io.digitallibrary.bookapi.model.api.{Error, ValidationError}
+import io.digitallibrary.bookapi.model.api.{Chapter, Error, ValidationError}
 import io.digitallibrary.bookapi.model.domain.{Paging, Sort}
 import io.digitallibrary.bookapi.service.search.SearchService
-import io.digitallibrary.bookapi.service.{ConverterService, ReadService}
+import io.digitallibrary.bookapi.service.{ReadService, WriteService}
 import io.digitallibrary.language.model.LanguageTag
 import org.scalatra._
 import org.scalatra.swagger.{ResponseMessage, Swagger, SwaggerSupport}
 
 trait BooksController {
-  this: ReadService with ConverterService with SearchService =>
+  this: ReadService with WriteService with SearchService =>
   val booksController: BooksController
 
   class BooksController(implicit val swagger: Swagger) extends GdlController with SwaggerSupport {
@@ -65,6 +65,17 @@ trait BooksController {
       pathParam[Long]("id").description("Id of the book that is to be returned."))
       responseMessages(response400, response404, response500))
 
+    private val updateBook = (apiOperation[Option[api.Book]]("updateBook")
+      summary "Updates the metadata of a book."
+      description "Updates the metadata of a book."
+      parameters(
+      headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
+      pathParam[String]("lang").description("The language of the book specified in ISO 639-2 format"),
+      pathParam[Long]("id").description("Id of the book to be updated."),
+      bodyParam[api.Book].description("JSON body"))
+      authorizations "oauth2"
+      responseMessages(response400, response404, response500))
+
     private val getChapters = (apiOperation[Seq[api.ChapterSummary]]("getChapters")
       summary "Returns metadata about the chapters for a given book in the given language"
       description "Returns metadata about the chapters for a given book in the given language"
@@ -82,6 +93,18 @@ trait BooksController {
       pathParam[String]("lang").description("Desired language for books specified in ISO 639-2 format"),
       pathParam[Long]("bookid").description("Id of the book that is to be returned."),
       pathParam[Long]("chapterid").description("Id of the chapter that is to be returned."))
+      responseMessages(response400, response404, response500))
+
+    private val updateChapter = (apiOperation[Option[api.Chapter]]("updateChapter")
+      summary "Updates the content of a chapter."
+      description "Updates the content of a chapter."
+      parameters(
+      headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
+      pathParam[String]("lang").description("The language of the book specified in ISO 639-2 format"),
+      pathParam[Long]("bookid").description("Id of the book to be updated."),
+      pathParam[Long]("chapterid").description("Id of the chapter to be updated."),
+      bodyParam[api.Chapter].description("JSON body"))
+      authorizations "oauth2"
       responseMessages(response400, response404, response500))
 
     private val getSimilar = (apiOperation[api.SearchResult]("getSimilar")
@@ -148,6 +171,25 @@ trait BooksController {
       }
     }
 
+    put("/:lang/:id/?", operation(updateBook)) {
+
+      assertHasRole(RoleWithWriteAccess)
+
+      val id = long("id")
+      val lang = LanguageTag(params("lang"))
+
+      val updatedBook = extract[api.Book](request.body)
+
+      readService.translationWithIdAndLanguage(id, lang) match {
+        case Some(existingBook) => writeService.updateTranslation(existingBook.copy(
+          title = updatedBook.title,
+          about = updatedBook.description
+        ))
+        case None => NotFound(body = Error(Error.NOT_FOUND, s"No book with id $id and language $lang found"))
+      }
+
+    }
+
     get("/:lang/:id/chapters/?", operation(getChapters)) {
       readService.chaptersForIdAndLanguage(long("id"), LanguageTag(params("lang")))
     }
@@ -159,6 +201,22 @@ trait BooksController {
 
       readService.chapterForBookWithLanguageAndId(bookId, lang, chapterId) match {
         case Some(x) => x
+        case None => NotFound(body = Error(Error.NOT_FOUND, s"No chapter with id $chapterId for book with id $bookId and language $lang found."))
+      }
+    }
+
+    put("/:lang/:bookid/chapters/:chapterid/?", operation(updateChapter)) {
+
+      assertHasRole(RoleWithWriteAccess)
+
+      val lang = LanguageTag(params("lang"))
+      val bookId = long("bookid")
+      val chapterId = long("chapterid")
+
+      val updatedChapter = extract[Chapter](request.body)
+
+      readService.domainChapterForBookWithLanguageAndId(bookId, lang, chapterId) match {
+        case Some(existingChapter) => writeService.updateChapter(existingChapter.copy(content = updatedChapter.content))
         case None => NotFound(body = Error(Error.NOT_FOUND, s"No chapter with id $chapterId for book with id $bookId and language $lang found."))
       }
     }
