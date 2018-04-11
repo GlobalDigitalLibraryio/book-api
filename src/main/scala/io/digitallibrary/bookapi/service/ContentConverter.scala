@@ -30,8 +30,21 @@ trait ContentConverter {
 
         imageApiClient.imageUrlFor(nodeId.toLong) match {
           case Some(url) => {
-            image.tagName("img")
-            image.attr("src", url)
+            image.tagName("picture")
+
+            // For devices larger than 768px
+            val forLargeDevice = image.appendElement("source")
+            forLargeDevice.attr("media", "(min-width: 768px)")
+            forLargeDevice.attr("srcset", url)
+
+            // For devices smaller than 768px
+            val smallImage = s"$url?width=300" // 300 should be enough for most small devices
+            val doubleImage = s"$url?width=600" // for retina devices (double number of pixels)
+
+            val forSmallDevice = image.appendElement("img")
+            forSmallDevice.attr("src", url)
+            forSmallDevice.attr("srcset", s"$smallImage, $doubleImage 2x")
+
           }
           case None => {
             image.tagName("p")
