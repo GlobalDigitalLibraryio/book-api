@@ -51,7 +51,7 @@ case class Translation(id: Option[Long],
                        bookFormat: BookFormat.Value)
 
 object PublishingStatus extends Enumeration {
-  val PUBLISHED, UNLISTED = Value
+  val PUBLISHED, UNLISTED, FLAGGED = Value
 
   def valueOfOrDefault(s: String): PublishingStatus.Value = {
     PublishingStatus.values.find(_.toString == s.toUpperCase).getOrElse(PUBLISHED)
@@ -69,7 +69,7 @@ object BookFormat extends Enumeration {
 object Translation extends SQLSyntaxSupport[Translation] {
 
   implicit val formats = org.json4s.DefaultFormats
-  override val tableName = "translation"
+  override val tableName = "translation_not_flagged"
   override val schemaName = Some(BookApiProperties.MetaSchema)
   val JSonSerializer = FieldSerializer[Translation]()
 
