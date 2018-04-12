@@ -354,7 +354,7 @@ trait ConverterService {
       imageIdOpt.flatMap(imageId =>
         imageApiClient.imageMetaWithId(imageId))
         .map(imageMeta => {
-          api.CoverImage(url = imageMeta.imageUrl, size = imageMeta.size, alttext = imageMeta.alttext.map(_.alttext))
+          api.CoverImage(url = imageMeta.imageUrl, alttext = imageMeta.alttext.map(_.alttext))
         })
     }
 

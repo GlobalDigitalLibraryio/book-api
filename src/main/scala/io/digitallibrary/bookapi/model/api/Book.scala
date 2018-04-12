@@ -32,7 +32,6 @@ case class CoverPhoto(@(ApiModelProperty@field)(description = "URL to a large ve
 
 @ApiModel(description = "Information about where to find the cover image for the book")
 case class CoverImage(@(ApiModelProperty@field)(description = "URL to the cover-image") url: String,
-                      @(ApiModelProperty@field)(description = "Size of the image, in bytes") size: Int,
                       @(ApiModelProperty@field)(description = "Alternate text for the cover image") alttext: Option[String])
 
 @ApiModel(description = "Information about where to download a copy of the book")
