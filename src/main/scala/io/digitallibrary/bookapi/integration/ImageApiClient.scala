@@ -8,12 +8,9 @@
 package io.digitallibrary.bookapi.integration
 
 import com.typesafe.scalalogging.LazyLogging
-import io.digitallibrary.network.GdlClient
-import io.digitallibrary.network.model.HttpRequestException
 import io.digitallibrary.bookapi.BookApiProperties
-import io.digitallibrary.bookapi.BookApiProperties.Domain
-import com.netaporter.uri.dsl._
 import io.digitallibrary.bookapi.model.api.NotFoundException
+import io.digitallibrary.network.GdlClient
 
 import scala.util.{Failure, Success, Try}
 import scalaj.http.{Http, HttpRequest}
@@ -53,6 +50,8 @@ trait ImageApiClient {
 
 }
 
-case class ImageMetaInformation(id: String, metaUrl: String, imageUrl: String, size: Int, contentType: String)
+case class ImageMetaInformation(id: String, metaUrl: String, imageUrl: String, size: Int, contentType: String, alttext: Option[Alttext])
+
+case class Alttext(alttext: String, language: String)
 
 case class DownloadedImage(metaInformation: ImageMetaInformation, bytes: Array[Byte])
