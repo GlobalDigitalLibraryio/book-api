@@ -7,7 +7,7 @@
 
 package io.digitallibrary.bookapi.service
 
-import io.digitallibrary.bookapi.integration.{DownloadedImage, ImageMetaInformation}
+import io.digitallibrary.bookapi.integration.{Alttext, DownloadedImage, ImageMetaInformation}
 import io.digitallibrary.bookapi.model.api.NotFoundException
 import io.digitallibrary.bookapi.{TestEnvironment, UnitSuite}
 import org.mockito.Mockito._
@@ -20,6 +20,9 @@ class ContentConverterTest extends UnitSuite with TestEnvironment {
     when(imageApiClient.imageUrlFor(1)).thenReturn(Some("image-url-1"))
     when(imageApiClient.imageUrlFor(2)).thenReturn(Some("image-url-2"))
     when(imageApiClient.imageUrlFor(3)).thenReturn(None)
+    when(imageApiClient.imageMetaWithId(1)).thenReturn(None)
+    when(imageApiClient.imageMetaWithId(2)).thenReturn(Some(ImageMetaInformation("2", "", "", 0, "", Some(Alttext("Some alt text", "en")))))
+    when(imageApiClient.imageMetaWithId(3)).thenReturn(None)
 
     val content =
       """
@@ -34,7 +37,7 @@ class ContentConverterTest extends UnitSuite with TestEnvironment {
       """
         |<p>
         |<picture><source media="(min-width: 768px)" srcset="image-url-1" /><img src="image-url-1" srcset="image-url-1?width=300, image-url-1?width=600 2x" /></picture>
-        |<picture><source media="(min-width: 768px)" srcset="image-url-2" /><img src="image-url-2" srcset="image-url-2?width=300, image-url-2?width=600 2x" /></picture>
+        |<picture><source media="(min-width: 768px)" srcset="image-url-2" /><img src="image-url-2" srcset="image-url-2?width=300, image-url-2?width=600 2x" alt="Some alt text" /></picture>
         |<p>Image not found</p>
         |</p>
       """.stripMargin
@@ -45,8 +48,8 @@ class ContentConverterTest extends UnitSuite with TestEnvironment {
 
   test("that toEPubContent throws exception if an image is missing") {
     val dummyBytes = "Hello, I am bytes".getBytes
-    val imageMeta1 = ImageMetaInformation("1", "some-url", "some-url", 123, "image/jpeg")
-    val imageMeta2 = ImageMetaInformation("2", "some-url", "some-url", 123, "image/jpeg")
+    val imageMeta1 = ImageMetaInformation("1", "some-url", "some-url", 123, "image/jpeg", None)
+    val imageMeta2 = ImageMetaInformation("2", "some-url", "some-url", 123, "image/jpeg", None)
 
     val content =
       """
@@ -65,8 +68,8 @@ class ContentConverterTest extends UnitSuite with TestEnvironment {
 
   test("that to EPubContent converts embed-tags to image-tags correctly") {
     val dummyBytes = "Hello, I am bytes".getBytes
-    val imageMeta1 = ImageMetaInformation("1", "meta-url", "some-url-1", 123, "image/jpeg")
-    val imageMeta2 = ImageMetaInformation("2", "meta-url", "some-url-2", 123, "image/jpeg")
+    val imageMeta1 = ImageMetaInformation("1", "meta-url", "some-url-1", 123, "image/jpeg", None)
+    val imageMeta2 = ImageMetaInformation("2", "meta-url", "some-url-2", 123, "image/jpeg", None)
 
     val content =
       """
