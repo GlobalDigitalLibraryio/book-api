@@ -281,6 +281,7 @@ trait ConverterService {
           dateArrived = translation.dateArrived,
           categories = toApiCategories(translation.categories),
           coverPhoto = toApiCoverPhoto(translation.coverphoto),
+          coverImage = toApiCoverImage(translation.coverphoto),
           downloads = toApiDownloads(translation),
           tags = translation.tags,
           contributors = toApiContributors(translation.contributors),
@@ -300,6 +301,7 @@ trait ConverterService {
           readingLevel = translation.readingLevel,
           categories = toApiCategories(translation.categories),
           coverPhoto = toApiCoverPhoto(translation.coverphoto),
+          coverImage = toApiCoverImage(translation.coverphoto),
           dateArrived = translation.dateArrived,
           source = book.source,
           highlightTitle = None,
@@ -323,6 +325,7 @@ trait ConverterService {
         translatedTo = toApiLanguage(translation.language),
         publisher = book.publisher,
         coverPhoto = toApiCoverPhoto(translation.coverphoto),
+        coverImage = toApiCoverImage(translation.coverphoto),
         synchronizeUrl = s"${BookApiProperties.Domain}${BookApiProperties.TranslationsPath}/synchronized/${inTranslation.id.get}",
         crowdinUrl = CrowdinUtils.crowdinUrlToBook(book, inTranslation.crowdinProjectId, inTranslation.crowdinToLanguage))
     }
@@ -346,6 +349,15 @@ trait ConverterService {
           api.CoverPhoto(large, small)
         })
     }
+
+    def toApiCoverImage(imageIdOpt: Option[Long]): Option[api.CoverImage] = {
+      imageIdOpt.flatMap(imageId =>
+        imageApiClient.imageMetaWithId(imageId))
+        .map(imageMeta => {
+          api.CoverImage(url = imageMeta.imageUrl, size = imageMeta.size, alttext = imageMeta.alttext.map(_.alttext))
+        })
+    }
+
 
     def toApiInternalCoverPhoto(imageIdOpt: Option[Long]): Option[api.internal.CoverPhoto] = imageIdOpt.map(api.internal.CoverPhoto)
 

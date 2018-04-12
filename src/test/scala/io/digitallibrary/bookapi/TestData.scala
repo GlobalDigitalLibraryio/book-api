@@ -75,6 +75,7 @@ object TestData {
       dateArrived = today,
       categories = Seq(category1, category2),
       coverPhoto = None,
+      coverImage = None,
       downloads = api.Downloads(Some(epub), None),
       tags = Seq(),
       contributors = Seq(author1, author2, photographer, illustrator),
@@ -93,6 +94,7 @@ object TestData {
         Category
         (1, 1, "library_books")),
       coverPhoto = None,
+      coverImage = None,
       dateArrived = today,
       source = DefaultSource,
       highlightTitle = Some("Title"),
