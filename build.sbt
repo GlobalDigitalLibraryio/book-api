@@ -36,7 +36,7 @@ lazy val book_api = (project in file(".")).
     scalacOptions := Seq("-target:jvm-1.8"),
     libraryDependencies ++= Seq(
       "gdl" %% "network" % "0.10",
-      "gdl" %% "language" % "0.5",
+      "gdl" %% "language" % "0.6",
       "com.typesafe.scala-logging" %% "scala-logging" % ScalaLoggingVersion,
       "com.typesafe" % "config" % "1.3.1",
       "org.apache.logging.log4j" % "log4j-api" % Log4JVersion,
