@@ -7,11 +7,13 @@
 
 package io.digitallibrary.bookapi.model.domain
 
-case class PdfCss (publisher: Option[String], fontNames: Seq[String]) {
+case class PdfCss (source: Option[String], fontNames: Seq[String]) {
 
   val DefaultPageSize = "a4"
-  val landscapePublishers = Map(
-    "pratham books" -> "a5 landscape"
+  val landscapeSources = Map(
+    "storyweaver" -> "a5 landscape",
+    "taf" -> "a5 landscape",
+    "bookdash" -> "a5 landscape"
   )
 
   def asString: String = {
@@ -36,13 +38,13 @@ case class PdfCss (publisher: Option[String], fontNames: Seq[String]) {
       |    max-height: 300px;
       |}
       |@page {
-      | size: ${getPageSize(publisher)};
+      | size: ${getPageSize(source)};
       |}
     """.stripMargin
   }
 
-  private def getPageSize(publisherOpt: Option[String]) = {
-    publisherOpt.flatMap(pub => landscapePublishers.get(pub.toLowerCase)).getOrElse(DefaultPageSize)
+  private def getPageSize(sourceOpt: Option[String]) = {
+    sourceOpt.flatMap(src => landscapeSources.get(src.toLowerCase)).getOrElse(DefaultPageSize)
   }
 }
 

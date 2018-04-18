@@ -58,6 +58,7 @@ trait PdfService {
       "tamil" -> FontDefinition("/NotoSansTamil-Regular.ttf", "Noto Sans Tamil")
     )
     val fontDefinitions = Map(
+      LanguageTag("tir") -> fonts("ethiopic"),
       LanguageTag("amh") -> fonts("ethiopic"),
       LanguageTag("mar") -> fonts("devangari"),
       LanguageTag("hin") -> fonts("devangari"),
@@ -83,7 +84,7 @@ trait PdfService {
 
     def createPdf(language: LanguageTag, uuid: String): Option[PdfRendererBuilder] = {
       translationRepository.withUuId(uuid).map(translation => {
-        val publisher = bookRepository.withId(translation.bookId).map(_.publisher.name)
+        val source = bookRepository.withId(translation.bookId).map(_.source)
 
         val chapters = readService.chaptersForIdAndLanguage(translation.bookId, language).flatMap(ch => readService.chapterForBookWithLanguageAndId(translation.bookId, language, ch.id))
         val fonts = fontDefinitions.get(language).toSeq :+ DefaultFont
@@ -92,7 +93,7 @@ trait PdfService {
           s"""
              |<html>
              |  <head>
-             |    <style language='text/css'>${PdfCss(publisher, fonts.map(_.fontName)).asString}</style>
+             |    <style language='text/css'>${PdfCss(source, fonts.map(_.fontName)).asString}</style>
              |  </head>
              |  <body>
              |    ${chapters.map(c => s"<div class='page'>${c.content}</div>").mkString("\n")}
