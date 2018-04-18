@@ -280,7 +280,6 @@ trait ConverterService {
           dateCreated = translation.dateCreated,
           dateArrived = translation.dateArrived,
           categories = toApiCategories(translation.categories),
-          coverPhoto = toApiCoverPhoto(translation.coverphoto),
           coverImage = toApiCoverImage(translation.coverphoto),
           downloads = toApiDownloads(translation),
           tags = translation.tags,
@@ -300,7 +299,6 @@ trait ConverterService {
           language = toApiLanguage(translation.language),
           readingLevel = translation.readingLevel,
           categories = toApiCategories(translation.categories),
-          coverPhoto = toApiCoverPhoto(translation.coverphoto),
           coverImage = toApiCoverImage(translation.coverphoto),
           dateArrived = translation.dateArrived,
           source = book.source,
@@ -324,7 +322,6 @@ trait ConverterService {
         translatedFrom = translation.translatedFrom.map(toApiLanguage),
         translatedTo = toApiLanguage(translation.language),
         publisher = book.publisher,
-        coverPhoto = toApiCoverPhoto(translation.coverphoto),
         coverImage = toApiCoverImage(translation.coverphoto),
         synchronizeUrl = s"${BookApiProperties.Domain}${BookApiProperties.TranslationsPath}/synchronized/${inTranslation.id.get}",
         crowdinUrl = CrowdinUtils.crowdinUrlToBook(book, inTranslation.crowdinProjectId, inTranslation.crowdinToLanguage))
@@ -338,16 +335,6 @@ trait ConverterService {
           pdf = Some(s"${BookApiProperties.CloudFrontBooks}/pdf/${translation.language}/${translation.uuid}.pdf"))
         case BookFormat.PDF => api.Downloads(pdf = Some(s"${BookApiProperties.CloudFrontBooks}/pdf/${translation.language}/${translation.uuid}.pdf"), epub = None)
       }
-    }
-
-    def toApiCoverPhoto(imageIdOpt: Option[Long]): Option[api.CoverPhoto] = {
-      imageIdOpt.flatMap(imageId =>
-        imageApiClient.imageMetaWithId(imageId))
-        .map(imageMeta => {
-          val large = imageMeta.imageUrl
-          val small = s"$large?width=200"
-          api.CoverPhoto(large, small)
-        })
     }
 
     def toApiCoverImage(imageIdOpt: Option[Long]): Option[api.CoverImage] = {
