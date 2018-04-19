@@ -58,6 +58,7 @@ trait PdfService {
       "tamil" -> FontDefinition("/NotoSansTamil-Regular.ttf", "Noto Sans Tamil")
     )
     val fontDefinitions = Map(
+      LanguageTag("tir-et") -> fonts("ethiopic"),
       LanguageTag("tir") -> fonts("ethiopic"),
       LanguageTag("amh") -> fonts("ethiopic"),
       LanguageTag("mar") -> fonts("devangari"),
