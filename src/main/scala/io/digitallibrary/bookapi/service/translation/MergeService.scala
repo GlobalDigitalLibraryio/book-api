@@ -28,19 +28,19 @@ trait MergeService {
     def mergeContents(originalContent: String, newContent: String): String = {
       val originalDoc = Jsoup.parseBodyFragment(originalContent)
 
-      val translatedDoc = Jsoup.parseBodyFragment(
+      val newDoc = Jsoup.parseBodyFragment(
         Jsoup.clean(newContent, Whitelist.basicWithImages().removeTags("a"))
       )
 
       val embedElements = originalDoc.select("embed[data-resource]").asScala
-      val imgElements = translatedDoc.getElementsByTag("img").asScala
+      val imgElements = newDoc.getElementsByTag("img").asScala
 
       embedElements.zipAll(imgElements, "", "").foreach {
         case (embed: Element, img: Element) => img.replaceWith(embed)
         case (_, img: Element) => img.remove()
         case (_, _) => Unit
       }
-      translatedDoc.body().html()
+      newDoc.body().html()
     }
 
     def mergeChapters(originalBook: Book, translatedChapters: Seq[TranslatedChapter]): Seq[NewTranslatedChapter] = {
