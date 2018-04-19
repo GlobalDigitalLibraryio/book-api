@@ -11,7 +11,6 @@ import java.time.{LocalDate, ZonedDateTime}
 import java.util.UUID
 
 import com.typesafe.scalalogging.LazyLogging
-import io.digitallibrary.language.model.LanguageTag
 import io.digitallibrary.bookapi.BookApiProperties
 import io.digitallibrary.bookapi.BookApiProperties.OpdsLanguageParam
 import io.digitallibrary.bookapi.model._
@@ -19,8 +18,7 @@ import io.digitallibrary.bookapi.model.api._
 import io.digitallibrary.bookapi.model.domain.{Paging, PublishingStatus, Sort}
 import io.digitallibrary.bookapi.repository.{BookRepository, FeedRepository, TranslationRepository}
 import io.digitallibrary.bookapi.service.search.SearchService
-
-import scala.util.Try
+import io.digitallibrary.language.model.LanguageTag
 
 trait FeedService {
   this: FeedRepository with TranslationRepository with BookRepository with ReadService with ConverterService with SearchService with FeedLocalizationService =>
@@ -104,10 +102,34 @@ trait FeedService {
       }
     }
 
+    def levelOrder(level: String): Int = {
+      level match {
+        case "decodable" => 0
+        case "read-aloud" => 100
+        case "root" => 101
+        case _ => level.toInt
+      }
+    }
+
     def facetsForReadingLevels(currentLanguage: LanguageTag, currentCategory: String, currentReadingLevel: Option[String]): Seq[Facet] = {
       val localization = feedLocalizationService.localizationFor(currentLanguage)
       val group = "Selection"
-      (Facet(
+      readService.listAvailablePublishedLevelsForLanguage(Some(currentLanguage), Some(currentCategory))
+        .sortBy(levelOrder).map(readingLevel =>
+        Facet(
+          href = s"${
+            BookApiProperties.CloudFrontOpds
+          }${
+            BookApiProperties.OpdsCategoryAndLevelUrl
+              .replace(BookApiProperties.OpdsLanguageParam, currentLanguage.toString)
+              .replace(BookApiProperties.OpdsCategoryParam, currentCategory)
+              .replace(BookApiProperties.OpdsLevelParam, readingLevel)
+          }",
+          title = localization.levelTitle(readingLevel),
+          group = group,
+          isActive = currentReadingLevel.contains(readingLevel))
+      ) ++
+      Seq(Facet(
         href = s"${
           BookApiProperties.CloudFrontOpds}${BookApiProperties.OpdsCategoryUrl
           .replace(BookApiProperties.OpdsLanguageParam, currentLanguage.toString)
@@ -115,20 +137,7 @@ trait FeedService {
         }",
         title = s"New arrivals",
         group = group,
-        isActive = currentReadingLevel.isEmpty)
-        +:
-        readService.listAvailablePublishedLevelsForLanguage(Some(currentLanguage), Some(currentCategory))
-          .sortBy(level => Try(level.toInt).getOrElse(0)).map(readingLevel =>
-          Facet(
-            href = s"${
-              BookApiProperties.CloudFrontOpds}${BookApiProperties.OpdsCategoryAndLevelUrl
-              .replace(BookApiProperties.OpdsLanguageParam, currentLanguage.toString)
-              .replace(BookApiProperties.OpdsCategoryParam, currentCategory)
-              .replace(BookApiProperties.OpdsLevelParam, readingLevel)}",
-            title = localization.levelTitle(readingLevel),
-            group = group,
-            isActive = currentReadingLevel.contains(readingLevel))
-        ))
+        isActive = currentReadingLevel.isEmpty))
     }
 
     def allEntries(language: LanguageTag, paging: Paging): (PagingStatus, Seq[FeedEntry]) = {
