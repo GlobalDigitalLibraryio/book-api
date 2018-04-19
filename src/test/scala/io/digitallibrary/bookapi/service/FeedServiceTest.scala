@@ -156,7 +156,7 @@ class FeedServiceTest extends UnitSuite with TestEnvironment {
       "3.xml",
       "4.xml",
       "read-aloud.xml",
-      "root.xml",
+      "root.xml"
     ))
   }
 
