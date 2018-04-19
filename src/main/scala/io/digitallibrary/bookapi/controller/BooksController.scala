@@ -13,13 +13,14 @@ import io.digitallibrary.bookapi.model.api
 import io.digitallibrary.bookapi.model.api.{Chapter, Error, ValidationError}
 import io.digitallibrary.bookapi.model.domain.{Paging, Sort}
 import io.digitallibrary.bookapi.service.search.SearchService
-import io.digitallibrary.bookapi.service.{ReadService, WriteService}
+import io.digitallibrary.bookapi.service.translation.MergeService
+import io.digitallibrary.bookapi.service.{ContentConverter, ReadService, WriteService}
 import io.digitallibrary.language.model.LanguageTag
 import org.scalatra._
 import org.scalatra.swagger.{ResponseMessage, Swagger, SwaggerSupport}
 
 trait BooksController {
-  this: ReadService with WriteService with SearchService =>
+  this: ReadService with WriteService with SearchService with MergeService with ContentConverter =>
   val booksController: BooksController
 
   class BooksController(implicit val swagger: Swagger) extends GdlController with SwaggerSupport {
@@ -216,7 +217,9 @@ trait BooksController {
       val updatedChapter = extract[Chapter](request.body)
 
       readService.domainChapterForBookWithLanguageAndId(bookId, lang, chapterId) match {
-        case Some(existingChapter) => writeService.updateChapter(existingChapter.copy(content = updatedChapter.content))
+        case Some(existingChapter) =>
+          val updated = writeService.updateChapter(existingChapter.copy(content = mergeService.mergeContents(existingChapter.content, updatedChapter.content)))
+          updated.copy(content = contentConverter.toApiContent(updated.content))
         case None => NotFound(body = Error(Error.NOT_FOUND, s"No chapter with id $chapterId for book with id $bookId and language $lang found."))
       }
     }

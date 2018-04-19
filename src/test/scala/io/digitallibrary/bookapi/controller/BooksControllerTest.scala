@@ -10,6 +10,7 @@ import java.text.SimpleDateFormat
 
 import io.digitallibrary.bookapi._
 import io.digitallibrary.bookapi.model.api._
+import io.digitallibrary.bookapi.model.domain
 import io.digitallibrary.bookapi.model.domain.{Paging, Sort}
 import io.digitallibrary.language.model.LanguageTag
 import org.json4s.native.Serialization._
@@ -245,6 +246,9 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
 
   test("that PUT /:lang/:bookid/chapters/:chapterid changes only chapter content") {
     when(readService.domainChapterForBookWithLanguageAndId(any[Long], any[LanguageTag], any[Long])).thenReturn(Some(TestData.Domain.DefaultChapter))
+    when(mergeService.mergeContents(TestData.Domain.DefaultChapter.content, "my updated content")).thenReturn("my updated content")
+    when(writeService.updateChapter(any[domain.Chapter])).thenReturn(TestData.Domain.DefaultChapter)
+    when(contentConverter.toApiContent(any[String])).thenReturn("")
     val payload =
       """
         | { "id": 1,
@@ -259,6 +263,31 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
     put("/eng/1/chapters/1", payload, headers = Seq(("Authorization", s"Bearer $validTestTokenWithWriteRole"))) {
       status should equal (200)
       verify(writeService).updateChapter(TestData.Domain.DefaultChapter.copy(content = "my updated content"))
+    }
+  }
+
+  test("that PUT /:lang/:bookid/chapters/:chapterid converts Picture-tags back to embed-tags") {
+    when(readService.domainChapterForBookWithLanguageAndId(any[Long], any[LanguageTag], any[Long])).thenReturn(Some(TestData.Domain.DefaultChapter))
+    when(mergeService.mergeContents(any[String], any[String])).thenReturn("<embed ...> <br /> Some content here")
+    when(writeService.updateChapter(any[domain.Chapter])).thenReturn(TestData.Domain.DefaultChapter)
+    when(contentConverter.toApiContent(any[String])).thenReturn("")
+    val pictureContent =
+      """<picture><source media=\"(min-width: 768px)\" srcset=\"https://images.test.digitallibrary.io/eB1RNSN8.jpg\" /><img src=\"https://images.test.digitallibrary.io/eB1RNSN8.jpg\" srcset=\"https://images.test.digitallibrary.io/eB1RNSN8.jpg?width=300, https://images.test.digitallibrary.io/eB1RNSN8.jpg?width=600 2x\" alt=\"\" /></picture>\n\n<picture><source media=\"(min-width: 768px)\" srcset=\"https://images.test.digitallibrary.io/bEvj3uIw.png\" /><img src=\"https://images.test.digitallibrary.io/bEvj3uIw.png\" srcset=\"https://images.test.digitallibrary.io/bEvj3uIw.png?width=300, https://images.test.digitallibrary.io/bEvj3uIw.png?width=600 2x\" alt=\"\" /></picture>\n\n<picture><source media=\"(min-width: 768px)\" srcset=\"https://images.test.digitallibrary.io/F4kwymDa.png\" /><img src=\"https://images.test.digitallibrary.io/F4kwymDa.png\" srcset=\"https://images.test.digitallibrary.io/F4kwymDa.png?width=300, https://images.test.digitallibrary.io/F4kwymDa.png?width=600 2x\" alt=\"\" /></picture>"""
+    val payload =
+      s"""
+        | { "id": 1,
+        |   "revision": 1,
+        |   "translationId": 1,
+        |   "seqNo": 1,
+        |   "title": "my title",
+        |   "content": "$pictureContent <br /> Some content here",
+        |   "chapterType": "CONTENT"
+        | }
+      """.stripMargin.getBytes
+    val expectedContent = "<embed ...> <br /> Some content here"
+    put("/eng/1/chapters/1", payload, headers = Seq(("Authorization", s"Bearer $validTestTokenWithWriteRole"))) {
+      status should equal (200)
+      verify(writeService).updateChapter(TestData.Domain.DefaultChapter.copy(content = expectedContent))
     }
   }
 

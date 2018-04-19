@@ -25,6 +25,24 @@ trait MergeService {
 
   class MergeService extends LazyLogging {
 
+    def mergeContents(originalContent: String, newContent: String): String = {
+      val originalDoc = Jsoup.parseBodyFragment(originalContent)
+
+      val newDoc = Jsoup.parseBodyFragment(
+        Jsoup.clean(newContent, Whitelist.basicWithImages().removeTags("a"))
+      )
+
+      val embedElements = originalDoc.select("embed[data-resource]").asScala
+      val imgElements = newDoc.getElementsByTag("img").asScala
+
+      embedElements.zipAll(imgElements, "", "").foreach {
+        case (embed: Element, img: Element) => img.replaceWith(embed)
+        case (_, img: Element) => img.remove()
+        case (_, _) => Unit
+      }
+      newDoc.body().html()
+    }
+
     def mergeChapters(originalBook: Book, translatedChapters: Seq[TranslatedChapter]): Seq[NewTranslatedChapter] = {
       val originalChapters = originalBook.chapters.flatMap(chapter => chapterRepository.withId(chapter.id))
 
@@ -44,23 +62,7 @@ trait MergeService {
     }
 
     def mergeChapter(originalChapter: Chapter, translatedChapter: TranslatedChapter): Chapter = {
-      val originalDoc = Jsoup.parseBodyFragment(originalChapter.content)
-
-      val translatedDoc = Jsoup.parseBodyFragment(
-        Jsoup.clean(translatedChapter.content, Whitelist.basicWithImages().removeTags("a"))
-      )
-
-      val embedElements = originalDoc.select("embed[data-resource]").asScala
-      val imgElements = translatedDoc.getElementsByTag("img").asScala
-
-      embedElements.zipAll(imgElements, "", "").foreach {
-        case (embed: Element, img: Element) => img.replaceWith(embed)
-        case (_, img: Element) => img.remove()
-        case (_, _) => Unit
-      }
-
-      originalChapter.copy(content = translatedDoc.body().html())
-
+      originalChapter.copy(content = mergeContents(originalChapter.content, translatedChapter.content))
     }
   }
 }
