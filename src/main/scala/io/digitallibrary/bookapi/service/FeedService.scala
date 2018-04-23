@@ -152,18 +152,23 @@ trait FeedService {
           sort = Sort.ByArrivalDateDesc)
       }
 
-      (searchResultToPagingStatus(searchResult, paging), searchResult.results.map(book => api.FeedEntry(fromHit(book, feedLocalizationService.localizationFor(language)))))
+      (searchResultToPagingStatus(searchResult, paging), searchResultsToFeedEntries(searchResult.results, language))
     }
 
-    def fromHit(bookHit: BookHit, feedLocalization: FeedLocalization): Book = {
-      val book = for {
+    def searchResultsToFeedEntries(bookHits: Seq[BookHit], language: LanguageTag): Seq[FeedEntry] = {
+       for {
+        bookHit <- bookHits
+        book <- fromHit(bookHit, feedLocalizationService.localizationFor(language))
+      } yield api.FeedEntry(book)
+    }
+
+    def fromHit(bookHit: BookHit, feedLocalization: FeedLocalization): Option[Book] = {
+      for {
         translation <- translationRepository.forBookIdAndLanguage(bookHit.id, LanguageTag(bookHit.language.code))
         book <- bookRepository.withId(bookHit.id)
         apiBook = converterService.toApiBook(translation, translationRepository.languagesFor(bookHit.id), book)
         apiBookWithLocalizedReadingLevel = apiBook.copy(readingLevel = apiBook.readingLevel.map(feedLocalization.levelTitle))
       } yield apiBookWithLocalizedReadingLevel
-
-      book.get
     }
 
     def entriesForLanguageAndCategory(language: LanguageTag, category: String, paging: Paging): (PagingStatus, Seq[FeedEntry]) = {
@@ -175,7 +180,7 @@ trait FeedService {
         paging = paging,
         sort = Sort.ByTitleAsc)
 
-      (searchResultToPagingStatus(searchResult, paging), searchResult.results.map(book => api.FeedEntry(fromHit(book, feedLocalizationService.localizationFor(language)))))
+      (searchResultToPagingStatus(searchResult, paging), searchResultsToFeedEntries(searchResult.results, language))
     }
 
     def entriesForLanguageCategoryAndLevel(language: LanguageTag, category: String, level: String, paging: Paging): (PagingStatus, Seq[FeedEntry]) = {
@@ -187,7 +192,7 @@ trait FeedService {
         paging = paging,
         sort = Sort.ByTitleAsc)
 
-      (searchResultToPagingStatus(searchResult, paging), searchResult.results.map(book => api.FeedEntry(fromHit(book, feedLocalizationService.localizationFor(language)))))
+      (searchResultToPagingStatus(searchResult, paging), searchResultsToFeedEntries(searchResult.results, language))
     }
 
     def searchResultToPagingStatus(searchResult: SearchResult, paging: Paging): PagingStatus = {
