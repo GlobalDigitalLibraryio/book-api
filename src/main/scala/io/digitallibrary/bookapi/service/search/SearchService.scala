@@ -12,7 +12,7 @@ import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http.search.{SearchHit, SearchHits}
 import com.sksamuel.elastic4s.searches.HighlightFieldDefinition
 import com.sksamuel.elastic4s.searches.queries.term.{TermQueryDefinition, TermsQueryDefinition}
-import com.sksamuel.elastic4s.searches.queries.{BoolQueryDefinition, MoreLikeThisItem, MoreLikeThisQueryDefinition, QueryStringQueryDefinition}
+import com.sksamuel.elastic4s.searches.queries._
 import com.sksamuel.elastic4s.searches.sort.{FieldSortDefinition, ScoreSortDefinition, SortOrder}
 import com.typesafe.scalalogging.LazyLogging
 import io.digitallibrary.language.model.LanguageTag
@@ -67,7 +67,7 @@ trait SearchService {
 
       val queryDefinition = query match {
         case None => boolDefinition
-        case Some(value) => boolDefinition.must(QueryStringQueryDefinition(value.toLowerCase).field("description",1.0).field("title",1.4))
+        case Some(value) => boolDefinition.must(SimpleStringQueryDefinition(value.toLowerCase).field("description",1.0).field("title",1.4))
       }
 
       val categoryFilter = categories match {
