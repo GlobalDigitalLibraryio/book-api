@@ -39,11 +39,10 @@ trait ContentConverter {
 
             // For devices smaller than 768px
             val smallImage = s"$url?width=300" // 300 should be enough for most small devices
-            val doubleImage = s"$url?width=600" // for retina devices (double number of pixels)
 
             val forSmallDevice = image.appendElement("img")
             forSmallDevice.attr("src", url)
-            forSmallDevice.attr("srcset", s"$smallImage, $doubleImage 2x")
+            forSmallDevice.attr("srcset", s"$smallImage")
 
             imageApiClient.imageMetaWithId(nodeId.toLong).flatMap(_.alttext).map(_.alttext).map(
               text => forSmallDevice.attr("alt", text))

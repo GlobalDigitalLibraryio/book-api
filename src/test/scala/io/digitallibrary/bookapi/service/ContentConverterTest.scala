@@ -36,8 +36,8 @@ class ContentConverterTest extends UnitSuite with TestEnvironment {
     val expectedApiContent =
       """
         |<p>
-        |<picture><source media="(min-width: 768px)" srcset="image-url-1" /><img src="image-url-1" srcset="image-url-1?width=300, image-url-1?width=600 2x" /></picture>
-        |<picture><source media="(min-width: 768px)" srcset="image-url-2" /><img src="image-url-2" srcset="image-url-2?width=300, image-url-2?width=600 2x" alt="Some alt text" /></picture>
+        |<picture><source media="(min-width: 768px)" srcset="image-url-1" /><img src="image-url-1" srcset="image-url-1?width=300" /></picture>
+        |<picture><source media="(min-width: 768px)" srcset="image-url-2" /><img src="image-url-2" srcset="image-url-2?width=300" alt="Some alt text" /></picture>
         |<p>Image not found</p>
         |</p>
       """.stripMargin
