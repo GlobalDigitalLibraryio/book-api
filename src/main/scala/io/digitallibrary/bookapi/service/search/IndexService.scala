@@ -123,9 +123,9 @@ trait IndexService extends LazyLogging {
         keywordField("readingLevel"),
         dateField("dateArrived"),
         keywordField("source"),
-        objectField("coverPhoto").fields(
-          textField("large"),
-          textField("small")
+        objectField("coverImage").fields(
+          textField("url"),
+          textField("alttext")
         )
       ))
     }

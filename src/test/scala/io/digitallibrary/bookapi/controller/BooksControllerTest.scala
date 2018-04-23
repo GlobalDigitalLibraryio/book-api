@@ -150,9 +150,9 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
       |			"name": "library_books"
       |		}
       |	],
-      |	"coverPhoto": {
-      |		"large": "http://local.digitallibrary.io/image-api/raw/f51fb826a78e25dd5910a610cfd4a2ce.jpg",
-      |		"small": "http://local.digitallibrary.io/image-api/raw/f51fb826a78e25dd5910a610cfd4a2ce.jpg?width=200"
+      |	"coverImage": {
+      |		"url": "http://local.digitallibrary.io/image-api/raw/f51fb826a78e25dd5910a610cfd4a2ce.jpg",
+      |		"alttext": "Some alt text"
       |	},
       |	"downloads": {
       |		"epub": "http://local.digitallibrary.io/book-api/download/epub/en/d251aa7a-bba7-47ca-9702-e829dc18cfb9.epub",

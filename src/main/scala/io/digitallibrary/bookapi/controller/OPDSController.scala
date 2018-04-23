@@ -133,9 +133,9 @@ trait OPDSController {
             <published>{feedEntry.book.dateArrived.atStartOfDay(ZoneId.systemDefault()).format(dtf)}</published>
             <lrmi:educationalAlignment alignmentType="readingLevel" targetName={feedEntry.book.readingLevel.getOrElse("1")} />
             <summary>{feedEntry.book.description}</summary>
-            {if (feedEntry.book.coverPhoto.isDefined) {
-              <link href={feedEntry.book.coverPhoto.get.large} type="image/jpeg" rel="http://opds-spec.org/image"/>
-              <link href={feedEntry.book.coverPhoto.get.small} type="image/png" rel="http://opds-spec.org/image/thumbnail"/>
+            {if (feedEntry.book.coverImage.isDefined) {
+              <link href={feedEntry.book.coverImage.get.url} type="image/jpeg" rel="http://opds-spec.org/image"/>
+              <link href={feedEntry.book.coverImage.get.url + "?width=200"} type="image/png" rel="http://opds-spec.org/image/thumbnail"/>
             }}
             {if(feedEntry.book.downloads.epub.isDefined)
               <link href={feedEntry.book.downloads.epub.get} type="application/epub+zip" rel="http://opds-spec.org/acquisition/open-access"/>

@@ -24,12 +24,6 @@ case class License(@(ApiModelProperty@field)(description = "The id of the licens
                    @(ApiModelProperty@field)(description = "Url to where the license can be found") url: Option[String])
 
 
-// TODO Remove when frontend no longer use it
-@ApiModel(description = "Information about where to find the cover-photo for the book")
-@Deprecated
-case class CoverPhoto(@(ApiModelProperty@field)(description = "URL to a large version of the cover-photo") large: String,
-                      @(ApiModelProperty@field)(description = "URL to a small version of the cover-photo") small: String)
-
 @ApiModel(description = "Information about where to find the cover image for the book")
 case class CoverImage(@(ApiModelProperty@field)(description = "URL to the cover-image") url: String,
                       @(ApiModelProperty@field)(description = "Alternate text for the cover image") alttext: Option[String])
@@ -96,8 +90,6 @@ case class Book(@(ApiModelProperty@field)(description = "The id of the book") id
                 @(ApiModelProperty@field)(description = "The date when this book was created (iso-format)") dateCreated: Option[LocalDate],
                 @(ApiModelProperty@field)(description = "The date when this book arrived to the Global Digital Library (iso-format)") dateArrived: LocalDate,
                 @(ApiModelProperty@field)(description = "Information about categories") categories: Seq[Category],
-                // TODO Remove when frontend no longer uses it
-                @(ApiModelProperty@field)(description = "Cover Photo information") coverPhoto: Option[CoverPhoto],
                 @(ApiModelProperty@field)(description = "Cover image information") coverImage: Option[CoverImage],
                 @(ApiModelProperty@field)(description = "Information about downloads") downloads: Downloads,
                 @(ApiModelProperty@field)(description = "Keywords for the book") tags: Seq[String],
@@ -114,7 +106,6 @@ case class BookHit(@(ApiModelProperty@field)(description = "The id of the book")
                    @(ApiModelProperty@field)(description = "Current language") language: Language,
                    @(ApiModelProperty@field)(description = "Information about reading level") readingLevel: Option[String],
                    @(ApiModelProperty@field)(description = "Information about categories") categories: Seq[Category],
-                   @(ApiModelProperty@field)(description = "Cover Photo information") coverPhoto: Option[CoverPhoto],
                    @(ApiModelProperty@field)(description = "Cover image information") coverImage: Option[CoverImage],
                    @(ApiModelProperty@field)(description = "The date when this book arrived to the Global Digital Library (iso-format)") dateArrived: LocalDate,
                    @(ApiModelProperty@field)(description = "The source of the book") source: String,
@@ -135,7 +126,6 @@ case class MyBook(@(ApiModelProperty@field)(description = "The id of the book") 
                   @(ApiModelProperty@field)(description = "The language this book has been translated from") translatedFrom: Option[Language],
                   @(ApiModelProperty@field)(description = "The language this book has been translated to") translatedTo: Language,
                   @(ApiModelProperty@field)(description = "Information about publisher of the original book") publisher: Publisher,
-                  @(ApiModelProperty@field)(description = "Cover Photo information") coverPhoto: Option[CoverPhoto],
                   @(ApiModelProperty@field)(description = "Cover image information") coverImage: Option[CoverImage],
                   @(ApiModelProperty@field)(description = "Url to call to fetch latest translations from crowdin") synchronizeUrl: String,
                   @(ApiModelProperty@field)(description = "Url to Crowdin to continue translation") crowdinUrl: String)
