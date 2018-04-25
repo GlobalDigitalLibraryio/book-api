@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration status="warn" packages="org.apache.logging.log4j.core,io.sentry.log4j2">
+    <appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="[book-api] %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] (%X{correlationID}) %-5level %C.%M#%L: %msg%n" />
+        </Console>
+
+        <Sentry name="Sentry" />
+    </appenders>
+
+    <loggers>
+        <Logger name="io.digitallibrary" level="info" additivity="false">
+            <AppenderRef ref="Console" />
+            <AppenderRef ref="Sentry" level="error" />
+        </Logger>
+        <root level="warn">
+            <appender-ref ref="Console" />
+            <appender-ref ref="Sentry" level="error" />
+        </root>
+    </loggers>
+</configuration>
