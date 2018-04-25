@@ -2,8 +2,8 @@ import java.util.Properties
 
 val Scalaversion = "2.12.2"
 val Scalatraversion = "2.6.2"
-val ScalaLoggingVersion = "3.7.2"
-val Log4JVersion = "2.9.1"
+val ScalaLoggingVersion = "3.9.0"
+val Log4JVersion = "2.11.0"
 val Jettyversion = "9.2.10.v20150310"
 val AwsSdkversion = "1.11.231"
 val ScalaTestVersion = "3.0.3"
@@ -70,7 +70,8 @@ lazy val book_api = (project in file(".")).
       "com.openhtmltopdf" % "openhtmltopdf-pdfbox" % OpenHtmlPdfVersion,
       "com.openhtmltopdf" % "openhtmltopdf-jsoup-dom-converter" % OpenHtmlPdfVersion,
       "com.github.blemale" %% "scaffeine" % "2.3.0",
-      "commons-validator" % "commons-validator" % "1.6"
+      "commons-validator" % "commons-validator" % "1.6",
+      "io.sentry" % "sentry-log4j2" % "1.7.3"
     )
   ).enablePlugins(DockerPlugin).enablePlugins(GitVersioning).enablePlugins(JettyPlugin)
 
@@ -83,6 +84,7 @@ assemblyMergeStrategy in assembly := {
   case PathList("org", "joda", "convert", "ToString.class")  => MergeStrategy.first
   case PathList("org", "joda", "convert", "FromString.class")  => MergeStrategy.first
   case PathList("org", "joda", "time", "base", "BaseDateTime.class")  => MergeStrategy.first
+  case PathList("META-INF", "org", "apache", "logging", "log4j", "core", "config", "plugins", "Log4j2Plugins.dat")  => MergeStrategy.first
   case x =>
     val oldStrategy = (assemblyMergeStrategy in assembly).value
     oldStrategy(x)
