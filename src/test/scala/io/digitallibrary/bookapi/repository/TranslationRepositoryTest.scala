@@ -100,9 +100,9 @@ class TranslationRepositoryTest extends IntegrationSuite with TestEnvironment wi
     withRollback { implicit session =>
       val book1 = addBookDef()
       addTranslationDef("ext1", "title 1", book1.id.get, LanguageTag("eng"))
-      addTranslationDef("ext1", "title 1", book1.id.get, LanguageTag("nob"))
-      addTranslationDef("ext1", "title 1", book1.id.get, LanguageTag("amh"))
-      addTranslationDef("ext1", "title 1", book1.id.get, LanguageTag("swa"))
+      addTranslationDef("ext2", "title 2", book1.id.get, LanguageTag("nob"))
+      addTranslationDef("ext3", "title 3", book1.id.get, LanguageTag("amh"))
+      addTranslationDef("ext4", "title 4", book1.id.get, LanguageTag("swa"))
 
       translationRepository.languagesFor(book1.id.get).map(_.toString).sorted should equal(Seq("am", "en", "nb", "sw"))
     }
@@ -342,10 +342,10 @@ class TranslationRepositoryTest extends IntegrationSuite with TestEnvironment wi
       val book2 = addBookDef()
 
       addTranslationDef("ext1", "title1", book1.id.get, LanguageTag("eng"))
-      addTranslationDef("ext1", "title1", book1.id.get, LanguageTag("nob"))
-      addTranslationDef("ext1", "title1", book1.id.get, LanguageTag("xho"))
-      addTranslationDef("ext2", "title2", book2.id.get, LanguageTag("nob"))
-      addTranslationDef("ext2", "title2", book2.id.get, LanguageTag("xho"))
+      addTranslationDef("ext2", "title1", book1.id.get, LanguageTag("nob"))
+      addTranslationDef("ext3", "title1", book1.id.get, LanguageTag("xho"))
+      addTranslationDef("ext4", "title2", book2.id.get, LanguageTag("nob"))
+      addTranslationDef("ext5", "title2", book2.id.get, LanguageTag("xho"))
 
       val engTranslations = translationRepository.translationsWithLanguageAndStatus(LanguageTag("eng"), PublishingStatus.PUBLISHED, 10, 0)
       val nobTranslations = translationRepository.translationsWithLanguageAndStatus(LanguageTag("nob"), PublishingStatus.PUBLISHED,10, 0)
@@ -364,11 +364,11 @@ class TranslationRepositoryTest extends IntegrationSuite with TestEnvironment wi
       val book3 = addBookDef()
 
       addTranslationDef("ext1", "title1", book1.id.get, LanguageTag("eng"))
-      addTranslationDef("ext1", "title1", book1.id.get, LanguageTag("nob"))
-      addTranslationDef("ext1", "title1", book1.id.get, LanguageTag("xho"))
-      addTranslationDef("ext2", "title2", book2.id.get, LanguageTag("eng"))
-      addTranslationDef("ext2", "title2", book2.id.get, LanguageTag("nob"))
-      addTranslationDef("ext3", "title3", book3.id.get, LanguageTag("nob"))
+      addTranslationDef("ext2", "title1", book1.id.get, LanguageTag("nob"))
+      addTranslationDef("ext3", "title1", book1.id.get, LanguageTag("xho"))
+      addTranslationDef("ext4", "title2", book2.id.get, LanguageTag("eng"))
+      addTranslationDef("ext5", "title2", book2.id.get, LanguageTag("nob"))
+      addTranslationDef("ext6", "title3", book3.id.get, LanguageTag("nob"))
 
       val nobBooks = translationRepository.numberOfTranslationsWithStatus(LanguageTag("nob"), PublishingStatus.PUBLISHED)
       val engBooks = translationRepository.numberOfTranslationsWithStatus(LanguageTag("eng"), PublishingStatus.PUBLISHED)
