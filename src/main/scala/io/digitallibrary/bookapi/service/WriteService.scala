@@ -16,7 +16,7 @@ import io.digitallibrary.network.AuthUser
 import io.digitallibrary.bookapi.controller.NewFeaturedContent
 import io.digitallibrary.bookapi.model._
 import io.digitallibrary.bookapi.model.api.internal.{NewChapter, NewTranslation}
-import io.digitallibrary.bookapi.model.api.{FeaturedContentId, NotFoundException, TranslateRequest}
+import io.digitallibrary.bookapi.model.api.{FeaturedContentId, NotFoundException, TranslateRequest, ValidationMessage}
 import io.digitallibrary.bookapi.model.domain._
 import io.digitallibrary.bookapi.repository._
 import io.digitallibrary.bookapi.service.search.IndexService
@@ -67,17 +67,23 @@ trait WriteService {
 
 
     def newFeaturedContent(newFeaturedContent: NewFeaturedContent): Try[FeaturedContentId] = {
+      val existingCategory = newFeaturedContent.category.flatMap(categoryRepository.withName)
       for {
-        valid <- validationService.validateFeaturedContent(converterService.toFeaturedContent(newFeaturedContent))
+        valid <- validationService.validateFeaturedContent(converterService.toFeaturedContent(newFeaturedContent, existingCategory))
         persisted <- Try(featuredContentRepository.addContent(valid))
       } yield FeaturedContentId(persisted.id.get)
     }
 
     def updateFeaturedContent(content: api.FeaturedContent): Try[FeaturedContentId] = {
-      for {
-        valid <- validationService.validateUpdatedFeaturedContent(content)
-        persistedId <- featuredContentRepository.updateContent(valid)
-      } yield persistedId
+      content.category match {
+        case Some(category) if categoryRepository.withId(category.id).isEmpty =>
+          Failure(new api.ValidationException(errors = Seq(ValidationMessage("category", s"No category with id=${category.id} found"))))
+        case _ =>
+          for {
+            valid <- validationService.validateUpdatedFeaturedContent(content)
+            persistedId <- featuredContentRepository.updateContent(valid)
+          } yield persistedId
+      }
     }
 
     def deleteFeaturedContent(id: Long): Try[Unit] = {

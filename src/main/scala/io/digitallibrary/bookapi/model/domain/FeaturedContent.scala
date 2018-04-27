@@ -18,7 +18,8 @@ case class FeaturedContent(id: Option[Long],
                            title: String,
                            description: String,
                            link: String,
-                           imageUrl: String)
+                           imageUrl: String,
+                           categoryId: Option[Long])
 
 object FeaturedContent extends SQLSyntaxSupport[FeaturedContent] {
   implicit val formats: DefaultFormats.type = org.json4s.DefaultFormats
@@ -34,6 +35,7 @@ object FeaturedContent extends SQLSyntaxSupport[FeaturedContent] {
     title = rs.string(fc.title),
     description = rs.string(fc.description),
     link = rs.string(fc.link),
-    imageUrl = rs.string(fc.imageUrl)
+    imageUrl = rs.string(fc.imageUrl),
+    categoryId = rs.longOpt(fc.categoryId)
   )
 }

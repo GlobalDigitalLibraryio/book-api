@@ -24,6 +24,13 @@ trait CategoryRepository {
         .apply.headOption
     }
 
+    def withId(id: Long)(implicit session: DBSession = AutoSession): Option[Category] = {
+      sql"select ${cat.result.*} from ${Category.as(cat)} where ${cat.id} = ${id}"
+        .map(Category(cat))
+        .list()
+        .apply.headOption
+    }
+
     def add(newCategory: Category)(implicit session: DBSession = AutoSession): Category = {
       val c = Category.column
       val startRevision = 1

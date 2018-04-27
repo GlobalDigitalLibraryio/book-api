@@ -33,7 +33,9 @@ trait ReadService {
           fc.title,
           fc.description,
           fc.link,
-          fc.imageUrl)
+          fc.imageUrl,
+          fc.categoryId.flatMap(categoryRepository.withId).map(converterService.toApiCategory)
+        )
       })
     }
 

@@ -7,13 +7,13 @@
 
 package io.digitallibrary.bookapi.controller
 
-import io.digitallibrary.language.model.LanguageTag
 import io.digitallibrary.bookapi.BookApiProperties.{DefaultLanguage, FeaturedContentAdminRole}
 import io.digitallibrary.bookapi.model.api
-import io.digitallibrary.bookapi.model.api.{FeaturedContent, FeaturedContentId}
+import io.digitallibrary.bookapi.model.api.{Error, FeaturedContent, FeaturedContentId, ValidationException}
 import io.digitallibrary.bookapi.service.{ReadService, WriteService}
+import io.digitallibrary.language.model.LanguageTag
 import org.scalatra.swagger.{ResponseMessage, Swagger, SwaggerSupport}
-import org.scalatra.{Created, NotFound, Ok}
+import org.scalatra.{Created, NotAcceptable, NotFound, Ok}
 
 import scala.util.{Failure, Success}
 
@@ -89,6 +89,7 @@ trait FeaturedContentController {
       val updatedContent = extract[FeaturedContent](request.body)
       writeService.updateFeaturedContent(updatedContent) match {
         case Success(x) => Ok(x)
+        case Failure(ex: ValidationException) => NotAcceptable(body = Error(Error.VALIDATION, ex.errors.map(_.message).mkString(", ")))
         case Failure(ex) => throw ex
       }
     }

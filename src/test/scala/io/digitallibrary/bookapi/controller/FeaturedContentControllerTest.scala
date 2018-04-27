@@ -24,7 +24,7 @@ class FeaturedContentControllerTest extends UnitSuite with TestEnvironment with 
   val validTestToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwczovL2RpZ2l0YWxsaWJyYXJ5LmlvL2dkbF9pZCI6IjEyMyIsInN1YiI6IjEyMzQ1Njc4OTAiLCJuYW1lIjoiSm9obiBEb2UiLCJzY29wZSI6ImJvb2tzLWxvY2FsOmZlYXR1cmVkIn0.lvUkAaez_uJzxFG4GJeXxKOdmMdqN3oNJttMYsozkzs"
   val invalidTestToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwczovL2RpZ2l0YWxsaWJyYXJ5LmlvL2dkbF9pZCI6IjEyMyIsInN1YiI6IjEyMzQ1Njc4OTAiLCJuYW1lIjoiSm9obiBEb2UiLCJzY29wZSI6ImJvb2tzLWxvY2FsOndyb25nS2luZE9mUm9sZSJ9.ixzLjZaS3EdTrbRk2UDDe-QTQpsy9hqLlgJnopsT0YI"
 
-  val mockData = Seq(FeaturedContent(1, 1, Language(code = "eng", name = "English"), "", "", "", ""))
+  val mockData = Seq(FeaturedContent(id = 1, revision = 1, language = Language(code = "eng", name = "English"), title = "", description = "", link = "", imageUrl = "", category = None))
 
   implicit val swagger: BookSwagger = new BookSwagger
   lazy val controller = new FeaturedContentController
