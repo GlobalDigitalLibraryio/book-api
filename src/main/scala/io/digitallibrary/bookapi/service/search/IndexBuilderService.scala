@@ -35,13 +35,27 @@ trait IndexBuilderService {
       synchronized {
         var numIndexed = 0
         val start = System.currentTimeMillis()
-        translationRepository.allAvailableLanguagesWithStatus(PublishingStatus.PUBLISHED).foreach(language => {
+        val languages = translationRepository.allAvailableLanguagesWithStatus(PublishingStatus.PUBLISHED)
+          languages.foreach(language => {
           indexDocumentsForLanguage(language) match {
             case Success(reindexResult) => numIndexed += reindexResult.totalIndexed
             case Failure(f) => Failure(f)
           }
         })
+        deleteOldIndexes(languages)
         Success(ReindexResult(numIndexed, System.currentTimeMillis() - start))
+      }
+    }
+
+    def deleteOldIndexes(languages: Seq[LanguageTag]): Unit = {
+      indexService.findAllIndexes() match {
+        case Success(indexes) => indexes.foreach(index => {
+          languages.map(language => BookApiProperties.searchIndex(language)).filter(alias => index.startsWith(s"${alias}_")) match {
+            case _ :: Nil => // Do nothing, index OK
+            case Nil => indexService.deleteSearchIndex(Some(index))
+          }
+        })
+        case Failure(_) => logger.debug("Found no indexes")
       }
     }
 

@@ -167,9 +167,9 @@ trait IndexService extends LazyLogging {
       }
     }
 
-    def deleteSearchIndex(optIndexName: Option[String]): Try[_] = {
+    def deleteSearchIndex(optIndexName: Option[String]): Try[Unit] = {
       optIndexName match {
-        case None => Success(optIndexName)
+        case None => Success()
         case Some(indexName) =>
           if (!indexExisting(indexName).getOrElse(false)) {
             Failure(new IllegalArgumentException(s"No such index: $indexName"))
