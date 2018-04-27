@@ -10,7 +10,7 @@ package io.digitallibrary.bookapi.service.search
 import io.digitallibrary.bookapi.{TestData, TestEnvironment, UnitSuite}
 import io.digitallibrary.language.model.LanguageTag
 import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.{when, verify}
+import org.mockito.Mockito.{verify, verifyNoMoreInteractions, when}
 
 import scala.util.Success
 
@@ -22,6 +22,8 @@ class IndexBuilderServiceTest  extends UnitSuite with TestEnvironment{
     when(indexService.deleteSearchIndex(any[Option[String]])).thenReturn(Success())
 
     service.deleteOldIndexes(Seq(LanguageTag(TestData.LanguageCodeNorwegian)))
+    verify(indexService).findAllIndexes()
     verify(indexService).deleteSearchIndex(Some("books-nn_timestamp_uuid"))
+    verifyNoMoreInteractions(indexService)
   }
 }
