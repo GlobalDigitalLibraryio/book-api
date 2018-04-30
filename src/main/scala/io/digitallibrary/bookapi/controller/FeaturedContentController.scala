@@ -80,6 +80,7 @@ trait FeaturedContentController {
       val newFeaturedContent = extract[NewFeaturedContent](request.body)
       writeService.newFeaturedContent(newFeaturedContent) match {
         case Success(x) => Created(x)
+        case Failure(ex: ValidationException) => NotAcceptable(body = Error(Error.VALIDATION, ex.errors.map(_.message).mkString(", ")))
         case Failure(ex) => throw ex
       }
     }

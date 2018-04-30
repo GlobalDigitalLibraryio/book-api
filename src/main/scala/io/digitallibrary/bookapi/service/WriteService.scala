@@ -67,7 +67,17 @@ trait WriteService {
 
 
     def newFeaturedContent(newFeaturedContent: NewFeaturedContent): Try[FeaturedContentId] = {
-      val existingCategory = newFeaturedContent.category.flatMap(categoryRepository.withName)
+      newFeaturedContent.category match {
+        case Some(categoryName) =>
+          categoryRepository.withName(categoryName) match {
+            case Some(category) => newFeaturedContentWithCategory(newFeaturedContent, Some(category))
+            case None => Failure(new api.ValidationException(errors = Seq(ValidationMessage("category", s"No category with name '$categoryName' found"))))
+          }
+        case None => newFeaturedContentWithCategory(newFeaturedContent, None)
+      }
+    }
+
+    def newFeaturedContentWithCategory(newFeaturedContent: NewFeaturedContent, existingCategory: Option[Category]): Try[FeaturedContentId] = {
       for {
         valid <- validationService.validateFeaturedContent(converterService.toFeaturedContent(newFeaturedContent, existingCategory))
         persisted <- Try(featuredContentRepository.addContent(valid))
