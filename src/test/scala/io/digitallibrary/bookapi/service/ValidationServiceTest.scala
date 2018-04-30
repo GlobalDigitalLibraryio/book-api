@@ -13,8 +13,8 @@ class ValidationServiceTest extends UnitSuite with TestEnvironment {
   override val validationService = new ValidationService
 
   private val validUrl = "http://commons.apache.org/proper/commons-validator/"
-  private val validUpdatedFC = FeaturedContent(1, 1, Language(code = "eng", name = "English"), "Title", "Description", validUrl, validUrl)
-  private val validNewFC = domain.FeaturedContent(Some(1), Some(1), LanguageTag("eng"), "Title", "Description", validUrl, validUrl)
+  private val validUpdatedFC = FeaturedContent(1, 1, Language(code = "eng", name = "English"), "Title", "Description", validUrl, validUrl, None)
+  private val validNewFC = domain.FeaturedContent(Some(1), Some(1), LanguageTag("eng"), "Title", "Description", validUrl, validUrl, None)
 
   test("that valid new feature content is ok") {
     validationService.validateFeaturedContent(validNewFC) shouldBe Success(validNewFC)

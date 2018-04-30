@@ -32,7 +32,8 @@ trait FeaturedContentRepository {
           f.title -> fc.title,
           f.description -> fc.description,
           f.link -> fc.link,
-          f.imageUrl -> fc.imageUrl)
+          f.imageUrl -> fc.imageUrl,
+          f.categoryId -> fc.category.map(_.id))
           .where.eq(f.id, fc.id)
           .toSQL.update().apply()
 
@@ -74,7 +75,8 @@ trait FeaturedContentRepository {
           f.title -> fc.title,
           f.description -> fc.description,
           f.link -> fc.link,
-          f.imageUrl -> fc.imageUrl
+          f.imageUrl -> fc.imageUrl,
+          f.categoryId -> fc.categoryId
         ).toSQL.updateAndReturnGeneratedKey().apply()
 
       fc.copy(id = Some(id), revision = Some(startRevision))

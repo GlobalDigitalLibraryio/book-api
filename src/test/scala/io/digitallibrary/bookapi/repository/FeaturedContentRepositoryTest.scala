@@ -28,7 +28,15 @@ class FeaturedContentRepositoryTest extends IntegrationSuite with TestEnvironmen
 
   test("that forLanguage returns an empty list when no featured content for given language") {
     withRollback { implicit session =>
-      featuredContentRepository.addContent(FeaturedContent(None, None, LanguageTag("eng"), "Some title 1", "Some description", "http://example.com", "http://example.com/example.png"))
+      featuredContentRepository.addContent(FeaturedContent(
+        id = None,
+        revision = None,
+        language = LanguageTag("eng"),
+        title = "Some title 1",
+        description = "Some description",
+        link = "http://example.com",
+        imageUrl = "http://example.com/example.png",
+        categoryId = None))
       val featuredContents = featuredContentRepository.forLanguage(LanguageTag("nob"))
       featuredContents should equal(Nil)
     }

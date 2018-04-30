@@ -137,7 +137,8 @@ case class FeaturedContent(@(ApiModelProperty@field)(description = "The id of th
                            @(ApiModelProperty@field)(description = "Title of the featured content") title: String,
                            @(ApiModelProperty@field)(description = "Description of the featured content") description: String,
                            @(ApiModelProperty@field)(description = "Link to the featured content") link: String,
-                           @(ApiModelProperty@field)(description = "Image URL to the featured content") imageUrl: String)
+                           @(ApiModelProperty@field)(description = "Image URL to the featured content") imageUrl: String,
+                           @(ApiModelProperty@field)(description = "Which category (if any) the featured content belongs to") category: Option[Category])
 
 case class FeedDefinition(@(ApiModelProperty@field)(description = "The internal id of the opds feed") id: Long,
                           @(ApiModelProperty@field)(description = "The revision of the feed") revision: Int,

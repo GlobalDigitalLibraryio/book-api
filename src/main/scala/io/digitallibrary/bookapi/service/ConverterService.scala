@@ -115,7 +115,7 @@ trait ConverterService {
       )
     }
 
-    def toFeaturedContent(newFeaturedContent: NewFeaturedContent): domain.FeaturedContent = {
+    def toFeaturedContent(newFeaturedContent: NewFeaturedContent, category: Option[Category]): domain.FeaturedContent = {
       domain.FeaturedContent(
         id = None,
         revision = None,
@@ -123,7 +123,9 @@ trait ConverterService {
         title = newFeaturedContent.title,
         description = newFeaturedContent.description,
         imageUrl = newFeaturedContent.imageUrl,
-        link = newFeaturedContent.link)
+        link = newFeaturedContent.link,
+        categoryId = category.flatMap(_.id)
+      )
     }
 
     def toDomainChapter(newChapter: NewChapter, translationId: Long): domain.Chapter = domain.Chapter(
@@ -201,8 +203,11 @@ trait ConverterService {
 
     def toApiPublisher(publisher: domain.Publisher): api.Publisher = api.Publisher(publisher.id.get, publisher.revision.get, publisher.name)
 
+    def toApiCategory(category: domain.Category): api.Category =
+      api.Category(category.id.get, category.revision.get, category.name)
+
     def toApiCategories(categories: Seq[domain.Category]): Seq[api.Category] =
-      categories.map(c => api.Category(c.id.get, c.revision.get, c.name))
+      categories.map(toApiCategory)
 
     def toApiContributors(contributors: Seq[domain.Contributor]): Seq[api.Contributor] =
       contributors.map(c => api.Contributor(c.id.get, c.revision.get, c.`type`.toString, c.person.name))
