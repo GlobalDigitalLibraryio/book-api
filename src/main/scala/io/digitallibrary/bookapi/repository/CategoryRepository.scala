@@ -25,10 +25,12 @@ trait CategoryRepository {
     }
 
     def withId(id: Long)(implicit session: DBSession = AutoSession): Option[Category] = {
-      sql"select ${cat.result.*} from ${Category.as(cat)} where ${cat.id} = ${id}"
+      select
+        .from(Category as cat)
+        .where.eq(cat.id, id).toSQL
         .map(Category(cat))
-        .list()
-        .apply.headOption
+        .single()
+        .apply()
     }
 
     def add(newCategory: Category)(implicit session: DBSession = AutoSession): Category = {
@@ -43,4 +45,5 @@ trait CategoryRepository {
       newCategory.copy(id = Some(id), revision = Some(startRevision))
     }
   }
+
 }
