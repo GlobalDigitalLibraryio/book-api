@@ -281,6 +281,7 @@ trait TranslationRepository {
           t.accessibilityFeature -> translation.accessibilityFeature,
           t.accessibilityHazard -> translation.accessibilityHazard,
           t.bookFormat -> translation.bookFormat.toString,
+          t.pageOrientation -> translation.pageOrientation.toString,
           t.tags -> tagBinder,
           t.categoryIds -> categoryBinder
         ).toSQL.updateAndReturnGeneratedKey().apply()
@@ -331,6 +332,7 @@ trait TranslationRepository {
           t.accessibilityFeature -> replacement.accessibilityFeature,
           t.accessibilityHazard -> replacement.accessibilityHazard,
           t.bookFormat -> replacement.bookFormat.toString,
+          t.pageOrientation -> replacement.pageOrientation.toString,
           t.tags -> tagBinder,
           t.categoryIds -> categoryBinder
         )

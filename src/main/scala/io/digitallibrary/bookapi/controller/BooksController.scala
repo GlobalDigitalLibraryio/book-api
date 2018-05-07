@@ -11,7 +11,7 @@ package io.digitallibrary.bookapi.controller
 import io.digitallibrary.bookapi.BookApiProperties.{DefaultLanguage, RoleWithWriteAccess}
 import io.digitallibrary.bookapi.model.api
 import io.digitallibrary.bookapi.model.api.{Chapter, Error, ValidationError}
-import io.digitallibrary.bookapi.model.domain.{Paging, Sort}
+import io.digitallibrary.bookapi.model.domain.{ChapterType, PageOrientation, Paging, Sort}
 import io.digitallibrary.bookapi.service.search.SearchService
 import io.digitallibrary.bookapi.service.translation.MergeService
 import io.digitallibrary.bookapi.service.{ContentConverter, ReadService, WriteService}
@@ -182,9 +182,12 @@ trait BooksController {
       val updatedBook = extract[api.Book](request.body)
 
       readService.translationWithIdAndLanguage(id, lang) match {
-        case Some(existingBook) => writeService.updateTranslation(existingBook.copy(
-          title = updatedBook.title,
-          about = updatedBook.description
+        case Some(existingBook) =>
+          val pageOrientationToUpdate = PageOrientation.valueOf(updatedBook.pageOrientation).getOrElse(existingBook.pageOrientation)
+          writeService.updateTranslation(existingBook.copy(
+            title = updatedBook.title,
+            about = updatedBook.description,
+            pageOrientation = pageOrientationToUpdate
         ))
         case None => NotFound(body = Error(Error.NOT_FOUND, s"No book with id $id and language $lang found"))
       }
@@ -218,7 +221,12 @@ trait BooksController {
 
       readService.domainChapterForBookWithLanguageAndId(bookId, lang, chapterId) match {
         case Some(existingChapter) =>
-          val updated = writeService.updateChapter(existingChapter.copy(content = mergeService.mergeContents(existingChapter.content, updatedChapter.content)))
+          val chapterTypeToUpdate = ChapterType.valueOf(updatedChapter.chapterType).getOrElse(existingChapter.chapterType)
+
+          val updated = writeService.updateChapter(existingChapter.copy(
+            content = mergeService.mergeContents(existingChapter.content, updatedChapter.content),
+            chapterType = chapterTypeToUpdate))
+
           updated.copy(content = contentConverter.toApiContent(updated.content))
         case None => NotFound(body = Error(Error.NOT_FOUND, s"No chapter with id $chapterId for book with id $bookId and language $lang found."))
       }

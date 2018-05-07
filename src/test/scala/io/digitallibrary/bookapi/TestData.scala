@@ -14,7 +14,7 @@ import io.digitallibrary.bookapi.integration.crowdin.{BookMetaData, TranslatedCh
 import io.digitallibrary.bookapi.model._
 import io.digitallibrary.bookapi.model.api._
 import io.digitallibrary.bookapi.model.api.internal.NewTranslatedChapter
-import io.digitallibrary.bookapi.model.domain.{BookFormat, ChapterType, ContributorType}
+import io.digitallibrary.bookapi.model.domain.{BookFormat, ChapterType, ContributorType, PageOrientation}
 import io.digitallibrary.language.model.LanguageTag
 
 object TestData {
@@ -42,6 +42,7 @@ object TestData {
     val DefaultLicense = api.License(1, 1, "lisens", Some("beskrivelse"), Some("url"))
     val DefaultPublisher = api.Publisher(1, 1, "Some Publisher")
     val DefaultSource = "storyweaver"
+    val DefaultPageOrientation = "PORTRAIT"
 
     val category1 = api.Category(1, 1, "category1")
     val category2 = api.Category(2, 1, "category2")
@@ -81,7 +82,8 @@ object TestData {
       chapters = Seq(ChapterSummary1),
       supportsTranslation = true,
       bookFormat = BookFormat.HTML.toString,
-      source = DefaultSource)
+      source = DefaultSource,
+      pageOrientation = DefaultPageOrientation)
 
     val DefaultBookHit = api.BookHit(
       id = 1,
@@ -117,6 +119,7 @@ object TestData {
 
   object Domain {
     val DefaultSource = "storyweaver"
+    val DefaultPageOrientation = PageOrientation.PORTRAIT
     val DefaultPublisher = domain.Publisher(Some(1), Some(1), "Default publisher")
     val DefaultLicense = domain.License(Some(1), Some(1), "Default License", Some("Default license description"), Some("http://some.url.com"))
     val DefaultCategory = domain.Category(Some(1), Some(1), "library_books")
@@ -171,7 +174,8 @@ object TestData {
       chapters = Seq(DefaultChapter),
       contributors = Seq(DefaultContributor),
       categories = Seq(DefaultCategory),
-      bookFormat = BookFormat.HTML
+      bookFormat = BookFormat.HTML,
+      pageOrientation = PageOrientation.PORTRAIT
     )
 
     val AmharicTranslation: domain.Translation = DefaultTranslation.copy(id = Some(2), language = LanguageTag(LanguageCodeAmharic))
@@ -217,7 +221,8 @@ object TestData {
       chapters = Seq(),
       supportsTranslation = false,
       bookFormat = BookFormat.HTML.toString,
-      source = "storyweaver"
+      source = "storyweaver",
+      pageOrientation = PageOrientation.PORTRAIT.toString
     )
   }
 
