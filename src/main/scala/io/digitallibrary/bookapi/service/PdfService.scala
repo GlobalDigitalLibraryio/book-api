@@ -114,30 +114,32 @@ trait PdfService {
     }
 
     private def preprocessChapters(source: Option[String], chapters: Seq[Chapter]) = {
+      def processStoryWeaverFirstPage(c: Chapter): Chapter = {
+        val document = Jsoup.parseBodyFragment(c.content)
+        val images = document.select("img")
+        for (i <- 0 until images.size()) {
+          val image = images.get(i)
+          if (i == 0) { // First image
+            image.addClass("cover")
+          } else {
+            image.addClass("logo")
+          }
+        }
+        document.outputSettings().syntax(Document.OutputSettings.Syntax.xml)
+        document.outputSettings().escapeMode(EscapeMode.xhtml).prettyPrint(false)
+        c.copy(content = document.select("body").html())
+      }
+
       source match {
         case Some("storyweaver") =>
-          chapters.zipWithIndex.map { case (c, i) =>
-            if (i == 0) { // First page
-              val document = Jsoup.parseBodyFragment(c.content)
-              val images = document.select("img")
-              for (i <- 0 until images.size()) {
-                val image = images.get(i)
-                if (i == 0) { // First image
-                  image.addClass("cover")
-                } else {
-                  image.addClass("logo")
-                }
-              }
-              document.outputSettings().syntax(Document.OutputSettings.Syntax.xml)
-              document.outputSettings().escapeMode(EscapeMode.xhtml).prettyPrint(false)
-              c.copy(content = document.select("body").html())
-            } else {
-              c
-            }
+          chapters match {
+            case (first :: rest) => processStoryWeaverFirstPage(first) :: rest
+            case _ => chapters
           }
         case _ => chapters
       }
     }
+
 
     def getFromS3(uuid: String): Try[S3Object] = {
       Try(amazonClient.getObject(new GetObjectRequest(BookApiProperties.StorageName, s"$uuid.pdf"))) match {
