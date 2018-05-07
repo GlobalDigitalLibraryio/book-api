@@ -31,10 +31,12 @@ object TestData {
   val epub = "url-to-epub"
   val pdf = "url-to-pdf"
 
+  val validTestToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwczovL2RpZ2l0YWxsaWJyYXJ5LmlvL2dkbF9pZCI6IjEyMyIsInN1YiI6IjEyMzQ1Njc4OTAiLCJuYW1lIjoiSm9obiBEb2UifQ.e3BKK_gLxWQwJhFX6SppNchM_eSwu82yKghVx2P3yMY"
+  val validTestTokenWithWriteRole = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwczovL2RpZ2l0YWxsaWJyYXJ5LmlvL2dkbF9pZCI6IjEyMyIsInN1YiI6IjEyMzQ1Njc4OTAiLCJuYW1lIjoiSm9obiBEb2UiLCJzY29wZSI6ImJvb2tzLWxvY2FsOndyaXRlIn0.RNLeTpQogFoHRgwz5bJN2INvszK-YSgiJS4yatJvvFs"
+  val validTestTokenWithFeaturedRole = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwczovL2RpZ2l0YWxsaWJyYXJ5LmlvL2dkbF9pZCI6IjEyMyIsInN1YiI6IjEyMzQ1Njc4OTAiLCJuYW1lIjoiSm9obiBEb2UiLCJzY29wZSI6ImJvb2tzLWxvY2FsOmZlYXR1cmVkIn0.lvUkAaez_uJzxFG4GJeXxKOdmMdqN3oNJttMYsozkzs"
+  val invalidTestToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwczovL2RpZ2l0YWxsaWJyYXJ5LmlvL2dkbF9hYmMiOiIxMjMiLCJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIn0.5rtcIdtPmH3AF1pwNbNvBMKmulyiEoWZfn1ip9aMzv4"
 
   object Api {
-
-
     val english = api.Language(LanguageCodeEnglish, "English")
     val norwegian_bokmal = api.Language(LanguageCodeNorwegian, "Bokmål, Norwegian")
     val amharic = api.Language(LanguageCodeAmharic, "Amharic")

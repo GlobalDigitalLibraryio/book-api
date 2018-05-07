@@ -26,15 +26,11 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
     override def dateFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS")
   } + LocalDateSerializer
 
-  implicit val swagger = new BookSwagger
+  implicit val swagger: BookSwagger = new BookSwagger
 
   lazy val controller = new BooksController
 
   addServlet(controller, "/*")
-
-  val validTestToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwczovL2RpZ2l0YWxsaWJyYXJ5LmlvL2dkbF9pZCI6IjEyMyIsInN1YiI6IjEyMzQ1Njc4OTAiLCJuYW1lIjoiSm9obiBEb2UifQ.e3BKK_gLxWQwJhFX6SppNchM_eSwu82yKghVx2P3yMY"
-  val validTestTokenWithWriteRole = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwczovL2RpZ2l0YWxsaWJyYXJ5LmlvL2dkbF9pZCI6IjEyMyIsInN1YiI6IjEyMzQ1Njc4OTAiLCJuYW1lIjoiSm9obiBEb2UiLCJzY29wZSI6ImJvb2tzLWxvY2FsOndyaXRlIn0.RNLeTpQogFoHRgwz5bJN2INvszK-YSgiJS4yatJvvFs"
-  val invalidTestToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwczovL2RpZ2l0YWxsaWJyYXJ5LmlvL2dkbF9hYmMiOiIxMjMiLCJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIn0.5rtcIdtPmH3AF1pwNbNvBMKmulyiEoWZfn1ip9aMzv4"
 
   test("that GET / will get books with default language") {
     val result = SearchResult(0, 1, 10, Language("eng", "English"), Seq(TestData.Api.DefaultBookHit))
@@ -168,7 +164,7 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
       |	"source": "storyweaver"
       |}""".stripMargin.getBytes
 
-    put("/eng/1", payload, headers = Seq(("Authorization", s"Bearer $validTestTokenWithWriteRole"))) {
+    put("/eng/1", payload, headers = Seq(("Authorization", s"Bearer ${TestData.validTestTokenWithWriteRole}"))) {
       status should equal (200)
       verify(writeService).updateTranslation(TestData.Domain.DefaultTranslation.copy(title = "new title", about = "new description"))
     }
@@ -222,7 +218,7 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
         |   "chapterType": "CONTENT"
         | }
       """.stripMargin.getBytes
-    put("/eng/1/chapters/1", payload, headers = Seq(("Authorization", s"Bearer $invalidTestToken"))) {
+    put("/eng/1/chapters/1", payload, headers = Seq(("Authorization", s"Bearer ${TestData.invalidTestToken}"))) {
       status should equal (403)
     }
   }
@@ -239,7 +235,7 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
         |   "chapterType": "CONTENT"
         | }
       """.stripMargin.getBytes
-    put("/eng/1/chapters/1", payload, headers = Seq(("Authorization", s"Bearer $validTestToken"))) {
+    put("/eng/1/chapters/1", payload, headers = Seq(("Authorization", s"Bearer ${TestData.validTestToken}"))) {
       status should equal (403)
     }
   }
@@ -260,7 +256,7 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
         |   "chapterType": "CONTENT"
         | }
       """.stripMargin.getBytes
-    put("/eng/1/chapters/1", payload, headers = Seq(("Authorization", s"Bearer $validTestTokenWithWriteRole"))) {
+    put("/eng/1/chapters/1", payload, headers = Seq(("Authorization", s"Bearer ${TestData.validTestTokenWithWriteRole}"))) {
       status should equal (200)
       verify(writeService).updateChapter(TestData.Domain.DefaultChapter.copy(content = "my updated content"))
     }
@@ -285,7 +281,7 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
         | }
       """.stripMargin.getBytes
     val expectedContent = "<embed ...> <br /> Some content here"
-    put("/eng/1/chapters/1", payload, headers = Seq(("Authorization", s"Bearer $validTestTokenWithWriteRole"))) {
+    put("/eng/1/chapters/1", payload, headers = Seq(("Authorization", s"Bearer ${TestData.validTestTokenWithWriteRole}"))) {
       status should equal (200)
       verify(writeService).updateChapter(TestData.Domain.DefaultChapter.copy(content = expectedContent))
     }
@@ -298,7 +294,7 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
   }
 
   test("that GET /mine returns AccessDenied for an invalid token") {
-    get("/mine", headers = Seq(("Authorization", s"Bearer $invalidTestToken"))) {
+    get("/mine", headers = Seq(("Authorization", s"Bearer ${TestData.invalidTestToken}"))) {
       status should equal (403)
       val error = read[Error](body)
       error.code should equal ("ACCESS DENIED")
@@ -306,7 +302,7 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
   }
 
   test("that GET /mine returns 200 ok for a valid user") {
-    get("/mine", headers = Seq(("Authorization", s"Bearer $validTestToken"))) {
+    get("/mine", headers = Seq(("Authorization", s"Bearer ${TestData.validTestToken}"))) {
       status should equal (200)
     }
   }

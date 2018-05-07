@@ -4,7 +4,7 @@ import java.text.SimpleDateFormat
 
 import io.digitallibrary.language.model.LanguageTag
 import io.digitallibrary.bookapi.model.api.{FeaturedContent, FeaturedContentId, Language, LocalDateSerializer}
-import io.digitallibrary.bookapi.{BookSwagger, TestEnvironment, UnitSuite}
+import io.digitallibrary.bookapi.{BookSwagger, TestData, TestEnvironment, UnitSuite}
 import org.json4s.native.Serialization._
 import org.json4s.{DefaultFormats, Formats}
 import org.mockito.ArgumentMatchers.any
@@ -20,9 +20,6 @@ class FeaturedContentControllerTest extends UnitSuite with TestEnvironment with 
   implicit val formats: Formats = new DefaultFormats {
     override def dateFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS")
   } + LocalDateSerializer
-
-  val validTestToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwczovL2RpZ2l0YWxsaWJyYXJ5LmlvL2dkbF9pZCI6IjEyMyIsInN1YiI6IjEyMzQ1Njc4OTAiLCJuYW1lIjoiSm9obiBEb2UiLCJzY29wZSI6ImJvb2tzLWxvY2FsOmZlYXR1cmVkIn0.lvUkAaez_uJzxFG4GJeXxKOdmMdqN3oNJttMYsozkzs"
-  val invalidTestToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwczovL2RpZ2l0YWxsaWJyYXJ5LmlvL2dkbF9pZCI6IjEyMyIsInN1YiI6IjEyMzQ1Njc4OTAiLCJuYW1lIjoiSm9obiBEb2UiLCJzY29wZSI6ImJvb2tzLWxvY2FsOndyb25nS2luZE9mUm9sZSJ9.ixzLjZaS3EdTrbRk2UDDe-QTQpsy9hqLlgJnopsT0YI"
 
   val mockData = Seq(FeaturedContent(id = 1, revision = 1, language = Language(code = "eng", name = "English"), title = "", description = "", link = "", imageUrl = "", category = None))
 
@@ -64,7 +61,7 @@ class FeaturedContentControllerTest extends UnitSuite with TestEnvironment with 
         |   "imageUrl": "https://www.iana.org/_img/2013.1/iana-logo-header.svg"
         | }
       """.stripMargin.getBytes
-    post("/", payload, headers = Seq(("Authorization", s"Bearer $validTestToken"))) {
+    post("/", payload, headers = Seq(("Authorization", s"Bearer ${TestData.validTestTokenWithFeaturedRole}"))) {
       status should equal(201)
       read[FeaturedContentId](body) should equal(FeaturedContentId(1))
     }
@@ -86,7 +83,7 @@ class FeaturedContentControllerTest extends UnitSuite with TestEnvironment with 
         |   "imageUrl": "https://www.iana.org/_img/2013.1/iana-logo-header.svg"
         | }
       """.stripMargin.getBytes
-    put("/", payload, headers = Seq(("Authorization", s"Bearer $validTestToken"))) {
+    put("/", payload, headers = Seq(("Authorization", s"Bearer ${TestData.validTestTokenWithFeaturedRole}"))) {
       status should equal(200)
       read[FeaturedContentId](body) should equal(FeaturedContentId(1))
       verify(writeService).updateFeaturedContent(any[FeaturedContent])
@@ -96,7 +93,7 @@ class FeaturedContentControllerTest extends UnitSuite with TestEnvironment with 
 
   test("that DELETE /123 deletes existing featured content with id=123") {
     when(writeService.deleteFeaturedContent(123)).thenReturn(Success())
-    delete("/123", headers = Seq(("Authorization", s"Bearer $validTestToken"))) {
+    delete("/123", headers = Seq(("Authorization", s"Bearer ${TestData.validTestTokenWithFeaturedRole}"))) {
       status should equal(200)
       verify(writeService).deleteFeaturedContent(123)
     }
@@ -104,7 +101,7 @@ class FeaturedContentControllerTest extends UnitSuite with TestEnvironment with 
 
   test("that DELETE /1 returns 404 when content was not deleted") {
     when(writeService.deleteFeaturedContent(1)).thenReturn(Failure(new RuntimeException("")))
-    delete("/1", headers = Seq(("Authorization", s"Bearer $validTestToken"))) {
+    delete("/1", headers = Seq(("Authorization", s"Bearer ${TestData.validTestTokenWithFeaturedRole}"))) {
       status should equal(404)
       verify(writeService).deleteFeaturedContent(1)
     }
@@ -117,7 +114,7 @@ class FeaturedContentControllerTest extends UnitSuite with TestEnvironment with 
   }
 
   test("that POST / isn't allowed if token has incorrect role") {
-    post("/", "".getBytes(), headers = Seq(("Authorization", s"Bearer $invalidTestToken"))) {
+    post("/", "".getBytes(), headers = Seq(("Authorization", s"Bearer ${TestData.invalidTestToken}"))) {
       status should equal(403)
     }
   }
