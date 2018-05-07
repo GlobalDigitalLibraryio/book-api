@@ -7,26 +7,30 @@
 
 package io.digitallibrary.bookapi.model.domain
 
-case class PdfCss (source: Option[String], fontNames: Seq[String]) {
-
-  val DefaultPageSize = "a4"
-  val landscapeSources = Map(
-    "storyweaver" -> "a5 landscape",
-    "taf" -> "a5 landscape",
-    "bookdash" -> "a5 landscape"
-  )
+case class PdfCss (source: Option[String], pageOrientation: PageOrientation.Value, fontNames: Seq[String]) {
 
   def asString: String = {
+    pageOrientation match {
+      case PageOrientation.PORTRAIT => portraitCss
+      case PageOrientation.LANDSCAPE => landscapeCss
+    }
+  }
+
+  def landscapeCss: String = {
     s"""
+      |@page {
+      |   size: a5 landscape;
+      |}
+      |
       |div.page {
-      | page-break-after: always;
+      |   page-break-after: always;
       |}
       |
       |body {
-      |    margin: 0;
-      |    text-align: center;
-      |    font-family: '${fontNames.mkString("','")}', sans-serif;
-      |    font-size: small;
+      |   margin: 0;
+      |   text-align: center;
+      |   font-family: '${fontNames.mkString("','")}', sans-serif;
+      |   font-size: small;
       |}
       |
       |p {
@@ -34,17 +38,88 @@ case class PdfCss (source: Option[String], fontNames: Seq[String]) {
       |}
       |
       |img {
-      |    max-width: 700px;
-      |    max-height: 300px;
+      |   max-width: 500px;
+      |   max-height: 400px;
+      |   display: block;
+      |   margin-left: auto;
+      |   margin-right: auto;
+      |   padding-bottom: 20px;
+      |   width: 75%;
       |}
-      |@page {
-      | size: ${getPageSize(source)};
+      |
+      |.page_0 img.cover {
+      |   width: 75%;
+      |   height: 50%;
+      |   display: block:
+      |   margin-left: auto;
+      |   margin-right: auto;
+      |}
+      |
+      |.page_0 img.logo {
+      |   width: 75px;
+      |}
+      |
+      |.license {
+      |   font-size: x-small;
+      |}
+      |
+      |.license img {
+      |   width: 100px;
       |}
     """.stripMargin
   }
 
-  private def getPageSize(sourceOpt: Option[String]) = {
-    sourceOpt.flatMap(src => landscapeSources.get(src.toLowerCase)).getOrElse(DefaultPageSize)
+  def portraitCss: String = {
+    s"""
+       |@page {
+       |   size: a5;
+       |}
+       |
+       |div.page {
+       |   page-break-after: always;
+       |}
+       |
+       |body {
+       |   margin: 0;
+       |   text-align: center;
+       |   font-family: '${fontNames.mkString("','")}', sans-serif;
+       |   font-size: medium;
+       |}
+       |
+       |p {
+       |   margin: 0;
+       |}
+       |
+       |img {
+       |   max-width: 400px;
+       |   max-height: 400px;
+       |   display: block;
+       |   margin-left: auto;
+       |   margin-right: auto;
+       |   padding-bottom: 40px;
+       |   width: 75%;
+       |}
+       |
+       |.page_0 img.cover {
+       |   width: 75%;
+       |   height: 50%;
+       |   display: block:
+       |   margin-left: auto;
+       |   margin-right: auto;
+       |}
+       |
+       |.page_0 img.logo {
+       |   width: 75px;
+       |}
+       |
+       |.license {
+       |   font-size: x-small;
+       |}
+       |
+       |.license img {
+       |   width: 100px;
+       |}
+    """.stripMargin
   }
 }
 

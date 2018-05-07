@@ -14,6 +14,8 @@ import io.digitallibrary.bookapi.BookApiProperties
 import org.json4s.FieldSerializer
 import scalikejdbc._
 
+import scala.util.{Failure, Success, Try}
+
 case class Translation(id: Option[Long],
                        revision: Option[Int],
                        bookId: Long,
@@ -48,7 +50,27 @@ case class Translation(id: Option[Long],
                        chapters: Seq[Chapter],
                        contributors: Seq[Contributor],
                        categories: Seq[Category],
-                       bookFormat: BookFormat.Value)
+                       bookFormat: BookFormat.Value,
+                       pageOrientation: PageOrientation.Value)
+
+object PageOrientation extends Enumeration {
+  val PORTRAIT, LANDSCAPE = Value
+
+  def valueOf(s: String): Try[PageOrientation.Value] = {
+    PageOrientation.values.find(_.toString.equalsIgnoreCase(s)) match {
+      case Some(x) => Success(x)
+      case None => Failure(new RuntimeException(s"Unknown PageOrientation $s."))
+    }
+  }
+
+  def valueOfOrDefault(s: String): PageOrientation.Value = {
+    PageOrientation.values.find(_.toString.equalsIgnoreCase(s)).getOrElse(PORTRAIT)
+  }
+
+  def valueOfOrDefault(s: Option[String]): PageOrientation.Value = {
+    s.map(valueOfOrDefault).getOrElse(PORTRAIT)
+  }
+}
 
 object PublishingStatus extends Enumeration {
   val PUBLISHED, UNLISTED, FLAGGED = Value
@@ -106,6 +128,7 @@ object Translation extends SQLSyntaxSupport[Translation] {
     dateArrived = rs.localDate(t.dateArrived),
     publishingStatus = PublishingStatus.valueOfOrDefault(rs.string(t.publishingStatus)),
     bookFormat = BookFormat.valueOfOrDefault(rs.string(t.bookFormat)),
+    pageOrientation = PageOrientation.valueOfOrDefault(rs.string(t.pageOrientation)),
     chapters = Seq(),
     contributors = Seq(),
     categories = Seq()

@@ -15,10 +15,13 @@ import com.openhtmltopdf.pdfboxout.PdfRendererBuilder
 import com.typesafe.scalalogging.LazyLogging
 import io.digitallibrary.bookapi.BookApiProperties
 import io.digitallibrary.bookapi.integration.AmazonClient
-import io.digitallibrary.bookapi.model.api.{NotFoundException, PdfStream}
+import io.digitallibrary.bookapi.model.api.{Chapter, NotFoundException, PdfStream}
 import io.digitallibrary.bookapi.model.domain.{BookFormat, PdfCss}
 import io.digitallibrary.bookapi.repository.{BookRepository, TranslationRepository}
 import io.digitallibrary.language.model.LanguageTag
+import org.jsoup.Jsoup
+import org.jsoup.nodes.Document
+import org.jsoup.nodes.Entities.EscapeMode
 
 import scala.util.{Failure, Success, Try}
 
@@ -88,25 +91,52 @@ trait PdfService {
         val source = bookRepository.withId(translation.bookId).map(_.source)
 
         val chapters = readService.chaptersForIdAndLanguage(translation.bookId, language).flatMap(ch => readService.chapterForBookWithLanguageAndId(translation.bookId, language, ch.id))
+        val preprocessedChapters = preprocessChapters(source, chapters)
         val fonts = fontDefinitions.get(language).toSeq :+ DefaultFont
 
         val bookAsHtml =
           s"""
              |<html>
              |  <head>
-             |    <style language='text/css'>${PdfCss(source, fonts.map(_.fontName)).asString}</style>
+             |    <style language='text/css'>${PdfCss(source, translation.pageOrientation, fonts.map(_.fontName)).asString}</style>
              |  </head>
              |  <body>
-             |    ${chapters.map(c => s"<div class='page'>${c.content}</div>").mkString("\n")}
+             |    ${preprocessedChapters.zipWithIndex.map { case (c, i) => s"<div class='page page_$i ${c.chapterType.toString.toLowerCase}'>${c.content}</div>" }.mkString("\n")}
              |  </body>
              |</html>
            """.stripMargin
 
         val rendererBuilder = new PdfRendererBuilder().withHtmlContent(bookAsHtml, "/")
-        fonts.foldLeft(rendererBuilder) {(builder, font) =>
+        fonts.foldLeft(rendererBuilder) { (builder, font) =>
           builder.useFont(new NotoFontSupplier(getClass.getResourceAsStream(font.fontFile)), font.fontName)
         }
       })
+    }
+
+    private def preprocessChapters(source: Option[String], chapters: Seq[Chapter]) = {
+      source match {
+        case Some("storyweaver") =>
+          chapters.zipWithIndex.map { case (c, i) =>
+            if (i == 0) { // First page
+              val document = Jsoup.parseBodyFragment(c.content)
+              val images = document.select("img")
+              for (i <- 0 until images.size()) {
+                val image = images.get(i)
+                if (i == 0) { // First image
+                  image.addClass("cover")
+                } else {
+                  image.addClass("logo")
+                }
+              }
+              document.outputSettings().syntax(Document.OutputSettings.Syntax.xml)
+              document.outputSettings().escapeMode(EscapeMode.xhtml).prettyPrint(false)
+              c.copy(content = document.select("body").html())
+            } else {
+              c
+            }
+          }
+        case _ => chapters
+      }
     }
 
     def getFromS3(uuid: String): Try[S3Object] = {

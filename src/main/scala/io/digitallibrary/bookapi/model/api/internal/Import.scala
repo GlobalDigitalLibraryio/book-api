@@ -3,6 +3,7 @@ package io.digitallibrary.bookapi.model.api.internal
 import java.time.LocalDate
 
 import io.digitallibrary.bookapi.model.api._
+import io.digitallibrary.bookapi.model.domain.PageOrientation
 
 
 case class CoverPhoto(imageApiId: Long)
@@ -33,4 +34,5 @@ case class Book(id: Long,
                 chapters: Seq[Chapter],
                 supportsTranslation: Boolean,
                 bookFormat: String,
-                source: String)
+                source: String,
+                pageOrientation: String)

@@ -111,7 +111,8 @@ trait ConverterService {
         chapters = Seq(),
         contributors = Seq(),
         categories = categories,
-        bookFormat = BookFormat.valueOfOrDefault(newBook.bookFormat)
+        bookFormat = BookFormat.valueOfOrDefault(newBook.bookFormat),
+        pageOrientation = PageOrientation.valueOfOrDefault(newBook.pageOrientation)
       )
     }
 
@@ -173,7 +174,8 @@ trait ConverterService {
         chapters = Seq(),
         contributors = Seq(),
         categories = Seq(),
-        bookFormat = BookFormat.valueOfOrDefault(newTranslation.bookFormat)
+        bookFormat = BookFormat.valueOfOrDefault(newTranslation.bookFormat),
+        pageOrientation = PageOrientation.valueOfOrDefault(newTranslation.pageOrientation)
       )
     }
 
@@ -260,7 +262,8 @@ trait ConverterService {
           chapters = translation.chapters.map(toApiChapter(_, convertContent = false)),
           supportsTranslation = BookApiProperties.supportsTranslationFrom(translation.language) && translation.bookFormat.equals(BookFormat.HTML),
           bookFormat = translation.bookFormat.toString,
-          source = book.source)
+          source = book.source,
+          pageOrientation = translation.pageOrientation.toString)
     }
 
     def toApiBook(translation: domain.Translation, availableLanguages: Seq[LanguageTag], book: domain.Book): api.Book = {
@@ -292,6 +295,7 @@ trait ConverterService {
           chapters = toApiChapterSummary(translation.chapters, translation.bookId, translation.language),
           supportsTranslation = BookApiProperties.supportsTranslationFrom(translation.language) && translation.bookFormat.equals(BookFormat.HTML),
           bookFormat = translation.bookFormat.toString,
+          pageOrientation = translation.pageOrientation.toString,
           source = book.source)
     }
 
