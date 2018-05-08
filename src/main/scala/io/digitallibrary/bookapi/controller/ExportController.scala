@@ -30,7 +30,7 @@ trait ExportController {
       description s"Returns a csv with books for langage and source"
       parameters(
       headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
-      pathParam[String]("lang").description("Export books for language."),
+      pathParam[String]("lang").description("Export books for language specified in BCP-47 format."),
       pathParam[String]("source").description(s"Exports books for source. 'all' gives all sources"))
       authorizations "oauth2"
       responseMessages response500)

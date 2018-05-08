@@ -41,11 +41,9 @@ trait ExportService {
       val firstPage = searchService.searchWithQuery(language, None, source, Paging(1, pageSize), Sort.ByIdAsc)
 
       val numberOfPages = (firstPage.totalCount / pageSize).toInt
-      var books = firstPage.results
-
-      1 to numberOfPages foreach(iterator => {
-        books ++= searchService.searchWithQuery(language, None, source, Paging(iterator + 1, pageSize), Sort.ByIdAsc).results
-      })
+      val books = firstPage.results ++
+        (1 to numberOfPages).flatMap(i =>
+          searchService.searchWithQuery(language, None, source, Paging(i + 1, pageSize), Sort.ByIdAsc).results)
 
       val factory = new CsvFactory()
       val generator = factory.createGenerator(outputStream)
