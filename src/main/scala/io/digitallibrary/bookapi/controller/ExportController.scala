@@ -43,7 +43,7 @@ trait ExportController {
       val searchSource = if (source.equals("all")) None else Some(source)
 
       contentType = "text/csv"
-      response.setHeader("Content-Disposition", s"""attachment; filename="books-$language-$source.csv" """)
+      response.setHeader("Content-Disposition", s"""attachment; filename="books-${BookApiProperties.Environment}-$language-$source.csv" """)
 
       exportService.exportBooks(language, searchSource, response.getOutputStream)
     }
