@@ -1,3 +1,10 @@
+/*
+ * Part of GDL book_api.
+ * Copyright (C) 2018 Global Digital Library
+ *
+ * See LICENSE
+ */
+
 package io.digitallibrary.bookapi.service
 
 import com.typesafe.scalalogging.LazyLogging
