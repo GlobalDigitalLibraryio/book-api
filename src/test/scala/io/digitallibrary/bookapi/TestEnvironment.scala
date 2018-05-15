@@ -97,7 +97,8 @@ trait TestEnvironment
   val categoryRepository = mock[CategoryRepository]
   val chapterRepository = mock[ChapterRepository]
   val contributorRepository = mock[ContributorRepository]
-  val translationRepository = mock[TranslationRepository]
+  val unFlaggedTranslationsRepository = mock[TranslationRepository]
+  val allTranslationsRepository = mock[TranslationRepository]
   val educationalAlignmentRepository = mock[EducationalAlignmentRepository]
   val licenseRepository = mock[LicenseRepository]
   val personRepository = mock[PersonRepository]
@@ -148,7 +149,8 @@ trait TestEnvironment
       categoryRepository,
       chapterRepository,
       contributorRepository,
-      translationRepository,
+      unFlaggedTranslationsRepository,
+      allTranslationsRepository,
       educationalAlignmentRepository,
       licenseRepository,
       personRepository,

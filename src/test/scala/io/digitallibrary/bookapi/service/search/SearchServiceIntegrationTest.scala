@@ -99,31 +99,31 @@ class SearchServiceIntegrationTest extends UnitSuite with TestEnvironment {
   }
 
   test("that search similar for norwegian returns one book") {
-    when(translationRepository.forBookIdAndLanguage(1, LanguageTag("nb"))).thenReturn(Some(TestData.Domain.DefaultTranslation))
+    when(unFlaggedTranslationsRepository.forBookIdAndLanguage(1, LanguageTag("nb"))).thenReturn(Some(TestData.Domain.DefaultTranslation))
     val searchResult = searchService.searchSimilar(LanguageTag("nb"), 1, Paging(1,10), Sort.ByIdAsc)
     searchResult.totalCount should be(1)
   }
 
   test("that search similar for unknown language returns empty") {
-    when(translationRepository.forBookIdAndLanguage(1, LanguageTag("aaa"))).thenReturn(Some(TestData.Domain.DefaultTranslation))
+    when(unFlaggedTranslationsRepository.forBookIdAndLanguage(1, LanguageTag("aaa"))).thenReturn(Some(TestData.Domain.DefaultTranslation))
     val searchResult = searchService.searchSimilar(LanguageTag("aaa"), 1, Paging(1,10), Sort.ByIdAsc)
     searchResult.totalCount should be(0)
   }
 
   test("that filtering on source only returns book with given source") {
-    when(translationRepository.forBookIdAndLanguage(3, LanguageTag("en"))).thenReturn(Some(TestData.Domain.DefaultTranslation))
+    when(unFlaggedTranslationsRepository.forBookIdAndLanguage(3, LanguageTag("en"))).thenReturn(Some(TestData.Domain.DefaultTranslation))
     val searchResult = searchService.searchWithQuery(LanguageTag("en"), None, Some("some_unknown_source"), Paging(1,10), Sort.ByIdAsc)
     searchResult.totalCount should be (1)
   }
 
   test("that filtering on source and combined search only gives hit on correct book") {
-    when(translationRepository.forBookIdAndLanguage(2, LanguageTag("nb"))).thenReturn(Some(TestData.Domain.DefaultTranslation))
+    when(unFlaggedTranslationsRepository.forBookIdAndLanguage(2, LanguageTag("nb"))).thenReturn(Some(TestData.Domain.DefaultTranslation))
     val searchResult = searchService.searchWithQuery(LanguageTag("nb"), Some("different"), Some("storyweaver"), Paging(1,10), Sort.ByIdAsc)
     searchResult.totalCount should be (1)
   }
 
   test("that filtering on source and combined search gives no hits if source is incorrect") {
-    when(translationRepository.forBookIdAndLanguage(2, LanguageTag("nb"))).thenReturn(Some(TestData.Domain.DefaultTranslation))
+    when(unFlaggedTranslationsRepository.forBookIdAndLanguage(2, LanguageTag("nb"))).thenReturn(Some(TestData.Domain.DefaultTranslation))
     val searchResult = searchService.searchWithQuery(LanguageTag("nb"), Some("different"), Some("bookdash"), Paging(1,10), Sort.ByIdAsc)
     searchResult.totalCount should be (0)
   }

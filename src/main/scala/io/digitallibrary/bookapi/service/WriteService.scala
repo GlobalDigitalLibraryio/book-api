@@ -48,7 +48,7 @@ trait WriteService {
   class WriteService extends LazyLogging {
 
     def updateTranslation(translationToUpdate: Translation) = {
-      translationRepository.updateTranslation(translationToUpdate)
+      unFlaggedTranslationsRepository.updateTranslation(translationToUpdate)
     }
 
     def addPersonFromAuthUser(): Person = {
@@ -190,7 +190,7 @@ trait WriteService {
     }
 
     def newTranslationForBook(originalBook: api.Book, translateRequest: TranslateRequest): Try[domain.Translation] = {
-      translationRepository.forBookIdAndLanguage(originalBook.id, LanguageTag(originalBook.language.code)) match {
+      unFlaggedTranslationsRepository.forBookIdAndLanguage(originalBook.id, LanguageTag(originalBook.language.code)) match {
         case None => Failure(new NotFoundException())
         case Some(translation) => {
           val newTranslation = translation.copy(
@@ -206,7 +206,7 @@ trait WriteService {
 
           Try {
             inTransaction { implicit session =>
-              val persistedTranslation = translationRepository.add(newTranslation)
+              val persistedTranslation = unFlaggedTranslationsRepository.add(newTranslation)
 
               val newPersons = AuthUser.get.flatMap(personRepository.withGdlId)
               val newContributors = newPersons.map(person => Contributor(None, None, person.id.get, persistedTranslation.id.get, ContributorType.Translator, person))
@@ -233,7 +233,7 @@ trait WriteService {
     def deleteTranslation(translation: domain.Translation): Unit = inTransaction { implicit session =>
       translation.chapters.foreach(chapterRepository.deleteChapter)
       translation.contributors.foreach(contributorRepository.remove)
-      translationRepository.deleteTranslation(translation)
+      unFlaggedTranslationsRepository.deleteTranslation(translation)
     }
 
 
@@ -265,7 +265,7 @@ trait WriteService {
             educationalAlignmentRepository.add(ea).id
           })
 
-          val translation = translationRepository.add(
+          val translation = unFlaggedTranslationsRepository.add(
             domainTranslation.copy(
               categoryIds = persistedCategories.map(_.id.get),
               eaId = optPersistedEA)
@@ -294,7 +294,7 @@ trait WriteService {
     }
 
     def updateTranslationForBook(bookId: Long, translationId: Long, translationReplacement: NewTranslation): Option[Try[api.internal.TranslationId]] = {
-      translationRepository.withId(translationId).map(existing => {
+      unFlaggedTranslationsRepository.withId(translationId).map(existing => {
         validationService.validateNewTranslation(translationReplacement).map(validTranslationReplacement => {
           val replacement = converterService.toDomainTranslation(validTranslationReplacement, bookId)
 
@@ -333,7 +333,7 @@ trait WriteService {
               case (None, None) => None
             }
 
-            val translation = translationRepository.updateTranslation(
+            val translation = unFlaggedTranslationsRepository.updateTranslation(
               existing.copy(
                 categoryIds = persistedCategories.map(_.id.get),
                 eaId = optPersistedEA,

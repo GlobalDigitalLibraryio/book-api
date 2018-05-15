@@ -42,7 +42,7 @@ trait SearchService {
       executeSearch(boolDefinition = BoolQueryDefinition(), languageTag = languageTag, query = None, categories = category.toSeq, readingLevel = readingLevel, source = source, paging = paging, sort = sort)
 
     def searchSimilar(languageTag: LanguageTag, bookId: Long, paging: Paging, sort: Sort.Value): SearchResult = {
-      val translation = translationRepository.forBookIdAndLanguage(bookId, languageTag)
+      val translation = unFlaggedTranslationsRepository.forBookIdAndLanguage(bookId, languageTag)
       translation match {
         case None => SearchResult(0, paging.page, paging.pageSize, converterService.toApiLanguage(languageTag), Seq())
         case Some(trans) =>

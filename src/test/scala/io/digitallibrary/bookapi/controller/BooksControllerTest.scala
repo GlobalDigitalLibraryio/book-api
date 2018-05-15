@@ -162,7 +162,8 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
       |	"supportsTranslation": false,
       |	"bookFormat": "HTML",
       |	"source": "storyweaver",
-      | "pageOrientation": "LANDSCAPE"
+      | "pageOrientation": "LANDSCAPE",
+      | "publishingStatus": "PUBLISHED"
       |}""".stripMargin.getBytes
 
     put("/eng/1", payload, headers = Seq(("Authorization", s"Bearer ${TestData.validTestTokenWithWriteRole}"))) {

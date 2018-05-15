@@ -19,7 +19,7 @@ class FeaturedContentRepositoryTest extends IntegrationSuite with TestEnvironmen
   override val publisherRepository = new PublisherRepository
   override val licenseRepository = new LicenseRepository
   override val categoryRepository = new CategoryRepository
-  override val translationRepository = new TranslationRepository
+  override val unFlaggedTranslationsRepository = new TranslationRepository
 
   test("that forLanguage returns an empty list when no featured content for any languages") {
     val featuredContents = featuredContentRepository.forLanguage(LanguageTag("eng"))

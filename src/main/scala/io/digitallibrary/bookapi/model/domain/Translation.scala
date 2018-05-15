@@ -88,11 +88,8 @@ object BookFormat extends Enumeration {
   }
 }
 
-object Translation extends SQLSyntaxSupport[Translation] {
-
+sealed trait TranslationView extends SQLSyntaxSupport[Translation] {
   implicit val formats = org.json4s.DefaultFormats
-  override val tableName = "translation_not_flagged"
-  override val schemaName = Some(BookApiProperties.MetaSchema)
   val JSonSerializer = FieldSerializer[Translation]()
 
   def apply(t: SyntaxProvider[Translation])(rs: WrappedResultSet): Translation = apply(t.resultName)(rs)
@@ -138,4 +135,15 @@ object Translation extends SQLSyntaxSupport[Translation] {
     val translation = apply(t)(rs)
     translation.copy(educationalAlignment = translation.eaId.map(_ => EducationalAlignment.apply(ea)(rs)))
   }
+}
+
+
+object UnflaggedTranslations extends TranslationView {
+  override val schemaName = Some(BookApiProperties.MetaSchema)
+  override val tableName = "translation_not_flagged"
+}
+
+object AllTranslations extends TranslationView {
+  override val schemaName = Some(BookApiProperties.MetaSchema)
+  override val tableName = "translation"
 }

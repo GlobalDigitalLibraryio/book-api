@@ -296,7 +296,8 @@ trait ConverterService {
           supportsTranslation = BookApiProperties.supportsTranslationFrom(translation.language) && translation.bookFormat.equals(BookFormat.HTML),
           bookFormat = translation.bookFormat.toString,
           pageOrientation = translation.pageOrientation.toString,
-          source = book.source)
+          source = book.source,
+          publishingStatus = translation.publishingStatus.toString)
     }
 
     def toApiBookHit(translation: Option[domain.Translation], book: Option[domain.Book]): Option[api.BookHit] = {

@@ -76,6 +76,6 @@ trait RepositoryTestHelpers {
       bookFormat = BookFormat.HTML,
       pageOrientation = PageOrientation.PORTRAIT)
 
-    translationRepository.add(translationDef)
+    unFlaggedTranslationsRepository.add(translationDef)
   }
 }

@@ -34,7 +34,7 @@ trait ImportService {
   class ImportService extends LazyLogging {
 
     def importBook(book: api.internal.Book): Try[api.internal.TranslationId] = {
-      book.externalId.flatMap(translationRepository.withExternalId) match {
+      book.externalId.flatMap(unFlaggedTranslationsRepository.withExternalId) match {
         case None => addBook(book)
         case Some(existingTranslation) => updateBook(book, existingTranslation)
       }
@@ -78,7 +78,7 @@ trait ImportService {
       bookRepository.withId(bookId) match {
         case None => Failure(new api.NotFoundException(s"The book with id $bookId was not found. Cannot update."))
         case Some(book) => {
-          newTranslation.externalId.flatMap(translationRepository.withExternalId) match {
+          newTranslation.externalId.flatMap(unFlaggedTranslationsRepository.withExternalId) match {
             case None => addBookAsTranslation(newTranslation, book)
             case Some(existingTranslation) => updateBookAsTranslation(newTranslation, existingTranslation, book)
           }
@@ -131,7 +131,7 @@ trait ImportService {
       for {
         validCategories <- validCategories(newBook)
         domainTranslation = converterService.toDomainTranslation(newBook, persistedBook, validCategories)
-        persistedTranslation <- Try(translationRepository.add(domainTranslation))
+        persistedTranslation <- Try(unFlaggedTranslationsRepository.add(domainTranslation))
         persistedContributors <- persistContributors(newBook.contributors, persistedTranslation)
       } yield persistedTranslation.copy(contributors = persistedContributors)
     }
@@ -141,7 +141,7 @@ trait ImportService {
       for {
         validCategories <- validCategories(newTranslation)
         domainTranslation <- Success(converterService.mergeTranslation(existingTranslation, newTranslation, validCategories))
-        persistedTranslation <- Try(translationRepository.updateTranslation(domainTranslation))
+        persistedTranslation <- Try(unFlaggedTranslationsRepository.updateTranslation(domainTranslation))
         persistedContributors <- persistContributorsUpdate(persistedTranslation, newTranslation)
       } yield persistedTranslation.copy(contributors = persistedContributors)
     }

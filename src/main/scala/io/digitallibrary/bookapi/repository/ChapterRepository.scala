@@ -9,20 +9,20 @@ package io.digitallibrary.bookapi.repository
 
 import io.digitallibrary.language.model.LanguageTag
 import io.digitallibrary.bookapi.model.api.OptimisticLockException
-import io.digitallibrary.bookapi.model.domain.{Chapter, Translation}
+import io.digitallibrary.bookapi.model.domain._
 import scalikejdbc._
 
 
 trait ChapterRepository {
   val chapterRepository: ChapterRepository
 
-  class ChapterRepository {
+  class ChapterRepository(translationView: TranslationView = UnflaggedTranslations) {
     def deleteChapter(chapter: Chapter)(implicit session: DBSession = AutoSession): Unit = {
       val ch = Chapter.column
       deleteFrom(Chapter).where.eq(ch.id, chapter.id).toSQL.update().apply()
     }
 
-    private val (ch, t) = (Chapter.syntax, Translation.syntax)
+    private val (ch, t) = (Chapter.syntax, translationView.syntax)
 
     def add(newChapter: Chapter)(implicit session: DBSession = AutoSession): Chapter = {
       val ch = Chapter.column
@@ -69,7 +69,7 @@ trait ChapterRepository {
     def chaptersForBookIdAndLanguage(bookId: Long, language: LanguageTag)(implicit session: DBSession = ReadOnlyAutoSession): Seq[Chapter] = {
       select
         .from(Chapter as ch)
-        .leftJoin(Translation as t).on(ch.translationId, t.id)
+        .leftJoin(translationView as t).on(ch.translationId, t.id)
         .where.eq(t.bookId, bookId).and.eq(t.language, language.toString)
         .orderBy(ch.seqNo).asc
         .toSQL
@@ -80,7 +80,7 @@ trait ChapterRepository {
     def chapterForBookWithLanguageAndId(bookId: Long, language: LanguageTag, chapterId: Long)(implicit session: DBSession = ReadOnlyAutoSession): Option[Chapter] = {
       select
         .from(Chapter as ch)
-        .rightJoin(Translation as t).on(ch.translationId, t.id)
+        .rightJoin(translationView as t).on(ch.translationId, t.id)
         .where
         .eq(t.bookId, bookId).and
         .eq(t.language, language.toString).and
@@ -91,7 +91,7 @@ trait ChapterRepository {
     def forTranslationWithSeqNo(translationId: Long, seqno: Long)(implicit session: DBSession = ReadOnlyAutoSession): Option[Chapter] = {
       select
         .from(Chapter as ch)
-        .rightJoin(Translation as t).on(ch.translationId, t.id)
+        .rightJoin(translationView as t).on(ch.translationId, t.id)
         .where
         .eq(t.id, translationId).and
         .eq(ch.seqNo, seqno).toSQL

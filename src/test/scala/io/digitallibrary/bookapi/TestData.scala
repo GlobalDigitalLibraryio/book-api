@@ -14,7 +14,7 @@ import io.digitallibrary.bookapi.integration.crowdin.{BookMetaData, TranslatedCh
 import io.digitallibrary.bookapi.model._
 import io.digitallibrary.bookapi.model.api._
 import io.digitallibrary.bookapi.model.api.internal.NewTranslatedChapter
-import io.digitallibrary.bookapi.model.domain.{BookFormat, ChapterType, ContributorType, PageOrientation}
+import io.digitallibrary.bookapi.model.domain.{BookFormat, ChapterType, ContributorType, PageOrientation, PublishingStatus}
 import io.digitallibrary.language.model.LanguageTag
 
 object TestData {
@@ -85,7 +85,8 @@ object TestData {
       supportsTranslation = true,
       bookFormat = BookFormat.HTML.toString,
       source = DefaultSource,
-      pageOrientation = DefaultPageOrientation)
+      pageOrientation = DefaultPageOrientation,
+      publishingStatus = PublishingStatus.PUBLISHED.toString)
 
     val DefaultBookHit = api.BookHit(
       id = 1,
