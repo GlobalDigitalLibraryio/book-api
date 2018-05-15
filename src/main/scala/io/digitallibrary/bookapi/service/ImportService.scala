@@ -11,6 +11,7 @@ import com.typesafe.scalalogging.LazyLogging
 import io.digitallibrary.bookapi.model._
 import io.digitallibrary.bookapi.model.api.{ValidationException, ValidationMessage}
 import io.digitallibrary.bookapi.repository._
+import io.digitallibrary.bookapi.service.search.IndexService
 import scalikejdbc.{AutoSession, DBSession}
 
 import scala.util.{Failure, Success, Try}
@@ -27,20 +28,25 @@ trait ImportService {
     with ContributorRepository
     with ChapterRepository
     with ConverterService
-    with InTranslationRepository =>
+    with InTranslationRepository
+    with IndexService =>
 
   val importService: ImportService
 
   class ImportService extends LazyLogging {
 
     def importBook(book: api.internal.Book): Try[api.internal.TranslationId] = {
-      book.externalId.flatMap(unFlaggedTranslationsRepository.withExternalId) match {
+      val persistedTranslation = book.externalId.flatMap(unFlaggedTranslationsRepository.withExternalId) match {
         case None => addBook(book)
         case Some(existingTranslation) => updateBook(book, existingTranslation)
       }
+
+      persistedTranslation
+        .flatMap(indexService.indexDocument)
+        .map(x => api.internal.TranslationId(x.id.get))
     }
 
-    private def addBook(book: api.internal.Book): Try[api.internal.TranslationId] = {
+    private def addBook(book: api.internal.Book): Try[domain.Translation] = {
       inTransaction { implicit session =>
         for {
           license <- validLicense(book)
@@ -49,11 +55,11 @@ trait ImportService {
           persistedBook <- persistBook(book, license, persistedPublisher)
           persistedTranslation <- persistTranslation(persistedBook, book)
           _ <- persistChapters(book, persistedTranslation)
-        } yield api.internal.TranslationId(persistedTranslation.id.get)
+        } yield persistedTranslation
       }
     }
 
-    private def updateBook(book: api.internal.Book, existingTranslation: domain.Translation): Try[api.internal.TranslationId] = {
+    private def updateBook(book: api.internal.Book, existingTranslation: domain.Translation): Try[domain.Translation] = {
       if (inTranslationRepository.forOriginalId(book.id).nonEmpty) {
         Failure(new RuntimeException(s"Book with id ${book.id} is currently being translated. Cannot update at the moment."))
       } else {
@@ -67,7 +73,7 @@ trait ImportService {
               persistedBook <- persistBookUpdate(originalBook, book, license, persistedPublisher)
               persistedTranslation <- persistTranslationUpdate(persistedBook, existingTranslation, book)
               _ <- persistChapterUpdates(book, persistedTranslation)
-            } yield api.internal.TranslationId(persistedTranslation.id.get)
+            } yield persistedTranslation
 
           }
         }
