@@ -11,7 +11,7 @@ import java.text.SimpleDateFormat
 import io.digitallibrary.bookapi._
 import io.digitallibrary.bookapi.model.api._
 import io.digitallibrary.bookapi.model.domain
-import io.digitallibrary.bookapi.model.domain.{ChapterType, PageOrientation, Paging, Sort}
+import io.digitallibrary.bookapi.model.domain.{Book => _, Chapter => _, SearchResult => _, _}
 import io.digitallibrary.language.model.LanguageTag
 import org.json4s.native.Serialization._
 import org.json4s.{DefaultFormats, Formats}
@@ -163,12 +163,12 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
       |	"bookFormat": "HTML",
       |	"source": "storyweaver",
       | "pageOrientation": "LANDSCAPE",
-      | "publishingStatus": "PUBLISHED"
+      | "publishingStatus": "FLAGGED"
       |}""".stripMargin.getBytes
 
     put("/eng/1", payload, headers = Seq(("Authorization", s"Bearer ${TestData.validTestTokenWithWriteRole}"))) {
       status should equal (200)
-      verify(writeService).updateTranslation(TestData.Domain.DefaultTranslation.copy(title = "new title", about = "new description", pageOrientation = PageOrientation.LANDSCAPE))
+      verify(writeService).updateTranslation(TestData.Domain.DefaultTranslation.copy(title = "new title", about = "new description", pageOrientation = PageOrientation.LANDSCAPE, publishingStatus = PublishingStatus.FLAGGED))
     }
   }
 

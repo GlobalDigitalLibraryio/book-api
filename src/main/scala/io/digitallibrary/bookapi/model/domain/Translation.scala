@@ -75,6 +75,13 @@ object PageOrientation extends Enumeration {
 object PublishingStatus extends Enumeration {
   val PUBLISHED, UNLISTED, FLAGGED = Value
 
+  def valueOf(s: String): Try[PublishingStatus.Value] = {
+    PublishingStatus.values.find(_.toString.equalsIgnoreCase(s)) match {
+      case Some(x) => Success(x)
+      case None => Failure(new RuntimeException(s"Unknown PublishingStatus $s."))
+    }
+  }
+
   def valueOfOrDefault(s: String): PublishingStatus.Value = {
     PublishingStatus.values.find(_.toString == s.toUpperCase).getOrElse(PUBLISHED)
   }

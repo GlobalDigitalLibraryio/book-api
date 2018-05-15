@@ -173,7 +173,6 @@ trait BooksController {
     }
 
     put("/:lang/:id/?", operation(updateBook)) {
-
       assertHasRole(RoleWithWriteAccess)
 
       val id = long("id")
@@ -187,7 +186,8 @@ trait BooksController {
           writeService.updateTranslation(existingBook.copy(
             title = updatedBook.title,
             about = updatedBook.description,
-            pageOrientation = pageOrientationToUpdate
+            pageOrientation = pageOrientationToUpdate,
+            publishingStatus = PublishingStatus.valueOf(updatedBook.publishingStatus).getOrElse(existingBook.publishingStatus)
         ))
         case None => NotFound(body = Error(Error.NOT_FOUND, s"No book with id $id and language $lang found"))
       }
