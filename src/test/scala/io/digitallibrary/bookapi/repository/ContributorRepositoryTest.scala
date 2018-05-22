@@ -17,7 +17,7 @@ class ContributorRepositoryTest extends IntegrationSuite with TestEnvironment wi
   override val bookRepository = new BookRepository
   override val categoryRepository = new CategoryRepository
   override val contributorRepository = new ContributorRepository
-  override val translationRepository = new TranslationRepository
+  override val unFlaggedTranslationsRepository = new TranslationRepository
   override val licenseRepository = new LicenseRepository
   override val personRepository = new PersonRepository
   override val publisherRepository = new PublisherRepository

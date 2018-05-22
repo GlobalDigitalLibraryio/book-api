@@ -35,8 +35,8 @@ trait IndexBuilderService {
       synchronized {
         var numIndexed = 0
         val start = System.currentTimeMillis()
-        val languages = translationRepository.allAvailableLanguagesWithStatus(PublishingStatus.PUBLISHED)
-          languages.foreach(language => {
+        val languages = unFlaggedTranslationsRepository.allAvailableLanguagesWithStatus(PublishingStatus.PUBLISHED)
+        languages.foreach(language => {
           indexDocumentsForLanguage(language) match {
             case Success(reindexResult) => numIndexed += reindexResult.totalIndexed
             case Failure(f) => Failure(f)
@@ -81,10 +81,12 @@ trait IndexBuilderService {
 
     def sendToElastic(indexName: String, languageTag: LanguageTag): Try[Int] = {
       var numIndexed = 0
-      val numTranslations = translationRepository.numberOfTranslationsWithStatus(languageTag, PublishingStatus.PUBLISHED)
-      val iterations = numTranslations / BookApiProperties.IndexBulkSize
-      0 to iterations foreach(iter => {
-        val numberInBulk = indexService.indexDocuments(translationRepository.translationsWithLanguageAndStatus(languageTag, PublishingStatus.PUBLISHED, BookApiProperties.IndexBulkSize, iter * BookApiProperties.IndexBulkSize), indexName)
+      val numTranslations = unFlaggedTranslationsRepository.numberOfTranslationsWithStatus(languageTag, PublishingStatus.PUBLISHED)
+      val pageSize = BookApiProperties.IndexBulkSize
+      val pages = Math.round(Math.ceil(numTranslations.toFloat / pageSize)).toInt
+      1 to pages foreach(page => {
+        val toIndex = unFlaggedTranslationsRepository.withLanguageAndStatus(Some(languageTag), PublishingStatus.PUBLISHED, pageSize, page).results
+        val numberInBulk = indexService.indexDocuments(toIndex.toList, indexName)
         numberInBulk match {
           case Success(num) => numIndexed += num
           case Failure(f) => Failure(f)

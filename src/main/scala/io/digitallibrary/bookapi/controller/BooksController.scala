@@ -11,7 +11,7 @@ package io.digitallibrary.bookapi.controller
 import io.digitallibrary.bookapi.BookApiProperties.{DefaultLanguage, RoleWithWriteAccess}
 import io.digitallibrary.bookapi.model.api
 import io.digitallibrary.bookapi.model.api.{Chapter, Error, ValidationError}
-import io.digitallibrary.bookapi.model.domain.{ChapterType, PageOrientation, Paging, Sort}
+import io.digitallibrary.bookapi.model.domain._
 import io.digitallibrary.bookapi.service.search.SearchService
 import io.digitallibrary.bookapi.service.translation.MergeService
 import io.digitallibrary.bookapi.service.{ContentConverter, ReadService, WriteService}
@@ -173,7 +173,6 @@ trait BooksController {
     }
 
     put("/:lang/:id/?", operation(updateBook)) {
-
       assertHasRole(RoleWithWriteAccess)
 
       val id = long("id")
@@ -187,7 +186,8 @@ trait BooksController {
           writeService.updateTranslation(existingBook.copy(
             title = updatedBook.title,
             about = updatedBook.description,
-            pageOrientation = pageOrientationToUpdate
+            pageOrientation = pageOrientationToUpdate,
+            publishingStatus = PublishingStatus.valueOf(updatedBook.publishingStatus).getOrElse(existingBook.publishingStatus)
         ))
         case None => NotFound(body = Error(Error.NOT_FOUND, s"No book with id $id and language $lang found"))
       }
@@ -252,6 +252,16 @@ trait BooksController {
 
       readService.forUserWithLanguage(userId, pageSize, page, sort)
 
+    }
+
+    get("/flagged/?") {
+      assertHasRole(RoleWithWriteAccess)
+
+      val pageSize = intOrDefault("page-size", 10).min(100).max(1)
+      val page = intOrDefault("page", 1).max(1)
+      val sort = Sort.valueOf(paramOrNone("sort")).getOrElse(Sort.ByIdAsc)
+
+      readService.withLanguageAndStatus(None, PublishingStatus.FLAGGED, pageSize, page)
     }
   }
 

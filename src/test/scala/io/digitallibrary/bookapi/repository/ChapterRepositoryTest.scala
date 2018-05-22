@@ -17,7 +17,7 @@ class ChapterRepositoryTest extends IntegrationSuite with TestEnvironment with R
   override val bookRepository = new BookRepository
   override val categoryRepository = new CategoryRepository
   override val chapterRepository = new ChapterRepository
-  override val translationRepository = new TranslationRepository
+  override val unFlaggedTranslationsRepository = new TranslationRepository
   override val licenseRepository = new LicenseRepository
   override val publisherRepository = new PublisherRepository
 

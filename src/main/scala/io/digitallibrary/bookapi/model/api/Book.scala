@@ -98,7 +98,8 @@ case class Book(@(ApiModelProperty@field)(description = "The id of the book") id
                 @(ApiModelProperty@field)(description = "Indicates if this book can be translated or not") supportsTranslation: Boolean,
                 @(ApiModelProperty@field)(description = "The format of the book. PDF or HTML") bookFormat: String,
                 @(ApiModelProperty@field)(description = "Either portrait or landscape") pageOrientation: String,
-                @(ApiModelProperty@field)(description = "The source of the book") source: String)
+                @(ApiModelProperty@field)(description = "The source of the book") source: String,
+                @(ApiModelProperty@field)(description = "The publishing status of this book") publishingStatus: String)
 
 @ApiModel(description = "Information about book search hit")
 case class BookHit(@(ApiModelProperty@field)(description = "The id of the book") id: Long,

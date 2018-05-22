@@ -8,10 +8,12 @@
 package io.digitallibrary.bookapi.service
 
 
+import io.digitallibrary.bookapi.BookApiProperties
 import io.digitallibrary.language.model.LanguageTag
 import io.digitallibrary.bookapi.model._
 import io.digitallibrary.bookapi.model.domain.{Category, PublishingStatus, Sort, Translation}
 import io.digitallibrary.bookapi.repository._
+import io.digitallibrary.network.AuthUser
 
 trait ReadService {
   this: ConverterService with BookRepository with ChapterRepository with TranslationRepository with InTranslationRepository
@@ -20,8 +22,16 @@ trait ReadService {
 
   class ReadService {
 
+    def withLanguageAndStatus(languageTag: Option[LanguageTag], status: PublishingStatus.Value, pageSize: Int, page: Int): api.SearchResult = {
+      val searchResult = getTranslationRepository.withLanguageAndStatus(languageTag, status, pageSize, page)
+      val books = searchResult.results.flatMap(translation =>
+          converterService.toApiBookHit(Some(translation), bookRepository.withId(translation.bookId)))
+
+      api.SearchResult(searchResult.totalCount, searchResult.page, searchResult.pageSize, converterService.toApiLanguage(searchResult.language), books)
+    }
+
     def listAvailablePublishedCategoriesForLanguage(language: LanguageTag): Map[Category, Set[String]] = {
-      translationRepository.allAvailableCategoriesAndReadingLevelsWithStatus(PublishingStatus.PUBLISHED, language)
+      unFlaggedTranslationsRepository.allAvailableCategoriesAndReadingLevelsWithStatus(PublishingStatus.PUBLISHED, language)
     }
 
     def featuredContentForLanguage(tag: LanguageTag): Seq[api.FeaturedContent] = {
@@ -40,16 +50,16 @@ trait ReadService {
     }
 
     def listAvailablePublishedLanguages: Seq[api.Language] = {
-      translationRepository.allAvailableLanguagesWithStatus(PublishingStatus.PUBLISHED).map(converterService.toApiLanguage).sortBy(_.name)
+      unFlaggedTranslationsRepository.allAvailableLanguagesWithStatus(PublishingStatus.PUBLISHED).map(converterService.toApiLanguage).sortBy(_.name)
     }
 
     def listAvailablePublishedLanguagesAsLanguageTags: Seq[LanguageTag] = {
-      translationRepository.allAvailableLanguagesWithStatus(PublishingStatus.PUBLISHED)
+      unFlaggedTranslationsRepository.allAvailableLanguagesWithStatus(PublishingStatus.PUBLISHED)
     }
 
     def listAvailablePublishedLevelsForLanguage(lang: Option[LanguageTag] = None, category: Option[String] = None): Seq[String] = {
       val cat = category.flatMap(categoryRepository.withName)
-      translationRepository.allAvailableLevelsWithStatus(PublishingStatus.PUBLISHED, lang, cat)
+      unFlaggedTranslationsRepository.allAvailableLevelsWithStatus(PublishingStatus.PUBLISHED, lang, cat)
     }
 
 
@@ -57,27 +67,27 @@ trait ReadService {
       val inTranslationForUser = inTranslationRepository.inTranslationForUser(userId)
       for {
         inTranslation <- inTranslationForUser.filter(_.newTranslationId.isDefined)
-        newTranslation <- translationRepository.withId(inTranslation.newTranslationId.get)
-        availableLanguages = translationRepository.languagesFor(newTranslation.bookId)
+        newTranslation <- unFlaggedTranslationsRepository.withId(inTranslation.newTranslationId.get)
+        availableLanguages = unFlaggedTranslationsRepository.languagesFor(newTranslation.bookId)
         book <- withIdAndLanguage(newTranslation.bookId, inTranslation.fromLanguage)
       } yield converterService.toApiMyBook(inTranslation, newTranslation, availableLanguages, book)
     }
 
     def translationWithIdAndLanguage(bookId: Long, language: LanguageTag): Option[Translation] =
-      translationRepository.forBookIdAndLanguage(bookId, language)
+      unFlaggedTranslationsRepository.forBookIdAndLanguage(bookId, language)
 
     def withIdAndLanguage(bookId: Long, language: LanguageTag): Option[api.Book] = {
       for {
-        translation <- translationRepository.forBookIdAndLanguage(bookId, language)
+        translation <- unFlaggedTranslationsRepository.forBookIdAndLanguage(bookId, language)
         book <- bookRepository.withId(bookId)
-      } yield converterService.toApiBook(translation, translationRepository.languagesFor(bookId), book)
+      } yield converterService.toApiBook(translation, unFlaggedTranslationsRepository.languagesFor(bookId), book)
     }
 
     def withIdAndLanguageForExport(bookId: Long, language: LanguageTag): Option[api.internal.Book] = {
       for {
-        translation <- translationRepository.forBookIdAndLanguage(bookId, language)
+        translation <- unFlaggedTranslationsRepository.forBookIdAndLanguage(bookId, language)
         book <- bookRepository.withId(bookId)
-      } yield converterService.toInternalApiBook(translation, translationRepository.languagesFor(bookId), book)
+      } yield converterService.toInternalApiBook(translation, unFlaggedTranslationsRepository.languagesFor(bookId), book)
     }
 
     def chaptersForIdAndLanguage(bookId: Long, language: LanguageTag): Seq[api.ChapterSummary] = {
@@ -102,23 +112,31 @@ trait ReadService {
 
     def translationWithExternalId(externalId: Option[String]): Option[api.internal.TranslationId] = {
       externalId
-        .flatMap(translationRepository.withExternalId)
+        .flatMap(unFlaggedTranslationsRepository.withExternalId)
         .flatMap(_.id)
         .map(api.internal.TranslationId)
     }
 
     def uuidWithTranslationId(translationId: Option[Long]): Option[api.internal.UUID] = {
       translationId
-        .flatMap(translationRepository.withId)
+        .flatMap(unFlaggedTranslationsRepository.withId)
         .map(_.uuid)
         .map(api.internal.UUID)
     }
 
     def withExternalId(externalId: Option[String]): Option[api.Book] = {
-      externalId.flatMap(translationRepository.withExternalId) match {
+      externalId.flatMap(unFlaggedTranslationsRepository.withExternalId) match {
         case Some(translation) => bookRepository.withId(translation.bookId).map(book =>
-          converterService.toApiBook(translation, translationRepository.languagesFor(translation.bookId), book))
+          converterService.toApiBook(translation, unFlaggedTranslationsRepository.languagesFor(translation.bookId), book))
         case None => None
+      }
+    }
+
+    private def getTranslationRepository: TranslationRepository = {
+      if(AuthUser.hasRole(BookApiProperties.RoleWithWriteAccess)) {
+        allTranslationsRepository
+      } else {
+        unFlaggedTranslationsRepository
       }
     }
   }

@@ -22,7 +22,7 @@ class EPubServiceTest extends UnitSuite with TestEnvironment {
   override val ePubService = new EPubService
 
   test("that createEPub returns None when uuid not found") {
-    when(translationRepository.withUuId("123")).thenReturn(None)
+    when(unFlaggedTranslationsRepository.withUuId("123")).thenReturn(None)
     ePubService.createEPub(LanguageTag("nob"), "123") should equal (None)
   }
 
@@ -31,7 +31,7 @@ class EPubServiceTest extends UnitSuite with TestEnvironment {
     val uuid = TestData.Domain.DefaultTranslation.uuid
     val language = TestData.Domain.DefaultTranslation.language
 
-    when(translationRepository.withUuId(any[String])(any[DBSession])).thenReturn(Some(TestData.Domain.DefaultTranslation))
+    when(unFlaggedTranslationsRepository.withUuId(any[String])(any[DBSession])).thenReturn(Some(TestData.Domain.DefaultTranslation))
     when(chapterRepository.chaptersForBookIdAndLanguage(any[Long], any[LanguageTag])(any[DBSession])).thenReturn(Seq())
 
     ePubService.createEPub(language, uuid) match {
@@ -50,7 +50,7 @@ class EPubServiceTest extends UnitSuite with TestEnvironment {
     val translation = TestData.Domain.DefaultTranslation.copy(coverphoto = Some(1))
     val image = DownloadedImage(ImageMetaInformation("1", "meta-url", "image-url", 1, "image/png", None), "bytes".getBytes)
 
-    when(translationRepository.withUuId(any[String])(any[DBSession])).thenReturn(Some(translation))
+    when(unFlaggedTranslationsRepository.withUuId(any[String])(any[DBSession])).thenReturn(Some(translation))
     when(chapterRepository.chaptersForBookIdAndLanguage(any[Long], any[LanguageTag])(any[DBSession])).thenReturn(Seq())
     when(imageApiClient.downloadImage(translation.coverphoto.get)).thenReturn(Success(image))
 
@@ -68,7 +68,7 @@ class EPubServiceTest extends UnitSuite with TestEnvironment {
   test("that createEpub returns failure when download of coverphoto fails") {
     val translation = TestData.Domain.DefaultTranslation.copy(coverphoto = Some(1))
 
-    when(translationRepository.withUuId(any[String])(any[DBSession])).thenReturn(Some(translation))
+    when(unFlaggedTranslationsRepository.withUuId(any[String])(any[DBSession])).thenReturn(Some(translation))
     when(chapterRepository.chaptersForBookIdAndLanguage(any[Long], any[LanguageTag])(any[DBSession])).thenReturn(Seq())
     when(imageApiClient.downloadImage(translation.coverphoto.get)).thenReturn(Failure(new RuntimeException("error")))
 
@@ -83,7 +83,7 @@ class EPubServiceTest extends UnitSuite with TestEnvironment {
 
   test("that createEpub creates a book with expected chapter") {
     val translation = TestData.Domain.DefaultTranslation
-    when(translationRepository.withUuId(any[String])(any[DBSession])).thenReturn(Some(translation))
+    when(unFlaggedTranslationsRepository.withUuId(any[String])(any[DBSession])).thenReturn(Some(translation))
     when(chapterRepository.chaptersForBookIdAndLanguage(any[Long], any[LanguageTag])(any[DBSession])).thenReturn(translation.chapters)
 
     when(contentConverter.toEPubContent(any[String], any[Seq[DownloadedImage]])).thenReturn("Content-of-chapter")
@@ -105,7 +105,7 @@ class EPubServiceTest extends UnitSuite with TestEnvironment {
     val chapter = TestData.Domain.DefaultChapter.copy(content = """<p><embed data-resource="image" data-resource_id="1"/></p>""")
     val image = DownloadedImage(ImageMetaInformation("1", "meta-url", "image-url", 1, "image/png", None), "bytes".getBytes)
 
-    when(translationRepository.withUuId(any[String])(any[DBSession])).thenReturn(Some(translation))
+    when(unFlaggedTranslationsRepository.withUuId(any[String])(any[DBSession])).thenReturn(Some(translation))
     when(chapterRepository.chaptersForBookIdAndLanguage(any[Long], any[LanguageTag])(any[DBSession])).thenReturn(Seq(chapter))
 
     when(contentConverter.toEPubContent(any[String], any[Seq[DownloadedImage]])).thenReturn("Content-of-chapter")
@@ -127,7 +127,7 @@ class EPubServiceTest extends UnitSuite with TestEnvironment {
     val translation = TestData.Domain.DefaultTranslation
     val chapter = TestData.Domain.DefaultChapter.copy(content = """<p><embed data-resource="image" data-resource_id="1"/></p>""")
 
-    when(translationRepository.withUuId(any[String])(any[DBSession])).thenReturn(Some(translation))
+    when(unFlaggedTranslationsRepository.withUuId(any[String])(any[DBSession])).thenReturn(Some(translation))
     when(chapterRepository.chaptersForBookIdAndLanguage(any[Long], any[LanguageTag])(any[DBSession])).thenReturn(Seq(chapter))
     when(imageApiClient.downloadImage(1)).thenReturn(Failure(new RuntimeException("image-download-error")))
 

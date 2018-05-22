@@ -75,6 +75,13 @@ object PageOrientation extends Enumeration {
 object PublishingStatus extends Enumeration {
   val PUBLISHED, UNLISTED, FLAGGED = Value
 
+  def valueOf(s: String): Try[PublishingStatus.Value] = {
+    PublishingStatus.values.find(_.toString.equalsIgnoreCase(s)) match {
+      case Some(x) => Success(x)
+      case None => Failure(new RuntimeException(s"Unknown PublishingStatus $s."))
+    }
+  }
+
   def valueOfOrDefault(s: String): PublishingStatus.Value = {
     PublishingStatus.values.find(_.toString == s.toUpperCase).getOrElse(PUBLISHED)
   }
@@ -88,11 +95,8 @@ object BookFormat extends Enumeration {
   }
 }
 
-object Translation extends SQLSyntaxSupport[Translation] {
-
+sealed trait TranslationView extends SQLSyntaxSupport[Translation] {
   implicit val formats = org.json4s.DefaultFormats
-  override val tableName = "translation_not_flagged"
-  override val schemaName = Some(BookApiProperties.MetaSchema)
   val JSonSerializer = FieldSerializer[Translation]()
 
   def apply(t: SyntaxProvider[Translation])(rs: WrappedResultSet): Translation = apply(t.resultName)(rs)
@@ -138,4 +142,15 @@ object Translation extends SQLSyntaxSupport[Translation] {
     val translation = apply(t)(rs)
     translation.copy(educationalAlignment = translation.eaId.map(_ => EducationalAlignment.apply(ea)(rs)))
   }
+}
+
+
+object UnflaggedTranslations extends TranslationView {
+  override val schemaName = Some(BookApiProperties.MetaSchema)
+  override val tableName = "translation_not_flagged"
+}
+
+object AllTranslations extends TranslationView {
+  override val schemaName = Some(BookApiProperties.MetaSchema)
+  override val tableName = "translation"
 }

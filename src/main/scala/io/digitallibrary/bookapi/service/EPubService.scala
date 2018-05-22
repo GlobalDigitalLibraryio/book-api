@@ -25,7 +25,7 @@ trait EPubService {
 
   class EPubService() extends LazyLogging {
     def createEPub(language: LanguageTag, uuid: String): Option[Try[EpubBook]] = {
-      translationRepository.withUuId(uuid).map(translation =>
+      unFlaggedTranslationsRepository.withUuId(uuid).map(translation =>
         translation.bookFormat match {
           case BookFormat.HTML => buildEPubFor(translation, chapterRepository.chaptersForBookIdAndLanguage(translation.bookId, language))
           case BookFormat.PDF => Failure(new NotFoundException(s"Book ${translation.title} is not an epub book."))

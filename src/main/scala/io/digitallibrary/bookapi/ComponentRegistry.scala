@@ -16,6 +16,7 @@ import com.zaxxer.hikari.HikariDataSource
 import io.digitallibrary.bookapi.controller._
 import io.digitallibrary.bookapi.integration._
 import io.digitallibrary.bookapi.integration.crowdin.CrowdinClientBuilder
+import io.digitallibrary.bookapi.model.domain.{AllTranslations, UnflaggedTranslations}
 import io.digitallibrary.bookapi.repository._
 import io.digitallibrary.bookapi.service._
 import io.digitallibrary.bookapi.service.search.{IndexBuilderService, IndexService, SearchService}
@@ -126,7 +127,8 @@ object ComponentRegistry
   lazy val categoryRepository = new CategoryRepository
   lazy val chapterRepository = new ChapterRepository
   lazy val contributorRepository = new ContributorRepository
-  lazy val translationRepository = new TranslationRepository
+  lazy val unFlaggedTranslationsRepository = new TranslationRepository
+  lazy val allTranslationsRepository = new TranslationRepository(translationView = AllTranslations)
   lazy val educationalAlignmentRepository = new EducationalAlignmentRepository
   lazy val licenseRepository = new LicenseRepository
   lazy val personRepository = new PersonRepository

@@ -73,8 +73,8 @@ trait TranslationService {
             inTranslation             <- Try(translationDbService.translationWithId(file.inTranslationId).get)
             crowdinClient             <- crowdinClientBuilder.forSourceLanguage(inTranslation.fromLanguage)
             translatedMetadata         <- crowdinClient.fetchTranslatedMetaData(file, crowdinToLanguage)
-            newTranslation            <- Try(translationRepository.withId(inTranslation.newTranslationId.get).get)
-            originalChapter           <- Try(translationRepository.updateTranslation(newTranslation.copy(title = translatedMetadata.title, about = translatedMetadata.description)))
+            newTranslation            <- Try(unFlaggedTranslationsRepository.withId(inTranslation.newTranslationId.get).get)
+            originalChapter           <- Try(unFlaggedTranslationsRepository.updateTranslation(newTranslation.copy(title = translatedMetadata.title, about = translatedMetadata.description)))
             updatedInTranslationFile  <- translationDbService.updateTranslationStatus(file, status)
           } yield updatedInTranslationFile
         }
@@ -203,7 +203,7 @@ trait TranslationService {
     }
 
     private def existingTranslation(translationId: Long): Try[domain.Translation] = {
-      translationRepository.withId(translationId) match {
+      unFlaggedTranslationsRepository.withId(translationId) match {
         case None => Failure(new RuntimeException(s"The translated book with id $translationId was not found. Cannot fetch updates."))
         case Some(existingTranslation) => Success(existingTranslation)
       }

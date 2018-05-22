@@ -73,7 +73,7 @@ trait PdfService {
     )
 
     def getPdf(language: LanguageTag, uuid: String): Option[PdfStream] = {
-      translationRepository.withUuId(uuid) match {
+      unFlaggedTranslationsRepository.withUuId(uuid) match {
         case Some(translation) => translation.bookFormat match {
           case BookFormat.HTML =>
             Some(RBPdf(createPdf(language, uuid).get, s"${translation.title}.pdf"))
@@ -87,7 +87,7 @@ trait PdfService {
     }
 
     def createPdf(language: LanguageTag, uuid: String): Option[PdfRendererBuilder] = {
-      translationRepository.withUuId(uuid).map(translation => {
+      unFlaggedTranslationsRepository.withUuId(uuid).map(translation => {
         val source = bookRepository.withId(translation.bookId).map(_.source)
 
         val chapters = readService.chaptersForIdAndLanguage(translation.bookId, language).flatMap(ch => readService.chapterForBookWithLanguageAndId(translation.bookId, language, ch.id))

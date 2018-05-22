@@ -164,9 +164,9 @@ trait FeedService {
 
     def fromHit(bookHit: BookHit, feedLocalization: FeedLocalization): Option[Book] = {
       for {
-        translation <- translationRepository.forBookIdAndLanguage(bookHit.id, LanguageTag(bookHit.language.code))
+        translation <- unFlaggedTranslationsRepository.forBookIdAndLanguage(bookHit.id, LanguageTag(bookHit.language.code))
         book <- bookRepository.withId(bookHit.id)
-        apiBook = converterService.toApiBook(translation, translationRepository.languagesFor(bookHit.id), book)
+        apiBook = converterService.toApiBook(translation, unFlaggedTranslationsRepository.languagesFor(bookHit.id), book)
         apiBookWithLocalizedReadingLevel = apiBook.copy(readingLevel = apiBook.readingLevel.map(feedLocalization.levelTitle))
       } yield apiBookWithLocalizedReadingLevel
     }
@@ -217,9 +217,9 @@ trait FeedService {
 
     def calculateFeeds: Seq[domain.Feed] = {
       val feeds = for {
-        language <- translationRepository.allAvailableLanguagesWithStatus(PublishingStatus.PUBLISHED)
+        language <- unFlaggedTranslationsRepository.allAvailableLanguagesWithStatus(PublishingStatus.PUBLISHED)
         localization = feedLocalizationService.localizationFor(language)
-        (category: domain.Category, levels: Set[String]) <- translationRepository.allAvailableCategoriesAndReadingLevelsWithStatus(PublishingStatus.PUBLISHED, language)
+        (category: domain.Category, levels: Set[String]) <- unFlaggedTranslationsRepository.allAvailableCategoriesAndReadingLevelsWithStatus(PublishingStatus.PUBLISHED, language)
         categoryFeed = domain.Feed(
           id = None,
           revision = None,
