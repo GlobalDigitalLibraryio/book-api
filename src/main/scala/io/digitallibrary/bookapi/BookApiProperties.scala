@@ -135,7 +135,7 @@ object BookApiProperties extends LazyLogging {
         }
       }
       case "prod" => s"https://$typ.digitallibrary.io"
-      case "staging" | "test" => s"https://$typ.$env.digitallibrary.io"
+      case "staging" | "test" | "demo" => s"https://$typ.$env.digitallibrary.io"
       case _ => throw new IllegalArgumentException(s"$env is not a valid env")
     }
   }
