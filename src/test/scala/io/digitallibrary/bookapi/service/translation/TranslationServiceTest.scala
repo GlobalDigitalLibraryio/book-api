@@ -10,7 +10,7 @@ package io.digitallibrary.bookapi.service.translation
 import io.digitallibrary.language.model.LanguageTag
 import io.digitallibrary.bookapi.integration.crowdin.{CrowdinClient, TranslatedChapter}
 import io.digitallibrary.bookapi.model._
-import io.digitallibrary.bookapi.model.domain.ChapterType
+import io.digitallibrary.bookapi.model.domain.{ChapterType, TranslationStatus}
 import io.digitallibrary.bookapi.{TestData, TestEnvironment, UnitSuite}
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
@@ -303,5 +303,25 @@ class TranslationServiceTest extends UnitSuite with TestEnvironment {
 
     val result = service.fetchTranslatedFile("abc", "nb", "file-id", domain.TranslationStatus.TRANSLATED)
     result should be a 'Success
+  }
+
+  test("that markTranslationAs returns a Failure when the file does not belong to a translation registered with crowdin") {
+    when(translationDbService.translationWithId(any[Long])).thenReturn(None)
+    service.markTranslationAs(TestData.Domain.DefaultInTranslationFile, TranslationStatus.PROOFREAD) should be a 'Failure
+  }
+
+  test("that markTranslationAs returns a Failure when a the new translation is not found") {
+    when(translationDbService.translationWithId(any[Long])).thenReturn(Some(TestData.Domain.DefaultinTranslation))
+    when(unFlaggedTranslationsRepository.withId(any[Long])(any[DBSession])).thenReturn(None)
+
+    service.markTranslationAs(TestData.Domain.DefaultInTranslationFile, TranslationStatus.PROOFREAD) should be a 'Failure
+  }
+
+  test("that markTranslationAs returns a Success when all data is found") {
+    when(translationDbService.translationWithId(any[Long])).thenReturn(Some(TestData.Domain.DefaultinTranslation))
+    when(unFlaggedTranslationsRepository.withId(any[Long])(any[DBSession])).thenReturn(Some(TestData.Domain.DefaultTranslation))
+    when(unFlaggedTranslationsRepository.updateTranslation(any[domain.Translation])(any[DBSession])).thenReturn(TestData.Domain.DefaultTranslation)
+
+    service.markTranslationAs(TestData.Domain.DefaultInTranslationFile, TranslationStatus.PROOFREAD) should be a 'Success
   }
 }

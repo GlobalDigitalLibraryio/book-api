@@ -76,6 +76,24 @@ trait TranslationsController {
       }
     }
 
+    get("/file-proofread", operation(projectFileTranslated)) {
+      val projectIdentifier = params("project")
+      val crowdinLanguage = params("language")
+      val language = LanguageTag(crowdinLanguage)
+      val fileId = params("file_id")
+
+      val translatedFileUpdated = translationService.fetchTranslatedFile(projectIdentifier, crowdinLanguage, fileId, TranslationStatus.PROOFREAD).map(file => {
+        if(translationService.allFilesHaveStatus(file, TranslationStatus.PROOFREAD)) {
+          translationService.markTranslationAs(file, TranslationStatus.PROOFREAD)
+        }
+      })
+
+      translatedFileUpdated match {
+        case Failure(err) => errorHandler(err)
+        case Success(_) => NoContent()
+      }
+    }
+
     get("/synchronized/:inTranslationId") {
       val inTranslationId = long("inTranslationId")
       logger.info(s"Synchronizing the translation for id $inTranslationId")

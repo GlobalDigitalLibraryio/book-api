@@ -86,7 +86,8 @@ object TestData {
       bookFormat = BookFormat.HTML.toString,
       source = DefaultSource,
       pageOrientation = DefaultPageOrientation,
-      publishingStatus = PublishingStatus.PUBLISHED.toString)
+      publishingStatus = PublishingStatus.PUBLISHED.toString,
+      translationStatus = None)
 
     val DefaultBookHit = api.BookHit(
       id = 1,
@@ -157,6 +158,7 @@ object TestData {
       dateCreated = Some(yesterday),
       dateArrived = today,
       publishingStatus = domain.PublishingStatus.PUBLISHED,
+      translationStatus = None,
       categoryIds = Seq(DefaultCategory.id.get),
       coverphoto = None,
       tags = Seq("tag1", "tag2"),

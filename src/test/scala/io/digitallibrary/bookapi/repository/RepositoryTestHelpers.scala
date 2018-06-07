@@ -53,6 +53,7 @@ trait RepositoryTestHelpers {
       dateCreated = Some(LocalDate.now()),
       dateArrived = dateArrived.getOrElse(LocalDate.now()),
       publishingStatus = status,
+      translationStatus = None,
       categoryIds = Seq(category.id.get),
       coverphoto = None,
       tags = Seq("tag1", "tag2"),

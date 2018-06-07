@@ -107,6 +107,7 @@ trait ConverterService {
         accessibilityHazard = None,
         dateArrived = newBook.dateArrived,
         publishingStatus = PublishingStatus.PUBLISHED,
+        translationStatus = None,
         educationalAlignment = None,
         chapters = Seq(),
         contributors = Seq(),
@@ -170,6 +171,7 @@ trait ConverterService {
         newTranslation.accessibilityHazard,
         newTranslation.dateArrived.getOrElse(LocalDate.now()),
         PublishingStatus.PUBLISHED,
+        None,
         newTranslation.educationalAlignment.map(toDomainEducationalAlignment),
         chapters = Seq(),
         contributors = Seq(),
@@ -297,7 +299,8 @@ trait ConverterService {
           bookFormat = translation.bookFormat.toString,
           pageOrientation = translation.pageOrientation.toString,
           source = book.source,
-          publishingStatus = translation.publishingStatus.toString)
+          publishingStatus = translation.publishingStatus.toString,
+          translationStatus = translation.translationStatus.map(_.toString))
     }
 
     def toApiBookHit(translation: Option[domain.Translation], book: Option[domain.Book]): Option[api.BookHit] = {

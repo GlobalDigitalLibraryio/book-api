@@ -81,6 +81,22 @@ trait TranslationService {
       }
     }
 
+    def allFilesHaveStatus(inTranslationFile: InTranslationFile, status: TranslationStatus.Value): Boolean = {
+      translationDbService.filesForTranslation(inTranslationFile.inTranslationId).forall(_.translationStatus == status)
+    }
+
+    def markTranslationAs(inTranslationFile: InTranslationFile, status: TranslationStatus.Value): Try[Translation] = {
+      val updateTranslation = translationDbService.translationWithId(inTranslationFile.inTranslationId)
+        .flatMap(_.newTranslationId)
+        .flatMap(inTranslation => unFlaggedTranslationsRepository.withId(inTranslation))
+          .map(translation => unFlaggedTranslationsRepository.updateTranslation(translation.copy(translationStatus = Some(status))))
+
+      updateTranslation match {
+        case Some(translation) => Success(translation)
+        case None => Failure(new NotFoundException(s"No translation for crowdin file ${inTranslationFile.crowdinFileId} found."))
+      }
+    }
+
     def updateTranslationStatus(projectIdentifier: String, language: LanguageTag, fileId: String, status: TranslationStatus.Value): Try[InTranslationFile] = {
       translationDbService.fileForCrowdinProjectWithFileIdAndLanguage(projectIdentifier, fileId, language) match {
         case None => Failure(new NotFoundException(s"No translation for project $projectIdentifier, language $language and file_id $fileId"))
