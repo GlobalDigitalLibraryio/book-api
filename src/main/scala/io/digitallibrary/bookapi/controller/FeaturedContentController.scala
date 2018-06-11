@@ -32,17 +32,17 @@ trait FeaturedContentController {
 
     private val correlationIDParameter = headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted.")
 
-    private val getAllFeaturedContentInDefaultLang = (apiOperation[Seq[api.Book]]("getAllFeaturedContentInDefaultLang")
+    private val getAllFeaturedContentInDefaultLang = (apiOperation[Seq[api.FeaturedContent]]("getAllFeaturedContentInDefaultLang")
       summary "Returns all featured content in default language"
       notes "Returns all featured content in default language"
       parameters correlationIDParameter
       responseMessages response500)
 
-    private val getAllFeaturedContentInLang = (apiOperation[Seq[api.Book]]("getAllFeaturedContentInLang")
+    private val getAllFeaturedContentInLang = (apiOperation[Seq[api.FeaturedContent]]("getAllFeaturedContentInLang")
       summary "Returns all featured content in given language"
       notes "Returns all featured content in given language"
       parameters(correlationIDParameter,
-      pathParam[String]("lang").description("Desired language for books specified in ISO 639-1/2 format."))
+      pathParam[String]("lang").description("Desired language for featured content specified in ISO 639-1/2 format."))
       responseMessages response500)
 
     private val addNewFeaturedContent = (apiOperation[FeaturedContentId]("addNewFeaturedContent")
