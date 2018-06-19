@@ -10,9 +10,10 @@ package io.digitallibrary.bookapi.service.translation
 import io.digitallibrary.language.model.LanguageTag
 import io.digitallibrary.bookapi.integration.crowdin.{CrowdinClient, TranslatedChapter}
 import io.digitallibrary.bookapi.model._
-import io.digitallibrary.bookapi.model.domain.ChapterType
+import io.digitallibrary.bookapi.model.domain.{ChapterType, ContributorType, Person}
 import io.digitallibrary.bookapi.{TestData, TestEnvironment, UnitSuite}
 import org.mockito.ArgumentMatchers._
+import org.mockito.ArgumentMatchers.{eq => eqTo}
 import org.mockito.Mockito._
 import scalikejdbc.DBSession
 
@@ -60,13 +61,12 @@ class TranslationServiceTest extends UnitSuite with TestEnvironment {
 
     when(translationDbService.translationsForOriginalId(any[Long])).thenReturn(existingInTranslations)
     when(translationDbService.addUserToTranslation(any[domain.InTranslation], any[domain.Person])).thenReturn(Success(inTranslationToUpdate))
-    when(writeService.addTranslatorToTranslation(any[Long], any[domain.Person])).thenReturn(TestData.Domain.DefaultContributor)
 
     val response = service.addTranslation(api.TranslateRequest(1, "eng", "nob"))
     response should be a 'Success
 
     verify(translationDbService).addUserToTranslation(any[domain.InTranslation], any[domain.Person])
-    verify(writeService).addTranslatorToTranslation(any[Long], any[domain.Person])
+    verify(writeService, never()).addTranslatorToTranslation(any[Long], any[domain.Person])
     verify(translationDbService).translationsForOriginalId(any[Long])
     verifyNoMoreInteractions(crowdinClientMock)
     verifyNoMoreInteractions(translationDbService)
@@ -110,6 +110,8 @@ class TranslationServiceTest extends UnitSuite with TestEnvironment {
 
     when(readService.chapterWithId(any[Long])).thenReturn(Some(TestData.Api.Chapter1))
 
+    when(writeService.addInTransportMark(any[api.Book])).thenReturn(Success())
+    when(writeService.removeInTransportMark(any[api.Book])).thenReturn(Success())
     when(crowdinClientMock.addTargetLanguage(any[String])).thenReturn(Success())
     when(crowdinClientMock.addDirectoryFor(any[domain.Translation])).thenReturn(Success("created-directory"))
     when(crowdinClientMock.addBookMetadata(any[domain.Translation])).thenReturn(Success(TestData.Crowdin.DefaultMetadataCrowdinFile))
@@ -140,6 +142,8 @@ class TranslationServiceTest extends UnitSuite with TestEnvironment {
     when(writeService.newTranslationForBook(any[api.Book], any[api.TranslateRequest])).thenReturn(Success(persistedNewTranslation))
     when(readService.chapterWithId(chapter1.id.get)).thenReturn(Some(TestData.Api.Chapter1))
 
+    when(writeService.addInTransportMark(any[api.Book])).thenReturn(Success())
+    when(writeService.removeInTransportMark(any[api.Book])).thenReturn(Success())
     when(crowdinClientMock.addTargetLanguage(any[String])).thenReturn(Success())
     when(crowdinClientMock.addDirectoryFor(any[domain.Translation])).thenReturn(Success("created-directory"))
     when(crowdinClientMock.addBookMetadata(any[domain.Translation])).thenReturn(Success(TestData.Crowdin.DefaultMetadataCrowdinFile))
@@ -165,6 +169,8 @@ class TranslationServiceTest extends UnitSuite with TestEnvironment {
 
     when(readService.chapterWithId(any[Long])).thenReturn(Some(TestData.Api.Chapter1))
 
+    when(writeService.addInTransportMark(any[api.Book])).thenReturn(Success())
+    when(writeService.removeInTransportMark(any[api.Book])).thenReturn(Success())
     when(crowdinClientMock.addTargetLanguage(any[String])).thenReturn(Success())
     when(crowdinClientMock.addDirectoryFor(any[domain.Translation])).thenReturn(Success("created-directory"))
     when(crowdinClientMock.addBookMetadata(any[domain.Translation])).thenReturn(Success(TestData.Crowdin.DefaultMetadataCrowdinFile))
@@ -180,20 +186,6 @@ class TranslationServiceTest extends UnitSuite with TestEnvironment {
 
     verify(crowdinClientMock, times(1)).deleteDirectoryFor(any[domain.Translation])
     verify(writeService, times(1)).deleteTranslation(any[domain.Translation])
-  }
-
-  test("that updateTranslationStatus returns a Failure when file not found") {
-    when(translationDbService.fileForCrowdinProjectWithFileIdAndLanguage(any[String], any[String], any[LanguageTag])).thenReturn(None)
-    val result = service.updateTranslationStatus("abc", LanguageTag("nob"), "123", domain.TranslationStatus.TRANSLATED)
-    result should be a 'Failure
-    result.failed.get.getMessage should equal (s"No translation for project abc, language nb and file_id 123")
-  }
-
-  test("that updateTranslationStatus returns a Success when update ok") {
-    when(translationDbService.fileForCrowdinProjectWithFileIdAndLanguage(any[String], any[String], any[LanguageTag])).thenReturn(Some(TestData.Domain.DefaultInTranslationFile))
-    when(translationDbService.updateTranslationStatus(any[domain.InTranslationFile], any[domain.TranslationStatus.Value])).thenReturn(Success(TestData.Domain.DefaultInTranslationFile))
-    val result = service.updateTranslationStatus("abc", LanguageTag("nob"), "123", domain.TranslationStatus.TRANSLATED)
-    result should be a 'Success
   }
 
   test("that fetchUpdatesFor returns Failure when book has not been translated yet") {
@@ -235,8 +227,9 @@ class TranslationServiceTest extends UnitSuite with TestEnvironment {
     result.failed.get.getMessage contains "No metadata for translation with id" should be (true)
   }
 
-  test("that fetchTranslatedFile returns Failure when translation file is not found") {
+  test("that fetchTranslatedFile returns Failure when no translation files for any languages are not found") {
     when(translationDbService.fileForCrowdinProjectWithFileIdAndLanguage(any[String], any[String], any[LanguageTag])).thenReturn(None)
+    when(translationDbService.fileForCrowdinProjectWithFileId(any[String], any[String])).thenReturn(Seq())
     val result = service.fetchTranslatedFile("abc", "nb", "file-id", domain.TranslationStatus.TRANSLATED)
     result should be a 'Failure
   }
@@ -303,5 +296,57 @@ class TranslationServiceTest extends UnitSuite with TestEnvironment {
 
     val result = service.fetchTranslatedFile("abc", "nb", "file-id", domain.TranslationStatus.TRANSLATED)
     result should be a 'Success
+  }
+
+  test("that fetchTranslatedFile creates a new translation when the targetLanguage is different from initiated language") {
+    val crowdinClientMock = mock[CrowdinClient]
+
+    when(translationDbService.fileForCrowdinProjectWithFileIdAndLanguage(any[String], any[String], any[LanguageTag]))
+      .thenReturn(None) //First iteration
+      .thenReturn(Some(TestData.Domain.DefaultInTranslationFile)) // Second iteration
+
+    when(translationDbService.fileForCrowdinProjectWithFileId(any[String], any[String])).thenReturn(Seq(TestData.Domain.DefaultInTranslationFile))
+    when(translationDbService.translationWithId(any[Long])).thenReturn(Some(TestData.Domain.DefaultinTranslation))
+    when(crowdinClientBuilder.forSourceLanguage(any[LanguageTag])).thenReturn(Success(crowdinClientMock))
+    when(readService.withIdAndLanguage(any[Long], any[LanguageTag])).thenReturn(Some(TestData.Api.DefaultBook))
+    when(translationDbService.filesForTranslation(any[Long])).thenReturn(Seq(TestData.Domain.DefaultInTranslationFile))
+    when(crowdinClientMock.addTargetLanguage(any[String])).thenReturn(Success())
+    when(writeService.newTranslationForBook(any[api.Book], any[api.TranslateRequest])).thenReturn(Success(TestData.Domain.DefaultTranslation))
+
+    val inTranslationToUpdate = TestData.Domain.DefaultinTranslation.copy(id = Some(2), fromLanguage = LanguageTag("eng"), toLanguage = LanguageTag("nob"))
+    when(translationDbService.addTranslationWithFiles(any[domain.InTranslation], any[Seq[domain.InTranslationFile]], any[domain.Translation], any[api.TranslateRequest])).thenReturn(Success(inTranslationToUpdate))
+    when(crowdinClientMock.fetchTranslatedChapter(any[domain.InTranslationFile], any[String])).thenReturn(Success(TestData.Crowdin.DefaultTranslatedChapter))
+    when(chapterRepository.withId(any[Long])(any[DBSession])).thenReturn(Some(TestData.Domain.DefaultChapter))
+    when(mergeService.mergeChapter(any[domain.Chapter], any[TranslatedChapter])).thenReturn(TestData.Domain.DefaultChapter)
+    when(chapterRepository.updateChapter(any[domain.Chapter])).thenReturn(TestData.Domain.DefaultChapter)
+    when(translationDbService.updateTranslationStatus(any[domain.InTranslationFile], any[domain.TranslationStatus.Value])).thenReturn(Success(TestData.Domain.DefaultInTranslationFile))
+
+    val result = service.fetchTranslatedFile("abc", "es", "file-id", domain.TranslationStatus.TRANSLATED)
+    result should be a 'Success
+  }
+
+  test("that exctractContributors adds new contributors, removes old and keeps existing contributors to translation") {
+
+    val existingContributor1 = TestData.Domain.DefaultContributor.copy(id = Some(1), personId = 1, person = Person(Some(1), Some(1), "Translator 1", None), `type` = ContributorType.Translator)
+    val existingContributor2 = TestData.Domain.DefaultContributor.copy(id = Some(2), personId = 2, person = Person(Some(2), Some(1), "Translator 2", None), `type` = ContributorType.Translator) // Should be removed
+    val existingTranslation = TestData.Domain.DefaultTranslation.copy(contributors = Seq(existingContributor1, existingContributor2))
+
+    val person1 = existingContributor1.person //already exists on translation, and should be kept
+    val person3 = Person(Some(3), Some(1), "Translator 3", None) // new and should be added
+    val addedContributor = domain.Contributor(Some(3), Some(1), person3.id.get, existingTranslation.id.get, ContributorType.Translator, person3)
+    val bookMetadata = TestData.Crowdin.DefaultBookMetaData.copy(translators = Some("Translator 1, Translator 3"))
+
+    when(writeService.addPerson(any[String]))
+      .thenReturn(person1)
+      .thenReturn(person3)
+
+    when(writeService.addTranslatorToTranslation(eqTo(existingTranslation.id.get), eqTo(person3))).thenReturn(addedContributor)
+
+    val translation = service.extractContributors(bookMetadata, existingTranslation)
+    translation.contributors.size should be (2)
+    translation.contributors.contains(existingContributor1) should be (true)
+    translation.contributors.contains(addedContributor) should be (true)
+
+    verify(writeService).removeContributor(eqTo(existingContributor2))
   }
 }

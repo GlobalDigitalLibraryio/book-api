@@ -191,7 +191,7 @@ object TestData {
     val DefaultContentCrowdinFile = crowdin.CrowdinFile(Some(1), 0, domain.FileType.CONTENT, crowdin.AddedFile(1, "filename", 1, 1))
     val DefaultMetadataCrowdinFile = crowdin.CrowdinFile(Some(2), 0, domain.FileType.METADATA, crowdin.AddedFile(1, "filename", 1, 1))
     val DefaultTranslatedChapter = TranslatedChapter(None, "Some content", Some("123"))
-    val DefaultBookMetaData = BookMetaData("Title", "Description", Some("123"))
+    val DefaultBookMetaData = BookMetaData("Title", "Description", Some("Translator 1, Translator"), Some("123"))
   }
 
   object Internal {

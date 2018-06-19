@@ -84,6 +84,19 @@ trait InTranslationFileRepository {
         .list().apply()
     }
 
+    def forCrowdinProjectWithFileId(crowdinProjectId: String, crowdinFileId: String)(implicit session: DBSession = ReadOnlyAutoSession): Seq[InTranslationFile] = {
+      select
+        .from(InTranslationFile as itf)
+        .leftJoin(InTranslation as it)
+          .on(it.id, itf.inTranslationId)
+        .where
+          .eq(itf.crowdinFileId, crowdinFileId).and
+          .eq(it.crowdinProjectId, crowdinProjectId)
+        .toSQL
+        .map(InTranslationFile(itf))
+        .list().apply()
+    }
+
     def forCrowdinProjectWithFileIdAndLanguage(crowdinProjectId: String, crowdinFileId: String, language: LanguageTag)(implicit session: DBSession = ReadOnlyAutoSession): Option[InTranslationFile] = {
       select
         .from(InTranslationFile as itf)

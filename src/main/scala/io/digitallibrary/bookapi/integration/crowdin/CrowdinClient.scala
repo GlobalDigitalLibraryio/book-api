@@ -49,7 +49,7 @@ class CrowdinClient(fromLanguage: String, projectIdentifier: String, projectKey:
   def addBookMetadata(translation: Translation): Try[CrowdinFile] = {
     implicit val formats: DefaultFormats = DefaultFormats
 
-    val metadata = BookMetaData(translation.title, translation.about)
+    val metadata = BookMetaData(translation.title, translation.about, Some("insert your name here, enter multiple names separated by a comma"))
     val filename = CrowdinUtils.metadataFilenameFor(translation)
 
     val response = gdlClient
@@ -191,5 +191,5 @@ object CrowdinUtils {
   def filenameFor(book: Book, chapterId: Long) = s"${directoryNameFor(book)}/$chapterId.xhtml"
 }
 
-case class BookMetaData(title: String, description: String, etag: Option[String] = None)
+case class BookMetaData(title: String, description: String, translators: Option[String], etag: Option[String] = None)
 case class TranslatedChapter(newChapterId: Option[Long], content: String, etag: Option[String] = None)

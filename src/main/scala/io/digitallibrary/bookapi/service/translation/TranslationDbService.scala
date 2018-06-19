@@ -26,6 +26,9 @@ trait TranslationDbService {
     def fileForCrowdinProjectWithFileIdAndLanguage(crowdinProjectId: String, fileId: String, language: LanguageTag): Option[InTranslationFile] =
       inTranslationFileRepository.forCrowdinProjectWithFileIdAndLanguage(crowdinProjectId, fileId, language)
 
+    def fileForCrowdinProjectWithFileId(crowdinProjectId: String, fileId: String): Seq[InTranslationFile] =
+      inTranslationFileRepository.forCrowdinProjectWithFileId(crowdinProjectId, fileId)
+
     def filesForTranslation(inTranslationId: Long): Seq[InTranslationFile] =
       inTranslationFileRepository.withTranslationId(inTranslationId)
 

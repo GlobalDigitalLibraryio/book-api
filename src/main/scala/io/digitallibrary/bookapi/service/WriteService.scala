@@ -15,8 +15,8 @@ import io.digitallibrary.language.model.LanguageTag
 import io.digitallibrary.network.AuthUser
 import io.digitallibrary.bookapi.controller.NewFeaturedContent
 import io.digitallibrary.bookapi.model._
-import io.digitallibrary.bookapi.model.api.internal.{NewChapter, NewTranslation}
-import io.digitallibrary.bookapi.model.api.{FeaturedContentId, NotFoundException, TranslateRequest, ValidationMessage}
+import io.digitallibrary.bookapi.model.api.internal.{NewChapter, NewTranslation, TranslationId}
+import io.digitallibrary.bookapi.model.api.{CrowdinException, FeaturedContentId, NotFoundException, TranslateRequest, ValidationMessage}
 import io.digitallibrary.bookapi.model.domain._
 import io.digitallibrary.bookapi.repository._
 import io.digitallibrary.bookapi.service.search.IndexService
@@ -61,8 +61,19 @@ trait WriteService {
       }
     }
 
+    def addPerson(personName: String): Person = {
+      personRepository.withName(personName) match {
+        case Some(person) => person
+        case None => personRepository.add(Person(id = None, revision = None, name = personName, gdlId = None))
+      }
+    }
+
     def addTranslatorToTranslation(translationId: Long, person: Person): Contributor = {
       contributorRepository.add(Contributor(None, None, person.id.get, translationId, ContributorType.Translator, person))
+    }
+
+    def removeContributor(contributor: Contributor): Unit = {
+      contributorRepository.remove(contributor)
     }
 
 
@@ -200,21 +211,11 @@ trait WriteService {
             uuid = UUID.randomUUID().toString,
             language = LanguageTag(translateRequest.toLanguage),
             translatedFrom = Some(LanguageTag(translateRequest.fromLanguage)),
-            title = originalBook.title,
-            about = originalBook.description,
             publishingStatus = PublishingStatus.UNLISTED)
 
           Try {
             inTransaction { implicit session =>
               val persistedTranslation = unFlaggedTranslationsRepository.add(newTranslation)
-
-              val newPersons = AuthUser.get.flatMap(personRepository.withGdlId)
-              val newContributors = newPersons.map(person => Contributor(None, None, person.id.get, persistedTranslation.id.get, ContributorType.Translator, person))
-              val copyContributors = translation.contributors.map(contributor => contributor.copy(id = None, revision = None, translationId = persistedTranslation.id.get))
-
-              val contributorsToPersist = newContributors ++ copyContributors
-              contributorsToPersist.map(contributor => contributorRepository.add(contributor))
-
               val persistedChapters = translation.chapters.map(chapterToCopy => {
                 val newChapter = chapterToCopy.copy(
                   id = None,
@@ -386,6 +387,25 @@ trait WriteService {
 
         })
       })
+    }
+
+    def addInTransportMark(book: api.Book): Try[Unit] = {
+      unFlaggedTranslationsRepository.forBookIdAndLanguage(book.id, LanguageTag(book.language.code)) match {
+        case None => Failure(new NotFoundException())
+        case Some(inTransport) if inTransport.inTransport => Failure(CrowdinException("Book is currently being transported to Translation system"))
+        case Some(translation) if !translation.inTransport => Try(unFlaggedTranslationsRepository.updateTranslation(translation.copy(inTransport = true)))
+      }
+    }
+
+    def removeInTransportMark(book: api.Book): Try[Unit] = {
+      unFlaggedTranslationsRepository
+        .forBookIdAndLanguage(book.id, LanguageTag(book.language.code))
+        .filter(_.inTransport)
+        .map(tr => Try(unFlaggedTranslationsRepository.updateTranslation(tr.copy(inTransport = false))))  match {
+        case None => Success()
+        case Some(Success(_)) => Success()
+        case Some(Failure(err)) => Failure(err)
+      }
     }
   }
 

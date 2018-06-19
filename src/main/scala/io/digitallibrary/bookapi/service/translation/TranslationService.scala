@@ -52,15 +52,30 @@ trait TranslationService {
       } yield SynchronizeResponse(persisted.bookId, CrowdinUtils.crowdinUrlToBook(originalBook, crowdinClient.getProjectIdentifier, inTranslation.crowdinToLanguage))
     }
 
+
     def fetchTranslatedFile(projectIdentifier: String, crowdinToLanguage: String, fileId: String, status: TranslationStatus.Value): Try[InTranslationFile] = {
       val toLanguage = LanguageTag(crowdinToLanguage)
 
       translationDbService.fileForCrowdinProjectWithFileIdAndLanguage(projectIdentifier, fileId, toLanguage) match {
-        case None => Failure(new NotFoundException(s"No translation for project $projectIdentifier, language $toLanguage and file_id $fileId"))
+        case None => {
+          val anInTranslationOpt = translationDbService.fileForCrowdinProjectWithFileId(projectIdentifier, fileId)
+            .headOption
+            .flatMap(x => translationDbService.translationWithId(x.inTranslationId))
+
+          anInTranslationOpt match {
+            case None => Failure(new RuntimeException(s"No translation for project $projectIdentifier and file_id $fileId"))
+            case Some(inTranslation) => for {
+                crowdinClient <- crowdinClientBuilder.forSourceLanguage(inTranslation.fromLanguage)
+                original <- originalBook(inTranslation)
+                addedTranslation <- addTargetLanguageForTranslation(inTranslation, TranslateRequest(inTranslation.originalTranslationId, inTranslation.fromLanguage.toString, crowdinToLanguage), original, crowdinClient)
+                translatedFile <- fetchTranslatedFile(projectIdentifier, crowdinToLanguage, fileId, status)
+              } yield translatedFile
+          }
+        }
         case Some(file) if file.fileType == FileType.CONTENT => {
           for {
             inTranslation             <- Try(translationDbService.translationWithId(file.inTranslationId).get)
-            crowdinClient             <- crowdinClientBuilder.forSourceLanguage(inTranslation.fromLanguage)
+            crowdinClient             <- crowdinClientBuilder.forSourceLanguage(inTranslation.fromLanguage  )
             translatedChapter         <- crowdinClient.fetchTranslatedChapter(file, crowdinToLanguage)
             originalChapter           <- Try(chapterRepository.withId(file.newChapterId.get).get)
             mergedChapter             <- Try(mergeService.mergeChapter(originalChapter, translatedChapter))
@@ -72,20 +87,31 @@ trait TranslationService {
           for {
             inTranslation             <- Try(translationDbService.translationWithId(file.inTranslationId).get)
             crowdinClient             <- crowdinClientBuilder.forSourceLanguage(inTranslation.fromLanguage)
-            translatedMetadata         <- crowdinClient.fetchTranslatedMetaData(file, crowdinToLanguage)
+            translatedMetadata        <- crowdinClient.fetchTranslatedMetaData(file, crowdinToLanguage)
             newTranslation            <- Try(unFlaggedTranslationsRepository.withId(inTranslation.newTranslationId.get).get)
-            originalChapter           <- Try(unFlaggedTranslationsRepository.updateTranslation(newTranslation.copy(title = translatedMetadata.title, about = translatedMetadata.description)))
+            newTranslationWithContrib <- Try(extractContributors(translatedMetadata, newTranslation))
+            originalChapter           <- Try(unFlaggedTranslationsRepository.updateTranslation(newTranslationWithContrib.copy(title = translatedMetadata.title, about = translatedMetadata.description)))
             updatedInTranslationFile  <- translationDbService.updateTranslationStatus(file, status)
           } yield updatedInTranslationFile
         }
       }
     }
 
-    def updateTranslationStatus(projectIdentifier: String, language: LanguageTag, fileId: String, status: TranslationStatus.Value): Try[InTranslationFile] = {
-      translationDbService.fileForCrowdinProjectWithFileIdAndLanguage(projectIdentifier, fileId, language) match {
-        case None => Failure(new NotFoundException(s"No translation for project $projectIdentifier, language $language and file_id $fileId"))
-        case Some(file) =>
-          translationDbService.updateTranslationStatus(file, status)
+    def extractContributors(bookMetaData: BookMetaData, translation: Translation): Translation = {
+      bookMetaData.translators match {
+        case None => translation
+        case Some(translators) => {
+          val persons = translators.split(",").filter(!_.isEmpty).map(_.trim).map(writeService.addPerson)
+          val existingTranslators = translation.contributors.filter(_.`type` == ContributorType.Translator)
+          val (toKeep, toDelete) = existingTranslators.partition(ctb => persons.exists(_.id == ctb.person.id))
+          val toAdd = persons.filterNot(p => existingTranslators.exists(_.person.id == p.id))
+
+          toDelete.foreach(writeService.removeContributor)
+          val added = toAdd.map(person => writeService.addTranslatorToTranslation(translation.id.get, person))
+
+          translation.copy(contributors = toKeep ++ added)
+
+        }
       }
     }
 
@@ -122,7 +148,6 @@ trait TranslationService {
       if(inTranslation.userIds.contains(person.gdlId.get)) {
         Success(inTranslation)
       } else {
-        writeService.addTranslatorToTranslation(inTranslation.newTranslationId.get, person)
         translationDbService.addUserToTranslation(inTranslation, person)
       }
     }
@@ -142,17 +167,21 @@ trait TranslationService {
           .filter(_.chapterType != ChapterType.License)
           .flatMap(ch => readService.chapterWithId(ch.id.get))
 
+
         val inTranslation = for {
+          _ <- writeService.addInTransportMark(originalBook)
           _ <- crowdinClient.addTargetLanguage(toLanguage)
           directory <- crowdinClient.addDirectoryFor(newTranslation)
           crowdinMeta <- crowdinClient.addBookMetadata(newTranslation)
           crowdinChapters <- crowdinClient.addChaptersFor(newTranslation, chaptersToTranslate)
           persistedTranslation <- translationDbService.newTranslation(translateRequest, newTranslation, crowdinMeta, crowdinChapters, crowdinClient.getProjectIdentifier)
+          _ <- writeService.removeInTransportMark(originalBook)
         } yield persistedTranslation
 
         inTranslation match {
           case Success(x) => Success(x)
           case Failure(e@(_: CrowdinException | _: DBException)) =>
+            writeService.removeInTransportMark(originalBook)
             crowdinClient.deleteDirectoryFor(newTranslation)
             writeService.deleteTranslation(newTranslation)
             Failure(e)
