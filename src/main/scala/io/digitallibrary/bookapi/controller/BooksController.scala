@@ -123,9 +123,7 @@ trait BooksController {
       description s"Returns a list of books for the logged in user."
       parameters(
       headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
-      queryParam[Option[Int]]("page-size").description("Return this many results per page."),
-      queryParam[Option[Int]]("page").description("Return results for this page."),
-      queryParam[Option[String]]("sort").description(s"Sorts result based on parameter. Possible values: ${Sort.values.mkString(",")}; Default value: ${Sort.ByIdAsc}"))
+      queryParam[Option[String]]("sort").description(s"Sorts result based on parameter. Possible values: ${MyBooksSort.values.mkString(",")}; Default value: ${MyBooksSort.ByIdAsc}"))
       responseMessages (response403, response500)
       authorizations "oauth2")
 
@@ -257,11 +255,9 @@ trait BooksController {
 
     get("/mine/?", operation(getMyBooks)) {
       val userId = requireUser
-      val pageSize = intOrDefault("page-size", 10).min(100).max(1)
-      val page = intOrDefault("page", 1).max(1)
-      val sort = Sort.valueOf(paramOrNone("sort")).getOrElse(Sort.ByIdAsc)
+      val sort = MyBooksSort.valueOf(paramOrNone("sort")).getOrElse(MyBooksSort.ByIdAsc)
 
-      readService.forUserWithLanguage(userId, pageSize, page, sort)
+      readService.forUserWithLanguage(userId, sort)
 
     }
 
