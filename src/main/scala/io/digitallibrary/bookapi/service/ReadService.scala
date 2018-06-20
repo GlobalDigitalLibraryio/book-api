@@ -62,8 +62,8 @@ trait ReadService {
       unFlaggedTranslationsRepository.allAvailableLevelsWithStatus(PublishingStatus.PUBLISHED, lang, cat)
     }
 
-
     def forUserWithLanguage(userId: String, pageSize: Int, page: Int, sort: Sort.Value): Seq[api.MyBook] = {
+      // TODO Use sort here or remove it!
       val inTranslationForUser = inTranslationRepository.inTranslationForUser(userId)
       for {
         inTranslation <- inTranslationForUser.filter(_.newTranslationId.isDefined)
