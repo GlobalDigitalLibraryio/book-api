@@ -62,4 +62,29 @@ class ChapterRepositoryTest extends IntegrationSuite with TestEnvironment with R
       chapter.head.content should equal(chapter1.content)
     }
   }
+
+  test("that Chapter.deleteChaptersExceptGivenSeqNumbers deletes chapters with seqNo not in the provided list, and no more") {
+    withRollback { implicit session =>
+      val book = addBookDef()
+      val translation1 = addTranslationDef("external-id1", "Some title 1", book.id.get, LanguageTag("eng"))
+      val translation2 = addTranslationDef("external-id2", "Some title 2", book.id.get, LanguageTag("swa"))
+
+      chapterRepository.add(Chapter(None, None, translation1.id.get, 1, Some("Chaptertitle1"), "Chaptercontent1", ChapterType.Content))
+      chapterRepository.add(Chapter(None, None, translation1.id.get, 2, Some("Chaptertitle1"), "Chaptercontent1", ChapterType.Content))
+      chapterRepository.add(Chapter(None, None, translation1.id.get, 3, Some("Chaptertitle1"), "Chaptercontent1", ChapterType.Content))
+      chapterRepository.add(Chapter(None, None, translation1.id.get, 4, Some("Chaptertitle1"), "Chaptercontent1", ChapterType.Content))
+      chapterRepository.add(Chapter(None, None, translation1.id.get, 5, Some("Chaptertitle1"), "Chaptercontent1", ChapterType.Content))
+
+      chapterRepository.add(Chapter(None, None, translation2.id.get, 4, Some("Chaptertitle1"), "Chaptercontent1", ChapterType.Content))
+      chapterRepository.add(Chapter(None, None, translation2.id.get, 5, Some("Chaptertitle1"), "Chaptercontent1", ChapterType.Content))
+
+      chapterRepository.chaptersForBookIdAndLanguage(book.id.get, LanguageTag("eng")).size should equal(5)
+      chapterRepository.chaptersForBookIdAndLanguage(book.id.get, LanguageTag("swa")).size should equal(2)
+
+      chapterRepository.deleteChaptersExceptGivenSeqNumbers(translation1.id.get, Seq(1, 2, 3))
+
+      chapterRepository.chaptersForBookIdAndLanguage(book.id.get, LanguageTag("eng")).size should equal(3)
+      chapterRepository.chaptersForBookIdAndLanguage(book.id.get, LanguageTag("swa")).size should equal(2)
+    }
+  }
 }

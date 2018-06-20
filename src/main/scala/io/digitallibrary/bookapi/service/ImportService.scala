@@ -124,12 +124,15 @@ trait ImportService {
 
     def persistChapterUpdates(book: api.internal.Book, translation: domain.Translation)(implicit session: DBSession = AutoSession): Try[Seq[domain.Chapter]] = {
       Try {
-        book.chapters.map(toUpdate => {
-          chapterRepository.forTranslationWithSeqNo(translation.id.get, toUpdate.seqNo) match {
-            case Some(chapter) => chapterRepository.updateChapter(converterService.mergeChapter(chapter, toUpdate))
-            case None => chapterRepository.add(converterService.toDomainChapter(toUpdate, translation.id.get))
-          }
-        })
+        inTransaction { implicit session =>
+          chapterRepository.deleteChaptersExceptGivenSeqNumbers(translation.id.get, book.chapters.map(_.seqNo))
+          book.chapters.map(toUpdate => {
+            chapterRepository.forTranslationWithSeqNo(translation.id.get, toUpdate.seqNo) match {
+              case Some(chapter) => chapterRepository.updateChapter(converterService.mergeChapter(chapter, toUpdate))
+              case None => chapterRepository.add(converterService.toDomainChapter(toUpdate, translation.id.get))
+            }
+          })
+        }
       }
     }
 
