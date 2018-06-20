@@ -100,7 +100,11 @@ trait ChapterRepository {
 
     def deleteChaptersExceptGivenSeqNumbers(translationId: Long, seqNumbersToKeep: Seq[Int])(implicit session: DBSession = AutoSession): Unit = {
       val ch = Chapter.column
-      deleteFrom(Chapter).where.notIn(ch.seqNo, seqNumbersToKeep).toSQL.update().apply()
+      deleteFrom(Chapter)
+        .where
+        .eq(ch.translationId, translationId).and
+        .notIn(ch.seqNo, seqNumbersToKeep)
+        .toSQL.update().apply()
     }
   }
 }
