@@ -204,6 +204,8 @@ trait WriteService {
       unFlaggedTranslationsRepository.forBookIdAndLanguage(originalBook.id, LanguageTag(originalBook.language.code)) match {
         case None => Failure(new NotFoundException())
         case Some(translation) => {
+
+
           val newTranslation = translation.copy(
             id = None,
             revision = None,
@@ -216,6 +218,9 @@ trait WriteService {
           Try {
             inTransaction { implicit session =>
               val persistedTranslation = unFlaggedTranslationsRepository.add(newTranslation)
+              val persistedContributors = translation.contributors.filter(_.`type` != ContributorType.Translator)
+                .map(ctb => contributorRepository.add(ctb.copy(id = None, revision = None, translationId = persistedTranslation.id.get)))
+
               val persistedChapters = translation.chapters.map(chapterToCopy => {
                 val newChapter = chapterToCopy.copy(
                   id = None,
@@ -224,7 +229,7 @@ trait WriteService {
 
                 chapterRepository.add(newChapter)
               })
-              persistedTranslation.copy(chapters = persistedChapters)
+              persistedTranslation.copy(chapters = persistedChapters, contributors = persistedContributors)
             }
           }
         }

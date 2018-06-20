@@ -325,10 +325,10 @@ class TranslationServiceTest extends UnitSuite with TestEnvironment {
     result should be a 'Success
   }
 
-  test("that exctractContributors adds new contributors, removes old and keeps existing contributors to translation") {
+  test("that exctractContributors adds new contributors and keeps existing contributors to translation") {
 
     val existingContributor1 = TestData.Domain.DefaultContributor.copy(id = Some(1), personId = 1, person = Person(Some(1), Some(1), "Translator 1", None), `type` = ContributorType.Translator)
-    val existingContributor2 = TestData.Domain.DefaultContributor.copy(id = Some(2), personId = 2, person = Person(Some(2), Some(1), "Translator 2", None), `type` = ContributorType.Translator) // Should be removed
+    val existingContributor2 = TestData.Domain.DefaultContributor.copy(id = Some(2), personId = 2, person = Person(Some(2), Some(1), "Translator 2", None), `type` = ContributorType.Translator)
     val existingTranslation = TestData.Domain.DefaultTranslation.copy(contributors = Seq(existingContributor1, existingContributor2))
 
     val person1 = existingContributor1.person //already exists on translation, and should be kept
@@ -343,10 +343,9 @@ class TranslationServiceTest extends UnitSuite with TestEnvironment {
     when(writeService.addTranslatorToTranslation(eqTo(existingTranslation.id.get), eqTo(person3))).thenReturn(addedContributor)
 
     val translation = service.extractContributors(bookMetadata, existingTranslation)
-    translation.contributors.size should be (2)
+    translation.contributors.size should be (3)
     translation.contributors.contains(existingContributor1) should be (true)
+    translation.contributors.contains(existingContributor2) should be (true)
     translation.contributors.contains(addedContributor) should be (true)
-
-    verify(writeService).removeContributor(eqTo(existingContributor2))
   }
 }

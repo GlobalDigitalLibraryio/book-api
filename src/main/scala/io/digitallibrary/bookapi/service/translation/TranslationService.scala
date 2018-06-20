@@ -8,6 +8,8 @@
 package io.digitallibrary.bookapi.service.translation
 
 import com.typesafe.scalalogging.LazyLogging
+import io.digitallibrary.bookapi.BookApiProperties
+import io.digitallibrary.bookapi.BookApiProperties.CrowidinTranslatorPlaceHolder
 import io.digitallibrary.language.model.LanguageTag
 import io.digitallibrary.network.AuthUser
 import io.digitallibrary.bookapi.integration.crowdin._
@@ -44,9 +46,10 @@ trait TranslationService {
         translatedChapters  <- Try(chapterFiles.map(chapter => crowdinClient.fetchTranslatedChapter(chapter, inTranslation.crowdinToLanguage)))
         persisted           <- inTransaction { implicit session =>
           for {
-            persisted       <- Try(writeService.updateTranslation(existingTranslation.copy(title = translatedMetadata.title, about = translatedMetadata.description)))
-            mergedChapters  <- Try(mergeService.mergeChapters(persisted, translatedChapters.filter(_.isSuccess).map(_.get)))
-            _               <- Try(mergedChapters.map(ch => writeService.updateChapter(ch)))
+            existingTranslationWithContrib <- Try(extractContributors(translatedMetadata, existingTranslation))
+            persisted                      <- Try(writeService.updateTranslation(existingTranslationWithContrib.copy(title = translatedMetadata.title, about = translatedMetadata.description)))
+            mergedChapters                 <- Try(mergeService.mergeChapters(persisted, translatedChapters.filter(_.isSuccess).map(_.get)))
+            _                              <- Try(mergedChapters.map(ch => writeService.updateChapter(ch)))
           } yield persisted
         }
       } yield SynchronizeResponse(persisted.bookId, CrowdinUtils.crowdinUrlToBook(originalBook, crowdinClient.getProjectIdentifier, inTranslation.crowdinToLanguage))
@@ -101,16 +104,12 @@ trait TranslationService {
       bookMetaData.translators match {
         case None => translation
         case Some(translators) => {
-          val persons = translators.split(",").filter(!_.isEmpty).map(_.trim).map(writeService.addPerson)
+          val persons = translators.replace(CrowidinTranslatorPlaceHolder, "").split(",").filter(!_.isEmpty).map(_.trim).map(writeService.addPerson)
           val existingTranslators = translation.contributors.filter(_.`type` == ContributorType.Translator)
-          val (toKeep, toDelete) = existingTranslators.partition(ctb => persons.exists(_.id == ctb.person.id))
-          val toAdd = persons.filterNot(p => existingTranslators.exists(_.person.id == p.id))
+          val added = persons.filterNot(p => existingTranslators.exists(_.person.id == p.id))
+            .map(person => writeService.addTranslatorToTranslation(translation.id.get, person))
 
-          toDelete.foreach(writeService.removeContributor)
-          val added = toAdd.map(person => writeService.addTranslatorToTranslation(translation.id.get, person))
-
-          translation.copy(contributors = toKeep ++ added)
-
+          translation.copy(contributors = existingTranslators ++ added)
         }
       }
     }
