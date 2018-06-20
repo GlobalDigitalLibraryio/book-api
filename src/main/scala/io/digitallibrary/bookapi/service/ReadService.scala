@@ -11,7 +11,8 @@ package io.digitallibrary.bookapi.service
 import io.digitallibrary.bookapi.BookApiProperties
 import io.digitallibrary.language.model.LanguageTag
 import io.digitallibrary.bookapi.model._
-import io.digitallibrary.bookapi.model.domain.{Category, PublishingStatus, Sort, Translation}
+import io.digitallibrary.bookapi.model.api.MyBook
+import io.digitallibrary.bookapi.model.domain._
 import io.digitallibrary.bookapi.repository._
 import io.digitallibrary.network.AuthUser
 
@@ -22,8 +23,8 @@ trait ReadService {
 
   class ReadService {
 
-    def withLanguageAndStatus(languageTag: Option[LanguageTag], status: PublishingStatus.Value, pageSize: Int, page: Int): api.SearchResult = {
-      val searchResult = getTranslationRepository.withLanguageAndStatus(languageTag, status, pageSize, page)
+    def withLanguageAndStatus(languageTag: Option[LanguageTag], status: PublishingStatus.Value, pageSize: Int, page: Int, sort: Sort.Value): api.SearchResult = {
+      val searchResult = getTranslationRepository.withLanguageAndStatus(languageTag, status, pageSize, page, sort = Some(sort))
       val books = searchResult.results.flatMap(translation =>
           converterService.toApiBookHit(Some(translation), bookRepository.withId(translation.bookId)))
 
@@ -62,15 +63,23 @@ trait ReadService {
       unFlaggedTranslationsRepository.allAvailableLevelsWithStatus(PublishingStatus.PUBLISHED, lang, cat)
     }
 
-    def forUserWithLanguage(userId: String, pageSize: Int, page: Int, sort: Sort.Value): Seq[api.MyBook] = {
-      // TODO Use sort here or remove it!
+    def myBookOrdering(sort: MyBooksSort.Value): Ordering[MyBook] = sort match {
+      case (MyBooksSort.ByIdAsc) => Ordering.by[api.MyBook, Long](_.id)
+      case (MyBooksSort.ByIdDesc) => Ordering.by[api.MyBook, Long](_.id).reverse
+      case (MyBooksSort.ByTitleAsc) => Ordering.by[api.MyBook, String](_.title)
+      case (MyBooksSort.ByTitleDesc) => Ordering.by[api.MyBook, String](_.title).reverse
+    }
+
+    def forUserWithLanguage(userId: String, sort: MyBooksSort.Value): Seq[api.MyBook] = {
       val inTranslationForUser = inTranslationRepository.inTranslationForUser(userId)
-      for {
+      val myBooks = for {
         inTranslation <- inTranslationForUser.filter(_.newTranslationId.isDefined)
         newTranslation <- unFlaggedTranslationsRepository.withId(inTranslation.newTranslationId.get)
         availableLanguages = unFlaggedTranslationsRepository.languagesFor(newTranslation.bookId)
         book <- withIdAndLanguage(newTranslation.bookId, inTranslation.fromLanguage)
       } yield converterService.toApiMyBook(inTranslation, newTranslation, availableLanguages, book)
+      implicit val ordering: Ordering[MyBook] = myBookOrdering(sort)
+      myBooks.sorted
     }
 
     def translationWithIdAndLanguage(bookId: Long, language: LanguageTag): Option[Translation] =
