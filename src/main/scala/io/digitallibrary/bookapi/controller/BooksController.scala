@@ -270,10 +270,9 @@ trait BooksController {
 
       val pageSize = intOrDefault("page-size", 10).min(100).max(1)
       val page = intOrDefault("page", 1).max(1)
-      // TODO Use sort here or remove it!
       val sort = Sort.valueOf(paramOrNone("sort")).getOrElse(Sort.ByIdAsc)
 
-      readService.withLanguageAndStatus(None, PublishingStatus.FLAGGED, pageSize, page)
+      readService.withLanguageAndStatus(None, PublishingStatus.FLAGGED, pageSize, page, sort)
     }
   }
 

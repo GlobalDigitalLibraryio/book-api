@@ -22,8 +22,8 @@ trait ReadService {
 
   class ReadService {
 
-    def withLanguageAndStatus(languageTag: Option[LanguageTag], status: PublishingStatus.Value, pageSize: Int, page: Int): api.SearchResult = {
-      val searchResult = getTranslationRepository.withLanguageAndStatus(languageTag, status, pageSize, page)
+    def withLanguageAndStatus(languageTag: Option[LanguageTag], status: PublishingStatus.Value, pageSize: Int, page: Int, sort: Sort.Value): api.SearchResult = {
+      val searchResult = getTranslationRepository.withLanguageAndStatus(languageTag, status, pageSize, page, sort = Some(sort))
       val books = searchResult.results.flatMap(translation =>
           converterService.toApiBookHit(Some(translation), bookRepository.withId(translation.bookId)))
 
