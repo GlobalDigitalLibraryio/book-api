@@ -8,7 +8,7 @@
 package io.digitallibrary.bookapi.integration.crowdin
 
 import com.typesafe.scalalogging.LazyLogging
-import io.digitallibrary.bookapi.BookApiProperties.CrowidinTranslatorPlaceHolder
+import io.digitallibrary.bookapi.BookApiProperties.CrowdinTranslatorPlaceHolder
 import io.digitallibrary.network.GdlClient
 import io.digitallibrary.bookapi.model.api.{Book, Chapter, CrowdinException}
 import io.digitallibrary.bookapi.model.crowdin._
@@ -49,7 +49,7 @@ class CrowdinClient(fromLanguage: String, projectIdentifier: String, projectKey:
   def addBookMetadata(translation: Translation): Try[CrowdinFile] = {
     implicit val formats: DefaultFormats = DefaultFormats
 
-    val metadata = BookMetaData(translation.title, translation.about, Some(CrowidinTranslatorPlaceHolder))
+    val metadata = BookMetaData(translation.title, translation.about, Some(CrowdinTranslatorPlaceHolder))
     val filename = CrowdinUtils.metadataFilenameFor(translation)
 
     val response = gdlClient

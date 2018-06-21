@@ -227,7 +227,7 @@ class TranslationServiceTest extends UnitSuite with TestEnvironment {
     result.failed.get.getMessage contains "No metadata for translation with id" should be (true)
   }
 
-  test("that fetchTranslatedFile returns Failure when no translation files for any languages are not found") {
+  test("that fetchTranslatedFile returns Failure when no translation files for any languages are found") {
     when(translationDbService.fileForCrowdinProjectWithFileIdAndLanguage(any[String], any[String], any[LanguageTag])).thenReturn(None)
     when(translationDbService.fileForCrowdinProjectWithFileId(any[String], any[String])).thenReturn(Seq())
     val result = service.fetchTranslatedFile("abc", "nb", "file-id", domain.TranslationStatus.TRANSLATED)
@@ -325,7 +325,7 @@ class TranslationServiceTest extends UnitSuite with TestEnvironment {
     result should be a 'Success
   }
 
-  test("that exctractContributors adds new contributors and keeps existing contributors to translation") {
+  test("that extractContributors adds new contributors and keeps existing contributors to translation") {
 
     val existingContributor1 = TestData.Domain.DefaultContributor.copy(id = Some(1), personId = 1, person = Person(Some(1), Some(1), "Translator 1", None), `type` = ContributorType.Translator)
     val existingContributor2 = TestData.Domain.DefaultContributor.copy(id = Some(2), personId = 2, person = Person(Some(2), Some(1), "Translator 2", None), `type` = ContributorType.Translator)
@@ -343,9 +343,6 @@ class TranslationServiceTest extends UnitSuite with TestEnvironment {
     when(writeService.addTranslatorToTranslation(eqTo(existingTranslation.id.get), eqTo(person3))).thenReturn(addedContributor)
 
     val translation = service.extractContributors(bookMetadata, existingTranslation)
-    translation.contributors.size should be (3)
-    translation.contributors.contains(existingContributor1) should be (true)
-    translation.contributors.contains(existingContributor2) should be (true)
-    translation.contributors.contains(addedContributor) should be (true)
+    translation.contributors.toSet should equal(Set(existingContributor1, existingContributor2, addedContributor))
   }
 }

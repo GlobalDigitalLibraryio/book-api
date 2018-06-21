@@ -9,7 +9,7 @@ package io.digitallibrary.bookapi.service.translation
 
 import com.typesafe.scalalogging.LazyLogging
 import io.digitallibrary.bookapi.BookApiProperties
-import io.digitallibrary.bookapi.BookApiProperties.CrowidinTranslatorPlaceHolder
+import io.digitallibrary.bookapi.BookApiProperties.CrowdinTranslatorPlaceHolder
 import io.digitallibrary.language.model.LanguageTag
 import io.digitallibrary.network.AuthUser
 import io.digitallibrary.bookapi.integration.crowdin._
@@ -48,7 +48,7 @@ trait TranslationService {
           for {
             existingTranslationWithContrib <- Try(extractContributors(translatedMetadata, existingTranslation))
             persisted                      <- Try(writeService.updateTranslation(existingTranslationWithContrib.copy(title = translatedMetadata.title, about = translatedMetadata.description)))
-            mergedChapters                 <- Try(mergeService.mergeChapters(persisted, translatedChapters.filter(_.isSuccess).map(_.get)))
+            mergedChapters                 <- Try(mergeService.mergeChapters(persisted, translatedChapters.flatMap(_.toOption)))
             _                              <- Try(mergedChapters.map(ch => writeService.updateChapter(ch)))
           } yield persisted
         }
@@ -104,7 +104,7 @@ trait TranslationService {
       bookMetaData.translators match {
         case None => translation
         case Some(translators) => {
-          val persons = translators.replace(CrowidinTranslatorPlaceHolder, "").split(",").filter(!_.isEmpty).map(_.trim).map(writeService.addPerson)
+          val persons = translators.replace(CrowdinTranslatorPlaceHolder, "").split(",").filter(_.nonEmpty).map(_.trim).map(writeService.addPerson)
           val existingTranslators = translation.contributors.filter(_.`type` == ContributorType.Translator)
           val added = persons.filterNot(p => existingTranslators.exists(_.person.id == p.id))
             .map(person => writeService.addTranslatorToTranslation(translation.id.get, person))
