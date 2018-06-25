@@ -8,7 +8,7 @@
 package io.digitallibrary.bookapi.controller
 
 import io.digitallibrary.bookapi.BookApiProperties
-import io.digitallibrary.bookapi.BookApiProperties.RoleWithWriteAccess
+import io.digitallibrary.bookapi.BookApiProperties.RoleWithAdminReadAccess
 import io.digitallibrary.bookapi.service.ExportService
 import io.digitallibrary.language.model.LanguageTag
 import org.scalatra.swagger.{ResponseMessage, Swagger, SwaggerSupport}
@@ -27,7 +27,7 @@ trait ExportController {
     private val exportBooks = (apiOperation[Array[Byte]]("exportBooks")
       produces "text/csv"
       summary s"Export all books for language and source"
-      description s"Returns a csv with books for langage and source"
+      description s"Returns a csv with books for language and source"
       parameters(
       headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
       pathParam[String]("lang").description("Export books for language specified in BCP-47 format."),
@@ -36,7 +36,7 @@ trait ExportController {
       responseMessages response500)
 
     get("/:lang/:source", operation(exportBooks)) {
-      assertHasRole(RoleWithWriteAccess)
+      assertHasRole(RoleWithAdminReadAccess)
 
       val language = LanguageTag(params("lang"))
       val source = params("source")
