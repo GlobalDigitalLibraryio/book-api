@@ -23,7 +23,7 @@ class ExportControllerTest extends UnitSuite with TestEnvironment with ScalatraF
   }
 
   test("that /export/en/all with authorized gives 200") {
-    get("/en/all", headers = Seq (("Authorization", s"Bearer ${TestData.validTestTokenWithWriteRole}") ) ) {
+    get("/en/all", headers = Seq (("Authorization", s"Bearer ${TestData.validTestTokenWithAdminReadRole}") ) ) {
       status should equal (200)
     }
   }

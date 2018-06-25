@@ -21,6 +21,7 @@ import scala.util.{Failure, Success}
 object BookApiProperties extends LazyLogging {
 
   val RoleWithWriteAccess = "books:write"
+  val RoleWithAdminReadAccess = "admin:read"
   val SecretsFile = "book-api.secrets"
   val CrowdinProjectsKey = "CROWDIN_PROJECTS"
 
