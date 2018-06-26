@@ -189,7 +189,7 @@ trait BooksController {
 
       val updatedBook = extract[api.Book](request.body)
 
-      readService.translationWithIdAndLanguage(id, lang) match {
+      readService.translationWithIdAndLanguageListingAllTranslationsIfAdmin(id, lang) match {
         case Some(existingBook) =>
           val pageOrientationToUpdate = PageOrientation.valueOf(updatedBook.pageOrientation).getOrElse(existingBook.pageOrientation)
           writeService.updateTranslation(existingBook.copy(

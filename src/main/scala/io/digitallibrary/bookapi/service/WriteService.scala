@@ -11,6 +11,7 @@ package io.digitallibrary.bookapi.service
 import java.util.UUID
 
 import com.typesafe.scalalogging.LazyLogging
+import io.digitallibrary.bookapi.BookApiProperties
 import io.digitallibrary.language.model.LanguageTag
 import io.digitallibrary.network.AuthUser
 import io.digitallibrary.bookapi.controller.NewFeaturedContent
@@ -47,8 +48,8 @@ trait WriteService {
 
   class WriteService extends LazyLogging {
 
-    def updateTranslation(translationToUpdate: Translation) = {
-      unFlaggedTranslationsRepository.updateTranslation(translationToUpdate)
+    def updateTranslation(translationToUpdate: Translation): Translation = {
+      getTranslationRepository.updateTranslation(translationToUpdate)
     }
 
     def addPersonFromAuthUser(): Person = {
@@ -387,6 +388,15 @@ trait WriteService {
         })
       })
     }
+
+    private def getTranslationRepository: TranslationRepository = {
+      if(AuthUser.hasRole(BookApiProperties.RoleWithWriteAccess)) {
+        allTranslationsRepository
+      } else {
+        unFlaggedTranslationsRepository
+      }
+    }
+
   }
 
 }
