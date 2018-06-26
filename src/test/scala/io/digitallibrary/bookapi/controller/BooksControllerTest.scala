@@ -82,7 +82,7 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
   }
 
   test("that GET /:lang/:id returns 404 when not found") {
-    when(readService.withIdAndLanguage(any[Long], any[LanguageTag])).thenReturn(None)
+    when(readService.withIdAndLanguageListingAllBooksIfAdmin(any[Long], any[LanguageTag])).thenReturn(None)
 
     get("/eng/1") {
       status should equal (404)
@@ -90,7 +90,7 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
   }
 
   test("that GET /:lang/:id returns book when found") {
-    when(readService.withIdAndLanguage(any[Long], any[LanguageTag])).thenReturn(Some(TestData.Api.DefaultBook))
+    when(readService.withIdAndLanguageListingAllBooksIfAdmin(any[Long], any[LanguageTag])).thenReturn(Some(TestData.Api.DefaultBook))
 
     get("/eng/1") {
       status should equal (200)
@@ -173,7 +173,7 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
   }
 
   test("that downloads in book is correct") {
-    when(readService.withIdAndLanguage(any[Long], any[LanguageTag])).thenReturn(Some(TestData.Api.DefaultBook))
+    when(readService.withIdAndLanguageListingAllBooksIfAdmin(any[Long], any[LanguageTag])).thenReturn(Some(TestData.Api.DefaultBook))
 
     get("/eng/1") {
       status should equal (200)
@@ -182,7 +182,7 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
       book.downloads.pdf should be(None)
     }
 
-    when(readService.withIdAndLanguage(any[Long], any[LanguageTag])).thenReturn(Some(TestData.Api.DefaultBook.copy(downloads = Downloads(None, Some("url-to-pdf")))))
+    when(readService.withIdAndLanguageListingAllBooksIfAdmin(any[Long], any[LanguageTag])).thenReturn(Some(TestData.Api.DefaultBook.copy(downloads = Downloads(None, Some("url-to-pdf")))))
 
     get("/eng/1") {
       status should equal (200)

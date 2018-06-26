@@ -175,7 +175,7 @@ trait BooksController {
       val id = long("id")
       val lang = LanguageTag(params("lang"))
 
-      readService.withIdAndLanguage(id, lang) match {
+      readService.withIdAndLanguageListingAllBooksIfAdmin(id, lang) match {
         case Some(x) => x
         case None => NotFound(body = Error(Error.NOT_FOUND, s"No book with id $id and language $lang found"))
       }
