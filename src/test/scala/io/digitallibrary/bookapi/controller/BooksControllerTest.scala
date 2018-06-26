@@ -100,7 +100,7 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
   }
 
   test("that PUT /:lang/:id updates book, with only certain fields modified") {
-    when(readService.translationWithIdAndLanguage(any[Long], any[LanguageTag])).thenReturn(Some(TestData.Domain.DefaultTranslation))
+    when(readService.translationWithIdAndLanguageListingAllTranslationsIfAdmin(any[Long], any[LanguageTag])).thenReturn(Some(TestData.Domain.DefaultTranslation))
 
     val payload = """{
       |	"id": 1,

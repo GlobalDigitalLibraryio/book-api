@@ -82,8 +82,8 @@ trait ReadService {
       myBooks.sorted
     }
 
-    def translationWithIdAndLanguage(bookId: Long, language: LanguageTag): Option[Translation] =
-      unFlaggedTranslationsRepository.forBookIdAndLanguage(bookId, language)
+    def translationWithIdAndLanguageListingAllTranslationsIfAdmin(bookId: Long, language: LanguageTag): Option[Translation] =
+      getTranslationRepository.forBookIdAndLanguage(bookId, language)
 
     def withIdAndLanguage(bookId: Long, language: LanguageTag): Option[api.Book] = {
       for {
