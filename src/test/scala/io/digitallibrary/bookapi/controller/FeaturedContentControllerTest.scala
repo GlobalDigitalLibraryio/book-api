@@ -91,11 +91,12 @@ class FeaturedContentControllerTest extends UnitSuite with TestEnvironment with 
 
   }
 
-  test("that DELETE /123 deletes existing featured content with id=123") {
+  test("that DELETE /123 deletes existing featured content with id=123 and content-type text/plain") {
     when(writeService.deleteFeaturedContent(123)).thenReturn(Success())
     delete("/123", headers = Seq(("Authorization", s"Bearer ${TestData.validTestTokenWithFeaturedRole}"))) {
       status should equal(200)
       verify(writeService).deleteFeaturedContent(123)
+      header.get("Content-Type") should equal (Some("text/plain; charset=UTF-8"))
     }
   }
 
