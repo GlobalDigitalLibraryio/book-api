@@ -98,6 +98,7 @@ trait FeaturedContentController {
     delete("/:id", operation(deleteFeaturedContent)) {
       assertHasRole(FeaturedContentAdminRole)
       val id = long("id")
+      contentType = formats("txt")
       writeService.deleteFeaturedContent(id) match {
         case Success(_) => Ok(s"Deleted $id")
         case Failure(_) => NotFound(s"No featured content with id=$id found")
