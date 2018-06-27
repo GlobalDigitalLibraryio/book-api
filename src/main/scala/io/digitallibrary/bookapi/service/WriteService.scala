@@ -16,7 +16,7 @@ import io.digitallibrary.language.model.LanguageTag
 import io.digitallibrary.network.AuthUser
 import io.digitallibrary.bookapi.controller.NewFeaturedContent
 import io.digitallibrary.bookapi.model._
-import io.digitallibrary.bookapi.model.api.internal.{NewChapter, NewTranslation}
+import io.digitallibrary.bookapi.model.api.internal.{ChapterId, NewChapter, NewTranslation}
 import io.digitallibrary.bookapi.model.api.{FeaturedContentId, NotFoundException, TranslateRequest, ValidationMessage}
 import io.digitallibrary.bookapi.model.domain._
 import io.digitallibrary.bookapi.repository._
@@ -277,6 +277,10 @@ trait WriteService {
             case (ctb, unpersisted) => (ctb, personRepository.add(unpersisted))
           }
 
+          val persistedChapters: Seq[Try[ChapterId]] = validNewTranslation.chapters.map(chapter => {
+            newChapter(translation.id.get, chapter)
+          })
+
           val persistedContributors = persistedContributorsToPersons.map { case (ctb, person) => {
             contributorRepository.add(
               Contributor(
@@ -380,6 +384,16 @@ trait WriteService {
             }
             }
             existing.contributors.foreach(contributorRepository.remove)
+
+            validTranslationReplacement.chapters.map(chapter => {
+              chapterRepository.forTranslationWithSeqNo(translation.id.get, chapter.seqNo) match {
+                case Some(existingChapter) => updateChapter(existingChapter.id.get, chapter)
+                case None => newChapter(translation.id.get, chapter)
+              }
+            })
+
+            // Remove exceeding chapters if the update contains fewer chapters than the existing version
+            chapterRepository.deleteChaptersExceptGivenSeqNumbers(translation.id.get, validTranslationReplacement.chapters.map(_.seqNo))
 
             indexService.indexDocument(translation)
             api.internal.TranslationId(translation.id.get)
