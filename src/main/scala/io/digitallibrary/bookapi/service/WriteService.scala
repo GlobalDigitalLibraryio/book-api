@@ -12,15 +12,15 @@ import java.util.UUID
 
 import com.typesafe.scalalogging.LazyLogging
 import io.digitallibrary.bookapi.BookApiProperties
-import io.digitallibrary.language.model.LanguageTag
-import io.digitallibrary.network.AuthUser
 import io.digitallibrary.bookapi.controller.NewFeaturedContent
 import io.digitallibrary.bookapi.model._
-import io.digitallibrary.bookapi.model.api.internal.{NewChapter, NewTranslation}
+import io.digitallibrary.bookapi.model.api.internal.{ChapterId, NewChapter, NewTranslation}
 import io.digitallibrary.bookapi.model.api.{FeaturedContentId, NotFoundException, TranslateRequest, ValidationMessage}
 import io.digitallibrary.bookapi.model.domain._
 import io.digitallibrary.bookapi.repository._
 import io.digitallibrary.bookapi.service.search.IndexService
+import io.digitallibrary.language.model.LanguageTag
+import io.digitallibrary.network.AuthUser
 
 import scala.util.{Failure, Success, Try}
 
@@ -256,7 +256,7 @@ trait WriteService {
           }
         })
 
-        inTransaction { implicit session =>
+        val translation = inTransaction { implicit session =>
           val persistedCategories = categories.map {
             case x if x.id.isEmpty => categoryRepository.add(x)
             case y => y
@@ -289,8 +289,14 @@ trait WriteService {
           }
           }
           indexService.indexDocument(translation)
-          api.internal.TranslationId(translation.id.get)
+          translation
         }
+
+        val persistedChapters: Seq[Try[ChapterId]] = validNewTranslation.chapters.map(chapter => {
+          newChapter(translation.id.get, chapter)
+        })
+
+        api.internal.TranslationId(translation.id.get)
       })
     }
 
@@ -380,6 +386,16 @@ trait WriteService {
             }
             }
             existing.contributors.foreach(contributorRepository.remove)
+
+            validTranslationReplacement.chapters.map(chapter => {
+              chapterRepository.forTranslationWithSeqNo(translation.id.get, chapter.seqNo) match {
+                case Some(existingChapter) => updateChapter(existingChapter.id.get, chapter)
+                case None => newChapter(translation.id.get, chapter)
+              }
+            })
+
+            // Remove exceeding chapters if the update contains fewer chapters than the existing version
+            chapterRepository.deleteChaptersExceptGivenSeqNumbers(translation.id.get, validTranslationReplacement.chapters.map(_.seqNo))
 
             indexService.indexDocument(translation)
             api.internal.TranslationId(translation.id.get)

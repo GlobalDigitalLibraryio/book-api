@@ -11,7 +11,7 @@ import com.typesafe.scalalogging.LazyLogging
 import io.digitallibrary.bookapi.model._
 import io.digitallibrary.bookapi.model.api.internal.NewTranslation
 import io.digitallibrary.bookapi.model.api.{ValidationException, ValidationMessage}
-import io.digitallibrary.bookapi.model.domain.{ChapterType, ContributorType}
+import io.digitallibrary.bookapi.model.domain.ContributorType
 import org.apache.commons.validator.routines.UrlValidator
 import org.jsoup.Jsoup
 import org.jsoup.safety.Whitelist
