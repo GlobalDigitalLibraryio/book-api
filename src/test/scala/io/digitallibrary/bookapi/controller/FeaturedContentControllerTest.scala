@@ -96,7 +96,7 @@ class FeaturedContentControllerTest extends UnitSuite with TestEnvironment with 
     delete("/123", headers = Seq(("Authorization", s"Bearer ${TestData.validTestTokenWithFeaturedRole}"))) {
       status should equal(200)
       verify(writeService).deleteFeaturedContent(123)
-      header.get("Content-Type") should equal (Some("text/plain; charset=UTF-8"))
+      header("Content-Type").contains("text/plain") should be(true)
     }
   }
 
