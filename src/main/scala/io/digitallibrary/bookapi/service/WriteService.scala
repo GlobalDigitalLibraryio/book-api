@@ -12,8 +12,6 @@ import java.util.UUID
 
 import com.typesafe.scalalogging.LazyLogging
 import io.digitallibrary.bookapi.BookApiProperties
-import io.digitallibrary.language.model.LanguageTag
-import io.digitallibrary.network.AuthUser
 import io.digitallibrary.bookapi.controller.NewFeaturedContent
 import io.digitallibrary.bookapi.model._
 import io.digitallibrary.bookapi.model.api.internal.{ChapterId, NewChapter, NewTranslation}
@@ -21,6 +19,8 @@ import io.digitallibrary.bookapi.model.api.{FeaturedContentId, NotFoundException
 import io.digitallibrary.bookapi.model.domain._
 import io.digitallibrary.bookapi.repository._
 import io.digitallibrary.bookapi.service.search.IndexService
+import io.digitallibrary.language.model.LanguageTag
+import io.digitallibrary.network.AuthUser
 
 import scala.util.{Failure, Success, Try}
 
@@ -256,7 +256,7 @@ trait WriteService {
           }
         })
 
-        inTransaction { implicit session =>
+        val translation = inTransaction { implicit session =>
           val persistedCategories = categories.map {
             case x if x.id.isEmpty => categoryRepository.add(x)
             case y => y
@@ -277,10 +277,6 @@ trait WriteService {
             case (ctb, unpersisted) => (ctb, personRepository.add(unpersisted))
           }
 
-          val persistedChapters: Seq[Try[ChapterId]] = validNewTranslation.chapters.map(chapter => {
-            newChapter(translation.id.get, chapter)
-          })
-
           val persistedContributors = persistedContributorsToPersons.map { case (ctb, person) => {
             contributorRepository.add(
               Contributor(
@@ -293,8 +289,14 @@ trait WriteService {
           }
           }
           indexService.indexDocument(translation)
-          api.internal.TranslationId(translation.id.get)
+          translation
         }
+
+        val persistedChapters: Seq[Try[ChapterId]] = validNewTranslation.chapters.map(chapter => {
+          newChapter(translation.id.get, chapter)
+        })
+
+        api.internal.TranslationId(translation.id.get)
       })
     }
 
