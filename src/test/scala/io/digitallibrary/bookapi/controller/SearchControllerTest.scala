@@ -7,13 +7,13 @@
 
 package io.digitallibrary.bookapi.controller
 
-import io.digitallibrary.language.model.LanguageTag
 import io.digitallibrary.bookapi._
 import io.digitallibrary.bookapi.model.api._
 import io.digitallibrary.bookapi.model.domain.{Paging, Sort}
+import io.digitallibrary.language.model.LanguageTag
 import org.json4s.native.Serialization.read
 import org.json4s.{DefaultFormats, Formats}
-import org.mockito.Mockito.when
+import org.mockito.Mockito.{verify, when}
 import org.scalatra.test.scalatest.ScalatraFunSuite
 
 class SearchControllerTest extends UnitSuite with TestEnvironment with ScalatraFunSuite{
@@ -23,14 +23,27 @@ class SearchControllerTest extends UnitSuite with TestEnvironment with ScalatraF
 
   addServlet(controller, "/*")
 
-  test("that search without lang searches for english books") {
-    val result = SearchResult(0, 1, 10, Language("eng", "English"), Seq(TestData.Api.DefaultBookHit))
-    when(searchService.searchWithQuery(LanguageTag(BookApiProperties.DefaultLanguage), None, None, Paging(1,10), Sort.ByRelevance)).thenReturn(result)
+  test("that search without lang searches for all books") {
+    val result = SearchResult(0, 1, 10, Language("en", "English"), Seq(TestData.Api.DefaultBookHit))
+    when(searchService.searchWithQueryForAllLanguages(None, None, Paging(1,10), Sort.ByRelevance)).thenReturn(result)
 
     get("/") {
       status should equal (200)
       val searchResult = read[SearchResult](body)
       searchResult should equal(result)
+      verify(searchService).searchWithQueryForAllLanguages(None, None, Paging(1, 10), Sort.ByRelevance)
+    }
+  }
+
+  test("that search with lang as query param searches for books in correct lang") {
+    val result = SearchResult(0, 1, 10, Language("om", "Afaan Oromoo"), Seq(TestData.Api.DefaultBookHit))
+    when(searchService.searchWithQuery(LanguageTag("om"), None, None, Paging(1,10), Sort.ByRelevance)).thenReturn(result)
+
+    get("/?language=om") {
+      status should equal (200)
+      val searchResult = read[SearchResult](body)
+      searchResult should equal(result)
+      verify(searchService).searchWithQuery(LanguageTag("om"), None, None, Paging(1, 10), Sort.ByRelevance)
     }
   }
 

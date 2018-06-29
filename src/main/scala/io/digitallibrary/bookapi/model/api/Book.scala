@@ -116,10 +116,11 @@ case class BookHit(@(ApiModelProperty@field)(description = "The id of the book")
 
 @ApiModel(description = "Information about search results")
 case class SearchResult(@(ApiModelProperty@field)(description = "The total number of books matching this query") totalCount: Long,
-                           @(ApiModelProperty@field)(description = "For which page results are shown from") page: Int,
-                           @(ApiModelProperty@field)(description = "The number of results per page") pageSize: Int,
-                           @(ApiModelProperty@field)(description = "The chosen language") language: Language,
-                           @(ApiModelProperty@field)(description = "The results") results: Seq[BookHit])
+                        @(ApiModelProperty@field)(description = "For which page results are shown from") page: Int,
+                        @(ApiModelProperty@field)(description = "The number of results per page") pageSize: Int,
+                        @Deprecated
+                        @(ApiModelProperty@field)(description = "The chosen language") language: Language,
+                        @(ApiModelProperty@field)(description = "The results") results: Seq[BookHit])
 
 @ApiModel(description = "Information about a book that is being translated by a user")
 case class MyBook(@(ApiModelProperty@field)(description = "The id of the book") id: Long,

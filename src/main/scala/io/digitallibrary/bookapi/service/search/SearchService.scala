@@ -36,10 +36,13 @@ trait SearchService {
     implicit val formats: Formats = DefaultFormats + LocalDateSerializer
 
     def searchWithQuery(languageTag: LanguageTag, query: Option[String], source: Option[String], paging: Paging, sort: Sort.Value): SearchResult =
-      executeSearch(boolDefinition = BoolQueryDefinition(), languageTag = languageTag, query = query, categories = Seq(), readingLevel = None, source = source, paging = paging, sort = sort)
+      executeSearch(boolDefinition = BoolQueryDefinition(), languageTag = Some(languageTag), query = query, categories = Seq(), readingLevel = None, source = source, paging = paging, sort = sort)
+
+    def searchWithQueryForAllLanguages(query: Option[String], source: Option[String], paging: Paging, sort: Sort.Value): SearchResult =
+      executeSearch(boolDefinition = BoolQueryDefinition(), languageTag = None, query = query, categories = Seq(), readingLevel = None, source = source, paging = paging, sort = sort)
 
     def searchWithCategoryAndLevel(languageTag: LanguageTag, category: Option[String], readingLevel: Option[String], source: Option[String], paging: Paging, sort: Sort.Value): SearchResult =
-      executeSearch(boolDefinition = BoolQueryDefinition(), languageTag = languageTag, query = None, categories = category.toSeq, readingLevel = readingLevel, source = source, paging = paging, sort = sort)
+      executeSearch(boolDefinition = BoolQueryDefinition(), languageTag = Some(languageTag), query = None, categories = category.toSeq, readingLevel = readingLevel, source = source, paging = paging, sort = sort)
 
     def searchSimilar(languageTag: LanguageTag, bookId: Long, paging: Paging, sort: Sort.Value): SearchResult = {
       val translation = unFlaggedTranslationsRepository.forBookIdAndLanguage(bookId, languageTag)
@@ -49,11 +52,19 @@ trait SearchService {
           val moreLikeThisDefinition = MoreLikeThisQueryDefinition(Seq("readingLevel","language"),
             likeDocs = Seq(MoreLikeThisItem(BookApiProperties.searchIndex(languageTag), BookApiProperties.SearchDocument, trans.id.get.toString)),
             minDocFreq = Some(1), minTermFreq = Some(1), minShouldMatch = Some("100%"))
-          executeSearch(boolDefinition = BoolQueryDefinition().must(moreLikeThisDefinition), languageTag = languageTag, query = None, categories = trans.categories.map(_.name), readingLevel = None, source = None, paging = paging, sort = sort)
+          executeSearch(boolDefinition = BoolQueryDefinition().must(moreLikeThisDefinition), languageTag = Some(languageTag), query = None, categories = trans.categories.map(_.name), readingLevel = None, source = None, paging = paging, sort = sort)
       }
     }
 
-    private def executeSearch(boolDefinition: BoolQueryDefinition, languageTag: LanguageTag, query: Option[String],
+
+    // TODO This function should be removed when the frontend does no longer use the language-field in the search results,
+    // which can then be removed.
+    @Deprecated
+    private def defaultLanguageIfNoLanguage(languageTagOpt: Option[LanguageTag]): LanguageTag = {
+      languageTagOpt.getOrElse(LanguageTag("en"))
+    }
+
+    private def executeSearch(boolDefinition: BoolQueryDefinition, languageTag: Option[LanguageTag], query: Option[String],
                               categories: Seq[String], readingLevel: Option[String], source: Option[String], paging: Paging, sort: Sort.Value): SearchResult = {
 
       val (startAt, numResults) = getStartAtAndNumResults(paging.page, paging.pageSize)
@@ -63,7 +74,7 @@ trait SearchService {
         logger.info(s"Max supported results are ${BookApiProperties.ElasticSearchIndexMaxResultWindow}, user requested $requestedResultWindow")
         throw new ResultWindowTooLargeException(Error.WindowTooLargeError.description)
       }
-      val indexAndTypes = IndexAndTypes(BookApiProperties.searchIndex(languageTag), Seq(BookApiProperties.SearchDocument))
+      val indexAndTypes = IndexAndTypes(languageTag.map(BookApiProperties.searchIndex).getOrElse(BookApiProperties.searchIndexPatternForAllLanguages()), Seq(BookApiProperties.SearchDocument))
 
       val queryDefinition = query match {
         case None => boolDefinition
@@ -89,13 +100,13 @@ trait SearchService {
           HighlightFieldDefinition("description", numOfFragments = Some(0))))
 
       esClient.execute(search) match {
-        case Success(response) => SearchResult(response.result.totalHits, paging.page, numResults, converterService.toApiLanguage(languageTag), getHits(response.result.hits, languageTag))
+        case Success(response) => SearchResult(response.result.totalHits, paging.page, numResults, converterService.toApiLanguage(defaultLanguageIfNoLanguage(languageTag)), getHits(response.result.hits))
         case Failure(failure: GdlSearchException) =>
           failure.getFailure.status match {
-            case 404 => SearchResult(0, paging.page, numResults, converterService.toApiLanguage(languageTag), Seq())
-            case _ => errorHandler(languageTag, Failure(failure))
+            case 404 => SearchResult(0, paging.page, numResults, converterService.toApiLanguage(defaultLanguageIfNoLanguage(languageTag)), Seq())
+            case _ => errorHandler(defaultLanguageIfNoLanguage(languageTag), Failure(failure))
           }
-        case Failure(failure) => errorHandler(languageTag, Failure(failure))
+        case Failure(failure) => errorHandler(defaultLanguageIfNoLanguage(languageTag), Failure(failure))
       }
     }
 
@@ -109,7 +120,7 @@ trait SearchService {
       case (Sort.ByArrivalDateDesc) => FieldSortDefinition("dateArrived", order = SortOrder.DESC)
     }
 
-    private def getHits(hits: SearchHits, language: LanguageTag): Seq[BookHit] = {
+    private def getHits(hits: SearchHits): Seq[BookHit] = {
       hits.hits.toSeq.map(hit => getHit(hit))
     }
 
