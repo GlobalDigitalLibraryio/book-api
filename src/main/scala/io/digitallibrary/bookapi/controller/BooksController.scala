@@ -129,6 +129,17 @@ trait BooksController {
       responseMessages (response403, response500)
       authorizations "oauth2")
 
+    private val getFlaggedBooks = (apiOperation[api.SearchResult]("getFlaggedBooks")
+      summary s"Returns all flagged books in all languages"
+      description s"Returns a list of flagged books"
+      parameters(
+      headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
+      queryParam[Option[Int]]("page-size").description("Return this many results per page."),
+      queryParam[Option[Int]]("page").description("Return results for this page."),
+      queryParam[Option[String]]("sort").description(s"Sorts result based on parameter. Possible values: ${Sort.values.mkString(",")}; Default value: ${Sort.ByIdAsc}"))
+      responseMessages response500
+      authorizations "oauth2")
+
     get("/", operation(getAllBooks)) {
       val pageSize = intOrDefault("page-size", 10).min(100).max(1)
       val page = intOrDefault("page", 1).max(1)
@@ -254,11 +265,12 @@ trait BooksController {
 
     }
 
-    get("/flagged/?") {
+    get("/flagged/?", operation(getFlaggedBooks)) {
       assertHasRole(RoleWithWriteAccess)
 
       val pageSize = intOrDefault("page-size", 10).min(100).max(1)
       val page = intOrDefault("page", 1).max(1)
+      // TODO Use sort here or remove it!
       val sort = Sort.valueOf(paramOrNone("sort")).getOrElse(Sort.ByIdAsc)
 
       readService.withLanguageAndStatus(None, PublishingStatus.FLAGGED, pageSize, page)

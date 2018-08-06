@@ -368,7 +368,7 @@ trait ConverterService {
     def asDomainInTranslation(translationRequest: api.TranslateRequest, newTranslation: domain.Translation, crowdinProjectId: String) = domain.InTranslation(
       id = None,
       revision = None,
-      userIds = Seq(AuthUser.get.get),
+      userIds = Seq(AuthUser.get).flatten,
       originalTranslationId = translationRequest.bookId,
       newTranslationId = newTranslation.id,
       fromLanguage = LanguageTag(translationRequest.fromLanguage),

@@ -8,13 +8,13 @@
 package io.digitallibrary.bookapi.integration.crowdin
 
 import com.typesafe.scalalogging.LazyLogging
+import io.digitallibrary.bookapi.BookApiProperties.CrowdinTranslatorPlaceHolder
 import io.digitallibrary.network.GdlClient
-import io.digitallibrary.bookapi.model.api.internal.ChapterId
 import io.digitallibrary.bookapi.model.api.{Book, Chapter, CrowdinException}
 import io.digitallibrary.bookapi.model.crowdin._
-import io.digitallibrary.bookapi.model.domain.{FileType, InTranslation, InTranslationFile, Translation}
+import io.digitallibrary.bookapi.model.domain.{FileType, InTranslationFile, Translation}
 import org.json4s.DefaultFormats
-import org.json4s.jackson.Serialization.{read, write}
+import org.json4s.jackson.Serialization.write
 
 import scala.util.{Failure, Success, Try}
 import scalaj.http.{Http, MultiPart}
@@ -49,7 +49,7 @@ class CrowdinClient(fromLanguage: String, projectIdentifier: String, projectKey:
   def addBookMetadata(translation: Translation): Try[CrowdinFile] = {
     implicit val formats: DefaultFormats = DefaultFormats
 
-    val metadata = BookMetaData(translation.title, translation.about)
+    val metadata = BookMetaData(translation.title, translation.about, Some(CrowdinTranslatorPlaceHolder))
     val filename = CrowdinUtils.metadataFilenameFor(translation)
 
     val response = gdlClient
@@ -58,7 +58,7 @@ class CrowdinClient(fromLanguage: String, projectIdentifier: String, projectKey:
 
     response.map(res => CrowdinFile(None, 0, FileType.METADATA, res.stats.get.files.head)) match {
       case Success(x) => Success(x)
-      case Failure(ex) => Failure(CrowdinException(ex))
+      case Failure(ex) => Failure(CrowdinException(s"Could not add metadata-file for ${translation.id} (${translation.title})", ex))
     }
   }
 
@@ -81,14 +81,14 @@ class CrowdinClient(fromLanguage: String, projectIdentifier: String, projectKey:
         MultiPart(s"files[$filename]", filename, "application/xhtml+xml", chapter.content.getBytes)
       })
 
-      gdlClient.fetch[AddFilesResponse](Http(AddFileUrl).postMulti(multiParts:_*).timeout(1000, 10000))
+      gdlClient.fetch[AddFilesResponse](Http(AddFileUrl).postMulti(multiParts:_*).timeout(1000, 20000))
     })
 
     val httpExceptions = uploadTries.filter(_.isFailure).map(_.failed.get)
     val crowdinExceptions = uploadTries.filter(req => req.isSuccess && !req.get.success).map(_.get.error.get)
 
     if(httpExceptions.nonEmpty || crowdinExceptions.nonEmpty) {
-      Failure(CrowdinException(crowdinExceptions, httpExceptions))
+      Failure(new CrowdinException(s"Could not upload chapters for ${translation.id} (${translation.title})", crowdinExceptions, httpExceptions))
     } else {
       val addedFiles = uploadTries.flatMap(_.get.stats.get.files)
       val result = addedFiles.flatMap(file => {
@@ -100,7 +100,7 @@ class CrowdinClient(fromLanguage: String, projectIdentifier: String, projectKey:
       if (result.lengthCompare(addedFiles.length) == 0) {
         Success(result)
       } else {
-        Failure(CrowdinException("Inconsistent file-result"))
+        Failure(CrowdinException(s"Inconsistent file-result for ${translation.id} (${translation.title})"))
       }
     }
   }
@@ -119,17 +119,18 @@ class CrowdinClient(fromLanguage: String, projectIdentifier: String, projectKey:
     gdlClient.fetch[AddDirectoryResponse](Http(AddDirectoryUrl).postForm(Seq("name" -> directoryName)))
       .map(_ => directoryName) match {
       case Success(x) => Success(x)
-      case Failure(ex) => Failure(CrowdinException(ex))
+      case Failure(ex) => Failure(CrowdinException(s"Could not add directory $directoryName", ex))
     }
   }
 
   def deleteDirectoryFor(translation: Translation): Try[Unit] = {
-    val result = gdlClient.fetch[DeleteDirectoryResponse](Http(DeleteDirectoryUrl).postForm(Seq("name" -> CrowdinUtils.directoryNameFor(translation))))
+    val directoryName = CrowdinUtils.directoryNameFor(translation)
+    val result = gdlClient.fetch[DeleteDirectoryResponse](Http(DeleteDirectoryUrl).postForm(Seq("name" -> directoryName)))
     result match {
       case Success(deleteDirectoryResponse) if deleteDirectoryResponse.success => Success()
       case Success(deleteDirectoryResponse) if deleteDirectoryResponse.dirNotFoundError => Success()
       case Success(deleteDirectoryResponse) if !deleteDirectoryResponse.success =>
-        Failure(CrowdinException(deleteDirectoryResponse.error.get))
+        Failure(CrowdinException(s"Could not delete directory $directoryName", deleteDirectoryResponse.error.get))
 
       case Failure(err) => Failure(CrowdinException(err))
     }
@@ -145,7 +146,7 @@ class CrowdinClient(fromLanguage: String, projectIdentifier: String, projectKey:
           case Success(EditProjectResponse(Some(Project(true)), _)) => Success()
           case Success(EditProjectResponse(_, Some(error))) => Failure(CrowdinException(error))
           case Success(_) => Failure(CrowdinException(s"Unknown error when adding $toLanguage to Crowdin"))
-          case Failure(ex) => Failure(CrowdinException(ex))
+          case Failure(ex) => Failure(CrowdinException(s"Could not add targetLanguage $toLanguage", ex))
         }
       } else {
         Success()
@@ -190,5 +191,5 @@ object CrowdinUtils {
   def filenameFor(book: Book, chapterId: Long) = s"${directoryNameFor(book)}/$chapterId.xhtml"
 }
 
-case class BookMetaData(title: String, description: String, etag: Option[String] = None)
+case class BookMetaData(title: String, description: String, translators: Option[String], etag: Option[String] = None)
 case class TranslatedChapter(newChapterId: Option[Long], content: String, etag: Option[String] = None)

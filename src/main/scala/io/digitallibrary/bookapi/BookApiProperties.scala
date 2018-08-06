@@ -88,6 +88,7 @@ object BookApiProperties extends LazyLogging {
   val CorrelationIdHeader = "X-Correlation-ID"
 
   lazy val CrowdinProjects: Seq[CrowdinProject] = readCrowdinProjects()
+  val CrowdinTranslatorPlaceHolder = "INSERT YOUR NAME HERE"
 
   //In format lang;projectid;projectkey, lang:projectid;projectkey
   def readCrowdinProjects(): Seq[CrowdinProject] = {

@@ -76,9 +76,11 @@ object CrowdinException {
 
   def apply(errors: Seq[crowdin.Error]): CrowdinException = new CrowdinException("Received Crowdin Errors", errors, Seq())
   def apply(error: crowdin.Error): CrowdinException = apply(Seq(error))
+  def apply(message: String, error: crowdin.Error): CrowdinException = new CrowdinException(message, Seq(error), Seq())
 
   def apply(cause: Throwable): CrowdinException = new CrowdinException(Seq(cause))
   def apply(message: String): CrowdinException = new CrowdinException(message, Seq(), Seq())
+  def apply(message: String, cause: Throwable) = new CrowdinException(message, Seq(), Seq(cause))
 }
 
 class DBException(message: String,
