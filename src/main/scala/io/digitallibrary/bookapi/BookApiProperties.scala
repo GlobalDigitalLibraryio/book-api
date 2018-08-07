@@ -126,6 +126,7 @@ object BookApiProperties extends LazyLogging {
   }
 
   def searchIndex(language: LanguageTag): String = s"$SearchIndex-${language.toString}"
+  def searchIndexPatternForAllLanguages(): String = s"$SearchIndex-*"
 
   def getCloudFrontUrl(env: String, typ: String): String = {
     env match {

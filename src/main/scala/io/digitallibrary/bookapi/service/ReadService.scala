@@ -28,7 +28,7 @@ trait ReadService {
       val books = searchResult.results.flatMap(translation =>
           converterService.toApiBookHit(Some(translation), bookRepository.withId(translation.bookId)))
 
-      api.SearchResult(searchResult.totalCount, searchResult.page, searchResult.pageSize, converterService.toApiLanguage(searchResult.language), books)
+      api.SearchResult(searchResult.totalCount, searchResult.page, searchResult.pageSize, Some(converterService.toApiLanguage(searchResult.language)), books)
     }
 
     def listAvailablePublishedCategoriesForLanguage(language: LanguageTag): Map[Category, Set[String]] = {

@@ -33,7 +33,7 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
   addServlet(controller, "/*")
 
   test("that GET / will get books with default language") {
-    val result = SearchResult(0, 1, 10, Language("eng", "English"), Seq(TestData.Api.DefaultBookHit))
+    val result = SearchResult(0, 1, 10, Some(Language("eng", "English")), Seq(TestData.Api.DefaultBookHit))
     when(searchService.searchWithCategoryAndLevel(languageTag = LanguageTag(BookApiProperties.DefaultLanguage), category = None, readingLevel = Some("1"), source = None, paging = Paging(1, 10), sort = Sort.ByIdAsc)).thenReturn(result)
 
     get("/?reading-level=1&page-size=10&page=1") {
@@ -47,7 +47,7 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
   test("that GET /:lang will get books with language") {
     val language = TestData.Api.norwegian_bokmal
 
-    val result = SearchResult(0, 1, 10, language, Seq(TestData.Api.DefaultBookHit))
+    val result = SearchResult(0, 1, 10, Some(language), Seq(TestData.Api.DefaultBookHit))
     when(searchService.searchWithCategoryAndLevel(languageTag = LanguageTag(language.code), category = None, readingLevel = Some("2"), source = None, paging = Paging(1, 10), sort = Sort.ByIdAsc)).thenReturn(result)
 
     get("/nob?reading-level=2&page-size=10&page=1") {
@@ -64,7 +64,7 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
     val firstBook = TestData.Api.DefaultBookHit.copy(id = 2, title = "This should be first")
     val secondBook = TestData.Api.DefaultBookHit.copy(id = 1, title = "This should be last")
 
-    val result = SearchResult(2, 1, 10, language, Seq(firstBook, secondBook))
+    val result = SearchResult(2, 1, 10, Some(language), Seq(firstBook, secondBook))
     when(searchService.searchWithCategoryAndLevel(languageTag = LanguageTag(language.code), category = None, readingLevel = Some("2"), source = None, paging = Paging(1, 10), sort = Sort.ByTitleDesc)).thenReturn(result)
 
     get("/nob?reading-level=2&page-size=10&page=1&sort=-title") {
