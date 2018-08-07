@@ -47,7 +47,7 @@ trait SearchService {
     def searchSimilar(languageTag: LanguageTag, bookId: Long, paging: Paging, sort: Sort.Value): SearchResult = {
       val translation = unFlaggedTranslationsRepository.forBookIdAndLanguage(bookId, languageTag)
       translation match {
-        case None => SearchResult(0, paging.page, paging.pageSize, converterService.toApiLanguage(languageTag), Seq())
+        case None => SearchResult(0, paging.page, paging.pageSize, Some(converterService.toApiLanguage(languageTag)), Seq())
         case Some(trans) =>
           val moreLikeThisDefinition = MoreLikeThisQueryDefinition(Seq("readingLevel","language"),
             likeDocs = Seq(MoreLikeThisItem(BookApiProperties.searchIndex(languageTag), BookApiProperties.SearchDocument, trans.id.get.toString)),
@@ -55,15 +55,7 @@ trait SearchService {
           executeSearch(boolDefinition = BoolQueryDefinition().must(moreLikeThisDefinition), languageTag = Some(languageTag), query = None, categories = trans.categories.map(_.name), readingLevel = None, source = None, paging = paging, sort = sort)
       }
     }
-
-
-    // TODO This function should be removed when the frontend does no longer use the language-field in the search results,
-    // which can then be removed.
-    @Deprecated
-    private def defaultLanguageIfNoLanguage(languageTagOpt: Option[LanguageTag]): LanguageTag = {
-      languageTagOpt.getOrElse(LanguageTag("en"))
-    }
-
+    
     private def executeSearch(boolDefinition: BoolQueryDefinition, languageTag: Option[LanguageTag], query: Option[String],
                               categories: Seq[String], readingLevel: Option[String], source: Option[String], paging: Paging, sort: Sort.Value): SearchResult = {
 
@@ -100,13 +92,13 @@ trait SearchService {
           HighlightFieldDefinition("description", numOfFragments = Some(0))))
 
       esClient.execute(search) match {
-        case Success(response) => SearchResult(response.result.totalHits, paging.page, numResults, converterService.toApiLanguage(defaultLanguageIfNoLanguage(languageTag)), getHits(response.result.hits))
+        case Success(response) => SearchResult(response.result.totalHits, paging.page, numResults, languageTag.map(converterService.toApiLanguage), getHits(response.result.hits))
         case Failure(failure: GdlSearchException) =>
           failure.getFailure.status match {
-            case 404 => SearchResult(0, paging.page, numResults, converterService.toApiLanguage(defaultLanguageIfNoLanguage(languageTag)), Seq())
-            case _ => errorHandler(defaultLanguageIfNoLanguage(languageTag), Failure(failure))
+            case 404 => SearchResult(0, paging.page, numResults, languageTag.map(converterService.toApiLanguage), Seq())
+            case _ => errorHandler(languageTag, Failure(failure))
           }
-        case Failure(failure) => errorHandler(defaultLanguageIfNoLanguage(languageTag), Failure(failure))
+        case Failure(failure) => errorHandler(languageTag, Failure(failure))
       }
     }
 
@@ -140,11 +132,11 @@ trait SearchService {
       (startAt, pageSize)
     }
 
-    private def errorHandler[T](languageTag: LanguageTag, failure: Failure[T]) = {
+    private def errorHandler[T](languageTag: Option[LanguageTag], failure: Failure[T]) = {
       failure match {
         case Failure(e: GdlSearchException) =>
           logger.error(e.getFailure.error.reason)
-          throw new ElasticsearchException(s"Unable to execute search in ${BookApiProperties.searchIndex(languageTag)}", e.getFailure.error.reason)
+          throw new ElasticsearchException(s"Unable to execute search in ${languageTag.map(BookApiProperties.searchIndex).getOrElse(BookApiProperties.searchIndexPatternForAllLanguages())}", e.getFailure.error.reason)
         case Failure(t: Throwable) => throw t
       }
     }

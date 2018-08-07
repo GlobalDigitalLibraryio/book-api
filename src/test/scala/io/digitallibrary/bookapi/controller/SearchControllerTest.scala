@@ -24,7 +24,7 @@ class SearchControllerTest extends UnitSuite with TestEnvironment with ScalatraF
   addServlet(controller, "/*")
 
   test("that search without lang searches for all books") {
-    val result = SearchResult(0, 1, 10, Language("en", "English"), Seq(TestData.Api.DefaultBookHit))
+    val result = SearchResult(0, 1, 10, None, Seq(TestData.Api.DefaultBookHit))
     when(searchService.searchWithQueryForAllLanguages(None, None, Paging(1,10), Sort.ByRelevance)).thenReturn(result)
 
     get("/") {
@@ -36,7 +36,7 @@ class SearchControllerTest extends UnitSuite with TestEnvironment with ScalatraF
   }
 
   test("that search with lang as query param searches for books in correct lang") {
-    val result = SearchResult(0, 1, 10, Language("om", "Afaan Oromoo"), Seq(TestData.Api.DefaultBookHit))
+    val result = SearchResult(0, 1, 10, Some(Language("om", "Afaan Oromoo")), Seq(TestData.Api.DefaultBookHit))
     when(searchService.searchWithQuery(LanguageTag("om"), None, None, Paging(1,10), Sort.ByRelevance)).thenReturn(result)
 
     get("/?language=om") {
@@ -48,7 +48,7 @@ class SearchControllerTest extends UnitSuite with TestEnvironment with ScalatraF
   }
 
   test("that search with lang searches for books in correct lang") {
-    val result = SearchResult(0, 1, 10, Language("amh", "Amharic"), Seq(TestData.Api.DefaultBookHit))
+    val result = SearchResult(0, 1, 10, Some(Language("amh", "Amharic")), Seq(TestData.Api.DefaultBookHit))
     when(searchService.searchWithQuery(LanguageTag("amh"), None, None, Paging(1,1), Sort.ByRelevance)).thenReturn(result)
 
     get("/amh/?page-size=1") {
