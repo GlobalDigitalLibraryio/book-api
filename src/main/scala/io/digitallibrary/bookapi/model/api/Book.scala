@@ -26,7 +26,9 @@ case class License(@(ApiModelProperty@field)(description = "The id of the licens
 
 @ApiModel(description = "Information about where to find the cover image for the book")
 case class CoverImage(@(ApiModelProperty@field)(description = "URL to the cover-image") url: String,
-                      @(ApiModelProperty@field)(description = "Alternate text for the cover image") alttext: Option[String])
+                      @(ApiModelProperty@field)(description = "Alternate text for the cover image") alttext: Option[String],
+                      @(ApiModelProperty@field)(description = "Image id of the cover-image") imageId: String)
+
 
 @ApiModel(description = "Information about where to download a copy of the book")
 case class Downloads(@(ApiModelProperty@field)(description = "URL to an epub-download") epub: Option[String],
