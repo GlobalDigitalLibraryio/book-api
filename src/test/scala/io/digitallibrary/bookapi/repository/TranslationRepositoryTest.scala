@@ -19,7 +19,6 @@ class TranslationRepositoryTest extends IntegrationSuite with TestEnvironment wi
   override val bookRepository = new BookRepository
   override val categoryRepository = new CategoryRepository
   override val unFlaggedTranslationsRepository = new TranslationRepository
-  override val licenseRepository = new LicenseRepository
   override val publisherRepository = new PublisherRepository
 
   test("that Translation is added") {
