@@ -17,7 +17,6 @@ class FeaturedContentRepositoryTest extends IntegrationSuite with TestEnvironmen
   override val featuredContentRepository = new FeaturedContentRepository
   override val bookRepository = new BookRepository
   override val publisherRepository = new PublisherRepository
-  override val licenseRepository = new LicenseRepository
   override val categoryRepository = new CategoryRepository
   override val unFlaggedTranslationsRepository = new TranslationRepository
 

@@ -8,13 +8,13 @@
 package io.digitallibrary.bookapi.model.domain
 
 import io.digitallibrary.bookapi.BookApiProperties
+import io.digitallibrary.license.model.License
 import scalikejdbc._
 
 
 case class Book(id: Option[Long],
                 revision: Option[Int],
                 publisherId: Long,
-                licenseId: Long,
                 publisher: Publisher,
                 license: License,
                 source: String)
@@ -24,17 +24,16 @@ object Book extends SQLSyntaxSupport[Book] {
   override val tableName = "book"
   override val schemaName = Some(BookApiProperties.MetaSchema)
 
-  def apply(b: SyntaxProvider[Book], pub: SyntaxProvider[Publisher], lic: SyntaxProvider[License])(rs: WrappedResultSet): Book =
-    apply(b.resultName, pub.resultName, lic.resultName)(rs)
+  def apply(b: SyntaxProvider[Book], pub: SyntaxProvider[Publisher])(rs: WrappedResultSet): Book =
+    apply(b.resultName, pub.resultName)(rs)
 
 
-  def apply(b: ResultName[Book], pub: ResultName[Publisher], lic: ResultName[License])(rs: WrappedResultSet): Book = Book(
+  def apply(b: ResultName[Book], pub: ResultName[Publisher])(rs: WrappedResultSet): Book = Book(
       rs.longOpt(b.id),
       rs.intOpt(b.revision),
       rs.long(b.publisherId),
-      rs.long(b.licenseId),
       Publisher.apply(pub)(rs),
-      License.apply(lic)(rs),
+      License(rs.string(b.license)),
       rs.string(b.source))
 
 }

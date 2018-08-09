@@ -20,6 +20,7 @@ import io.digitallibrary.bookapi.model.domain._
 import io.digitallibrary.bookapi.repository._
 import io.digitallibrary.bookapi.service.search.IndexService
 import io.digitallibrary.language.model.LanguageTag
+import io.digitallibrary.license.model.License
 import io.digitallibrary.network.AuthUser
 
 import scala.util.{Failure, Success, Try}
@@ -37,7 +38,6 @@ trait WriteService {
     with ContributorRepository
     with TranslationRepository
     with EducationalAlignmentRepository
-    with LicenseRepository
     with PersonRepository
     with PublisherRepository
     with FeaturedContentRepository
@@ -125,14 +125,13 @@ trait WriteService {
       bookRepository.withId(bookId) match {
         case None => Failure(new NotFoundException(s"Book with id $bookId was not found"))
         case Some(existingBook) => {
-          val optLicense = licenseRepository.withName(bookReplacement.license)
           val optPublisher = publisherRepository.withName(bookReplacement.publisher) match {
             case Some(x) => Some(x)
             case None => Some(Publisher(None, None, bookReplacement.publisher))
           }
 
           for {
-            validLicense <- validationService.validateLicense(optLicense)
+            validLicense <- Try(License(bookReplacement.license))
             validPublisher <- validationService.validatePublisher(optPublisher)
             persistedBook <- inTransaction { implicit session =>
               val persistedPublisher = validPublisher.id match {
@@ -143,9 +142,8 @@ trait WriteService {
               persistedPublisher.flatMap(p => {
                 existingBook.copy(
                   publisherId = p.id.get,
-                  licenseId = validLicense.id.get,
-                  publisher = p,
                   license = validLicense,
+                  publisher = p,
                   source = bookReplacement.source)
 
                 bookRepository.updateBook(existingBook)
@@ -158,14 +156,13 @@ trait WriteService {
     }
 
     def newBook(newBook: api.internal.NewBook): Try[api.internal.BookId] = {
-      val optLicense = licenseRepository.withName(newBook.license)
       val optPublisher = publisherRepository.withName(newBook.publisher) match {
         case Some(x) => Some(x)
         case None => Some(Publisher(None, None, newBook.publisher))
       }
 
       for {
-        validLicense <- validationService.validateLicense(optLicense)
+        validLicense <- Try(License(newBook.license))
         validPublisher <- validationService.validatePublisher(optPublisher)
         persistedBook <- inTransaction { implicit session =>
           val persistedPublisher = validPublisher.id match {
@@ -179,7 +176,6 @@ trait WriteService {
               revision = None,
               publisherId = p.id.get,
               publisher = p,
-              licenseId = validLicense.id.get,
               license = validLicense,
               source = newBook.source)
 
