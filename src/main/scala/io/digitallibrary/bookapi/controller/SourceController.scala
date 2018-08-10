@@ -40,5 +40,4 @@ trait SourceController {
       readService.listSourcesForLanguage(language)
     }
   }
-
 }

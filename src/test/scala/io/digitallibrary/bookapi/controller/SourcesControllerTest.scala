@@ -66,5 +66,3 @@ class SourcesControllerTest extends UnitSuite with TestEnvironment with Scalatra
 
 
 }
-
-
