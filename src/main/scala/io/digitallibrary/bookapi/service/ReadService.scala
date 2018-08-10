@@ -18,7 +18,7 @@ import io.digitallibrary.network.AuthUser
 
 trait ReadService {
   this: ConverterService with BookRepository with ChapterRepository with TranslationRepository with InTranslationRepository
-  with FeaturedContentRepository with CategoryRepository =>
+  with FeaturedContentRepository with CategoryRepository with SourceRepository =>
   val readService: ReadService
 
   class ReadService {
@@ -155,5 +155,10 @@ trait ReadService {
         unFlaggedTranslationsRepository
       }
     }
+
+    def listSourcesForLanguage(language: LanguageTag): Seq[String] = {
+      sourceRepository.getSources(language)
+    }
+
   }
 }

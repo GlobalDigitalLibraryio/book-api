@@ -38,6 +38,7 @@ object ComponentRegistry
   with InternController
   with HealthController
   with OPDSController
+  with SourceController
   with GdlClient
   with ImageApiClient
   with DownloadController
@@ -51,6 +52,7 @@ object ComponentRegistry
   with LicenseRepository
   with PersonRepository
   with PublisherRepository
+  with SourceRepository
   with EPubService
   with PdfService
   with FeedRepository
@@ -110,6 +112,7 @@ object ComponentRegistry
   lazy val internController = new InternController
   lazy val opdsController = new OPDSController
   lazy val featuredContentController = new FeaturedContentController
+  lazy val sourceController = new SourceController
 
   lazy val readService = new ReadService
   lazy val writeService = new WriteService
@@ -134,6 +137,7 @@ object ComponentRegistry
   lazy val personRepository = new PersonRepository
   lazy val publisherRepository = new PublisherRepository
   lazy val featuredContentRepository = new FeaturedContentRepository
+  lazy val sourceRepository = new SourceRepository
 
   lazy val ePubService = new EPubService
   lazy val pdfService = new PdfService

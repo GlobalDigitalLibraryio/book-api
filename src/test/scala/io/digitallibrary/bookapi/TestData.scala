@@ -45,6 +45,8 @@ object TestData {
     val DefaultLicense = api.License(1, 1, "lisens", Some("beskrivelse"), Some("url"))
     val DefaultPublisher = api.Publisher(1, 1, "Some Publisher")
     val DefaultSource = "storyweaver"
+    val SecondarySource = "bookdash"
+
     val DefaultPageOrientation = "PORTRAIT"
 
     val category1 = api.Category(1, 1, "category1")
