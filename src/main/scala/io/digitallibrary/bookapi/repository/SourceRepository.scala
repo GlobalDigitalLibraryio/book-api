@@ -1,6 +1,6 @@
 package io.digitallibrary.bookapi.repository
 
-import io.digitallibrary.bookapi.model.domain.{AllTranslations, Book}
+import io.digitallibrary.bookapi.model.domain.{UnflaggedTranslations, Book, Source}
 import io.digitallibrary.language.model.LanguageTag
 import scalikejdbc._
 
@@ -8,15 +8,15 @@ trait SourceRepository {
   val sourceRepository: SourceRepository
 
   class SourceRepository {
-    private val (book, t) = (Book.syntax, AllTranslations.syntax)
+    private val (book, t) = (Book.syntax, UnflaggedTranslations.syntax)
 
-    def getSources(language: LanguageTag)(implicit  session: DBSession = ReadOnlyAutoSession): Seq[String] = {
-      select(sqls.distinct(book.source))
+    def getSources(language: LanguageTag)(implicit  session: DBSession = ReadOnlyAutoSession): Seq[Source] = {
+      select(book.source, sqls.count)
         .from(Book as book)
-        .innerJoin(AllTranslations as t).on(book.id, t.id)
-        .where.eq(t.language, language.toString())
+        .innerJoin(UnflaggedTranslations as t).on(book.id, t.id)
+        .where.eq(t.language, language.toString()).groupBy(book.source)
         .toSQL
-        .map(rs => rs.string(1)).list().apply()
+        .map(rs => Source(rs.string(1), rs.long(2))).list().apply()
     }
   }
 }

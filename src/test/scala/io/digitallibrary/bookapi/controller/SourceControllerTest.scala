@@ -8,7 +8,7 @@ import org.mockito.ArgumentMatchers._
 
 
 
-class SourcesControllerTest extends UnitSuite with TestEnvironment with ScalatraFunSuite {
+class SourceControllerTest extends UnitSuite with TestEnvironment with ScalatraFunSuite {
 
   implicit val swagger: BookSwagger = new BookSwagger
   lazy val controller = new SourceController
@@ -24,7 +24,7 @@ class SourcesControllerTest extends UnitSuite with TestEnvironment with Scalatra
 
     get("/eng", headers = Seq(("Authorization", s"Bearer ${TestData.validTestTokenWithAdminReadRole}"))) {
       status should equal(200)
-      body should equal("""["storyweaver"]""")
+      body should equal(s"""[{"source":"${TestData.Api.DefaultSource.source}","count":${TestData.Api.DefaultSource.count}}]""")
     }
   }
 
@@ -33,7 +33,7 @@ class SourcesControllerTest extends UnitSuite with TestEnvironment with Scalatra
 
     get("/eng" , headers = Seq(("Authorization", s"Bearer ${TestData.validTestTokenWithAdminReadRole}"))) {
       status should equal(200)
-      body should equal("""["storyweaver","bookdash"]""")
+      body should equal(s"""[{"source":"${TestData.Api.DefaultSource.source}","count":${TestData.Api.DefaultSource.count}},{"source":"${TestData.Api.SecondarySource.source}","count":${TestData.Api.SecondarySource.count}}]""")
     }
   }
 

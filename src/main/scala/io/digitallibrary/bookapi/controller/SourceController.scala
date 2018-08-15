@@ -26,12 +26,11 @@ trait SourceController {
     val response500 = ResponseMessage(500, "Unknown error", Some("Error"))
 
     private val getSourcesForLanguage = (apiOperation[Seq[String]]("getSourcesForLanguage")
-      summary (s"Returns all the sources for the specified language")
-      description (s"Returns a list of sources in the specified language")
-      parameter (pathParam[String]("lang").description("The language to receive sources for in ISO 639-2 format"))
+      summary s"Returns all the sources for the specified language"
+      description s"Returns a list of sources in the specified language"
+      parameter pathParam[String]("lang").description("The language to receive sources for in ISO 639-2 format")
       authorizations "oauth2"
-      responseMessages(response400, response403, response404, response500)
-      )
+      responseMessages(response400, response403, response404, response500))
 
     get("/:lang", operation(getSourcesForLanguage)) {
       assertHasRole(RoleWithAdminReadAccess)
