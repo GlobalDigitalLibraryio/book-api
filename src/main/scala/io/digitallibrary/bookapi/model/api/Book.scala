@@ -17,9 +17,7 @@ import org.scalatra.swagger.runtime.annotations.ApiModelProperty
 import scala.annotation.meta.field
 
 @ApiModel(description = "Information about the licensing of the book")
-case class License(@(ApiModelProperty@field)(description = "The id of the license") id: Long,
-                   @(ApiModelProperty@field)(description = "The revision of the license") revision: Int,
-                   @(ApiModelProperty@field)(description = "The name of the license") name: String,
+case class License(@(ApiModelProperty@field)(description = "The name of the license") name: String,
                    @(ApiModelProperty@field)(description = "Description of the license") description: Option[String],
                    @(ApiModelProperty@field)(description = "Url to where the license can be found") url: Option[String])
 

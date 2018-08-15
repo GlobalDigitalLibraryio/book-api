@@ -42,7 +42,7 @@ object TestData {
     val norwegian_bokmal = api.Language(LanguageCodeNorwegian, "Bokmål, Norwegian")
     val amharic = api.Language(LanguageCodeAmharic, "Amharic")
 
-    val DefaultLicense = api.License(1, 1, "lisens", Some("beskrivelse"), Some("url"))
+    val DefaultLicense = api.License("lisens", Some("beskrivelse"), Some("url"))
     val DefaultPublisher = api.Publisher(1, 1, "Some Publisher")
     val DefaultSource = "storyweaver"
     val SecondarySource = "bookdash"
@@ -127,14 +127,13 @@ object TestData {
     val DefaultSource = "storyweaver"
     val DefaultPageOrientation = PageOrientation.PORTRAIT
     val DefaultPublisher = domain.Publisher(Some(1), Some(1), "Default publisher")
-    val DefaultLicense = domain.License(Some(1), Some(1), "Default License", Some("Default license description"), Some("http://some.url.com"))
+    val DefaultLicense = io.digitallibrary.license.model.License("cc-by-4.0")
     val DefaultCategory = domain.Category(Some(1), Some(1), "library_books")
 
     val DefaultBook = domain.Book(
       id = Some(1),
       revision = Some(1),
       publisherId = DefaultPublisher.id.get,
-      licenseId = DefaultLicense.id.get,
       publisher = DefaultPublisher,
       license = DefaultLicense,
       source = DefaultSource)

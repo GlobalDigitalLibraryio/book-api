@@ -49,7 +49,6 @@ object ComponentRegistry
   with ContributorRepository
   with TranslationRepository
   with EducationalAlignmentRepository
-  with LicenseRepository
   with PersonRepository
   with PublisherRepository
   with SourceRepository
@@ -133,7 +132,6 @@ object ComponentRegistry
   lazy val unFlaggedTranslationsRepository = new TranslationRepository
   lazy val allTranslationsRepository = new TranslationRepository(translationView = AllTranslations)
   lazy val educationalAlignmentRepository = new EducationalAlignmentRepository
-  lazy val licenseRepository = new LicenseRepository
   lazy val personRepository = new PersonRepository
   lazy val publisherRepository = new PublisherRepository
   lazy val featuredContentRepository = new FeaturedContentRepository

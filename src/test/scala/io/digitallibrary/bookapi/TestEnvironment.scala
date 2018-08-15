@@ -44,7 +44,6 @@ trait TestEnvironment
     with ContributorRepository
     with TranslationRepository
     with EducationalAlignmentRepository
-    with LicenseRepository
     with PersonRepository
     with PublisherRepository
     with EPubService
@@ -105,7 +104,6 @@ trait TestEnvironment
   val unFlaggedTranslationsRepository = mock[TranslationRepository]
   val allTranslationsRepository = mock[TranslationRepository]
   val educationalAlignmentRepository = mock[EducationalAlignmentRepository]
-  val licenseRepository = mock[LicenseRepository]
   val personRepository = mock[PersonRepository]
   val publisherRepository = mock[PublisherRepository]
   val ePubService = mock[EPubService]
@@ -157,7 +155,6 @@ trait TestEnvironment
       unFlaggedTranslationsRepository,
       allTranslationsRepository,
       educationalAlignmentRepository,
-      licenseRepository,
       personRepository,
       publisherRepository,
       ePubService,
