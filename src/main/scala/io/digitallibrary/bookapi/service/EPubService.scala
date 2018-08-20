@@ -9,6 +9,7 @@ package io.digitallibrary.bookapi.service
 
 import com.netaporter.uri.dsl._
 import com.typesafe.scalalogging.LazyLogging
+import coza.opencollab.epub.creator.model.contributor.Contributor
 import coza.opencollab.epub.creator.model.{Content, EpubBook, TocLink}
 import io.digitallibrary.language.model.LanguageTag
 import io.digitallibrary.bookapi.integration.ImageApiClient
@@ -40,8 +41,20 @@ trait EPubService {
 
     private def buildEPubFor(translation: domain.Translation, chapters: Seq[domain.Chapter]): Try[EpubBook] = {
       Try {
-        val authors = translation.contributors.filter(_.`type` == ContributorType.Author).map(_.person.name).mkString(", ")
-        val book = new EpubBook(translation.language.toString, translation.uuid, translation.title, authors)
+        val book = new EpubBook(translation.language.toString, translation.uuid, translation.title)
+        book.setDescription(translation.about)
+
+        translation.contributors.foreach(contributor => {
+          val ctbType = contributor.`type` match {
+            case ContributorType.Author => coza.opencollab.epub.creator.model.contributor.ContributorType.Author
+            case ContributorType.Illustrator => coza.opencollab.epub.creator.model.contributor.ContributorType.Illustrator
+            case ContributorType.Translator => coza.opencollab.epub.creator.model.contributor.ContributorType.Translator
+            case _ => null
+          }
+
+          book.addContributor(new Contributor(contributor.person.name, ctbType))
+        })
+
 
         // Add CSS to ePub
         val ePubCss = EPubCss()
