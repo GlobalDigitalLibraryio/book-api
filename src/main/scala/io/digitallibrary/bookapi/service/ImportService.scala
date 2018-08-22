@@ -12,13 +12,13 @@ import io.digitallibrary.bookapi.model._
 import io.digitallibrary.bookapi.model.api.{ValidationException, ValidationMessage}
 import io.digitallibrary.bookapi.repository._
 import io.digitallibrary.bookapi.service.search.IndexService
+import io.digitallibrary.license.model.License
 import scalikejdbc.{AutoSession, DBSession}
 
 import scala.util.{Failure, Success, Try}
 
 trait ImportService {
   this: TransactionHandler
-    with LicenseRepository
     with PublisherRepository
     with BookRepository
     with CategoryRepository
@@ -124,12 +124,15 @@ trait ImportService {
 
     def persistChapterUpdates(book: api.internal.Book, translation: domain.Translation)(implicit session: DBSession = AutoSession): Try[Seq[domain.Chapter]] = {
       Try {
-        book.chapters.map(toUpdate => {
-          chapterRepository.forTranslationWithSeqNo(translation.id.get, toUpdate.seqNo) match {
-            case Some(chapter) => chapterRepository.updateChapter(converterService.mergeChapter(chapter, toUpdate))
-            case None => chapterRepository.add(converterService.toDomainChapter(toUpdate, translation.id.get))
-          }
-        })
+        inTransaction { implicit session =>
+          chapterRepository.deleteChaptersExceptGivenSeqNumbers(translation.id.get, book.chapters.map(_.seqNo))
+          book.chapters.map(toUpdate => {
+            chapterRepository.forTranslationWithSeqNo(translation.id.get, toUpdate.seqNo) match {
+              case Some(chapter) => chapterRepository.updateChapter(converterService.mergeChapter(chapter, toUpdate))
+              case None => chapterRepository.add(converterService.toDomainChapter(toUpdate, translation.id.get))
+            }
+          })
+        }
       }
     }
 
@@ -188,7 +191,7 @@ trait ImportService {
       }
     }
 
-    private def persistBook(book: api.internal.Book, license: domain.License, publisher: domain.Publisher)(implicit session: DBSession = AutoSession): Try[domain.Book] = {
+    private def persistBook(book: api.internal.Book, license: License, publisher: domain.Publisher)(implicit session: DBSession = AutoSession): Try[domain.Book] = {
       Try(
         bookRepository.add(
           domain.Book(
@@ -196,24 +199,22 @@ trait ImportService {
             revision = None,
             publisherId = publisher.id.get,
             publisher = publisher,
-            licenseId = license.id.get,
             license = license,
             source = book.source)))
 
     }
 
-    def persistBookUpdate(originalBook: domain.Book, book: api.internal.Book, license: domain.License, persistedPubliser: domain.Publisher): Try[domain.Book] = {
+    def persistBookUpdate(originalBook: domain.Book, book: api.internal.Book, license: License, persistedPubliser: domain.Publisher): Try[domain.Book] = {
       bookRepository.updateBook(
         originalBook.copy(
           publisherId = persistedPubliser.id.get,
           publisher = persistedPubliser,
-          licenseId = license.id.get,
           license = license,
           source = book.source))
     }
 
-    private def validLicense(book: api.internal.Book): Try[domain.License] = {
-      validationService.validateLicense(licenseRepository.withName(book.license.name))
+    private def validLicense(book: api.internal.Book): Try[License] = {
+      validationService.validateLicense(book.license.name)
     }
 
     def persistPublisher(publisher: domain.Publisher)(implicit session: DBSession = AutoSession): Try[domain.Publisher] = {

@@ -6,7 +6,7 @@ import io.digitallibrary.bookapi.model.api.{Contributor, ValidationException}
 import io.digitallibrary.bookapi.model.domain.Translation
 import org.mockito.ArgumentMatchers.{any, anyString, eq => eqTo}
 import org.mockito.Mockito._
-import scalikejdbc.DBSession
+import scalikejdbc.{AutoSession, DBSession}
 
 class ImportServiceTest extends UnitSuite with TestEnvironment {
   val service = new ImportService
@@ -97,7 +97,7 @@ class ImportServiceTest extends UnitSuite with TestEnvironment {
     verify(chapterRepository).updateChapter(any[domain.Chapter])(any[DBSession])
   }
 
-  test("that persistChapterUpdates adds new chapters") {
+  test("that persistChapterUpdates adds new chapters and deletes redundant chapters") {
     val translation = TestData.Domain.DefaultTranslation
     val book = TestData.Internal.DefaultInternalBook.copy(chapters = Seq(TestData.Api.Chapter1))
 
@@ -111,6 +111,7 @@ class ImportServiceTest extends UnitSuite with TestEnvironment {
     result should be a 'Success
 
     verify(chapterRepository).add(any[domain.Chapter])(any[DBSession])
+    verify(chapterRepository).deleteChaptersExceptGivenSeqNumbers(translation.id.get, Seq(TestData.Api.Chapter1.seqNo))(AutoSession)
   }
 
   test("that persistPublisher creates a new publisher when no id") {

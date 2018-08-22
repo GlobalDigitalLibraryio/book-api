@@ -11,7 +11,8 @@ import com.typesafe.scalalogging.LazyLogging
 import io.digitallibrary.bookapi.model._
 import io.digitallibrary.bookapi.model.api.internal.NewTranslation
 import io.digitallibrary.bookapi.model.api.{ValidationException, ValidationMessage}
-import io.digitallibrary.bookapi.model.domain.{ChapterType, ContributorType}
+import io.digitallibrary.bookapi.model.domain.ContributorType
+import io.digitallibrary.license.model.License
 import org.apache.commons.validator.routines.UrlValidator
 import org.jsoup.Jsoup
 import org.jsoup.safety.Whitelist
@@ -61,12 +62,7 @@ trait ValidationService {
       ))
     }
 
-    def validateLicense(license: Option[domain.License]): Try[domain.License] = {
-      license match {
-        case None => Failure(new ValidationException(errors = Seq(ValidationMessage("license", "Invalid license"))))
-        case Some(x) => Success(x)
-      }
-    }
+    def validateLicense(license: String): Try[License] = Try(License(license))
 
     def validatePublisher(publisher: Option[domain.Publisher]): Try[domain.Publisher] = {
       publisher match {

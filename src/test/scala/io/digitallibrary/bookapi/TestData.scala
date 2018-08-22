@@ -33,6 +33,7 @@ object TestData {
 
   val validTestToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwczovL2RpZ2l0YWxsaWJyYXJ5LmlvL2dkbF9pZCI6IjEyMyIsInN1YiI6IjEyMzQ1Njc4OTAiLCJuYW1lIjoiSm9obiBEb2UifQ.e3BKK_gLxWQwJhFX6SppNchM_eSwu82yKghVx2P3yMY"
   val validTestTokenWithWriteRole = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwczovL2RpZ2l0YWxsaWJyYXJ5LmlvL2dkbF9pZCI6IjEyMyIsInN1YiI6IjEyMzQ1Njc4OTAiLCJuYW1lIjoiSm9obiBEb2UiLCJzY29wZSI6ImJvb2tzLWxvY2FsOndyaXRlIn0.RNLeTpQogFoHRgwz5bJN2INvszK-YSgiJS4yatJvvFs"
+  val validTestTokenWithAdminReadRole = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwczovL2RpZ2l0YWxsaWJyYXJ5LmlvL2dkbF9pZCI6IjEyMyIsInN1YiI6IjEyMzQ1Njc4OTAiLCJuYW1lIjoiSm9obiBEb2UiLCJzY29wZSI6ImFkbWluLWxvY2FsOnJlYWQifQ.HhektFTT_cKwU7grc5YLlSqUev-8URspKNfZKzsuOzE"
   val validTestTokenWithFeaturedRole = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwczovL2RpZ2l0YWxsaWJyYXJ5LmlvL2dkbF9pZCI6IjEyMyIsInN1YiI6IjEyMzQ1Njc4OTAiLCJuYW1lIjoiSm9obiBEb2UiLCJzY29wZSI6ImJvb2tzLWxvY2FsOmZlYXR1cmVkIn0.lvUkAaez_uJzxFG4GJeXxKOdmMdqN3oNJttMYsozkzs"
   val invalidTestToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwczovL2RpZ2l0YWxsaWJyYXJ5LmlvL2dkbF9hYmMiOiIxMjMiLCJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIn0.5rtcIdtPmH3AF1pwNbNvBMKmulyiEoWZfn1ip9aMzv4"
 
@@ -41,9 +42,11 @@ object TestData {
     val norwegian_bokmal = api.Language(LanguageCodeNorwegian, "Bokmål, Norwegian")
     val amharic = api.Language(LanguageCodeAmharic, "Amharic")
 
-    val DefaultLicense = api.License(1, 1, "lisens", Some("beskrivelse"), Some("url"))
+    val DefaultLicense = api.License("lisens", Some("beskrivelse"), Some("url"))
     val DefaultPublisher = api.Publisher(1, 1, "Some Publisher")
-    val DefaultSource = "storyweaver"
+    val DefaultSource = api.Source("storyweaver", 2)
+    val SecondarySource = api.Source("bookdash", 3)
+
     val DefaultPageOrientation = "PORTRAIT"
 
     val category1 = api.Category(1, 1, "category1")
@@ -84,7 +87,7 @@ object TestData {
       chapters = Seq(ChapterSummary1),
       supportsTranslation = true,
       bookFormat = BookFormat.HTML.toString,
-      source = DefaultSource,
+      source = DefaultSource.source,
       pageOrientation = DefaultPageOrientation,
       publishingStatus = PublishingStatus.PUBLISHED.toString,
       translationStatus = None)
@@ -100,7 +103,7 @@ object TestData {
         (1, 1, "library_books")),
       coverImage = None,
       dateArrived = today,
-      source = DefaultSource,
+      source = DefaultSource.source,
       highlightTitle = Some("Title"),
       highlightDescription = Some("Description"))
 
@@ -125,14 +128,13 @@ object TestData {
     val DefaultSource = "storyweaver"
     val DefaultPageOrientation = PageOrientation.PORTRAIT
     val DefaultPublisher = domain.Publisher(Some(1), Some(1), "Default publisher")
-    val DefaultLicense = domain.License(Some(1), Some(1), "Default License", Some("Default license description"), Some("http://some.url.com"))
+    val DefaultLicense = io.digitallibrary.license.model.License("cc-by-4.0")
     val DefaultCategory = domain.Category(Some(1), Some(1), "library_books")
 
     val DefaultBook = domain.Book(
       id = Some(1),
       revision = Some(1),
       publisherId = DefaultPublisher.id.get,
-      licenseId = DefaultLicense.id.get,
       publisher = DefaultPublisher,
       license = DefaultLicense,
       source = DefaultSource)

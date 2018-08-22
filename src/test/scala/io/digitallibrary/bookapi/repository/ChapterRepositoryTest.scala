@@ -18,7 +18,6 @@ class ChapterRepositoryTest extends IntegrationSuite with TestEnvironment with R
   override val categoryRepository = new CategoryRepository
   override val chapterRepository = new ChapterRepository
   override val unFlaggedTranslationsRepository = new TranslationRepository
-  override val licenseRepository = new LicenseRepository
   override val publisherRepository = new PublisherRepository
 
   test("that Chapter.add returns a Chapter with id") {
@@ -60,6 +59,31 @@ class ChapterRepositoryTest extends IntegrationSuite with TestEnvironment with R
       chapter.isDefined should be(true)
       chapter.head.id should equal(chapter1.id)
       chapter.head.content should equal(chapter1.content)
+    }
+  }
+
+  test("that Chapter.deleteChaptersExceptGivenSeqNumbers deletes chapters with seqNo not in the provided list, and no more") {
+    withRollback { implicit session =>
+      val book = addBookDef()
+      val translation1 = addTranslationDef("external-id1", "Some title 1", book.id.get, LanguageTag("eng"))
+      val translation2 = addTranslationDef("external-id2", "Some title 2", book.id.get, LanguageTag("swa"))
+
+      chapterRepository.add(Chapter(None, None, translation1.id.get, 1, Some("Chaptertitle1"), "Chaptercontent1", ChapterType.Content))
+      chapterRepository.add(Chapter(None, None, translation1.id.get, 2, Some("Chaptertitle1"), "Chaptercontent1", ChapterType.Content))
+      chapterRepository.add(Chapter(None, None, translation1.id.get, 3, Some("Chaptertitle1"), "Chaptercontent1", ChapterType.Content))
+      chapterRepository.add(Chapter(None, None, translation1.id.get, 4, Some("Chaptertitle1"), "Chaptercontent1", ChapterType.Content))
+      chapterRepository.add(Chapter(None, None, translation1.id.get, 5, Some("Chaptertitle1"), "Chaptercontent1", ChapterType.Content))
+
+      chapterRepository.add(Chapter(None, None, translation2.id.get, 4, Some("Chaptertitle1"), "Chaptercontent1", ChapterType.Content))
+      chapterRepository.add(Chapter(None, None, translation2.id.get, 5, Some("Chaptertitle1"), "Chaptercontent1", ChapterType.Content))
+
+      chapterRepository.chaptersForBookIdAndLanguage(book.id.get, LanguageTag("eng")).size should equal(5)
+      chapterRepository.chaptersForBookIdAndLanguage(book.id.get, LanguageTag("swa")).size should equal(2)
+
+      chapterRepository.deleteChaptersExceptGivenSeqNumbers(translation1.id.get, Seq(1, 2, 3))
+
+      chapterRepository.chaptersForBookIdAndLanguage(book.id.get, LanguageTag("eng")).size should equal(3)
+      chapterRepository.chaptersForBookIdAndLanguage(book.id.get, LanguageTag("swa")).size should equal(2)
     }
   }
 }

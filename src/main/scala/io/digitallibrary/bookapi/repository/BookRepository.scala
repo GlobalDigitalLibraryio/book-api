@@ -8,7 +8,7 @@
 package io.digitallibrary.bookapi.repository
 
 import io.digitallibrary.bookapi.model.api.OptimisticLockException
-import io.digitallibrary.bookapi.model.domain.{Book, License, Publisher}
+import io.digitallibrary.bookapi.model.domain.{Book, Publisher}
 import scalikejdbc.{AutoSession, DBSession, ReadOnlyAutoSession, insert, select, update}
 
 import scala.util.Try
@@ -18,15 +18,14 @@ trait BookRepository {
   val bookRepository: BookRepository
 
   class BookRepository {
-    private val (b, lic, pub) = (Book.syntax, License.syntax, Publisher.syntax)
+    private val (b, pub) = (Book.syntax, Publisher.syntax)
 
     def withId(id: Long)(implicit session: DBSession = ReadOnlyAutoSession): Option[Book] = {
       select
         .from(Book as b)
-        .innerJoin(License as lic).on(b.licenseId, lic.id)
         .innerJoin(Publisher as pub).on(b.publisherId, pub.id)
         .where.eq(b.id, id).toSQL
-        .map(Book.apply(b, pub, lic)).single().apply()
+        .map(Book.apply(b, pub)).single().apply()
     }
 
     def add(newBook: Book)(implicit session: DBSession = AutoSession): Book = {
@@ -37,7 +36,7 @@ trait BookRepository {
         val id = insert.into(Book).namedValues(
           b.revision -> startRevision,
           b.publisherId -> newBook.publisherId,
-          b.licenseId -> newBook.licenseId,
+          b.license -> newBook.license.toString(),
           b.source -> newBook.source
         ).toSQL
           .updateAndReturnGeneratedKey()
@@ -54,7 +53,7 @@ trait BookRepository {
         val count = update(Book).set(
           b.revision -> newRevision,
           b.publisherId -> book.publisherId,
-          b.licenseId -> book.licenseId,
+          b.license -> book.license.toString(),
           b.source -> book.source
         ).where
           .eq(b.id, book.id).and

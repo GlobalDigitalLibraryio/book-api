@@ -17,16 +17,16 @@ import org.scalatra.swagger.runtime.annotations.ApiModelProperty
 import scala.annotation.meta.field
 
 @ApiModel(description = "Information about the licensing of the book")
-case class License(@(ApiModelProperty@field)(description = "The id of the license") id: Long,
-                   @(ApiModelProperty@field)(description = "The revision of the license") revision: Int,
-                   @(ApiModelProperty@field)(description = "The name of the license") name: String,
+case class License(@(ApiModelProperty@field)(description = "The name of the license") name: String,
                    @(ApiModelProperty@field)(description = "Description of the license") description: Option[String],
                    @(ApiModelProperty@field)(description = "Url to where the license can be found") url: Option[String])
 
 
 @ApiModel(description = "Information about where to find the cover image for the book")
 case class CoverImage(@(ApiModelProperty@field)(description = "URL to the cover-image") url: String,
-                      @(ApiModelProperty@field)(description = "Alternate text for the cover image") alttext: Option[String])
+                      @(ApiModelProperty@field)(description = "Alternate text for the cover image") alttext: Option[String],
+                      @(ApiModelProperty@field)(description = "Image id of the cover-image") imageId: String)
+
 
 @ApiModel(description = "Information about where to download a copy of the book")
 case class Downloads(@(ApiModelProperty@field)(description = "URL to an epub-download") epub: Option[String],
@@ -117,10 +117,10 @@ case class BookHit(@(ApiModelProperty@field)(description = "The id of the book")
 
 @ApiModel(description = "Information about search results")
 case class SearchResult(@(ApiModelProperty@field)(description = "The total number of books matching this query") totalCount: Long,
-                           @(ApiModelProperty@field)(description = "For which page results are shown from") page: Int,
-                           @(ApiModelProperty@field)(description = "The number of results per page") pageSize: Int,
-                           @(ApiModelProperty@field)(description = "The chosen language") language: Language,
-                           @(ApiModelProperty@field)(description = "The results") results: Seq[BookHit])
+                        @(ApiModelProperty@field)(description = "For which page results are shown from") page: Int,
+                        @(ApiModelProperty@field)(description = "The number of results per page") pageSize: Int,
+                        @(ApiModelProperty@field)(description = "The chosen language") language: Option[Language],
+                        @(ApiModelProperty@field)(description = "The results") results: Seq[BookHit])
 
 @ApiModel(description = "Information about a book that is being translated by a user")
 case class MyBook(@(ApiModelProperty@field)(description = "The id of the book") id: Long,
@@ -187,6 +187,10 @@ case class TranslateResponse(@(ApiModelProperty@field)(description = "The id of 
 @ApiModel(description = "Information about the response from a synchronize request")
 case class SynchronizeResponse(@(ApiModelProperty@field)(description = "The id of the book that has been sent to translation") bookId: Long,
                                @(ApiModelProperty@field)(description = "The url of where the book can be translated") crowdinUrl: String)
+
+@ApiModel(description = "Information about a source and the number of books for this source")
+case class Source(@(ApiModelProperty@field)(description = "The source of where a book was imported from") source: String,
+                  @(ApiModelProperty@field)(description = "The number of books with this source") count: Long)
 
 case object LocalDateSerializer extends CustomSerializer[LocalDate](format => ( {
   case JString(p) => LocalDate.parse(p)

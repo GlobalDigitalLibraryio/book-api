@@ -35,8 +35,9 @@ lazy val book_api = (project in file(".")).
     javacOptions ++= Seq("-source", "1.8", "-target", "1.8"),
     scalacOptions := Seq("-target:jvm-1.8"),
     libraryDependencies ++= Seq(
-      "gdl" %% "network" % "0.10",
+      "gdl" %% "network" % "0.11",
       "gdl" %% "language" % "0.6",
+      "gdl" %% "license" % "0.1",
       "com.typesafe.scala-logging" %% "scala-logging" % ScalaLoggingVersion,
       "com.typesafe" % "config" % "1.3.1",
       "org.apache.logging.log4j" % "log4j-api" % Log4JVersion,
@@ -66,7 +67,7 @@ lazy val book_api = (project in file(".")).
       "com.sksamuel.elastic4s" %% "elastic4s-aws" % Elastic4sVersion,
       "org.elasticsearch" % "elasticsearch" % ElasticsearchVersion % "test",
       "org.jsoup" % "jsoup" % JsoupVersion,
-      "coza.opencollab" % "epub-creator" % "1.0.0",
+      "coza.opencollab.epub" % "epub-creator" % "1.0.3-GDL",
       "com.openhtmltopdf" % "openhtmltopdf-core" % OpenHtmlPdfVersion,
       "com.openhtmltopdf" % "openhtmltopdf-pdfbox" % OpenHtmlPdfVersion,
       "com.openhtmltopdf" % "openhtmltopdf-jsoup-dom-converter" % OpenHtmlPdfVersion,
@@ -130,3 +131,4 @@ resolvers ++= Seq(
 ).flatten
 
 resolvers += "OpenCollab Nexus Release Repo" at "http://nexus.opencollab.co.za/nexus/content/repositories/releases"
+resolvers += Resolver.mavenLocal

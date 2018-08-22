@@ -247,7 +247,7 @@ trait TranslationRepository {
       deleteFrom(translationView).where.eq(t.id, translation.id).toSQL.update().apply()
     }
 
-    private def getSorting(sortDef: Sort.Value) = sortDef match {
+    private def getSorting(sortDef: Sort.Value): SQLSyntax = sortDef match {
       case (Sort.ByIdAsc) => sqls.orderBy(t.id).asc
       case (Sort.ByIdDesc) => sqls.orderBy(t.id).desc
       case (Sort.ByTitleAsc) => sqls.orderBy(t.title).asc
@@ -256,16 +256,17 @@ trait TranslationRepository {
       case (Sort.ByArrivalDateDesc) => sqls.orderBy(t.dateArrived.desc, t.bookId.desc)
     }
 
-    def withLanguageAndStatus(languageTag: Option[LanguageTag] = None, status: PublishingStatus.Value, pageSize: Int, page: Int)(implicit session: DBSession = ReadOnlyAutoSession): SearchResult[Translation] = {
+    def withLanguageAndStatus(languageTag: Option[LanguageTag] = None, status: PublishingStatus.Value, pageSize: Int, page: Int, sort: Option[Sort.Value] = None)(implicit session: DBSession = ReadOnlyAutoSession): SearchResult[Translation] = {
       val limit = pageSize.max(1)
       val offset = (page.max(1) - 1) * pageSize
+      val ordering = sort.map(getSorting).getOrElse(sqls.orderBy(t.id))
 
       val result = select(countAllBeforeLimiting, t.result.id)
         .from(translationView as t)
         .where
           .eq(t.publishingStatus, status.toString)
           .and(sqls.toAndConditionOpt(languageTag.map(lang => sqls.eq(t.language, lang.toString))))
-        .orderBy(t.id)
+        .append(ordering)
         .limit(limit)
         .offset(offset)
         .toSQL.map(rs => (rs.long(1), withId(rs.long(2)).get)).list().apply()

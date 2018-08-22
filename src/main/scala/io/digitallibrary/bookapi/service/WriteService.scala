@@ -11,15 +11,17 @@ package io.digitallibrary.bookapi.service
 import java.util.UUID
 
 import com.typesafe.scalalogging.LazyLogging
-import io.digitallibrary.language.model.LanguageTag
-import io.digitallibrary.network.AuthUser
+import io.digitallibrary.bookapi.BookApiProperties
 import io.digitallibrary.bookapi.controller.NewFeaturedContent
 import io.digitallibrary.bookapi.model._
-import io.digitallibrary.bookapi.model.api.internal.{NewChapter, NewTranslation, TranslationId}
+import io.digitallibrary.bookapi.model.api.internal.{ChapterId, NewChapter, NewTranslation, TranslationId}
 import io.digitallibrary.bookapi.model.api.{CrowdinException, FeaturedContentId, NotFoundException, TranslateRequest, ValidationMessage}
 import io.digitallibrary.bookapi.model.domain._
 import io.digitallibrary.bookapi.repository._
 import io.digitallibrary.bookapi.service.search.IndexService
+import io.digitallibrary.language.model.LanguageTag
+import io.digitallibrary.license.model.License
+import io.digitallibrary.network.AuthUser
 
 import scala.util.{Failure, Success, Try}
 
@@ -36,7 +38,6 @@ trait WriteService {
     with ContributorRepository
     with TranslationRepository
     with EducationalAlignmentRepository
-    with LicenseRepository
     with PersonRepository
     with PublisherRepository
     with FeaturedContentRepository
@@ -47,8 +48,8 @@ trait WriteService {
 
   class WriteService extends LazyLogging {
 
-    def updateTranslation(translationToUpdate: Translation) = {
-      unFlaggedTranslationsRepository.updateTranslation(translationToUpdate)
+    def updateTranslation(translationToUpdate: Translation): Translation = {
+      getTranslationRepository.updateTranslation(translationToUpdate)
     }
 
     def addPersonFromAuthUser(): Person = {
@@ -135,14 +136,13 @@ trait WriteService {
       bookRepository.withId(bookId) match {
         case None => Failure(new NotFoundException(s"Book with id $bookId was not found"))
         case Some(existingBook) => {
-          val optLicense = licenseRepository.withName(bookReplacement.license)
           val optPublisher = publisherRepository.withName(bookReplacement.publisher) match {
             case Some(x) => Some(x)
             case None => Some(Publisher(None, None, bookReplacement.publisher))
           }
 
           for {
-            validLicense <- validationService.validateLicense(optLicense)
+            validLicense <- Try(License(bookReplacement.license))
             validPublisher <- validationService.validatePublisher(optPublisher)
             persistedBook <- inTransaction { implicit session =>
               val persistedPublisher = validPublisher.id match {
@@ -153,9 +153,8 @@ trait WriteService {
               persistedPublisher.flatMap(p => {
                 existingBook.copy(
                   publisherId = p.id.get,
-                  licenseId = validLicense.id.get,
-                  publisher = p,
                   license = validLicense,
+                  publisher = p,
                   source = bookReplacement.source)
 
                 bookRepository.updateBook(existingBook)
@@ -168,14 +167,13 @@ trait WriteService {
     }
 
     def newBook(newBook: api.internal.NewBook): Try[api.internal.BookId] = {
-      val optLicense = licenseRepository.withName(newBook.license)
       val optPublisher = publisherRepository.withName(newBook.publisher) match {
         case Some(x) => Some(x)
         case None => Some(Publisher(None, None, newBook.publisher))
       }
 
       for {
-        validLicense <- validationService.validateLicense(optLicense)
+        validLicense <- Try(License(newBook.license))
         validPublisher <- validationService.validatePublisher(optPublisher)
         persistedBook <- inTransaction { implicit session =>
           val persistedPublisher = validPublisher.id match {
@@ -189,7 +187,6 @@ trait WriteService {
               revision = None,
               publisherId = p.id.get,
               publisher = p,
-              licenseId = validLicense.id.get,
               license = validLicense,
               source = newBook.source)
 
@@ -261,7 +258,7 @@ trait WriteService {
           }
         })
 
-        inTransaction { implicit session =>
+        val translation = inTransaction { implicit session =>
           val persistedCategories = categories.map {
             case x if x.id.isEmpty => categoryRepository.add(x)
             case y => y
@@ -294,8 +291,14 @@ trait WriteService {
           }
           }
           indexService.indexDocument(translation)
-          api.internal.TranslationId(translation.id.get)
+          translation
         }
+
+        val persistedChapters: Seq[Try[ChapterId]] = validNewTranslation.chapters.map(chapter => {
+          newChapter(translation.id.get, chapter)
+        })
+
+        api.internal.TranslationId(translation.id.get)
       })
     }
 
@@ -386,6 +389,16 @@ trait WriteService {
             }
             existing.contributors.foreach(contributorRepository.remove)
 
+            validTranslationReplacement.chapters.map(chapter => {
+              chapterRepository.forTranslationWithSeqNo(translation.id.get, chapter.seqNo) match {
+                case Some(existingChapter) => updateChapter(existingChapter.id.get, chapter)
+                case None => newChapter(translation.id.get, chapter)
+              }
+            })
+
+            // Remove exceeding chapters if the update contains fewer chapters than the existing version
+            chapterRepository.deleteChaptersExceptGivenSeqNumbers(translation.id.get, validTranslationReplacement.chapters.map(_.seqNo))
+
             indexService.indexDocument(translation)
             api.internal.TranslationId(translation.id.get)
           }
@@ -412,6 +425,15 @@ trait WriteService {
         case Some(Failure(err)) => Failure(err)
       }
     }
+
+    private def getTranslationRepository: TranslationRepository = {
+      if(AuthUser.hasRole(BookApiProperties.RoleWithWriteAccess)) {
+        allTranslationsRepository
+      } else {
+        unFlaggedTranslationsRepository
+      }
+    }
+
   }
 
 }

@@ -60,7 +60,8 @@ case class NewTranslation(externalId: Option[String],
                           pageOrientation: Option[String],
                           contributors: Seq[NewContributor],
                           categories: Seq[NewCategory],
-                          educationalAlignment: Option[NewEducationalAlignment])
+                          educationalAlignment: Option[NewEducationalAlignment],
+                          chapters: Seq[NewChapter])
 
 case class NewChapter(seqNo: Int,
                       title: Option[String],

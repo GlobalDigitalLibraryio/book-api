@@ -12,17 +12,18 @@ import java.util.UUID
 
 import io.digitallibrary.language.model.LanguageTag
 import io.digitallibrary.bookapi.model.domain._
+import io.digitallibrary.license.model.License
 import scalikejdbc.{AutoSession, DBSession}
 
 
 trait RepositoryTestHelpers {
-  this: BookRepository with PublisherRepository with LicenseRepository with CategoryRepository with TranslationRepository =>
+  this: BookRepository with PublisherRepository with CategoryRepository with TranslationRepository =>
 
   def addBookDef()(implicit session: DBSession = AutoSession): Book = {
     val publisher = publisherRepository.add(Publisher(None, None, "Publisher Name"))
-    val license = licenseRepository.add(License(None, None, "License Name", None, None))
+    val license = License("cc-by-4.0")
 
-    bookRepository.add(Book(None, None, publisher.id.get, license.id.get, publisher, license, "storyweaver"))
+    bookRepository.add(Book(None, None, publisher.id.get, publisher, license, "storyweaver"))
   }
 
   def addTranslationDef(externalId: String,

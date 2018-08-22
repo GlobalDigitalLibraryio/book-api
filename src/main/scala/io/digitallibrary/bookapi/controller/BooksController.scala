@@ -123,9 +123,7 @@ trait BooksController {
       description s"Returns a list of books for the logged in user."
       parameters(
       headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
-      queryParam[Option[Int]]("page-size").description("Return this many results per page."),
-      queryParam[Option[Int]]("page").description("Return results for this page."),
-      queryParam[Option[String]]("sort").description(s"Sorts result based on parameter. Possible values: ${Sort.values.mkString(",")}; Default value: ${Sort.ByIdAsc}"))
+      queryParam[Option[String]]("sort").description(s"Sorts result based on parameter. Possible values: ${MyBooksSort.values.mkString(",")}; Default value: ${MyBooksSort.ByIdAsc}"))
       responseMessages (response403, response500)
       authorizations "oauth2")
 
@@ -177,7 +175,7 @@ trait BooksController {
       val id = long("id")
       val lang = LanguageTag(params("lang"))
 
-      readService.withIdAndLanguage(id, lang) match {
+      readService.withIdAndLanguageListingAllBooksIfAdmin(id, lang) match {
         case Some(x) => x
         case None => NotFound(body = Error(Error.NOT_FOUND, s"No book with id $id and language $lang found"))
       }
@@ -191,7 +189,7 @@ trait BooksController {
 
       val updatedBook = extract[api.Book](request.body)
 
-      readService.translationWithIdAndLanguage(id, lang) match {
+      readService.translationWithIdAndLanguageListingAllTranslationsIfAdmin(id, lang) match {
         case Some(existingBook) =>
           val pageOrientationToUpdate = PageOrientation.valueOf(updatedBook.pageOrientation).getOrElse(existingBook.pageOrientation)
           writeService.updateTranslation(existingBook.copy(
@@ -257,11 +255,9 @@ trait BooksController {
 
     get("/mine/?", operation(getMyBooks)) {
       val userId = requireUser
-      val pageSize = intOrDefault("page-size", 10).min(100).max(1)
-      val page = intOrDefault("page", 1).max(1)
-      val sort = Sort.valueOf(paramOrNone("sort")).getOrElse(Sort.ByIdAsc)
+      val sort = MyBooksSort.valueOf(paramOrNone("sort")).getOrElse(MyBooksSort.ByIdAsc)
 
-      readService.forUserWithLanguage(userId, pageSize, page, sort)
+      readService.forUserWithLanguage(userId, sort)
 
     }
 
@@ -270,10 +266,9 @@ trait BooksController {
 
       val pageSize = intOrDefault("page-size", 10).min(100).max(1)
       val page = intOrDefault("page", 1).max(1)
-      // TODO Use sort here or remove it!
       val sort = Sort.valueOf(paramOrNone("sort")).getOrElse(Sort.ByIdAsc)
 
-      readService.withLanguageAndStatus(None, PublishingStatus.FLAGGED, pageSize, page)
+      readService.withLanguageAndStatus(None, PublishingStatus.FLAGGED, pageSize, page, sort)
     }
   }
 

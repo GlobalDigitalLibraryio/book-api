@@ -23,6 +23,7 @@ import io.digitallibrary.bookapi.model.api.internal.{NewChapter, NewEducationalA
 import io.digitallibrary.bookapi.model.crowdin.CrowdinFile
 import io.digitallibrary.bookapi.model.domain._
 import io.digitallibrary.bookapi.{BookApiProperties, model}
+import io.digitallibrary.license.model.License
 
 
 trait ConverterService {
@@ -193,17 +194,12 @@ trait ConverterService {
       )
     }
 
-
-    def toDomainLicense(license: api.License): domain.License = {
-      domain.License(Option(license.id), Option(license.revision), license.name, license.description, license.url)
-    }
-
     def toDomainPublisher(publisher: api.Publisher): domain.Publisher = {
       domain.Publisher(Option(publisher.id), Option(publisher.revision), publisher.name)
     }
 
-    def toApiLicense(license: domain.License): api.License =
-      api.License(license.id.get, license.revision.get, license.name, license.description, license.url)
+    def toApiLicense(license: License): api.License =
+      api.License(license.name, Some(license.description), Some(license.url))
 
     def toApiPublisher(publisher: domain.Publisher): api.Publisher = api.Publisher(publisher.id.get, publisher.revision.get, publisher.name)
 
@@ -354,7 +350,7 @@ trait ConverterService {
       imageIdOpt.flatMap(imageId =>
         imageApiClient.imageMetaWithId(imageId))
         .map(imageMeta => {
-          api.CoverImage(url = imageMeta.imageUrl, alttext = imageMeta.alttext.map(_.alttext))
+          api.CoverImage(url = imageMeta.imageUrl, alttext = imageMeta.alttext.map(_.alttext), imageId = imageMeta.id)
         })
     }
 
