@@ -8,6 +8,7 @@
 
 package io.digitallibrary.bookapi.controller
 
+import io.digitallibrary.bookapi.BookApiProperties
 import io.digitallibrary.bookapi.service.ReadService
 import io.digitallibrary.language.model.LanguageTag
 import io.digitallibrary.bookapi.BookApiProperties.RoleWithAdminReadAccess
@@ -37,6 +38,10 @@ trait SourceController {
 
       val language = LanguageTag(params("lang"))
       readService.listSourcesForLanguage(language)
+    }
+
+    get("/") {
+      redirect(s"${BookApiProperties.SourcePath}/${BookApiProperties.DefaultLanguage}")
     }
   }
 }
