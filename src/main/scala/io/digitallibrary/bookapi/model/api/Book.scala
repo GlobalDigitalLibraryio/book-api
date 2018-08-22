@@ -187,6 +187,10 @@ case class TranslateResponse(@(ApiModelProperty@field)(description = "The id of 
 case class SynchronizeResponse(@(ApiModelProperty@field)(description = "The id of the book that has been sent to translation") bookId: Long,
                                @(ApiModelProperty@field)(description = "The url of where the book can be translated") crowdinUrl: String)
 
+@ApiModel(description = "Information about a source and the number of books for this source")
+case class Source(@(ApiModelProperty@field)(description = "The source of where a book was imported from") source: String,
+                  @(ApiModelProperty@field)(description = "The number of books with this source") count: Long)
+
 case object LocalDateSerializer extends CustomSerializer[LocalDate](format => ( {
   case JString(p) => LocalDate.parse(p)
   case JNull => null

@@ -23,6 +23,8 @@ import org.mockito.Mockito
 trait TestEnvironment
   extends DataSource
     with ReadService
+    with SourceRepository
+    with SourceController
     with WriteService
     with ElasticClient
     with ConverterService
@@ -84,6 +86,9 @@ trait TestEnvironment
   val languageController = mock[LanguageController]
   val levelController = mock[LevelController]
   val featuredContentController = mock[FeaturedContentController]
+
+  val sourceController = mock[SourceController]
+  val sourceRepository = mock[SourceRepository]
 
   val esClient = mock[E4sClient]
 
@@ -170,7 +175,9 @@ trait TestEnvironment
       categoriesController,
       importService,
       exportController,
-      exportService
+      exportService,
+      sourceController,
+      sourceRepository
     )
   }
 }

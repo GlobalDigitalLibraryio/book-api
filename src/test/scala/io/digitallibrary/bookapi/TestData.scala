@@ -44,7 +44,9 @@ object TestData {
 
     val DefaultLicense = api.License("lisens", Some("beskrivelse"), Some("url"))
     val DefaultPublisher = api.Publisher(1, 1, "Some Publisher")
-    val DefaultSource = "storyweaver"
+    val DefaultSource = api.Source("storyweaver", 2)
+    val SecondarySource = api.Source("bookdash", 3)
+
     val DefaultPageOrientation = "PORTRAIT"
 
     val category1 = api.Category(1, 1, "category1")
@@ -85,7 +87,7 @@ object TestData {
       chapters = Seq(ChapterSummary1),
       supportsTranslation = true,
       bookFormat = BookFormat.HTML.toString,
-      source = DefaultSource,
+      source = DefaultSource.source,
       pageOrientation = DefaultPageOrientation,
       publishingStatus = PublishingStatus.PUBLISHED.toString)
 
@@ -100,7 +102,7 @@ object TestData {
         (1, 1, "library_books")),
       coverImage = None,
       dateArrived = today,
-      source = DefaultSource,
+      source = DefaultSource.source,
       highlightTitle = Some("Title"),
       highlightDescription = Some("Description"))
 
