@@ -67,7 +67,7 @@ lazy val book_api = (project in file(".")).
       "com.sksamuel.elastic4s" %% "elastic4s-aws" % Elastic4sVersion,
       "org.elasticsearch" % "elasticsearch" % ElasticsearchVersion % "test",
       "org.jsoup" % "jsoup" % JsoupVersion,
-      "coza.opencollab" % "epub-creator" % "1.0.0",
+      "coza.opencollab.epub" % "epub-creator" % "1.0.3-GDL",
       "com.openhtmltopdf" % "openhtmltopdf-core" % OpenHtmlPdfVersion,
       "com.openhtmltopdf" % "openhtmltopdf-pdfbox" % OpenHtmlPdfVersion,
       "com.openhtmltopdf" % "openhtmltopdf-jsoup-dom-converter" % OpenHtmlPdfVersion,
@@ -131,3 +131,4 @@ resolvers ++= Seq(
 ).flatten
 
 resolvers += "OpenCollab Nexus Release Repo" at "http://nexus.opencollab.co.za/nexus/content/repositories/releases"
+resolvers += Resolver.mavenLocal

@@ -8,8 +8,12 @@
 package io.digitallibrary.bookapi.model.domain
 
 case class EPubChapter(seqNo: Int, content: String, ePubCss: EPubCss, mimeType: String = "application/xhtml+xml") {
+  def id: String = {
+    s"chapter-$seqNo"
+  }
+
   def href: String = {
-    s"chapter-$seqNo.xhtml"
+    s"$id.xhtml"
   }
 
   def title: String = {
