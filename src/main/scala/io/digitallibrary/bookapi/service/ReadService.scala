@@ -82,6 +82,14 @@ trait ReadService {
       myBooks.sorted
     }
 
+    def translationsWithTranslationStatus(status: TranslationStatus.Value, paging: Paging, sort: Sort.Value) = {
+      val searchResult = getTranslationRepository.withTranslationStatus(status, paging.pageSize, paging.page, Some(sort))
+      val books = searchResult.results.flatMap(translation =>
+        converterService.toApiBookHit(Some(translation), bookRepository.withId(translation.bookId)))
+
+      api.SearchResult(searchResult.totalCount, searchResult.page, searchResult.pageSize, Some(converterService.toApiLanguage(searchResult.language)), books)
+    }
+
     def translationWithIdAndLanguageListingAllTranslationsIfAdmin(bookId: Long, language: LanguageTag): Option[Translation] =
       getTranslationRepository.forBookIdAndLanguage(bookId, language)
 
