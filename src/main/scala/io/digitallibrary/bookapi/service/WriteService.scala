@@ -52,16 +52,6 @@ trait WriteService {
       getTranslationRepository.updateTranslation(translationToUpdate)
     }
 
-    def addPersonFromAuthUser(): Person = {
-      val gdlUserId = AuthUser.get
-      val personName = AuthUser.getName.getOrElse("Unknown")
-
-      personRepository.withGdlId(gdlUserId.get) match {
-        case Some(person) => personRepository.updatePerson(person.copy(name = personName))
-        case None => personRepository.add(Person(id = None, revision = None, name = personName, gdlId = gdlUserId))
-      }
-    }
-
     def addPerson(personName: String): Person = {
       personRepository.withName(personName) match {
         case Some(person) => person
@@ -210,7 +200,8 @@ trait WriteService {
             uuid = UUID.randomUUID().toString,
             language = LanguageTag(translateRequest.toLanguage),
             translatedFrom = Some(LanguageTag(translateRequest.fromLanguage)),
-            publishingStatus = PublishingStatus.UNLISTED)
+            publishingStatus = PublishingStatus.UNLISTED,
+            translationStatus = Some(TranslationStatus.IN_PROGRESS))
 
           Try {
             inTransaction { implicit session =>

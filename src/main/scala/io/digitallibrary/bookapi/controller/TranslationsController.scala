@@ -12,6 +12,7 @@ import io.digitallibrary.bookapi.model._
 import io.digitallibrary.bookapi.model.api.{Error, Language, SynchronizeResponse, TranslateRequest, TranslateResponse}
 import io.digitallibrary.bookapi.model.domain.TranslationStatus
 import io.digitallibrary.bookapi.service.translation.{SupportedLanguageService, TranslationService}
+import javax.servlet.http.HttpServletRequest
 import org.scalatra.{NoContent, NotFound, Ok}
 import org.scalatra.swagger.{ResponseMessage, Swagger, SwaggerSupport}
 
@@ -60,38 +61,8 @@ trait TranslationsController {
     }
 
     post("/", operation(sendResourceToTranslation)) {
-      requireUser
-      translationService.addTranslation(extract[TranslateRequest](request.body))
-    }
-
-    get("/file-translated", operation(projectFileTranslated)) {
-      val projectIdentifier = params("project")
-      val crowdinLanguage = params("language")
-      val language = LanguageTag(crowdinLanguage)
-      val fileId = params("file_id")
-
-      translationService.fetchTranslatedFile(projectIdentifier, crowdinLanguage, fileId, TranslationStatus.TRANSLATED) match {
-        case Success(_) => NoContent()
-        case Failure(err) => errorHandler(err)
-      }
-    }
-
-    get("/file-proofread", operation(projectFileTranslated)) {
-      val projectIdentifier = params("project")
-      val crowdinLanguage = params("language")
-      val language = LanguageTag(crowdinLanguage)
-      val fileId = params("file_id")
-
-      val translatedFileUpdated = translationService.fetchTranslatedFile(projectIdentifier, crowdinLanguage, fileId, TranslationStatus.PROOFREAD).map(file => {
-        if(translationService.allFilesHaveStatus(file, TranslationStatus.PROOFREAD)) {
-          translationService.markTranslationAs(file, TranslationStatus.PROOFREAD)
-        }
-      })
-
-      translatedFileUpdated match {
-        case Failure(err) => errorHandler(err)
-        case Success(_) => NoContent()
-      }
+      val userId = requireUser
+      translationService.addTranslation(extract[TranslateRequest](request.body), userId)
     }
 
     get("/synchronized/:inTranslationId") {
@@ -100,6 +71,32 @@ trait TranslationsController {
       translationService.inTranslationWithId(inTranslationId) match {
         case None => NotFound(body = Error(Error.NOT_FOUND, s"No book is currently being translated with inTranslationId $inTranslationId"))
         case Some(inTranslation) => translationService.fetchUpdatesFor(inTranslation)
+      }
+    }
+
+    get("/file-translated", operation(projectFileTranslated)) {
+      fetchAndUpdateStatus(TranslationStatus.TRANSLATED)
+    }
+
+    get("/file-proofread", operation(projectFileTranslated)) {
+      fetchAndUpdateStatus(TranslationStatus.PROOFREAD)
+    }
+
+    private def fetchAndUpdateStatus(status: TranslationStatus.Value)(implicit request: HttpServletRequest) = {
+      val projectIdentifier = params("project")
+      val crowdinLanguage = params("language")
+      val language = LanguageTag(crowdinLanguage)
+      val fileId = params("file_id")
+
+      val translatedFileUpdated = translationService.fetchTranslatedFile(projectIdentifier, crowdinLanguage, fileId, status).map(file => {
+        if(translationService.allFilesHaveStatus(file, status)) {
+          translationService.markTranslationAs(file, status)
+        }
+      })
+
+      translatedFileUpdated match {
+        case Failure(err) => errorHandler(err)
+        case Success(_) => NoContent()
       }
     }
   }

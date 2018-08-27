@@ -121,7 +121,7 @@ trait TranslationService {
     def markTranslationAs(inTranslationFile: InTranslationFile, status: TranslationStatus.Value): Try[Translation] = {
       val updateTranslation = translationDbService.translationWithId(inTranslationFile.inTranslationId)
         .flatMap(_.newTranslationId)
-        .flatMap(inTranslation => unFlaggedTranslationsRepository.withId(inTranslation))
+        .flatMap(translationId => unFlaggedTranslationsRepository.withId(translationId))
           .map(translation => unFlaggedTranslationsRepository.updateTranslation(translation.copy(translationStatus = Some(status))))
 
       updateTranslation match {
@@ -131,14 +131,12 @@ trait TranslationService {
     }
 
       
-    def addTranslation(translateRequest: api.TranslateRequest): Try[api.TranslateResponse] = {
+    def addTranslation(translateRequest: api.TranslateRequest, userId: String): Try[api.TranslateResponse] = {
       Try(LanguageTag(translateRequest.fromLanguage)).flatMap(fromLanguage => {
         validateToLanguage(translateRequest.toLanguage).flatMap(toLanguage => {
           readService.withIdAndLanguage(translateRequest.bookId, fromLanguage) match {
             case None => Failure(new NotFoundException())
             case Some(originalBook) => {
-              val person = writeService.addPersonFromAuthUser()
-
               crowdinClientBuilder.forSourceLanguage(fromLanguage).flatMap(crowdinClient => {
                 val existingTranslations = translationDbService.translationsForOriginalId(translateRequest.bookId)
 
@@ -146,7 +144,7 @@ trait TranslationService {
                 val toAddLanguage = existingTranslations.find(tr => tr.fromLanguage == fromLanguage)
 
                 val inTranslationTry = (toAddUser, toAddLanguage) match {
-                  case (Some(addUser), _) => addUserToTranslation(addUser, person)
+                  case (Some(addUser), _) => addUserToTranslation(addUser, userId)
                   case (None, Some(addLanguage)) => addTargetLanguageForTranslation(addLanguage, translateRequest, originalBook, crowdinClient)
                   case _ => createTranslation(translateRequest, originalBook, fromLanguage, toLanguage, crowdinClient)
                 }
@@ -160,11 +158,11 @@ trait TranslationService {
       })
     }
 
-    private def addUserToTranslation(inTranslation: InTranslation, person: Person): Try[InTranslation] = {
-      if(inTranslation.userIds.contains(person.gdlId.get)) {
+    private def addUserToTranslation(inTranslation: InTranslation, userId: String): Try[InTranslation] = {
+      if(inTranslation.userIds.contains(userId)) {
         Success(inTranslation)
       } else {
-        translationDbService.addUserToTranslation(inTranslation, person)
+        translationDbService.addUserToTranslation(inTranslation, userId)
       }
     }
 

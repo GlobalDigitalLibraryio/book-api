@@ -10,7 +10,7 @@ package io.digitallibrary.bookapi.service.translation
 import io.digitallibrary.language.model.LanguageTag
 import io.digitallibrary.bookapi.integration.crowdin.{CrowdinClient, TranslatedChapter}
 import io.digitallibrary.bookapi.model._
-import io.digitallibrary.bookapi.model.domain.{ChapterType, ContributorType, Person}
+import io.digitallibrary.bookapi.model.domain.{ChapterType, ContributorType, Person, TranslationStatus}
 import io.digitallibrary.bookapi.{TestData, TestEnvironment, UnitSuite}
 import org.mockito.ArgumentMatchers._
 import org.mockito.ArgumentMatchers.{eq => eqTo}
@@ -32,7 +32,7 @@ class TranslationServiceTest extends UnitSuite with TestEnvironment {
     when(supportedLanguageService.getSupportedLanguages).thenReturn(Seq(api.Language("eng", "English")))
     when(crowdinClientBuilder.forSourceLanguage(any[LanguageTag])).thenReturn(Failure(new RuntimeException("Not supported fromLanguage")))
 
-    val translateResponse = service.addTranslation(api.TranslateRequest(bookId = 1, fromLanguage = "nob", toLanguage = "eng"))
+    val translateResponse = service.addTranslation(api.TranslateRequest(bookId = 1, fromLanguage = "nob", toLanguage = "eng"), "userId")
     translateResponse should be a 'Failure
     translateResponse.failed.get.getMessage should equal("Not supported fromLanguage")
   }
@@ -40,7 +40,7 @@ class TranslationServiceTest extends UnitSuite with TestEnvironment {
   test("that addTranslation returns a failure if toLanguage is not supported") {
     when(supportedLanguageService.getSupportedLanguages).thenReturn(Seq(api.Language("eng", "English")))
 
-    val translateResponse = service.addTranslation(api.TranslateRequest(1, "nob", "fra"))
+    val translateResponse = service.addTranslation(api.TranslateRequest(1, "nob", "fra"), "userId")
     translateResponse should be a 'Failure
     translateResponse.failed.get.asInstanceOf[api.ValidationException].errors.head.message should equal("The language 'fra' is not a supported language to translate to.")
   }
@@ -54,18 +54,17 @@ class TranslationServiceTest extends UnitSuite with TestEnvironment {
 
     val crowdinClientMock = mock[CrowdinClient]
 
-    when(writeService.addPersonFromAuthUser()).thenReturn(TestData.Domain.DefaultPerson)
     when(readService.withIdAndLanguage(any[Long], any[LanguageTag])).thenReturn(Some(TestData.Api.DefaultBook))
     when(supportedLanguageService.getSupportedLanguages).thenReturn(Seq(api.Language("nob", "Norwegian Bokmål")))
     when(crowdinClientBuilder.forSourceLanguage(any[LanguageTag])).thenReturn(Success(crowdinClientMock))
 
     when(translationDbService.translationsForOriginalId(any[Long])).thenReturn(existingInTranslations)
-    when(translationDbService.addUserToTranslation(any[domain.InTranslation], any[domain.Person])).thenReturn(Success(inTranslationToUpdate))
+    when(translationDbService.addUserToTranslation(any[domain.InTranslation], any[String])).thenReturn(Success(inTranslationToUpdate))
 
-    val response = service.addTranslation(api.TranslateRequest(1, "eng", "nob"))
+    val response = service.addTranslation(api.TranslateRequest(1, "eng", "nob"), "userId")
     response should be a 'Success
 
-    verify(translationDbService).addUserToTranslation(any[domain.InTranslation], any[domain.Person])
+    verify(translationDbService).addUserToTranslation(any[domain.InTranslation], any[String])
     verify(writeService, never()).addTranslatorToTranslation(any[Long], any[domain.Person])
     verify(translationDbService).translationsForOriginalId(any[Long])
     verifyNoMoreInteractions(crowdinClientMock)
@@ -78,7 +77,6 @@ class TranslationServiceTest extends UnitSuite with TestEnvironment {
     val crowdinClientMock = mock[CrowdinClient]
 
     when(readService.withIdAndLanguage(any[Long], any[LanguageTag])).thenReturn(Some(TestData.Api.DefaultBook))
-    when(writeService.addPersonFromAuthUser()).thenReturn(TestData.Domain.DefaultPerson)
     when(supportedLanguageService.getSupportedLanguages).thenReturn(Seq(api.Language("nob", "Norwegian Bokmål")))
     when(crowdinClientBuilder.forSourceLanguage(any[LanguageTag])).thenReturn(Success(crowdinClientMock))
 
@@ -88,7 +86,7 @@ class TranslationServiceTest extends UnitSuite with TestEnvironment {
     when(writeService.newTranslationForBook(any[api.Book], any[api.TranslateRequest])).thenReturn(Success(TestData.Domain.DefaultTranslation))
     when(translationDbService.addTranslationWithFiles(any[domain.InTranslation], any[Seq[domain.InTranslationFile]], any[domain.Translation], any[api.TranslateRequest])).thenReturn(Success(inTranslationToUpdate))
 
-    val response = service.addTranslation(api.TranslateRequest(1, "eng", "nob"))
+    val response = service.addTranslation(api.TranslateRequest(1, "eng", "nob"), "userId")
     response should be a 'Success
 
     verify(translationDbService, times(1)).translationsForOriginalId(any[Long])
@@ -103,7 +101,6 @@ class TranslationServiceTest extends UnitSuite with TestEnvironment {
     val crowdinClientMock = mock[CrowdinClient]
 
     when(readService.withIdAndLanguage(any[Long], any[LanguageTag])).thenReturn(Some(TestData.Api.DefaultBook))
-    when(writeService.addPersonFromAuthUser()).thenReturn(TestData.Domain.DefaultPerson)
     when(supportedLanguageService.getSupportedLanguages).thenReturn(Seq(api.Language("nob", "Norwegian Bokmål")))
     when(crowdinClientBuilder.forSourceLanguage(any[LanguageTag])).thenReturn(Success(crowdinClientMock))
     when(translationDbService.translationsForOriginalId(any[Long])).thenReturn(Seq())
@@ -120,7 +117,7 @@ class TranslationServiceTest extends UnitSuite with TestEnvironment {
 
     when(translationDbService.newTranslation(any[api.TranslateRequest], any[domain.Translation], any[crowdin.CrowdinFile], any[Seq[crowdin.CrowdinFile]], any[String])).thenReturn(Success(TestData.Domain.DefaultinTranslation))
 
-    val response = service.addTranslation(api.TranslateRequest(1, "eng", "nob"))
+    val response = service.addTranslation(api.TranslateRequest(1, "eng", "nob"), "userId")
     response should be a 'Success
   }
 
@@ -134,7 +131,6 @@ class TranslationServiceTest extends UnitSuite with TestEnvironment {
     val persistedNewTranslation = TestData.Domain.DefaultTranslation.copy(chapters = chapters)
 
     when(readService.withIdAndLanguage(any[Long], any[LanguageTag])).thenReturn(Some(TestData.Api.DefaultBook))
-    when(writeService.addPersonFromAuthUser()).thenReturn(TestData.Domain.DefaultPerson)
     when(supportedLanguageService.getSupportedLanguages).thenReturn(Seq(api.Language("nob", "Norwegian Bokmål")))
     when(crowdinClientBuilder.forSourceLanguage(any[LanguageTag])).thenReturn(Success(crowdinClientMock))
     when(translationDbService.translationsForOriginalId(any[Long])).thenReturn(Seq())
@@ -151,7 +147,7 @@ class TranslationServiceTest extends UnitSuite with TestEnvironment {
 
     when(translationDbService.newTranslation(any[api.TranslateRequest], any[domain.Translation], any[crowdin.CrowdinFile], any[Seq[crowdin.CrowdinFile]], any[String])).thenReturn(Success(TestData.Domain.DefaultinTranslation))
 
-    val response = service.addTranslation(api.TranslateRequest(1, "eng", "nob"))
+    val response = service.addTranslation(api.TranslateRequest(1, "eng", "nob"), "userId")
     response should be a 'Success
 
     verify(readService).chapterWithId(chapter1.id.get)
@@ -162,7 +158,6 @@ class TranslationServiceTest extends UnitSuite with TestEnvironment {
     val crowdinClientMock = mock[CrowdinClient]
 
     when(readService.withIdAndLanguage(any[Long], any[LanguageTag])).thenReturn(Some(TestData.Api.DefaultBook))
-    when(writeService.addPersonFromAuthUser()).thenReturn(TestData.Domain.DefaultPerson)
     when(supportedLanguageService.getSupportedLanguages).thenReturn(Seq(api.Language("nob", "Norwegian Bokmål")))
     when(crowdinClientBuilder.forSourceLanguage(any[LanguageTag])).thenReturn(Success(crowdinClientMock))
     when(translationDbService.translationsForOriginalId(any[Long])).thenReturn(Seq())
@@ -181,7 +176,7 @@ class TranslationServiceTest extends UnitSuite with TestEnvironment {
 
     when(translationDbService.newTranslation(any[api.TranslateRequest], any[domain.Translation], any[crowdin.CrowdinFile], any[Seq[crowdin.CrowdinFile]], any[String])).thenReturn(Failure(new api.DBException(new RuntimeException("Some message"))))
 
-    val response = service.addTranslation(api.TranslateRequest(1, "eng", "nob"))
+    val response = service.addTranslation(api.TranslateRequest(1, "eng", "nob"), "userId")
     response should be a 'Failure
 
     verify(crowdinClientMock, times(1)).deleteDirectoryFor(any[domain.Translation])
@@ -316,6 +311,8 @@ class TranslationServiceTest extends UnitSuite with TestEnvironment {
     when(unFlaggedTranslationsRepository.updateTranslation(any[domain.Translation])(any[DBSession])).thenReturn(TestData.Domain.DefaultTranslation)
 
     service.markTranslationAs(TestData.Domain.DefaultInTranslationFile, TranslationStatus.PROOFREAD) should be a 'Success
+  }
+
   test("that fetchTranslatedFile creates a new translation when the targetLanguage is different from initiated language") {
     val crowdinClientMock = mock[CrowdinClient]
 

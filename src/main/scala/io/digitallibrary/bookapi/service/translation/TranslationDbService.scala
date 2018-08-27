@@ -75,8 +75,8 @@ trait TranslationDbService {
       }
     }
 
-    def addUserToTranslation(inTranslation: InTranslation, person: Person): Try[InTranslation] = {
-      val newListOfUsers = inTranslation.userIds :+ person.gdlId.get
+    def addUserToTranslation(inTranslation: InTranslation, userId: String): Try[InTranslation] = {
+      val newListOfUsers = inTranslation.userIds :+ userId
       val toUpdate = inTranslation.copy(userIds = newListOfUsers)
 
       Try(inTranslationRepository.updateTranslation(toUpdate))
