@@ -46,12 +46,14 @@ case class Translation(id: Option[Long],
                        accessibilityHazard: Option[String],
                        dateArrived: LocalDate,
                        publishingStatus: PublishingStatus.Value,
+                       translationStatus: Option[TranslationStatus.Value],
                        educationalAlignment: Option[EducationalAlignment] = None,
                        chapters: Seq[Chapter],
                        contributors: Seq[Contributor],
                        categories: Seq[Category],
                        bookFormat: BookFormat.Value,
-                       pageOrientation: PageOrientation.Value)
+                       pageOrientation: PageOrientation.Value,
+                       inTransport: Boolean = false)
 
 object PageOrientation extends Enumeration {
   val PORTRAIT, LANDSCAPE = Value
@@ -131,11 +133,13 @@ sealed trait TranslationView extends SQLSyntaxSupport[Translation] {
     accessibilityHazard = rs.stringOpt(t.accessibilityHazard),
     dateArrived = rs.localDate(t.dateArrived),
     publishingStatus = PublishingStatus.valueOfOrDefault(rs.string(t.publishingStatus)),
+    translationStatus = TranslationStatus.valueOf(rs.stringOpt(t.translationStatus)),
     bookFormat = BookFormat.valueOfOrDefault(rs.string(t.bookFormat)),
     pageOrientation = PageOrientation.valueOfOrDefault(rs.string(t.pageOrientation)),
     chapters = Seq(),
     contributors = Seq(),
-    categories = Seq()
+    categories = Seq(),
+    inTransport = rs.boolean(t.inTransport)
   )
 
   def apply(t: ResultName[Translation], ea: ResultName[EducationalAlignment])(rs: WrappedResultSet): Translation = {

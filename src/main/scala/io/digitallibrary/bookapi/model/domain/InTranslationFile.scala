@@ -45,10 +45,14 @@ object InTranslationFile extends SQLSyntaxSupport[InTranslationFile] {
 }
 
 object TranslationStatus extends Enumeration {
-  val IN_PROGRESS, TRANSLATED = Value
+  val IN_PROGRESS, TRANSLATED, PROOFREAD = Value
 
   def valueOf(s: String): Option[TranslationStatus.Value] = {
     TranslationStatus.values.find(_.toString == s.toUpperCase)
+  }
+
+  def valueOf(s: Option[String]): Option[TranslationStatus.Value] = {
+    s.flatMap(valueOf)
   }
 }
 

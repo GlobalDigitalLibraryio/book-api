@@ -154,6 +154,7 @@ trait TranslationRepository {
           t.dateCreated -> translation.dateCreated,
           t.dateArrived -> translation.dateArrived,
           t.publishingStatus -> translation.publishingStatus.toString,
+          t.translationStatus -> translation.translationStatus.map(_.toString),
           t.coverphoto -> translation.coverphoto,
           t.isBasedOnUrl -> translation.isBasedOnUrl,
           t.educationalUse -> translation.educationalUse,
@@ -170,6 +171,7 @@ trait TranslationRepository {
           t.accessibilityHazard -> translation.accessibilityHazard,
           t.bookFormat -> translation.bookFormat.toString,
           t.pageOrientation -> translation.pageOrientation.toString,
+          t.inTransport -> translation.inTransport,
           t.tags -> tagBinder,
           t.categoryIds -> categoryBinder
         ).toSQL.updateAndReturnGeneratedKey().apply()
@@ -205,6 +207,7 @@ trait TranslationRepository {
           t.dateCreated -> replacement.dateCreated,
           t.dateArrived -> replacement.dateArrived,
           t.publishingStatus -> replacement.publishingStatus.toString,
+          t.translationStatus -> replacement.translationStatus.map(_.toString),
           t.coverphoto -> replacement.coverphoto,
           t.isBasedOnUrl -> replacement.isBasedOnUrl,
           t.educationalUse -> replacement.educationalUse,
@@ -221,6 +224,7 @@ trait TranslationRepository {
           t.accessibilityHazard -> replacement.accessibilityHazard,
           t.bookFormat -> replacement.bookFormat.toString,
           t.pageOrientation -> replacement.pageOrientation.toString,
+          t.inTransport -> replacement.inTransport,
           t.tags -> tagBinder,
           t.categoryIds -> categoryBinder
         )

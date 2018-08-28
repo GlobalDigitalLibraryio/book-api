@@ -8,13 +8,13 @@
 package io.digitallibrary.bookapi.integration.crowdin
 
 import com.typesafe.scalalogging.LazyLogging
+import io.digitallibrary.bookapi.BookApiProperties.CrowdinTranslatorPlaceHolder
 import io.digitallibrary.network.GdlClient
-import io.digitallibrary.bookapi.model.api.internal.ChapterId
 import io.digitallibrary.bookapi.model.api.{Book, Chapter, CrowdinException}
 import io.digitallibrary.bookapi.model.crowdin._
-import io.digitallibrary.bookapi.model.domain.{FileType, InTranslation, InTranslationFile, Translation}
+import io.digitallibrary.bookapi.model.domain.{FileType, InTranslationFile, Translation}
 import org.json4s.DefaultFormats
-import org.json4s.jackson.Serialization.{read, write}
+import org.json4s.jackson.Serialization.write
 
 import scala.util.{Failure, Success, Try}
 import scalaj.http.{Http, MultiPart}
@@ -49,7 +49,7 @@ class CrowdinClient(fromLanguage: String, projectIdentifier: String, projectKey:
   def addBookMetadata(translation: Translation): Try[CrowdinFile] = {
     implicit val formats: DefaultFormats = DefaultFormats
 
-    val metadata = BookMetaData(translation.title, translation.about)
+    val metadata = BookMetaData(translation.title, translation.about, Some(CrowdinTranslatorPlaceHolder))
     val filename = CrowdinUtils.metadataFilenameFor(translation)
 
     val response = gdlClient
@@ -191,5 +191,5 @@ object CrowdinUtils {
   def filenameFor(book: Book, chapterId: Long) = s"${directoryNameFor(book)}/$chapterId.xhtml"
 }
 
-case class BookMetaData(title: String, description: String, etag: Option[String] = None)
+case class BookMetaData(title: String, description: String, translators: Option[String], etag: Option[String] = None)
 case class TranslatedChapter(newChapterId: Option[Long], content: String, etag: Option[String] = None)

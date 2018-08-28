@@ -26,6 +26,9 @@ trait TranslationDbService {
     def fileForCrowdinProjectWithFileIdAndLanguage(crowdinProjectId: String, fileId: String, language: LanguageTag): Option[InTranslationFile] =
       inTranslationFileRepository.forCrowdinProjectWithFileIdAndLanguage(crowdinProjectId, fileId, language)
 
+    def fileForCrowdinProjectWithFileId(crowdinProjectId: String, fileId: String): Seq[InTranslationFile] =
+      inTranslationFileRepository.forCrowdinProjectWithFileId(crowdinProjectId, fileId)
+
     def filesForTranslation(inTranslationId: Long): Seq[InTranslationFile] =
       inTranslationFileRepository.withTranslationId(inTranslationId)
 
@@ -72,8 +75,8 @@ trait TranslationDbService {
       }
     }
 
-    def addUserToTranslation(inTranslation: InTranslation, person: Person): Try[InTranslation] = {
-      val newListOfUsers = inTranslation.userIds :+ person.gdlId.get
+    def addUserToTranslation(inTranslation: InTranslation, userId: String): Try[InTranslation] = {
+      val newListOfUsers = inTranslation.userIds :+ userId
       val toUpdate = inTranslation.copy(userIds = newListOfUsers)
 
       Try(inTranslationRepository.updateTranslation(toUpdate))

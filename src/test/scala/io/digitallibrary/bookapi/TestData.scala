@@ -89,7 +89,8 @@ object TestData {
       bookFormat = BookFormat.HTML.toString,
       source = DefaultSource.source,
       pageOrientation = DefaultPageOrientation,
-      publishingStatus = PublishingStatus.PUBLISHED.toString)
+      publishingStatus = PublishingStatus.PUBLISHED.toString,
+      translationStatus = None)
 
     val DefaultBookHit = api.BookHit(
       id = 1,
@@ -159,6 +160,7 @@ object TestData {
       dateCreated = Some(yesterday),
       dateArrived = today,
       publishingStatus = domain.PublishingStatus.PUBLISHED,
+      translationStatus = None,
       categoryIds = Seq(DefaultCategory.id.get),
       coverphoto = None,
       tags = Seq("tag1", "tag2"),
@@ -193,7 +195,7 @@ object TestData {
     val DefaultContentCrowdinFile = crowdin.CrowdinFile(Some(1), 0, domain.FileType.CONTENT, crowdin.AddedFile(1, "filename", 1, 1))
     val DefaultMetadataCrowdinFile = crowdin.CrowdinFile(Some(2), 0, domain.FileType.METADATA, crowdin.AddedFile(1, "filename", 1, 1))
     val DefaultTranslatedChapter = TranslatedChapter(None, "Some content", Some("123"))
-    val DefaultBookMetaData = BookMetaData("Title", "Description", Some("123"))
+    val DefaultBookMetaData = BookMetaData("Title", "Description", Some("Translator 1, Translator"), Some("123"))
   }
 
   object Internal {
