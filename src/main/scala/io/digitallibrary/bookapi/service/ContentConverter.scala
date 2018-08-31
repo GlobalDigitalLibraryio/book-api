@@ -26,22 +26,25 @@ trait ContentConverter {
       for (i <- 0 until images.size()) {
         val image = images.get(i)
         val nodeId = image.attr("data-resource_id")
-
+        val imgSize = if (image.hasAttr("data-resource_size")) Some(image.attr("data-resource_size").toInt) else None
 
         imageApiClient.imageUrlFor(nodeId.toLong) match {
           case Some(url) =>
             image.tagName("picture")
 
+            val fullSizeUrl = if (imgSize.isDefined) s"$url?width=${imgSize.get}" else url
+            val halfSize = imgSize.map(size => size / 2)
+
             // For devices larger than 768px
             val forLargeDevice = image.appendElement("source")
             forLargeDevice.attr("media", "(min-width: 768px)")
-            forLargeDevice.attr("srcset", url)
+            forLargeDevice.attr("srcset", fullSizeUrl)
 
             // For devices smaller than 768px
-            val smallImage = s"$url?width=300" // 300 should be enough for most small devices
+            val smallImage = s"$url?width=${halfSize.getOrElse(300)}" // 300 should be enough for most small devices
 
             val forSmallDevice = image.appendElement("img")
-            forSmallDevice.attr("src", url)
+            forSmallDevice.attr("src", fullSizeUrl)
             forSmallDevice.attr("srcset", s"$smallImage")
 
             imageApiClient.imageMetaWithId(nodeId.toLong).flatMap(_.alttext).map(_.alttext).map(
