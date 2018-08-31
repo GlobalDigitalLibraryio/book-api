@@ -114,8 +114,8 @@ trait TranslationService {
       }
     }
 
-    def allFilesHaveStatus(inTranslationFile: InTranslationFile, status: TranslationStatus.Value): Boolean = {
-      translationDbService.filesForTranslation(inTranslationFile.inTranslationId).forall(_.translationStatus == status)
+    def allFilesHaveTranslationStatusGreatherOrEqualTo(inTranslationFile: InTranslationFile, status: TranslationStatus.Value): Boolean = {
+      translationDbService.filesForTranslation(inTranslationFile.inTranslationId).forall(_.translationStatus.id >= status.id)
     }
 
     def markTranslationAs(inTranslationFile: InTranslationFile, status: TranslationStatus.Value): Try[Translation] = {

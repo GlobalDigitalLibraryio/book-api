@@ -381,7 +381,7 @@ trait ConverterService {
         seqNo = file.seqNo,
         filename = file.addedFile.name,
         crowdinFileId = file.addedFile.fileId.toString,
-        translationStatus = TranslationStatus.IN_PROGRESS,
+        translationStatus = if (file.addedFile.strings > 0)  TranslationStatus.IN_PROGRESS else TranslationStatus.PROOFREAD,
         etag = None)
 
   }

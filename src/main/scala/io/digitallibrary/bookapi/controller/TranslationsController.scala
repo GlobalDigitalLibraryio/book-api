@@ -89,7 +89,7 @@ trait TranslationsController {
       val fileId = params("file_id")
 
       val translatedFileUpdated = translationService.fetchTranslatedFile(projectIdentifier, crowdinLanguage, fileId, status).map(file => {
-        if(translationService.allFilesHaveStatus(file, status)) {
+        if(translationService.allFilesHaveTranslationStatusGreatherOrEqualTo(file, status)) {
           translationService.markTranslationAs(file, status)
         }
       })
