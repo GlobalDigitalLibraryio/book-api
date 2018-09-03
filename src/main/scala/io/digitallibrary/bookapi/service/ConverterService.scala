@@ -72,7 +72,8 @@ trait ConverterService {
         dateArrived = newBook.dateArrived,
         publishingStatus = PublishingStatus.PUBLISHED,
         categories = categories,
-        bookFormat = BookFormat.valueOfOrDefault(newBook.bookFormat)
+        bookFormat = BookFormat.valueOfOrDefault(newBook.bookFormat),
+        pageOrientation = PageOrientation.valueOfOrDefault(newBook.pageOrientation)
       )
     }
 
