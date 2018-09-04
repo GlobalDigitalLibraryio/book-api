@@ -90,7 +90,8 @@ object TestData {
       source = DefaultSource.source,
       pageOrientation = DefaultPageOrientation,
       publishingStatus = PublishingStatus.PUBLISHED.toString,
-      translationStatus = None)
+      translationStatus = None,
+      additionalInformation = None)
 
     val DefaultBookHit = api.BookHit(
       id = 1,
@@ -182,7 +183,8 @@ object TestData {
       contributors = Seq(DefaultContributor),
       categories = Seq(DefaultCategory),
       bookFormat = BookFormat.HTML,
-      pageOrientation = PageOrientation.PORTRAIT
+      pageOrientation = PageOrientation.PORTRAIT,
+      additionalInformation = None
     )
 
     val AmharicTranslation: domain.Translation = DefaultTranslation.copy(id = Some(2), language = LanguageTag(LanguageCodeAmharic))
@@ -229,7 +231,8 @@ object TestData {
       supportsTranslation = false,
       bookFormat = BookFormat.HTML.toString,
       source = "storyweaver",
-      pageOrientation = PageOrientation.PORTRAIT.toString
+      pageOrientation = PageOrientation.PORTRAIT.toString,
+      additionalInformation = None
     )
   }
 

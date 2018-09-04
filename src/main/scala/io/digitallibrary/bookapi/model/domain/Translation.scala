@@ -53,6 +53,7 @@ case class Translation(id: Option[Long],
                        categories: Seq[Category],
                        bookFormat: BookFormat.Value,
                        pageOrientation: PageOrientation.Value,
+                       additionalInformation: Option[String],
                        inTransport: Boolean = false)
 
 object PageOrientation extends Enumeration {
@@ -139,6 +140,7 @@ sealed trait TranslationView extends SQLSyntaxSupport[Translation] {
     chapters = Seq(),
     contributors = Seq(),
     categories = Seq(),
+    additionalInformation = rs.stringOpt(t.additionalInformation),
     inTransport = rs.boolean(t.inTransport)
   )
 
