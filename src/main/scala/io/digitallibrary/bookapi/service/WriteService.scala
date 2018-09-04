@@ -358,7 +358,8 @@ trait WriteService {
                 accessibilityFeature = replacement.accessibilityFeature,
                 accessibilityHazard = replacement.accessibilityHazard,
                 bookFormat = replacement.bookFormat,
-                pageOrientation = replacement.pageOrientation
+                pageOrientation = replacement.pageOrientation,
+                additionalInformation = replacement.additionalInformation
               )
             )
 
