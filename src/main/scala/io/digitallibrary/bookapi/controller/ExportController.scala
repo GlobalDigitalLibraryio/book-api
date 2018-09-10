@@ -14,6 +14,7 @@ import io.digitallibrary.bookapi.service.ExportService
 import io.digitallibrary.language.model.LanguageTag
 import javax.servlet.http.HttpServletRequest
 import org.scalatra.swagger.{ResponseMessage, Swagger, SwaggerSupport}
+import org.scalatra.util.UrlCodingUtils
 
 
 trait ExportController {
@@ -48,12 +49,35 @@ trait ExportController {
       authorizations "oauth2"
       responseMessages response500)
 
+    private val exportEpubsAsZipFile = (apiOperation[Array[Byte]]("exportEpubsAsZipFile")
+      produces "application/octet-stream"
+      summary s"Export all books as epub files for language and source"
+      description s"Export all books as epub files for language and source"
+      parameters(
+      headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
+      pathParam[String]("lang").description("Export books for language specified in BCP-47 format."),
+      pathParam[String]("source").description(s"Exports books for source. 'all' gives all sources"))
+      authorizations "oauth2"
+      responseMessages response500)
+
     get("/:lang/:source", operation(exportBooks)) {
       exportBooks(CsvFormat.QualityAssurance, "qualityAssurance")
     }
 
     get("/googleplay/:lang/:source", operation(exportAsGooglePlayCsv)) {
       exportBooks(CsvFormat.GooglePlay, "googlePlay")
+    }
+
+    get("/epubs/:lang/:source", operation(exportEpubsAsZipFile)) {
+      assertHasRole(RoleWithAdminReadAccess)
+
+      val language = LanguageTag(params("lang"))
+      val source = params("source")
+      val searchSource = if (source.equals("all")) None else Some(source)
+
+      contentType = "application/octet-stream"
+      response.setHeader("Content-Disposition", s"""attachment; filename="books-${BookApiProperties.Environment}-$language-$source.zip" """)
+      exportService.getAllEPubsAsZipFile(language, searchSource, response.getOutputStream)
     }
 
     private def exportBooks(format: CsvFormat.Value, fileEnding: String)(implicit request: HttpServletRequest): Any = {
@@ -68,8 +92,5 @@ trait ExportController {
 
       exportService.exportBooks(format, language, searchSource, response.getOutputStream)
     }
-
-
   }
-
 }

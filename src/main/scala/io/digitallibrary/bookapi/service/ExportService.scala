@@ -7,7 +7,8 @@
 
 package io.digitallibrary.bookapi.service
 
-import java.io.OutputStream
+import java.io.{FileOutputStream, OutputStream}
+import java.util.zip.{ZipEntry, ZipOutputStream}
 
 import com.fasterxml.jackson.dataformat.csv.{CsvFactory, CsvGenerator, CsvSchema}
 import com.typesafe.scalalogging.LazyLogging
@@ -17,6 +18,7 @@ import io.digitallibrary.bookapi.model.domain.{CsvFormat, Paging, Sort}
 import io.digitallibrary.bookapi.service.search.SearchService
 import io.digitallibrary.language.model.LanguageTag
 import io.digitallibrary.bookapi.model._
+import scalaj.http.Http
 
 trait ExportService {
   this: SearchService with ReadService =>
@@ -83,6 +85,36 @@ trait ExportService {
 
     val pageSize = 100
     val baseUrl: String = s"https://${BookApiProperties.Environment}.digitallibrary.io".replace("prod.", "")
+
+    def getAllEPubsAsZipFile(language: LanguageTag, source: Option[String], outputStream: OutputStream): Any = {
+      val firstPage = searchService.searchWithQuery(language, None, source, Paging(1, pageSize), Sort.ByIdAsc)
+
+      val numberOfPages = (firstPage.totalCount / pageSize).toInt
+      val books = firstPage.results ++
+        (1 to numberOfPages).flatMap(i =>
+          searchService.searchWithQuery(language, None, source, Paging(i + 1, pageSize), Sort.ByIdAsc).results)
+
+      val uuidToEpubUrl = books.flatMap(b => readService.withIdAndLanguageForExport(b.id, language)).flatMap(book => {
+        if (book.downloads.epub.isDefined) {
+          Some((book.uuid, book.downloads.epub.get))
+        } else {
+          None
+        }
+      })
+
+      val zip = new ZipOutputStream(outputStream)
+      uuidToEpubUrl.foreach(download => {
+        val uuid = download._1
+        val urlToEpub = download._2
+        logger.info(s"Downloading $urlToEpub")
+        zip.putNextEntry(new ZipEntry(s"$uuid.epub"))
+        zip.write(Http(urlToEpub).asBytes.body)
+        zip.closeEntry()
+
+      })
+      zip.flush()
+      zip.close()
+    }
 
     def exportBooks(csvFormat: CsvFormat.Value, language: LanguageTag, source: Option[String], outputStream: OutputStream): Unit = {
       val firstPage = searchService.searchWithQuery(language, None, source, Paging(1, pageSize), Sort.ByIdAsc)
