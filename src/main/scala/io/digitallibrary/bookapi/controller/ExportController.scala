@@ -9,8 +9,10 @@ package io.digitallibrary.bookapi.controller
 
 import io.digitallibrary.bookapi.BookApiProperties
 import io.digitallibrary.bookapi.BookApiProperties.RoleWithAdminReadAccess
+import io.digitallibrary.bookapi.model.domain.CsvFormat
 import io.digitallibrary.bookapi.service.ExportService
 import io.digitallibrary.language.model.LanguageTag
+import javax.servlet.http.HttpServletRequest
 import org.scalatra.swagger.{ResponseMessage, Swagger, SwaggerSupport}
 
 
@@ -35,7 +37,26 @@ trait ExportController {
       authorizations "oauth2"
       responseMessages response500)
 
+    private val exportAsGooglePlayCsv = (apiOperation[Array[Byte]]("exportasGooglePlayCsv")
+      produces "text/csv"
+      summary s"Export all books for language and source on format for google play"
+      description s"Returns a csv with books for language and source formatted for google play"
+      parameters(
+      headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
+      pathParam[String]("lang").description("Export books for language specified in BCP-47 format."),
+      pathParam[String]("source").description(s"Exports books for source. 'all' gives all sources"))
+      authorizations "oauth2"
+      responseMessages response500)
+
     get("/:lang/:source", operation(exportBooks)) {
+      exportBooks(CsvFormat.QualityAssurance, "qualityAssurance")
+    }
+
+    get("/googleplay/:lang/:source", operation(exportAsGooglePlayCsv)) {
+      exportBooks(CsvFormat.GooglePlay, "googlePlay")
+    }
+
+    private def exportBooks(format: CsvFormat.Value, fileEnding: String)(implicit request: HttpServletRequest): Any = {
       assertHasRole(RoleWithAdminReadAccess)
 
       val language = LanguageTag(params("lang"))
@@ -43,10 +64,12 @@ trait ExportController {
       val searchSource = if (source.equals("all")) None else Some(source)
 
       contentType = "text/csv"
-      response.setHeader("Content-Disposition", s"""attachment; filename="books-${BookApiProperties.Environment}-$language-$source.csv" """)
+      response.setHeader("Content-Disposition", s"""attachment; filename="books-${BookApiProperties.Environment}-$language-$source-$fileEnding.csv" """)
 
-      exportService.exportBooks(language, searchSource, response.getOutputStream)
+      exportService.exportBooks(format, language, searchSource, response.getOutputStream)
     }
+
+
   }
 
 }
