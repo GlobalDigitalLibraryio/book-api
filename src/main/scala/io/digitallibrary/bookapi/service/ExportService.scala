@@ -18,7 +18,7 @@ import io.digitallibrary.bookapi.model.domain.{CsvFormat, Paging, Sort}
 import io.digitallibrary.bookapi.service.search.SearchService
 import io.digitallibrary.language.model.LanguageTag
 import io.digitallibrary.bookapi.model._
-import scalaj.http.Http
+import scalaj.http.{Http, HttpOptions}
 
 trait ExportService {
   this: SearchService with ReadService =>
@@ -108,9 +108,8 @@ trait ExportService {
         val urlToEpub = download._2
         logger.info(s"Downloading $urlToEpub")
         zip.putNextEntry(new ZipEntry(s"$uuid.epub"))
-        zip.write(Http(urlToEpub).asBytes.body)
+        zip.write(Http(urlToEpub).option(HttpOptions.readTimeout(600000)).asBytes.body)
         zip.closeEntry()
-
       })
       zip.flush()
       zip.close()
