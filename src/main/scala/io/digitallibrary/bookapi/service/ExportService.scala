@@ -18,10 +18,13 @@ import io.digitallibrary.bookapi.model.domain.{CsvFormat, Paging, Sort}
 import io.digitallibrary.bookapi.service.search.SearchService
 import io.digitallibrary.language.model.LanguageTag
 import io.digitallibrary.bookapi.model._
+import io.digitallibrary.network.GdlClient
 import scalaj.http.{Http, HttpOptions}
 
+import scala.util.{Failure, Success}
+
 trait ExportService {
-  this: SearchService with ReadService =>
+  this: SearchService with ReadService with GdlClient =>
 
   val exportService: ExportService
 
@@ -86,7 +89,7 @@ trait ExportService {
     val pageSize = 100
     val baseUrl: String = s"https://${BookApiProperties.Environment}.digitallibrary.io".replace("prod.", "")
 
-    def getAllEPubsAsZipFile(language: LanguageTag, source: Option[String], outputStream: OutputStream): Any = {
+    def getAllEPubsAsZipFile(language: LanguageTag, source: Option[String], outputStream: OutputStream): Unit = {
       val firstPage = searchService.searchWithQuery(language, None, source, Paging(1, pageSize), Sort.ByIdAsc)
 
       val numberOfPages = (firstPage.totalCount / pageSize).toInt
@@ -94,23 +97,21 @@ trait ExportService {
         (1 to numberOfPages).flatMap(i =>
           searchService.searchWithQuery(language, None, source, Paging(i + 1, pageSize), Sort.ByIdAsc).results)
 
-      val uuidToEpubUrl = books.flatMap(b => readService.withIdAndLanguageForExport(b.id, language)).flatMap(book => {
-        if (book.downloads.epub.isDefined) {
-          Some((book.uuid, book.downloads.epub.get))
-        } else {
-          None
-        }
-      })
-
       val zip = new ZipOutputStream(outputStream)
-      uuidToEpubUrl.foreach(download => {
-        val uuid = download._1
-        val urlToEpub = download._2
-        logger.info(s"Downloading $urlToEpub")
-        zip.putNextEntry(new ZipEntry(s"$uuid.epub"))
-        zip.write(Http(urlToEpub).option(HttpOptions.readTimeout(600000)).asBytes.body)
-        zip.closeEntry()
-      })
+      books
+        .flatMap(b => readService.withIdAndLanguageForExport(b.id, language))
+        .filter(_.downloads.epub.isDefined)
+        .foreach(book => {
+          val urlToEpub = book.downloads.epub.get
+          gdlClient.fetchBytes(Http(urlToEpub).option(HttpOptions.readTimeout(600000))) match {
+            case Failure(error) => logger.error(s"Error when producing zip-archive for $language and $source. Could not download $urlToEpub", error)
+            case Success(bytes) =>
+              zip.putNextEntry(new ZipEntry(s"${book.uuid}.epub"))
+              zip.write(bytes)
+              zip.closeEntry()
+          }
+
+        })
       zip.flush()
       zip.close()
     }
