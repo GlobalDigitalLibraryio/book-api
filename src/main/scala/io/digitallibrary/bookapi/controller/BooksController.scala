@@ -196,7 +196,8 @@ trait BooksController {
             title = updatedBook.title,
             about = updatedBook.description,
             pageOrientation = pageOrientationToUpdate,
-            publishingStatus = PublishingStatus.valueOf(updatedBook.publishingStatus).getOrElse(existingBook.publishingStatus)
+            publishingStatus = PublishingStatus.valueOf(updatedBook.publishingStatus).getOrElse(existingBook.publishingStatus),
+            additionalInformation = updatedBook.additionalInformation.filter(_.trim.nonEmpty)
         ))
         case None => NotFound(body = Error(Error.NOT_FOUND, s"No book with id $id and language $lang found"))
       }

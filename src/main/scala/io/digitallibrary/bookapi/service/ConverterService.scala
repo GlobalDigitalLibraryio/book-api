@@ -72,7 +72,8 @@ trait ConverterService {
         dateArrived = newBook.dateArrived,
         publishingStatus = PublishingStatus.PUBLISHED,
         categories = categories,
-        bookFormat = BookFormat.valueOfOrDefault(newBook.bookFormat)
+        bookFormat = BookFormat.valueOfOrDefault(newBook.bookFormat),
+        pageOrientation = PageOrientation.valueOfOrDefault(newBook.pageOrientation)
       )
     }
 
@@ -114,7 +115,8 @@ trait ConverterService {
         contributors = Seq(),
         categories = categories,
         bookFormat = BookFormat.valueOfOrDefault(newBook.bookFormat),
-        pageOrientation = PageOrientation.valueOfOrDefault(newBook.pageOrientation)
+        pageOrientation = PageOrientation.valueOfOrDefault(newBook.pageOrientation),
+        additionalInformation = newBook.additionalInformation
       )
     }
 
@@ -178,7 +180,8 @@ trait ConverterService {
         contributors = Seq(),
         categories = Seq(),
         bookFormat = BookFormat.valueOfOrDefault(newTranslation.bookFormat),
-        pageOrientation = PageOrientation.valueOfOrDefault(newTranslation.pageOrientation)
+        pageOrientation = PageOrientation.valueOfOrDefault(newTranslation.pageOrientation),
+        additionalInformation = newTranslation.additionalInformation
       )
     }
 
@@ -261,7 +264,8 @@ trait ConverterService {
           supportsTranslation = BookApiProperties.supportsTranslationFrom(translation.language) && translation.bookFormat.equals(BookFormat.HTML),
           bookFormat = translation.bookFormat.toString,
           source = book.source,
-          pageOrientation = translation.pageOrientation.toString)
+          pageOrientation = translation.pageOrientation.toString,
+          additionalInformation = translation.additionalInformation)
     }
 
     def toApiBook(translation: domain.Translation, availableLanguages: Seq[LanguageTag], book: domain.Book): api.Book = {
@@ -296,7 +300,8 @@ trait ConverterService {
           pageOrientation = translation.pageOrientation.toString,
           source = book.source,
           publishingStatus = translation.publishingStatus.toString,
-          translationStatus = translation.translationStatus.map(_.toString))
+          translationStatus = translation.translationStatus.map(_.toString),
+          additionalInformation = translation.additionalInformation)
     }
 
     def toApiBookHit(translation: Option[domain.Translation], book: Option[domain.Book]): Option[api.BookHit] = {

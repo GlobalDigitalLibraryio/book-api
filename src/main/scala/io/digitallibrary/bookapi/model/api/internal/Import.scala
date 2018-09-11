@@ -35,4 +35,5 @@ case class Book(id: Long,
                 supportsTranslation: Boolean,
                 bookFormat: String,
                 source: String,
-                pageOrientation: String)
+                pageOrientation: String,
+                additionalInformation: Option[String])
