@@ -22,7 +22,7 @@ case class Chapter(id: Option[Long],
                    content: String,
                    chapterType: ChapterType.Value) {
 
-  def imagesInChapter(): Seq[Long] = {
+  def imagesInChapter(): Seq[(Long, Option[Int])] = {
     val document = Jsoup.parseBodyFragment(content)
     val images: Elements = document.select("embed[data-resource='image']")
 
@@ -30,7 +30,8 @@ case class Chapter(id: Option[Long],
       i <- 0 until images.size()
       image = images.get(i)
       nodeId = image.attr("data-resource_id")
-    } yield nodeId.toLong
+      size = if (image.hasAttr("data-resource_size")) Some(image.attr("data-resource_size").toInt) else None
+    } yield (nodeId.toLong, size)
   }
 }
 

@@ -58,6 +58,7 @@ case class PdfCss(source: Option[String], pageOrientation: PageOrientation.Value
        |   margin-right: auto;
        |   padding-bottom: $imgPaddingBottom;
        |   width: 75%;
+       |   -fs-page-break-min-height: 5cm;
        |}
        |
        |.page_0 img.cover {

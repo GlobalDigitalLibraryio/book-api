@@ -43,6 +43,6 @@ class ChapterTest extends UnitSuite {
       """.stripMargin
 
     val chapter = TestData.Domain.DefaultChapter.copy(content = contentWithImages)
-    chapter.imagesInChapter() should equal(Seq(1, 2, 3))
+    chapter.imagesInChapter() should equal(Seq((1, None), (2, None), (3, None)))
   }
 }

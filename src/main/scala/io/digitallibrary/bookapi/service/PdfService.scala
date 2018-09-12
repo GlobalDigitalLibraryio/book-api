@@ -138,7 +138,6 @@ trait PdfService {
           val src = image.attr("src")
           val regex = "(^.+\\?)(width=)(\\d+)(.*)".r
           regex.findFirstMatchIn(src).foreach(matchPattern => {
-            println(s"Matched group is ${matchPattern.group(3)}")
             image.attr("width", matchPattern.group(3))
           })
         }
@@ -150,7 +149,7 @@ trait PdfService {
       source match {
         case Some("storyweaver") =>
           chapters match {
-            case (first :: rest) => processStoryWeaverFirstPage(first) :: rest
+            case first :: rest => processStoryWeaverFirstPage(first) :: rest
             case _ => chapters
           }
         case Some("3asafeer") => {
