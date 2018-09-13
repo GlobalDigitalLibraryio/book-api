@@ -21,11 +21,12 @@ trait ImageApiClient {
   val imageApiClient: ImageApiClient
 
   class ImageApiClient extends LazyLogging {
-    def downloadImage(id: Long): Try[DownloadedImage] = {
+    def downloadImage(id: Long, width: Option[Int] = None): Try[DownloadedImage] = {
       imageMetaWithId(id) match {
         case None => Failure(new NotFoundException(s"Image with id $id was not found"))
         case Some(imageMetaInformation) =>
-          gdlClient.fetchBytes(Http(imageMetaInformation.imageUrl))
+          val imageUrl = if (width.isDefined) s"${imageMetaInformation.imageUrl}?width=${width.get}" else imageMetaInformation.imageUrl
+          gdlClient.fetchBytes(Http(imageUrl))
             .map(bytes => DownloadedImage(imageMetaInformation, bytes))
       }
     }

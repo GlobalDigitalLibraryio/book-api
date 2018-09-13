@@ -18,6 +18,10 @@ case class EPubCss(href: String = "epub.css", mimeType: String = "text/css") {
       |img {
       |    max-width: 100%;
       |    max-height: 50vh;
+      |    display: block;
+      |    margin-left: auto;
+      |    margin-right: auto;
+      |    margin-bottom: 10px;
       |}
     """.stripMargin.getBytes
 }
