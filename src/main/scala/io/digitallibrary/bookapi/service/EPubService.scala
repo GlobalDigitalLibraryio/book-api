@@ -83,7 +83,7 @@ trait EPubService {
         // Add images first (do not add more than one version of each image if image is used in multiple pages)
         val imageIdsToAdd = chapters.flatMap(_.imagesInChapter()).distinct
 
-        val images = imageIdsToAdd.map(imageApiClient.downloadImage).map(_.get)
+        val images = imageIdsToAdd.map(idAndSize => imageApiClient.downloadImage(idAndSize._1, idAndSize._2)).map(_.get)
         for (imageWithIndex <- images.zipWithIndex) {
           val image = imageWithIndex._1
           val imageNo = imageWithIndex._2
