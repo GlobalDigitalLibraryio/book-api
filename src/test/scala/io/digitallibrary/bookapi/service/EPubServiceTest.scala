@@ -109,7 +109,7 @@ class EPubServiceTest extends UnitSuite with TestEnvironment {
     when(chapterRepository.chaptersForBookIdAndLanguage(any[Long], any[LanguageTag])(any[DBSession])).thenReturn(Seq(chapter))
 
     when(contentConverter.toEPubContent(any[String], any[Seq[DownloadedImage]])).thenReturn("Content-of-chapter")
-    when(imageApiClient.downloadImage(1)).thenReturn(Success(image))
+    when(imageApiClient.downloadImage(1, None)).thenReturn(Success(image))
 
     ePubService.createEPub(translation.language, translation.uuid) match {
       case None => fail("epub should be defined")
@@ -129,7 +129,7 @@ class EPubServiceTest extends UnitSuite with TestEnvironment {
 
     when(unFlaggedTranslationsRepository.withUuId(any[String])(any[DBSession])).thenReturn(Some(translation))
     when(chapterRepository.chaptersForBookIdAndLanguage(any[Long], any[LanguageTag])(any[DBSession])).thenReturn(Seq(chapter))
-    when(imageApiClient.downloadImage(1)).thenReturn(Failure(new RuntimeException("image-download-error")))
+    when(imageApiClient.downloadImage(1, None)).thenReturn(Failure(new RuntimeException("image-download-error")))
 
     ePubService.createEPub(translation.language, translation.uuid) match {
       case None => fail("epub should be defined")

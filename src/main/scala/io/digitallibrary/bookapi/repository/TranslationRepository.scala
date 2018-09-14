@@ -173,7 +173,8 @@ trait TranslationRepository {
           t.pageOrientation -> translation.pageOrientation.toString,
           t.inTransport -> translation.inTransport,
           t.tags -> tagBinder,
-          t.categoryIds -> categoryBinder
+          t.categoryIds -> categoryBinder,
+          t.additionalInformation -> translation.additionalInformation
         ).toSQL.updateAndReturnGeneratedKey().apply()
 
       translation.copy(id = Some(id), revision = Some(startRevision))
@@ -226,7 +227,8 @@ trait TranslationRepository {
           t.pageOrientation -> replacement.pageOrientation.toString,
           t.inTransport -> replacement.inTransport,
           t.tags -> tagBinder,
-          t.categoryIds -> categoryBinder
+          t.categoryIds -> categoryBinder,
+          t.additionalInformation -> replacement.additionalInformation
         )
         .where
         .eq(t.id, replacement.id)

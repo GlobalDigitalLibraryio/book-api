@@ -45,7 +45,9 @@ object InTranslationFile extends SQLSyntaxSupport[InTranslationFile] {
 }
 
 object TranslationStatus extends Enumeration {
-  val IN_PROGRESS, TRANSLATED, PROOFREAD = Value
+  val IN_PROGRESS: TranslationStatus.Value = Value(0)
+  val TRANSLATED: TranslationStatus.Value = Value(1)
+  val PROOFREAD: TranslationStatus.Value = Value(2)
 
   def valueOf(s: String): Option[TranslationStatus.Value] = {
     TranslationStatus.values.find(_.toString == s.toUpperCase)

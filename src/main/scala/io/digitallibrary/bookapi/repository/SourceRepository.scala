@@ -13,8 +13,9 @@ trait SourceRepository {
     def getSources(language: LanguageTag)(implicit  session: DBSession = ReadOnlyAutoSession): Seq[Source] = {
       select(book.source, sqls.count)
         .from(Book as book)
-        .innerJoin(UnflaggedTranslations as t).on(book.id, t.id)
-        .where.eq(t.language, language.toString()).groupBy(book.source)
+        .innerJoin(UnflaggedTranslations as t).on(book.id, t.bookId)
+        .where.eq(t.language, language.toString())
+        .groupBy(book.source)
         .toSQL
         .map(rs => Source(rs.string(1), rs.long(2))).list().apply()
     }
