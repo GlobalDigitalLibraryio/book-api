@@ -278,6 +278,25 @@ trait TranslationRepository {
       SearchResult[Translation](result.map(_._1).headOption.getOrElse(0), page, pageSize, responseLang, result.map(_._2))
     }
 
+    def withTranslationStatus(status: TranslationStatus.Value, pageSize: Int, page: Int, sort: Option[Sort.Value])(implicit session: DBSession = ReadOnlyAutoSession): SearchResult[Translation] = {
+      val limit = pageSize.max(1)
+      val offset = (page.max(1) - 1) * pageSize
+      val ordering = sort.map(getSorting).getOrElse(sqls.orderBy(t.id))
+
+      val result = select(countAllBeforeLimiting, t.result.id)
+        .from(translationView as t)
+        .where
+        .eq(t.translationStatus, status.toString)
+        .append(ordering)
+        .limit(limit)
+        .offset(offset)
+        .toSQL.map(rs => (rs.long(1), withId(rs.long(2)).get)).list().apply()
+
+
+      val responseLang = LanguageTag(BookApiProperties.DefaultLanguage)
+      SearchResult[Translation](result.map(_._1).headOption.getOrElse(0), page, pageSize, responseLang, result.map(_._2))
+    }
+
     def numberOfTranslationsWithStatus(languageTag: LanguageTag, status: PublishingStatus.Value)(implicit session: DBSession = ReadOnlyAutoSession): Int = {
       select(sqls"count(*)")
         .from(translationView as t)
