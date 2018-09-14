@@ -76,7 +76,8 @@ trait TranslationsController {
       queryParam[Option[Int]]("page-size").description("Return this many results per page."),
       queryParam[Option[Int]]("page").description("Return results for this page."),
       queryParam[Option[String]]("sort").description(s"Sorts result based on parameter. Possible values: ${Sort.values.mkString(",")}; Default value: ${Sort.ByIdAsc}"))
-      responseMessages(response400, response500))
+      responseMessages(response400, response500)
+      authorizations "oauth2")
 
     private val listAllProofreadBooks = (apiOperation[api.SearchResult]("List all books that have been proofread fully through translation system.")
       summary "List all books that have been proofread fully through translation system."
@@ -85,7 +86,8 @@ trait TranslationsController {
       queryParam[Option[Int]]("page-size").description("Return this many results per page."),
       queryParam[Option[Int]]("page").description("Return results for this page."),
       queryParam[Option[String]]("sort").description(s"Sorts result based on parameter. Possible values: ${Sort.values.mkString(",")}; Default value: ${Sort.ByIdAsc}"))
-      responseMessages(response400, response500))
+      responseMessages(response400, response500)
+      authorizations "oauth2")
 
 
     get("/supported-languages", operation(getSupportedLanguages)) {
