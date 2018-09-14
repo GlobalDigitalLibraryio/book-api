@@ -179,6 +179,7 @@ trait TranslationService {
       writeService.newTranslationForBook(originalBook, translateRequest).flatMap(newTranslation => {
         val chaptersToTranslate: Seq[Chapter] = newTranslation.chapters
           .filter(_.chapterType != ChapterType.License)
+          .filter(_.containsText())
           .flatMap(ch => readService.chapterWithId(ch.id.get))
 
 

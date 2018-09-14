@@ -33,6 +33,10 @@ case class Chapter(id: Option[Long],
       size = if (image.hasAttr("data-resource_size")) Some(image.attr("data-resource_size").toInt) else None
     } yield (nodeId.toLong, size)
   }
+
+  def containsText(): Boolean = {
+    Jsoup.parseBodyFragment(content).text().trim.nonEmpty
+  }
 }
 
 object ChapterType extends Enumeration {
