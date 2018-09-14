@@ -46,7 +46,7 @@ class ChapterTest extends UnitSuite {
     chapter.imagesInChapter() should equal(Seq((1, None), (2, None), (3, None)))
   }
 
-  test("that containsOnlyImages returns true for a chapter with only images") {
+  test("that containsText returns false for a chapter with only images and empty tags") {
     val contentWithOnlyImages =
       """
         |
@@ -64,7 +64,7 @@ class ChapterTest extends UnitSuite {
     chapter.containsText() should be(false)
   }
 
-  test("that containsOnlyImages returns false for a chapter with at least one character") {
+  test("that containsText returns true for a chapter with at least one character") {
     val contentWithOnlyImages =
       """
         |H
