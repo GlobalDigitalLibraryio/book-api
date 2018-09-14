@@ -45,4 +45,33 @@ class ChapterTest extends UnitSuite {
     val chapter = TestData.Domain.DefaultChapter.copy(content = contentWithImages)
     chapter.imagesInChapter() should equal(Seq((1, None), (2, None), (3, None)))
   }
+
+  test("that containsText returns false for a chapter with only images and empty tags") {
+    val contentWithOnlyImages =
+      """
+        |
+        |<embed data-resource="image" data-resource_id="2"/>
+        |
+        |<p>
+        |</p>
+        |
+        |<embed data-resource="image" data-resource_id="3"/>
+        |
+        |<div></div>
+        |
+      """.stripMargin
+    val chapter = TestData.Domain.DefaultChapter.copy(content = contentWithOnlyImages)
+    chapter.containsText() should be(false)
+  }
+
+  test("that containsText returns true for a chapter with at least one character") {
+    val contentWithOnlyImages =
+      """
+        |H
+        |<embed data-resource="image" data-resource_id="2"/>
+        |<embed data-resource="image" data-resource_id="3"/>
+      """.stripMargin
+    val chapter = TestData.Domain.DefaultChapter.copy(content = contentWithOnlyImages)
+    chapter.containsText() should be(true)
+  }
 }
