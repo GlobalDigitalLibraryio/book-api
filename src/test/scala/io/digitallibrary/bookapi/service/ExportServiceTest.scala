@@ -17,8 +17,7 @@ import io.digitallibrary.bookapi.{TestData, TestEnvironment, UnitSuite}
 import io.digitallibrary.language.model.LanguageTag
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import org.mockito.Mockito
-import org.mockito.junit.MockitoJUnit
-import scalaj.http.{Http, HttpOptions, HttpRequest}
+import scalaj.http.HttpRequest
 
 import scala.util.{Failure, Success}
 
@@ -32,9 +31,15 @@ class ExportServiceTest extends UnitSuite with TestEnvironment {
         Seq(BookHit(1, "This is a title", "Short description", Language(TestData.LanguageCodeEnglish, ""), None, Seq(), None, LocalDate.now(), "source", None, None)))
       )
     service.exportBooks(CsvFormat.QualityAssurance, LanguageTag(TestData.LanguageCodeEnglish), Some("all"), outputStream)
-    assert(outputStream.toString.contains("id,environment,language,title,description,source,url,approved,comment"))
-    assert(outputStream.toString.contains("This is a title"))
-    assert(outputStream.toString.contains("Short description"))
+
+    val csvArr = outputStream.toString.split("\n").map(_.split(",").map(_.trim))
+    csvArr(1)(0) should equal ("1")
+    csvArr(1)(1) should equal("local")
+    csvArr(1)(2) should equal ("en")
+    csvArr(1)(3) should equal (""""This is a title"""")
+    csvArr(1)(4) should equal (""""Short description"""")
+    csvArr(1)(5) should equal ("source")
+    csvArr(1)(6) should equal ("https://local.digitallibrary.io/en/books/details/1")
   }
 
   test("that export of no books gives csv with headers") {
