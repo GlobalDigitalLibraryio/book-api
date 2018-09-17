@@ -138,14 +138,15 @@ trait ExportService {
     }
 
     def writeQualityAssurance(generator: CsvGenerator, book: BookHit): Unit = {
+      val languageTag = LanguageTag(book.language.code)
       generator.writeStartArray()
       generator.writeRawValue(book.id.toString)
       generator.writeRawValue(BookApiProperties.Environment)
-      generator.writeRawValue(language.toString)
+      generator.writeRawValue(languageTag.toString)
       generator.writeString(book.title)
       generator.writeString(book.description)
       generator.writeRawValue(book.source)
-      generator.writeRawValue(s"$baseUrl/${language.toString}/books/details/${book.id}")
+      generator.writeRawValue(s"$baseUrl/${languageTag.toString}/books/details/${book.id}")
       generator.writeRawValue("")
       generator.writeRawValue("")
       generator.writeEndArray()
