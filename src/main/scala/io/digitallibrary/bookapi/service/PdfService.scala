@@ -58,7 +58,8 @@ trait PdfService {
       "devangari" -> FontDefinition("/NotoSansDevanagari-Regular.ttf", "Noto Sans Devanagari"),
       "bengali" -> FontDefinition("/NotoSansBengali-Regular.ttf", "Noto Sans Bengali"),
       "khmer" -> FontDefinition("/NotoSansKhmer-Regular.ttf", "Noto Sans Khmer"),
-      "tamil" -> FontDefinition("/NotoSansTamil-Regular.ttf", "Noto Sans Tamil")
+      "tamil" -> FontDefinition("/NotoSansTamil-Regular.ttf", "Noto Sans Tamil"),
+      "arabic" -> FontDefinition("/NotoKufiArabic-Regular.ttf", "Noto Kufi Arabic"),
     )
     val fontDefinitions = Map(
       LanguageTag("tir-et") -> fonts("ethiopic"),
@@ -69,7 +70,9 @@ trait PdfService {
       LanguageTag("ben") -> fonts("bengali"),
       LanguageTag("nep") -> fonts("devangari"),
       LanguageTag("khm") -> fonts("khmer"),
-      LanguageTag("tam") -> fonts("tamil")
+      LanguageTag("tam") -> fonts("tamil"),
+      LanguageTag("ar-ae") -> fonts("arabic"),
+      LanguageTag("ar") -> fonts("arabic")
     )
 
     def getPdf(language: LanguageTag, uuid: String): Option[PdfStream] = {
