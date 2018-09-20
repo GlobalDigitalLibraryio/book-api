@@ -59,7 +59,7 @@ trait PdfService {
       "bengali" -> FontDefinition("/NotoSansBengali-Regular.ttf", "Noto Sans Bengali"),
       "khmer" -> FontDefinition("/NotoSansKhmer-Regular.ttf", "Noto Sans Khmer"),
       "tamil" -> FontDefinition("/NotoSansTamil-Regular.ttf", "Noto Sans Tamil"),
-      "arabic" -> FontDefinition("/NotoKufiArabic-Regular.ttf", "Noto Kufi Arabic"),
+      "arabic" -> FontDefinition("/NotoKufiArabic-Regular.ttf", "Noto Kufi Arabic")
     )
     val fontDefinitions = Map(
       LanguageTag("tir-et") -> fonts("ethiopic"),
