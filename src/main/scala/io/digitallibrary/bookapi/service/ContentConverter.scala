@@ -10,6 +10,7 @@ package io.digitallibrary.bookapi.service
 import com.typesafe.scalalogging.LazyLogging
 import io.digitallibrary.bookapi.integration.{DownloadedImage, ImageApiClient}
 import io.digitallibrary.bookapi.model.api.NotFoundException
+import io.digitallibrary.bookapi.model.domain.ApiContent
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Entities.EscapeMode
@@ -20,9 +21,10 @@ trait ContentConverter {
   val contentConverter: ContentConverter
 
   class ContentConverter extends LazyLogging {
-    def toApiContent(content: String): String = {
+    def toApiContent(content: String): ApiContent = {
       val document = Jsoup.parseBodyFragment(content)
       val images: Elements = document.select("embed[data-resource='image']")
+      var imageList: Seq[String] = Seq()
       for (i <- 0 until images.size()) {
         val image = images.get(i)
         val nodeId = image.attr("data-resource_id")
@@ -30,6 +32,7 @@ trait ContentConverter {
 
         imageApiClient.imageUrlFor(nodeId.toLong) match {
           case Some(url) =>
+            imageList = imageList :+ url
             image.tagName("picture")
 
             val fullSizeUrl = if (imgSize.isDefined) s"$url?width=${imgSize.get}" else url
@@ -62,6 +65,8 @@ trait ContentConverter {
       document.outputSettings().syntax(Document.OutputSettings.Syntax.xml)
       document.outputSettings().escapeMode(EscapeMode.xhtml).prettyPrint(false)
       document.select("body").html()
+
+      ApiContent(document.select("body").html(), imageList)
     }
 
     def toEPubContent(content: String, downloadedImages: Seq[DownloadedImage]): String = {

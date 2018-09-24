@@ -237,7 +237,7 @@ trait BooksController {
             content = mergeService.mergeContents(existingChapter.content, updatedChapter.content),
             chapterType = chapterTypeToUpdate))
 
-          updated.copy(content = contentConverter.toApiContent(updated.content))
+          updated.copy(content = contentConverter.toApiContent(updated.content).content)
         case None => NotFound(body = Error(Error.NOT_FOUND, s"No chapter with id $chapterId for book with id $bookId and language $lang found."))
       }
     }

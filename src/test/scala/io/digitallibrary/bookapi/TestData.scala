@@ -58,7 +58,7 @@ object TestData {
     val illustrator = api.Contributor(4, 1, ContributorType.Illustrator.toString, "Illu Strator")
 
     val ChapterSummary1 = api.ChapterSummary(1, 1, Some("Title"), "some-url")
-    val Chapter1 = api.Chapter(1, 1, 1, Some("Title"), "Content", "Content")
+    val Chapter1 = api.Chapter(1, 1, 1, Some("Title"), "Content", "Content", Seq())
 
     val DefaultBook = api.Book(
       id = 1,

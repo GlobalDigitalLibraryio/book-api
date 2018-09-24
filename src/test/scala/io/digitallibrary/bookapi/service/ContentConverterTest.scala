@@ -42,7 +42,7 @@ class ContentConverterTest extends UnitSuite with TestEnvironment {
         |</p>
       """.stripMargin
 
-    val apiContent = service.toApiContent(content)
+    val apiContent = service.toApiContent(content).content
     apiContent should equal (expectedApiContent)
   }
 

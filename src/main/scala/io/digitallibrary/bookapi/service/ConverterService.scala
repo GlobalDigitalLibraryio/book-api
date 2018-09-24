@@ -224,14 +224,14 @@ trait ConverterService {
       s"${Domain}${BookApiProperties.ApiPath}/${language.toString}/${bookId}/chapters/${chapter.id.get}")
 
     def toApiChapter(chapter: domain.Chapter, convertContent: Boolean = true): api.Chapter = {
-      val chaptercontent = if (convertContent) contentConverter.toApiContent(chapter.content) else chapter.content
+      val apiContent = contentConverter.toApiContent(chapter.content)
       api.Chapter(
         chapter.id.get,
         chapter.revision.get,
         chapter.seqNo,
         chapter.title,
-        chaptercontent,
-        chapter.chapterType.toString)
+        if (convertContent) apiContent.content else chapter.content,
+        chapter.chapterType.toString, apiContent.images)
     }
 
     def toInternalApiBook(translation: domain.Translation, availableLanguages: Seq[LanguageTag], book: domain.Book): api.internal.Book = {

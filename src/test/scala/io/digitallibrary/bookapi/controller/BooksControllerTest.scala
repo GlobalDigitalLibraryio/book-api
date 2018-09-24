@@ -246,7 +246,7 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
     when(readService.domainChapterForBookWithLanguageAndId(any[Long], any[LanguageTag], any[Long])).thenReturn(Some(TestData.Domain.DefaultChapter))
     when(mergeService.mergeContents(TestData.Domain.DefaultChapter.content, "my updated content")).thenReturn("my updated content")
     when(writeService.updateChapter(any[domain.Chapter])).thenReturn(TestData.Domain.DefaultChapter)
-    when(contentConverter.toApiContent(any[String])).thenReturn("")
+    when(contentConverter.toApiContent(any[String])).thenReturn(ApiContent("", Seq()))
     val payload =
       """
         | { "id": 1,
@@ -268,7 +268,7 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
     when(readService.domainChapterForBookWithLanguageAndId(any[Long], any[LanguageTag], any[Long])).thenReturn(Some(TestData.Domain.DefaultChapter))
     when(mergeService.mergeContents(any[String], any[String])).thenReturn("<embed ...> <br /> Some content here")
     when(writeService.updateChapter(any[domain.Chapter])).thenReturn(TestData.Domain.DefaultChapter)
-    when(contentConverter.toApiContent(any[String])).thenReturn("")
+    when(contentConverter.toApiContent(any[String])).thenReturn(ApiContent("", Seq()))
     val pictureContent =
       """<picture><source media=\"(min-width: 768px)\" srcset=\"https://images.test.digitallibrary.io/eB1RNSN8.jpg\" /><img src=\"https://images.test.digitallibrary.io/eB1RNSN8.jpg\" srcset=\"https://images.test.digitallibrary.io/eB1RNSN8.jpg?width=300, https://images.test.digitallibrary.io/eB1RNSN8.jpg?width=600 2x\" alt=\"\" /></picture>\n\n<picture><source media=\"(min-width: 768px)\" srcset=\"https://images.test.digitallibrary.io/bEvj3uIw.png\" /><img src=\"https://images.test.digitallibrary.io/bEvj3uIw.png\" srcset=\"https://images.test.digitallibrary.io/bEvj3uIw.png?width=300, https://images.test.digitallibrary.io/bEvj3uIw.png?width=600 2x\" alt=\"\" /></picture>\n\n<picture><source media=\"(min-width: 768px)\" srcset=\"https://images.test.digitallibrary.io/F4kwymDa.png\" /><img src=\"https://images.test.digitallibrary.io/F4kwymDa.png\" srcset=\"https://images.test.digitallibrary.io/F4kwymDa.png?width=300, https://images.test.digitallibrary.io/F4kwymDa.png?width=600 2x\" alt=\"\" /></picture>"""
     val payload =
