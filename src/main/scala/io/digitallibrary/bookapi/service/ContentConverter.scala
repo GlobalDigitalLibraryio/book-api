@@ -48,6 +48,7 @@ trait ContentConverter {
 
             val forSmallDevice = image.appendElement("img")
             forSmallDevice.attr("src", fullSizeUrl)
+            forSmallDevice.attr("crossorigin", "anonymous")
             forSmallDevice.attr("srcset", s"$smallImage")
 
             imageApiClient.imageMetaWithId(nodeId.toLong).flatMap(_.alttext).map(_.alttext).map(
