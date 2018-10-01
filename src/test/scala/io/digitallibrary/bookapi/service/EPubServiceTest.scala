@@ -48,7 +48,7 @@ class EPubServiceTest extends UnitSuite with TestEnvironment {
 
   test("that createEPub creates a book with expected CoverPhoto") {
     val translation = TestData.Domain.DefaultTranslation.copy(coverphoto = Some(1))
-    val image = DownloadedImage(ImageMetaInformation("1", "meta-url", "image-url", 1, "image/png", None), "bytes".getBytes)
+    val image = DownloadedImage(ImageMetaInformation("1", "meta-url", "image-url", 1, "image/png", None, None), "bytes".getBytes)
 
     when(unFlaggedTranslationsRepository.withUuId(any[String])(any[DBSession])).thenReturn(Some(translation))
     when(chapterRepository.chaptersForBookIdAndLanguage(any[Long], any[LanguageTag])(any[DBSession])).thenReturn(Seq())
@@ -103,7 +103,7 @@ class EPubServiceTest extends UnitSuite with TestEnvironment {
   test("that createEpub creates a book with expected chapter with image") {
     val translation = TestData.Domain.DefaultTranslation
     val chapter = TestData.Domain.DefaultChapter.copy(content = """<p><embed data-resource="image" data-resource_id="1"/></p>""")
-    val image = DownloadedImage(ImageMetaInformation("1", "meta-url", "image-url", 1, "image/png", None), "bytes".getBytes)
+    val image = DownloadedImage(ImageMetaInformation("1", "meta-url", "image-url", 1, "image/png", None, None), "bytes".getBytes)
 
     when(unFlaggedTranslationsRepository.withUuId(any[String])(any[DBSession])).thenReturn(Some(translation))
     when(chapterRepository.chaptersForBookIdAndLanguage(any[Long], any[LanguageTag])(any[DBSession])).thenReturn(Seq(chapter))

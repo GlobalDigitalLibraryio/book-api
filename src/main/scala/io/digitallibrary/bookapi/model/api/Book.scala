@@ -25,7 +25,14 @@ case class License(@(ApiModelProperty@field)(description = "The name of the lice
 @ApiModel(description = "Information about where to find the cover image for the book")
 case class CoverImage(@(ApiModelProperty@field)(description = "URL to the cover-image") url: String,
                       @(ApiModelProperty@field)(description = "Alternate text for the cover image") alttext: Option[String],
-                      @(ApiModelProperty@field)(description = "Image id of the cover-image") imageId: String)
+                      @(ApiModelProperty@field)(description = "Image id of the cover-image") imageId: String,
+                      @(ApiModelProperty@field)(description = "The different variants of the image") variants: Map[String, ImageVariant])
+
+case class ImageVariant(@(ApiModelProperty@field)(description = "The ratio of this image") ratio: String,
+                        @(ApiModelProperty@field)(description = "Start x-point of the variant") x: Int,
+                        @(ApiModelProperty@field)(description = "Start y-point of the variant") y: Int,
+                        @(ApiModelProperty@field)(description = "The width of the variant") width: Int,
+                        @(ApiModelProperty@field)(description = "The height of the variant") height: Int)
 
 
 @ApiModel(description = "Information about where to download a copy of the book")

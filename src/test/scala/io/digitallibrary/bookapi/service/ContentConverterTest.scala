@@ -21,7 +21,7 @@ class ContentConverterTest extends UnitSuite with TestEnvironment {
     when(imageApiClient.imageUrlFor(2)).thenReturn(Some("image-url-2"))
     when(imageApiClient.imageUrlFor(3)).thenReturn(None)
     when(imageApiClient.imageMetaWithId(1)).thenReturn(None)
-    when(imageApiClient.imageMetaWithId(2)).thenReturn(Some(ImageMetaInformation("2", "", "", 0, "", Some(Alttext("Some alt text", "en")))))
+    when(imageApiClient.imageMetaWithId(2)).thenReturn(Some(ImageMetaInformation("2", "", "", 0, "", Some(Alttext("Some alt text", "en")), None)))
     when(imageApiClient.imageMetaWithId(3)).thenReturn(None)
 
     val content =
@@ -48,8 +48,8 @@ class ContentConverterTest extends UnitSuite with TestEnvironment {
 
   test("that toEPubContent throws exception if an image is missing") {
     val dummyBytes = "Hello, I am bytes".getBytes
-    val imageMeta1 = ImageMetaInformation("1", "some-url", "some-url", 123, "image/jpeg", None)
-    val imageMeta2 = ImageMetaInformation("2", "some-url", "some-url", 123, "image/jpeg", None)
+    val imageMeta1 = ImageMetaInformation("1", "some-url", "some-url", 123, "image/jpeg", None, None)
+    val imageMeta2 = ImageMetaInformation("2", "some-url", "some-url", 123, "image/jpeg", None, None)
 
     val content =
       """
@@ -68,8 +68,8 @@ class ContentConverterTest extends UnitSuite with TestEnvironment {
 
   test("that to EPubContent converts embed-tags to image-tags correctly") {
     val dummyBytes = "Hello, I am bytes".getBytes
-    val imageMeta1 = ImageMetaInformation("1", "meta-url", "some-url-1", 123, "image/jpeg", None)
-    val imageMeta2 = ImageMetaInformation("2", "meta-url", "some-url-2", 123, "image/jpeg", None)
+    val imageMeta1 = ImageMetaInformation("1", "meta-url", "some-url-1", 123, "image/jpeg", None, None)
+    val imageMeta2 = ImageMetaInformation("2", "meta-url", "some-url-2", 123, "image/jpeg", None, None)
 
     val content =
       """

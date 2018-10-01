@@ -15,9 +15,9 @@ import io.digitallibrary.language.model.LanguageTag
 import io.digitallibrary.network.AuthUser
 import io.digitallibrary.bookapi.BookApiProperties.Domain
 import io.digitallibrary.bookapi.controller.NewFeaturedContent
-import io.digitallibrary.bookapi.integration.ImageApiClient
+import io.digitallibrary.bookapi.integration.{ImageApiClient, ImageVariant}
 import io.digitallibrary.bookapi.integration.crowdin.CrowdinUtils
-import io.digitallibrary.bookapi.model._
+import io.digitallibrary.bookapi.model.{api, _}
 import io.digitallibrary.bookapi.model.api.internal
 import io.digitallibrary.bookapi.model.api.internal.{NewChapter, NewEducationalAlignment, NewTranslation}
 import io.digitallibrary.bookapi.model.crowdin.CrowdinFile
@@ -351,11 +351,16 @@ trait ConverterService {
       }
     }
 
+    def asApiVariant(variant: ImageVariant): api.ImageVariant = {
+      api.ImageVariant(variant.ratio, variant.topLeftX, variant.topLeftY, variant.width, variant.height)
+    }
+
     def toApiCoverImage(imageIdOpt: Option[Long]): Option[api.CoverImage] = {
       imageIdOpt.flatMap(imageId =>
         imageApiClient.imageMetaWithId(imageId))
         .map(imageMeta => {
-          api.CoverImage(url = imageMeta.imageUrl, alttext = imageMeta.alttext.map(_.alttext), imageId = imageMeta.id)
+          val variants = imageMeta.imageVariants.getOrElse(Map.empty)
+          api.CoverImage(url = imageMeta.imageUrl, alttext = imageMeta.alttext.map(_.alttext), imageId = imageMeta.id, variants = variants.map(entry => entry._1 -> asApiVariant(entry._2)))
         })
     }
 
