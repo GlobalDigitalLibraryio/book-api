@@ -359,11 +359,10 @@ trait ConverterService {
       imageIdOpt.flatMap(imageId =>
         imageApiClient.imageMetaWithId(imageId))
         .map(imageMeta => {
-          val variants = imageMeta.imageVariants.getOrElse(Map.empty)
-          api.CoverImage(url = imageMeta.imageUrl, alttext = imageMeta.alttext.map(_.alttext), imageId = imageMeta.id, variants = variants.map(entry => entry._1 -> asApiVariant(entry._2)))
+          val variants = imageMeta.imageVariants.map(x => x.map(entry => entry._1 -> asApiVariant(entry._2)))
+          api.CoverImage(url = imageMeta.imageUrl, alttext = imageMeta.alttext.map(_.alttext), imageId = imageMeta.id, variants = variants)
         })
     }
-
 
     def toApiInternalCoverPhoto(imageIdOpt: Option[Long]): Option[api.internal.CoverPhoto] = imageIdOpt.map(api.internal.CoverPhoto)
 
