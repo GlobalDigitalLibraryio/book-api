@@ -31,8 +31,19 @@ trait ImageApiClient {
       }
     }
 
-    def imageUrlFor(id: Long): Option[String] = {
-      imageMetaWithId(id).map(_.imageUrl)
+    def imageUrlFor(id: Long, widthOpt: Option[Int] = None): Option[ImageUrl] = {
+      val widthAppendix = widthOpt match {
+        case None => ""
+        case Some(width) => s"?width=$width"
+      }
+
+      val request = Http(s"http://${BookApiProperties.InternalImageApiUrl}/$id/imageUrl$widthAppendix")
+      gdlClient.fetch[ImageUrl](request) match {
+        case Success(imageUrl) => Some(imageUrl)
+        case Failure(ex: Throwable) =>
+          logger.error(s"Got ${ex.getClass.getSimpleName} when calling ${request.url}: ${ex.getMessage}")
+          None
+      }
     }
 
     def imageMetaWithId(id: Long): Option[ImageMetaInformation] = doRequest(
@@ -54,5 +65,5 @@ trait ImageApiClient {
 case class ImageMetaInformation(id: String, metaUrl: String, imageUrl: String, size: Int, contentType: String, alttext: Option[Alttext], imageVariants: Option[Map[String, ImageVariant]])
 case class ImageVariant(ratio: String, revision: Option[Int], topLeftX: Int, topLeftY: Int, width: Int, height: Int)
 case class Alttext(alttext: String, language: String)
-
+case class ImageUrl(id: String, url: String, alttext: Option[String])
 case class DownloadedImage(metaInformation: ImageMetaInformation, bytes: Array[Byte])

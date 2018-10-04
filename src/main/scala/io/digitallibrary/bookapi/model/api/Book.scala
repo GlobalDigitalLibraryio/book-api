@@ -28,6 +28,7 @@ case class CoverImage(@(ApiModelProperty@field)(description = "URL to the cover-
                       @(ApiModelProperty@field)(description = "Image id of the cover-image") imageId: String,
                       @(ApiModelProperty@field)(description = "The different variants of the image") variants: Option[Map[String, ImageVariant]])
 
+@ApiModel(description = "Information about a variant of the image")
 case class ImageVariant(@(ApiModelProperty@field)(description = "The ratio of this image") ratio: String,
                         @(ApiModelProperty@field)(description = "Start x-point of the variant") x: Int,
                         @(ApiModelProperty@field)(description = "Start y-point of the variant") y: Int,

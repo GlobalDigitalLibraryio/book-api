@@ -30,29 +30,13 @@ trait ContentConverter {
         val nodeId = image.attr("data-resource_id")
         val imgSize = if (image.hasAttr("data-resource_size")) Some(image.attr("data-resource_size").toInt) else None
 
-        imageApiClient.imageUrlFor(nodeId.toLong) match {
+        imageApiClient.imageUrlFor(nodeId.toLong, imgSize) match {
           case Some(url) =>
-            imageList = imageList :+ url
-            image.tagName("picture")
-
-            val fullSizeUrl = if (imgSize.isDefined) s"$url?width=${imgSize.get}" else url
-            val halfSize = imgSize.map(size => size / 2)
-
-            // For devices larger than 768px
-            val forLargeDevice = image.appendElement("source")
-            forLargeDevice.attr("media", "(min-width: 768px)")
-            forLargeDevice.attr("srcset", fullSizeUrl)
-
-            // For devices smaller than 768px
-            val smallImage = s"$url?width=${halfSize.getOrElse(300)}" // 300 should be enough for most small devices
-
-            val forSmallDevice = image.appendElement("img")
-            forSmallDevice.attr("src", fullSizeUrl)
-            forSmallDevice.attr("crossorigin", "anonymous")
-            forSmallDevice.attr("srcset", s"$smallImage")
-
-            imageApiClient.imageMetaWithId(nodeId.toLong).flatMap(_.alttext).map(_.alttext).map(
-              text => forSmallDevice.attr("alt", text))
+            imageList = imageList :+ url.url
+            image.tagName("img")
+            image.attr("src", url.url)
+            image.attr("crossorigin", "anonymous")
+            url.alttext.foreach(alttext => image.attr("alt", alttext))
 
           case None =>
             image.tagName("p")
@@ -60,7 +44,7 @@ trait ContentConverter {
         }
         image.removeAttr("data-resource")
         image.removeAttr("data-resource_id")
-
+        image.removeAttr("data-resource_size")
       }
 
       document.outputSettings().syntax(Document.OutputSettings.Syntax.xml)
