@@ -367,7 +367,7 @@ trait ConverterService {
     def toApiInternalCoverPhoto(imageIdOpt: Option[Long]): Option[api.internal.CoverPhoto] = imageIdOpt.map(api.internal.CoverPhoto)
 
     def toApiLanguage(languageTag: LanguageTag): api.Language = {
-      api.Language(languageTag.toString, languageTag.localDisplayName.getOrElse(languageTag.displayName))
+      api.Language(languageTag.toString, languageTag.localDisplayName.getOrElse(languageTag.displayName), if(languageTag.isRightToLeft) Some(languageTag.isRightToLeft) else None)
     }
 
     def asDomainInTranslation(translationRequest: api.TranslateRequest, newTranslation: domain.Translation, crowdinProjectId: String) = domain.InTranslation(

@@ -76,7 +76,8 @@ case class Chapter(@(ApiModelProperty@field)(description = "Id for the chapter")
 
 @ApiModel(description = "Information about a language")
 case class Language(@(ApiModelProperty@field)(description = "ISO 639-2 code") code: String,
-                    @(ApiModelProperty@field)(description = "Human readable name of the language") name: String)
+                    @(ApiModelProperty@field)(description = "Human readable name of the language") name: String,
+                    @(ApiModelProperty@field)(description = "Language is RTL (Right-To-Left)") isRTL: Option[Boolean] = None)
 
 @ApiModel(description = "Information about book")
 case class Book(@(ApiModelProperty@field)(description = "The id of the book") id: Long,
