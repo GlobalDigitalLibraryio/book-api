@@ -69,8 +69,8 @@ trait EPubService {
             case Failure(ex) => throw ex
             case Success(downloadedImage) =>
               val coverImage = new Content(
-                downloadedImage.metaInformation.contentType,
-                downloadedImage.metaInformation.imageUrl.pathParts.last.part,
+                downloadedImage.contentType,
+                downloadedImage.filename,
                 "cover",
                 "cover-image",
                 downloadedImage.bytes)
@@ -89,9 +89,9 @@ trait EPubService {
           val imageNo = imageWithIndex._2
 
           val epubImage = new Content(
-            image.metaInformation.contentType,
-            image.metaInformation.imageUrl.pathParts.last.part,
-            s"image-${image.metaInformation.id}-$imageNo",
+            image.contentType,
+            image.filename,
+            s"image-${image.id}-$imageNo",
             null,
             image.bytes)
           epubImage.setToc(false)

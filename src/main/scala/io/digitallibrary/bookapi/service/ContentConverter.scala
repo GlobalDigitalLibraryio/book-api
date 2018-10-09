@@ -36,6 +36,7 @@ trait ContentConverter {
             image.tagName("img")
             image.attr("src", url.url)
             image.attr("crossorigin", "anonymous")
+            imgSize.foreach(width => image.attr("width", width.toString))
             url.alttext.foreach(alttext => image.attr("alt", alttext))
 
           case None =>
@@ -64,8 +65,8 @@ trait ContentConverter {
         val nodeId = image.attr("data-resource_id")
         val imgSize = if (image.hasAttr("data-resource_size")) Some(image.attr("data-resource_size").toInt) else None
 
-        val url = downloadedImages.find(_.metaInformation.id == nodeId) match {
-          case Some(x) => x.metaInformation.imageUrl.pathParts.last.part
+        val url = downloadedImages.find(_.id.toString == nodeId) match {
+          case Some(x) => x.filename
           case None => throw new NotFoundException(s"Could not find image for id $nodeId")
         }
 

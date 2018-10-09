@@ -59,7 +59,7 @@ class ContentConverterTest extends UnitSuite with TestEnvironment {
         |</p>
       """.stripMargin
 
-    val images = Seq(DownloadedImage(imageMeta1, dummyBytes), DownloadedImage(imageMeta2, dummyBytes))
+    val images = Seq(DownloadedImage(1, "image/jpeg", "some-url.jpg", dummyBytes), DownloadedImage(2, "image/jpeg", "some-url.jpg", dummyBytes))
     intercept[NotFoundException] {
       service.toEPubContent(content, images)
     }.getMessage should equal ("Could not find image for id 3")
@@ -81,12 +81,12 @@ class ContentConverterTest extends UnitSuite with TestEnvironment {
     val expectedEpubContent =
       """
         |<p>
-        |<img src="some-url-1" />
-        |<img src="some-url-2" />
+        |<img src="some-url-1.jpg" />
+        |<img src="some-url-2.jpg" />
         |</p>
       """.stripMargin
 
-    val images = Seq(DownloadedImage(imageMeta1, dummyBytes), DownloadedImage(imageMeta2, dummyBytes))
+    val images = Seq(DownloadedImage(1, "image/jpeg", "some-url-1.jpg", dummyBytes), DownloadedImage(2, "image/jpeg", "some-url-2.jpg", dummyBytes))
 
     val epubContent = service.toEPubContent(content, images)
     epubContent should equal (expectedEpubContent)

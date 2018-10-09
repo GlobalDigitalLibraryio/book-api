@@ -133,31 +133,12 @@ trait PdfService {
         c.copy(content = document.select("body").html())
       }
 
-      def process3AsafeerImages(c: Chapter): Chapter = {
-        val document = Jsoup.parseBodyFragment(c.content)
-        val images = document.select("img")
-        for (i <- 0 until images.size()) {
-          val image = images.get(i)
-          val src = image.attr("src")
-          val regex = "(^.+\\?)(width=)(\\d+)(.*)".r
-          regex.findFirstMatchIn(src).foreach(matchPattern => {
-            image.attr("width", matchPattern.group(3))
-          })
-        }
-        document.outputSettings().syntax(Document.OutputSettings.Syntax.xml)
-        document.outputSettings().escapeMode(EscapeMode.xhtml).prettyPrint(false)
-        c.copy(content = document.select("body").html())
-      }
-
       source match {
         case Some("storyweaver") =>
           chapters match {
             case first :: rest => processStoryWeaverFirstPage(first) :: rest
             case _ => chapters
           }
-        case Some("3asafeer") => {
-          chapters.map(process3AsafeerImages)
-        }
         case _ => chapters
       }
     }
