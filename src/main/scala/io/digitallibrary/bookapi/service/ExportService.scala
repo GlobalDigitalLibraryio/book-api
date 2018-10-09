@@ -128,6 +128,7 @@ trait ExportService {
       val generator: CsvGenerator = factory.createGenerator(outputStream)
       generator.setSchema(formatToSchema.getOrElse(csvFormat, qaSchema))
 
+      printStaticValues(generator, csvFormat)
       books.foreach(book => formatToGenerator.getOrElse(csvFormat, writeQualityAssurance _)(generator, book))
 
       generator.writeStartArray()
@@ -135,6 +136,13 @@ trait ExportService {
 
       generator.flush()
       generator.close()
+    }
+
+    def printStaticValues(generator: CsvGenerator, format: CsvFormat.Value): Unit = {
+      format match {
+        case CsvFormat.GooglePlay => writeGooglePlayReadOnlyRow(generator)
+        case _ =>
+      }
     }
 
     def writeQualityAssurance(generator: CsvGenerator, book: BookHit): Unit = {
@@ -149,6 +157,42 @@ trait ExportService {
       generator.writeRawValue(s"$baseUrl/${languageTag.toString}/books/details/${book.id}")
       generator.writeRawValue("")
       generator.writeRawValue("")
+      generator.writeEndArray()
+    }
+
+    def writeGooglePlayReadOnlyRow(generator: CsvGenerator): Unit = {
+      generator.writeStartArray()
+      generator.writeRawValue("Default values for collection code: {KQ7RRL5}. This row is read-only; do not modify the data. Any cells you leave blank in a book row will inherit the value in this row.") // Identifier
+      generator.writeString("") // Enable for sale?
+      generator.writeString("") // Title
+      generator.writeString("") // Subtitle
+      generator.writeString("Digital") // Book format
+      generator.writeString("") // Related identifier
+      generator.writeString("") // Contributor
+      generator.writeString("") // Biographical note
+      generator.writeString("") // Language
+      generator.writeString("") // Subject code
+      generator.writeString("") // Age-group
+      generator.writeString("")
+      generator.writeString("") // Publication date
+      generator.writeString("") // Page count
+      generator.writeString("") // Series name
+      generator.writeString("") // Volume in series
+      generator.writeString("100%") // Preview type
+      generator.writeString("WORLD") // Preview territory
+      generator.writeString("") // Buy link text
+      generator.writeString("") // Buy link
+      generator.writeString("Global Digital Library") // Publisher name
+      generator.writeString("https://www.digitallibrary.io/") // Publisher website
+      generator.writeString("Yes") // Show pictures in Preview
+      generator.writeString("No") // PDF Download allowed
+      generator.writeString("") // On sale date
+      generator.writeString("No") // DRM Enabled?
+      generator.writeString("Yes") // Show photos in eBook?
+      generator.writeString("No") // Include scanned pages?
+      generator.writeString("No") // For mature audience?
+      generator.writeString("0%") // Copy paste percentage
+
       generator.writeEndArray()
     }
 
