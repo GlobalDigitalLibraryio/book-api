@@ -40,7 +40,7 @@ trait SupportedLanguageService {
     private def loadSupportedLanguages = crowdinClientBuilder.withGenericAccess.getSupportedLanguages match {
       case Success(supportedLanguages) => supportedLanguages.flatMap(supportedLanguage => {
         Try(LanguageTag(supportedLanguage.crowdinCode)) match {
-          case Success(validLanguage) => Some(Language(supportedLanguage.crowdinCode, validLanguage.displayName))
+          case Success(validLanguage) => Some(Language(supportedLanguage.crowdinCode, validLanguage.displayName, if (validLanguage.isRightToLeft) Some(validLanguage.isRightToLeft) else None))
           case Failure(_) => None
         }
       }).distinct
