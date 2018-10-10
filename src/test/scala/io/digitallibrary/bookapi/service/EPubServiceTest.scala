@@ -48,7 +48,7 @@ class EPubServiceTest extends UnitSuite with TestEnvironment {
 
   test("that createEPub creates a book with expected CoverPhoto") {
     val translation = TestData.Domain.DefaultTranslation.copy(coverphoto = Some(1))
-    val image = DownloadedImage(ImageMetaInformation("1", "meta-url", "image-url", 1, "image/png", None), "bytes".getBytes)
+    val image = DownloadedImage(1, "image/png", "image-url.png", "png", "bytes".getBytes)
 
     when(unFlaggedTranslationsRepository.withUuId(any[String])(any[DBSession])).thenReturn(Some(translation))
     when(chapterRepository.chaptersForBookIdAndLanguage(any[Long], any[LanguageTag])(any[DBSession])).thenReturn(Seq())
@@ -60,7 +60,7 @@ class EPubServiceTest extends UnitSuite with TestEnvironment {
       case Some(Success(book)) => {
         val contents = JavaConverters.asScalaBuffer(book.getContents).toSeq
         val coverImage = contents.find(_.getProperties == "cover-image").get
-        coverImage.getMediaType should equal (image.metaInformation.contentType)
+        coverImage.getMediaType should equal (image.contentType)
       }
     }
   }
@@ -103,7 +103,7 @@ class EPubServiceTest extends UnitSuite with TestEnvironment {
   test("that createEpub creates a book with expected chapter with image") {
     val translation = TestData.Domain.DefaultTranslation
     val chapter = TestData.Domain.DefaultChapter.copy(content = """<p><embed data-resource="image" data-resource_id="1"/></p>""")
-    val image = DownloadedImage(ImageMetaInformation("1", "meta-url", "image-url", 1, "image/png", None), "bytes".getBytes)
+    val image = DownloadedImage(1, "image/png", "image-url.png", "png", "bytes".getBytes)
 
     when(unFlaggedTranslationsRepository.withUuId(any[String])(any[DBSession])).thenReturn(Some(translation))
     when(chapterRepository.chaptersForBookIdAndLanguage(any[Long], any[LanguageTag])(any[DBSession])).thenReturn(Seq(chapter))
@@ -118,7 +118,7 @@ class EPubServiceTest extends UnitSuite with TestEnvironment {
         val contents = JavaConverters.asScalaBuffer(book.getContents).toSeq
         contents.size should be (3)
         contents.exists(_.getHref == s"chapter-${translation.chapters.head.seqNo}.xhtml") should be (true)
-        contents.exists(_.getHref == "image-url") should be (true)
+        contents.exists(_.getHref == "image-url.png") should be (true)
       }
     }
   }

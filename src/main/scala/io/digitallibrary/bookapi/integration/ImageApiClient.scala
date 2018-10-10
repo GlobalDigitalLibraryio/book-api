@@ -13,7 +13,7 @@ import io.digitallibrary.bookapi.model.api.NotFoundException
 import io.digitallibrary.network.GdlClient
 
 import scala.util.{Failure, Success, Try}
-import scalaj.http.{Http, HttpRequest}
+import scalaj.http.{Http, HttpRequest, HttpResponse}
 
 
 trait ImageApiClient {
@@ -22,13 +22,21 @@ trait ImageApiClient {
 
   class ImageApiClient extends LazyLogging {
     def downloadImage(id: Long, width: Option[Int] = None): Try[DownloadedImage] = {
-      imageMetaWithId(id) match {
+      import com.netaporter.uri.dsl._
+
+      imageUrlFor(id) match {
         case None => Failure(new NotFoundException(s"Image with id $id was not found"))
-        case Some(imageMetaInformation) =>
-          val imageUrl = if (width.isDefined) s"${imageMetaInformation.imageUrl}?width=${width.get}" else imageMetaInformation.imageUrl
-          gdlClient.fetchBytes(Http(imageUrl))
-            .map(bytes => DownloadedImage(imageMetaInformation, bytes))
+        case Some(url) => for {
+          response <- Try(Http(url).asBytes)
+          contentType <- extractContentType(response)
+          fileEnding <- MediaType.fileEndingFor(contentType).map(Success(_)).getOrElse(Failure(new RuntimeException("ContentType not supported")))
+          fileName <- Success(s"${url.pathParts.last.part}.$fileEnding")
+        } yield DownloadedImage(id, contentType, fileName, fileEnding, response.body)
       }
+    }
+
+    def extractContentType[A](response: HttpResponse[A]): Try[String] = {
+      response.contentType.flatMap(_.split(';').headOption).map(x => Success(x.trim())).getOrElse(Failure(new RuntimeException("Missing content-type for image")))
     }
 
     def imageUrlFor(id: Long): Option[String] = {
@@ -52,7 +60,21 @@ trait ImageApiClient {
 }
 
 case class ImageMetaInformation(id: String, metaUrl: String, imageUrl: String, size: Int, contentType: String, alttext: Option[Alttext])
-
 case class Alttext(alttext: String, language: String)
+case class DownloadedImage(id: Long, contentType: String, filename: String, fileEnding: String, bytes: Array[Byte])
+object MediaType {
+  private val mediaTypeToFileEnding = Map(
+    "application/xhtml+xml" -> "xhtml",
+    "image/jpeg" -> "jpg",
+    "image/jpg" -> "jpg",
+    "image/gif" -> "gif",
+    "image/png" -> "png",
+    "image/webp" -> "webp",
+    "text/css" -> "css",
+    "application/epub+zip" -> "epub"
+  )
 
-case class DownloadedImage(metaInformation: ImageMetaInformation, bytes: Array[Byte])
+  def fileEndingFor(mediaType: String): Option[String] = {
+    mediaTypeToFileEnding.find(_._1.equalsIgnoreCase(mediaType)).map(_._2)
+  }
+}

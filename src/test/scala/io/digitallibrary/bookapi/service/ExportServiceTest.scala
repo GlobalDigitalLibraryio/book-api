@@ -72,8 +72,8 @@ class ExportServiceTest extends UnitSuite with TestEnvironment {
     while({entry = Option(input.getNextEntry); entry}.isDefined) { entries = entries ++ entry }
 
     entries.size should be (2)
-    entries.head.getName should equal ("book-1-uuid.epub")
-    entries.last.getName should equal ("book-2-uuid.epub")
+    entries.head.getName should equal ("PKEY:book-1-uuid.epub")
+    entries.last.getName should equal ("PKEY:book-2-uuid.epub")
   }
 
   test("that export of epubs is still successfull even if one epub fails to download") {
@@ -103,7 +103,7 @@ class ExportServiceTest extends UnitSuite with TestEnvironment {
     while({entry = Option(input.getNextEntry); entry}.isDefined) { entries = entries ++ entry }
 
     entries.size should be (1)
-    entries.last.getName should equal ("book-2-uuid.epub")
+    entries.last.getName should equal ("PKEY:book-2-uuid.epub")
   }
 
 }
