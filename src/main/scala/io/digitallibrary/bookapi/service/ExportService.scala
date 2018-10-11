@@ -239,7 +239,7 @@ trait ExportService {
         generator.writeString("") // Related identifier
         generator.writeString(asGooglePlayContributors(book.contributors).mkString(";")) // Contributor
         generator.writeString("") // Biographical note
-        generator.writeString(languageTag.language.part1.getOrElse(languageTag.language.id)) // Language
+        generator.writeString(languageTag.language.part2b.getOrElse(languageTag.language.id)) // Language
         generator.writeString("") // Subject code
         generator.writeString("") // Age-group
         generator.writeString(book.description)
