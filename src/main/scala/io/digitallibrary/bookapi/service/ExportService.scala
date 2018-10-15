@@ -13,6 +13,7 @@ import java.util.zip.{ZipEntry, ZipOutputStream}
 import com.fasterxml.jackson.dataformat.csv.{CsvFactory, CsvGenerator, CsvSchema}
 import com.typesafe.scalalogging.LazyLogging
 import io.digitallibrary.bookapi.BookApiProperties
+import io.digitallibrary.bookapi.integration.ImageApiClient
 import io.digitallibrary.bookapi.model.api.BookHit
 import io.digitallibrary.bookapi.model.domain.{CsvFormat, Paging, Sort}
 import io.digitallibrary.bookapi.service.search.SearchService
@@ -24,7 +25,7 @@ import scalaj.http.{Http, HttpOptions}
 import scala.util.{Failure, Success}
 
 trait ExportService {
-  this: SearchService with ReadService with GdlClient =>
+  this: SearchService with ReadService with GdlClient with ImageApiClient =>
 
   val exportService: ExportService
 
@@ -73,6 +74,8 @@ trait ExportService {
       .addColumn("Include Scanned Pages?")
       .addColumn("For Mature Audiences?")
       .addColumn("Copy-Paste Percentage")
+      .addColumn("USD [Recommended Retail Price, Excluding Tax] Price")
+      .addColumn("Countries for USD [Recommended Retail Price, Excluding Tax] Price")
       .setColumnSeparator('\t')
       .build().withHeader()
 
@@ -104,13 +107,39 @@ trait ExportService {
         .foreach(book => {
           val urlToEpub = book.downloads.epub.get
           gdlClient.fetchBytes(Http(urlToEpub).option(HttpOptions.readTimeout(600000))) match {
-            case Failure(error) => logger.error(s"Error when producing zip-archive for $language and $source. Could not download $urlToEpub", error)
+            case Failure(error) => logger.error(s"Error when producing zip-archive for epubs for $language and $source. Could not download $urlToEpub", error)
             case Success(bytes) =>
-              zip.putNextEntry(new ZipEntry(s"${book.uuid}.epub"))
+              zip.putNextEntry(new ZipEntry(s"PKEY:${book.uuid}.epub"))
               zip.write(bytes)
               zip.closeEntry()
           }
 
+        })
+      zip.flush()
+      zip.close()
+    }
+
+    def getAllCoverImagesAsZipFile(language: LanguageTag, source: Option[String], outputStream: OutputStream): Unit = {
+      val firstPage = searchService.searchWithQuery(language, None, source, Paging(1, pageSize), Sort.ByIdAsc)
+
+      val numberOfPages = (firstPage.totalCount / pageSize).toInt
+      val books = firstPage.results ++
+        (1 to numberOfPages).flatMap(i =>
+          searchService.searchWithQuery(language, None, source, Paging(i + 1, pageSize), Sort.ByIdAsc).results)
+
+      val zip = new ZipOutputStream(outputStream)
+      books
+        .filter(_.coverImage.isDefined)
+        .flatMap(b => readService.withIdAndLanguageForExport(b.id, language))
+        .foreach(book => {
+          imageApiClient.downloadImage(book.coverPhoto.get.imageApiId) match {
+            case Failure(error) => logger.error(s"Error when producing zip-archive with cover images for $language and $source. Could not download cover image with id ${book.coverPhoto.get.imageApiId}", error)
+            case Success(downloadedImage) =>
+              zip.putNextEntry(new ZipEntry(s"PKEY:${book.uuid}_frontcover.${downloadedImage.fileEnding}"))
+              zip.write(downloadedImage.bytes)
+              zip.closeEntry()
+
+          }
         })
       zip.flush()
       zip.close()
@@ -192,6 +221,8 @@ trait ExportService {
       generator.writeString("No") // Include scanned pages?
       generator.writeString("No") // For mature audience?
       generator.writeString("0%") // Copy paste percentage
+      generator.writeString("0.00") // USD [Recommended Retail Price, Excluding Tax] Price
+      generator.writeString("WORLD") // Countries for USD [Recommended Retail Price, Excluding Tax] Price
 
       generator.writeEndArray()
     }
@@ -200,7 +231,7 @@ trait ExportService {
       val languageTag = LanguageTag(bookHit.language.code)
       readService.withIdAndLanguageForExport(bookHit.id, languageTag).foreach(book => {
         generator.writeStartArray()
-        generator.writeRawValue(book.uuid) // Identifier
+        generator.writeRawValue(s"PKEY:${book.uuid}") // Identifier
         generator.writeString("Yes") // Enable for sale?
         generator.writeString(book.title) // Title
         generator.writeString("") // Subtitle
@@ -208,7 +239,7 @@ trait ExportService {
         generator.writeString("") // Related identifier
         generator.writeString(asGooglePlayContributors(book.contributors).mkString(";")) // Contributor
         generator.writeString("") // Biographical note
-        generator.writeString(languageTag.language.part1.getOrElse(languageTag.language.id)) // Language
+        generator.writeString(languageTag.language.part2b.getOrElse(languageTag.language.id)) // Language
         generator.writeString("") // Subject code
         generator.writeString("") // Age-group
         generator.writeString(book.description)
@@ -230,6 +261,8 @@ trait ExportService {
         generator.writeString("Yes") // Include scanned pages?
         generator.writeString("No") // For mature audience?
         generator.writeString("0%") // Copy paste percentage
+        generator.writeString("0.00") // USD [Recommended Retail Price, Excluding Tax] Price
+        generator.writeString("WORLD") // Countries for USD [Recommended Retail Price, Excluding Tax] Price
 
         generator.writeEndArray()
       })

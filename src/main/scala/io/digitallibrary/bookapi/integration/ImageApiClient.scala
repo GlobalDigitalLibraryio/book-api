@@ -32,7 +32,7 @@ trait ImageApiClient {
           contentType <- extractContentType(response)
           fileEnding <- MediaType.fileEndingFor(contentType).map(Success(_)).getOrElse(Failure(new RuntimeException("ContentType not supported")))
           fileName <- Success(s"${url.url.pathParts.last.part}.$fileEnding")
-        } yield DownloadedImage(id, contentType, fileName, response.body)
+        } yield DownloadedImage(id, contentType, fileName, fileEnding, response.body)
       }
     }
 
@@ -75,7 +75,7 @@ case class ImageMetaInformation(id: String, metaUrl: String, imageUrl: String, s
 case class ImageVariant(ratio: String, revision: Option[Int], topLeftX: Int, topLeftY: Int, width: Int, height: Int)
 case class Alttext(alttext: String, language: String)
 case class ImageUrl(id: String, url: String, alttext: Option[String])
-case class DownloadedImage(id: Long, contentType: String, filename: String, bytes: Array[Byte])
+case class DownloadedImage(id: Long, contentType: String, filename: String, fileEnding: String, bytes: Array[Byte])
 object MediaType {
   private val mediaTypeToFileEnding = Map(
     "application/xhtml+xml" -> "xhtml",

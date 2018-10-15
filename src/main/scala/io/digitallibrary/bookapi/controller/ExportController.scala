@@ -60,6 +60,17 @@ trait ExportController {
       authorizations "oauth2"
       responseMessages response500)
 
+    private val exportCoversAsZipFile = (apiOperation[Array[Byte]]("exportCoversAsZipFile")
+      produces "application/octet-stream"
+      summary s"Export all cover images for language and source"
+      description s"Export all cover images for language and source"
+      parameters(
+      headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
+      pathParam[String]("lang").description("Export cover images for books in language specified in BCP-47 format."),
+      pathParam[String]("source").description(s"Exports cover images for source. 'all' gives all sources"))
+      authorizations "oauth2"
+      responseMessages response500)
+
     get("/:lang/:source", operation(exportBooks)) {
       exportBooks(CsvFormat.QualityAssurance, "qualityAssurance")
     }
@@ -78,6 +89,18 @@ trait ExportController {
       contentType = "application/octet-stream"
       response.setHeader("Content-Disposition", s"""attachment; filename="books-${BookApiProperties.Environment}-$language-$source.zip" """)
       exportService.getAllEPubsAsZipFile(language, searchSource, response.getOutputStream)
+    }
+
+    get("/covers/:lang/:source", operation(exportCoversAsZipFile)) {
+      assertHasRole(RoleWithAdminReadAccess)
+
+      val language = LanguageTag(params("lang"))
+      val source = params("source")
+      val searchSource = if (source.equals("all")) None else Some(source)
+
+      contentType = "application/octet-stream"
+      response.setHeader("Content-Disposition", s"""attachment; filename="covers-${BookApiProperties.Environment}-$language-$source.zip" """)
+      exportService.getAllCoverImagesAsZipFile(language, searchSource, response.getOutputStream)
     }
 
     private def exportBooks(format: CsvFormat.Value, fileEnding: String)(implicit request: HttpServletRequest): Any = {
