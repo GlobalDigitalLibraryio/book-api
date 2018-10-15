@@ -25,7 +25,15 @@ case class License(@(ApiModelProperty@field)(description = "The name of the lice
 @ApiModel(description = "Information about where to find the cover image for the book")
 case class CoverImage(@(ApiModelProperty@field)(description = "URL to the cover-image") url: String,
                       @(ApiModelProperty@field)(description = "Alternate text for the cover image") alttext: Option[String],
-                      @(ApiModelProperty@field)(description = "Image id of the cover-image") imageId: String)
+                      @(ApiModelProperty@field)(description = "Image id of the cover-image") imageId: String,
+                      @(ApiModelProperty@field)(description = "The different variants of the image") variants: Option[Map[String, ImageVariant]])
+
+@ApiModel(description = "Information about a variant of the image")
+case class ImageVariant(@(ApiModelProperty@field)(description = "The ratio of this image") ratio: String,
+                        @(ApiModelProperty@field)(description = "Start x-point of the variant") x: Int,
+                        @(ApiModelProperty@field)(description = "Start y-point of the variant") y: Int,
+                        @(ApiModelProperty@field)(description = "The width of the variant") width: Int,
+                        @(ApiModelProperty@field)(description = "The height of the variant") height: Int)
 
 
 @ApiModel(description = "Information about where to download a copy of the book")
@@ -63,7 +71,8 @@ case class Chapter(@(ApiModelProperty@field)(description = "Id for the chapter")
                    @(ApiModelProperty@field)(description = "The sequence number of the chapter") seqNo: Int,
                    @(ApiModelProperty@field)(description = "Title of the chapter") title: Option[String],
                    @(ApiModelProperty@field)(description = "The HTML content of the chapter") content: String,
-                   @(ApiModelProperty@field)(description = "Indicates type of chapter. One of Content, License, Cover, BackCover") chapterType: String)
+                   @(ApiModelProperty@field)(description = "Indicates type of chapter. One of Content, License, Cover, BackCover") chapterType: String,
+                   @(ApiModelProperty@field)(description = "List of all images referenced in chapter") images: Seq[String])
 
 @ApiModel(description = "Information about a language")
 case class Language(@(ApiModelProperty@field)(description = "ISO 639-2 code") code: String,

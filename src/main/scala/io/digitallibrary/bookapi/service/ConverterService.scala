@@ -15,9 +15,9 @@ import io.digitallibrary.language.model.LanguageTag
 import io.digitallibrary.network.AuthUser
 import io.digitallibrary.bookapi.BookApiProperties.Domain
 import io.digitallibrary.bookapi.controller.NewFeaturedContent
-import io.digitallibrary.bookapi.integration.ImageApiClient
+import io.digitallibrary.bookapi.integration.{ImageApiClient, ImageVariant}
 import io.digitallibrary.bookapi.integration.crowdin.CrowdinUtils
-import io.digitallibrary.bookapi.model._
+import io.digitallibrary.bookapi.model.{api, _}
 import io.digitallibrary.bookapi.model.api.internal
 import io.digitallibrary.bookapi.model.api.internal.{NewChapter, NewEducationalAlignment, NewTranslation}
 import io.digitallibrary.bookapi.model.crowdin.CrowdinFile
@@ -224,14 +224,14 @@ trait ConverterService {
       s"${Domain}${BookApiProperties.ApiPath}/${language.toString}/${bookId}/chapters/${chapter.id.get}")
 
     def toApiChapter(chapter: domain.Chapter, convertContent: Boolean = true): api.Chapter = {
-      val chaptercontent = if (convertContent) contentConverter.toApiContent(chapter.content) else chapter.content
+      val apiContent = contentConverter.toApiContent(chapter.content)
       api.Chapter(
         chapter.id.get,
         chapter.revision.get,
         chapter.seqNo,
         chapter.title,
-        chaptercontent,
-        chapter.chapterType.toString)
+        if (convertContent) apiContent.content else chapter.content,
+        chapter.chapterType.toString, apiContent.images)
     }
 
     def toInternalApiBook(translation: domain.Translation, availableLanguages: Seq[LanguageTag], book: domain.Book): api.internal.Book = {
@@ -351,14 +351,18 @@ trait ConverterService {
       }
     }
 
+    def asApiVariant(variant: ImageVariant): api.ImageVariant = {
+      api.ImageVariant(variant.ratio, variant.topLeftX, variant.topLeftY, variant.width, variant.height)
+    }
+
     def toApiCoverImage(imageIdOpt: Option[Long]): Option[api.CoverImage] = {
       imageIdOpt.flatMap(imageId =>
         imageApiClient.imageMetaWithId(imageId))
         .map(imageMeta => {
-          api.CoverImage(url = imageMeta.imageUrl, alttext = imageMeta.alttext.map(_.alttext), imageId = imageMeta.id)
+          val variants = imageMeta.imageVariants.map(x => x.map(entry => entry._1 -> asApiVariant(entry._2)))
+          api.CoverImage(url = imageMeta.imageUrl, alttext = imageMeta.alttext.map(_.alttext), imageId = imageMeta.id, variants = variants)
         })
     }
-
 
     def toApiInternalCoverPhoto(imageIdOpt: Option[Long]): Option[api.internal.CoverPhoto] = imageIdOpt.map(api.internal.CoverPhoto)
 

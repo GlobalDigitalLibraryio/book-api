@@ -10,6 +10,7 @@ package io.digitallibrary.bookapi.service
 import com.typesafe.scalalogging.LazyLogging
 import io.digitallibrary.bookapi.integration.{DownloadedImage, ImageApiClient}
 import io.digitallibrary.bookapi.model.api.NotFoundException
+import io.digitallibrary.bookapi.model.domain.ApiContent
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Entities.EscapeMode
@@ -20,35 +21,23 @@ trait ContentConverter {
   val contentConverter: ContentConverter
 
   class ContentConverter extends LazyLogging {
-    def toApiContent(content: String): String = {
+    def toApiContent(content: String): ApiContent = {
       val document = Jsoup.parseBodyFragment(content)
       val images: Elements = document.select("embed[data-resource='image']")
+      var imageList: Seq[String] = Seq()
       for (i <- 0 until images.size()) {
         val image = images.get(i)
         val nodeId = image.attr("data-resource_id")
         val imgSize = if (image.hasAttr("data-resource_size")) Some(image.attr("data-resource_size").toInt) else None
 
-        imageApiClient.imageUrlFor(nodeId.toLong) match {
+        imageApiClient.imageUrlFor(nodeId.toLong, imgSize) match {
           case Some(url) =>
-            image.tagName("picture")
-
-            val fullSizeUrl = if (imgSize.isDefined) s"$url?width=${imgSize.get}" else url
-            val halfSize = imgSize.map(size => size / 2)
-
-            // For devices larger than 768px
-            val forLargeDevice = image.appendElement("source")
-            forLargeDevice.attr("media", "(min-width: 768px)")
-            forLargeDevice.attr("srcset", fullSizeUrl)
-
-            // For devices smaller than 768px
-            val smallImage = s"$url?width=${halfSize.getOrElse(300)}" // 300 should be enough for most small devices
-
-            val forSmallDevice = image.appendElement("img")
-            forSmallDevice.attr("src", fullSizeUrl)
-            forSmallDevice.attr("srcset", s"$smallImage")
-
-            imageApiClient.imageMetaWithId(nodeId.toLong).flatMap(_.alttext).map(_.alttext).map(
-              text => forSmallDevice.attr("alt", text))
+            imageList = imageList :+ url.url
+            image.tagName("img")
+            image.attr("src", url.url)
+            image.attr("crossorigin", "anonymous")
+            imgSize.foreach(width => image.attr("width", width.toString))
+            url.alttext.foreach(alttext => image.attr("alt", alttext))
 
           case None =>
             image.tagName("p")
@@ -56,12 +45,14 @@ trait ContentConverter {
         }
         image.removeAttr("data-resource")
         image.removeAttr("data-resource_id")
-
+        image.removeAttr("data-resource_size")
       }
 
       document.outputSettings().syntax(Document.OutputSettings.Syntax.xml)
       document.outputSettings().escapeMode(EscapeMode.xhtml).prettyPrint(false)
       document.select("body").html()
+
+      ApiContent(document.select("body").html(), imageList)
     }
 
     def toEPubContent(content: String, downloadedImages: Seq[DownloadedImage]): String = {
