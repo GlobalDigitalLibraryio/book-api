@@ -251,7 +251,7 @@ trait ExportService {
         generator.writeString("WORLD") // Preview territory
         generator.writeString("") // Buy link text
         generator.writeString("") // Buy link
-        generator.writeString("Global Digital Library") // Publisher name
+        generator.writeString(book.publisher.name) // Publisher name
         generator.writeString("https://www.digitallibrary.io/") // Publisher website
         generator.writeString("Yes") // Show pictures in Preview
         generator.writeString("No") // PDF Download allowed
