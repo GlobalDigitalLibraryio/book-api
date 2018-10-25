@@ -352,7 +352,7 @@ trait ConverterService {
     }
 
     def asApiVariant(variant: ImageVariant): api.ImageVariant = {
-      api.ImageVariant(variant.ratio, variant.topLeftX, variant.topLeftY, variant.width, variant.height)
+      api.ImageVariant(variant.ratio, variant.x, variant.y, variant.width, variant.height)
     }
 
     def toApiCoverImage(imageIdOpt: Option[Long]): Option[api.CoverImage] = {
