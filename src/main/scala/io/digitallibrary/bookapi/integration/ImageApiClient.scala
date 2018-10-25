@@ -72,7 +72,7 @@ trait ImageApiClient {
 }
 
 case class ImageMetaInformation(id: String, metaUrl: String, imageUrl: String, size: Int, contentType: String, alttext: Option[Alttext], imageVariants: Option[Map[String, ImageVariant]])
-case class ImageVariant(ratio: String, revision: Option[Int], topLeftX: Int, topLeftY: Int, width: Int, height: Int)
+case class ImageVariant(ratio: String, revision: Option[Int], x: Int, y: Int, width: Int, height: Int)
 case class Alttext(alttext: String, language: String)
 case class ImageUrl(id: String, url: String, alttext: Option[String])
 case class DownloadedImage(id: Long, contentType: String, filename: String, fileEnding: String, bytes: Array[Byte])
