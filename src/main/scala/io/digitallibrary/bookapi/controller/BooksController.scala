@@ -19,6 +19,8 @@ import io.digitallibrary.language.model.LanguageTag
 import org.scalatra._
 import org.scalatra.swagger.{ResponseMessage, Swagger, SwaggerSupport}
 
+import scala.util.{Failure, Success}
+
 trait BooksController {
   this: ReadService with WriteService with SearchService with MergeService with ContentConverter =>
   val booksController: BooksController
@@ -197,8 +199,12 @@ trait BooksController {
             about = updatedBook.description,
             pageOrientation = pageOrientationToUpdate,
             publishingStatus = PublishingStatus.valueOf(updatedBook.publishingStatus).getOrElse(existingBook.publishingStatus),
-            additionalInformation = updatedBook.additionalInformation.filter(_.trim.nonEmpty)
-        ))
+            additionalInformation = updatedBook.additionalInformation.filter(_.trim.nonEmpty),
+            revision = Some(updatedBook.revision.toInt)
+        )) match {
+            case Success(updated) => readService.withIdAndLanguage(updated.id.get, updated.language)
+            case Failure(failure) => errorHandler(failure)
+          }
         case None => NotFound(body = Error(Error.NOT_FOUND, s"No book with id $id and language $lang found"))
       }
 
