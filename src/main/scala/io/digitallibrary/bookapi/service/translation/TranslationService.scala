@@ -47,7 +47,7 @@ trait TranslationService {
         persisted           <- inTransaction { implicit session =>
           for {
             existingTranslationWithContrib <- Try(extractContributors(translatedMetadata, existingTranslation))
-            persisted                      <- Try(writeService.updateTranslation(existingTranslationWithContrib.copy(title = translatedMetadata.title, about = translatedMetadata.description)))
+            persisted                      <- writeService.updateTranslation(existingTranslationWithContrib.copy(title = translatedMetadata.title, about = translatedMetadata.description))
             mergedChapters                 <- Try(mergeService.mergeChapters(persisted, translatedChapters.flatMap(_.toOption)))
             _                              <- Try(mergedChapters.map(ch => writeService.updateChapter(ch)))
           } yield persisted

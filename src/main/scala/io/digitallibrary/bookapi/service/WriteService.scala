@@ -48,8 +48,11 @@ trait WriteService {
 
   class WriteService extends LazyLogging {
 
-    def updateTranslation(translationToUpdate: Translation): Translation = {
-      getTranslationRepository.updateTranslation(translationToUpdate)
+    def updateTranslation(translationToUpdate: Translation): Try[Translation] = {
+      for {
+        updatedTranslation <- Try(getTranslationRepository.updateTranslation(translationToUpdate))
+        indexedTranslation <- indexService.updateOrRemoveDocument(updatedTranslation)
+      } yield indexedTranslation
     }
 
     def addPerson(personName: String): Person = {

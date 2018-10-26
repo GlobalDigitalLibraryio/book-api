@@ -23,7 +23,7 @@ import io.digitallibrary.bookapi.integration.ElasticClient
 import io.digitallibrary.bookapi.model.Language._
 import io.digitallibrary.bookapi.model._
 import io.digitallibrary.bookapi.model.api.LocalDateSerializer
-import io.digitallibrary.bookapi.model.domain.Translation
+import io.digitallibrary.bookapi.model.domain.{PublishingStatus, Translation}
 import io.digitallibrary.bookapi.repository.{BookRepository, TranslationRepository}
 import io.digitallibrary.bookapi.service.ConverterService
 import org.json4s.{DefaultFormats, Formats}
@@ -38,6 +38,14 @@ trait IndexService extends LazyLogging {
 
   class IndexService {
     implicit val formats: Formats = DefaultFormats + LocalDateSerializer
+
+    def updateOrRemoveDocument(translation: Translation): Try[Translation] = {
+      translation.publishingStatus match {
+        case PublishingStatus.PUBLISHED => indexDocument(translation)
+        case PublishingStatus.FLAGGED => removeDocument(translation)
+        case PublishingStatus.UNLISTED => removeDocument(translation)
+      }
+    }
 
     def indexDocument(translation: Translation): Try[Translation] = {
       indexExisting(BookApiProperties.searchIndex(translation.language)) match {
@@ -54,6 +62,22 @@ trait IndexService extends LazyLogging {
         indexInto(BookApiProperties.searchIndex(translation.language), BookApiProperties.SearchDocument)
           .id(translation.id.get.toString)
           .source(source)
+      ) match {
+        case Success(_) => Success(translation)
+        case Failure(failure) => Failure(failure)
+      }
+    }
+
+    def removeDocument(translation: Translation): Try[Translation] = {
+      indexExisting(BookApiProperties.searchIndex(translation.language)) match {
+        case Success(false) =>
+          val indexName = createSearchIndex(translation.language)
+          updateAliasTarget(None, indexName.get, translation.language)
+        case _ => // Does not matter
+      }
+
+      esClient.execute(
+        deleteById(BookApiProperties.searchIndex(translation.language), BookApiProperties.SearchDocument, translation.id.get.toString)
       ) match {
         case Success(_) => Success(translation)
         case Failure(failure) => Failure(failure)

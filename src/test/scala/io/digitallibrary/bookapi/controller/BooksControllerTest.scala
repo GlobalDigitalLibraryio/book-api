@@ -19,6 +19,8 @@ import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.scalatra.test.scalatest.ScalatraFunSuite
 
+import scala.util.Success
+
 
 class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFunSuite {
 
@@ -101,6 +103,8 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
 
   test("that PUT /:lang/:id updates book, with only certain fields modified") {
     when(readService.translationWithIdAndLanguageListingAllTranslationsIfAdmin(any[Long], any[LanguageTag])).thenReturn(Some(TestData.Domain.DefaultTranslation))
+    when(readService.withIdAndLanguage(any[Long], any[LanguageTag])).thenReturn(Some(TestData.Api.DefaultBook))
+    when(writeService.updateTranslation(any[domain.Translation])).thenReturn(Success(TestData.Domain.DefaultTranslation))
 
     val payload = """{
       |	"id": 1,

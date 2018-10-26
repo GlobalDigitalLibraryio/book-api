@@ -271,7 +271,7 @@ trait ConverterService {
     def toApiBook(translation: domain.Translation, availableLanguages: Seq[LanguageTag], book: domain.Book): api.Book = {
         model.api.Book(
           id = book.id.get,
-          revision = book.revision.get,
+          revision = translation.revision.get,
           externalId = translation.externalId,
           uuid = translation.uuid,
           title = translation.title,

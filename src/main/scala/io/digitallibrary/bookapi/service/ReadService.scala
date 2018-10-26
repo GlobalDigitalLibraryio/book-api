@@ -95,7 +95,7 @@ trait ReadService {
 
     def withIdAndLanguage(bookId: Long, language: LanguageTag): Option[api.Book] = {
       for {
-        translation <- unFlaggedTranslationsRepository.forBookIdAndLanguage(bookId, language)
+        translation <- getTranslationRepository.forBookIdAndLanguage(bookId, language)
         book <- bookRepository.withId(bookId)
       } yield converterService.toApiBook(translation, unFlaggedTranslationsRepository.languagesFor(bookId), book)
     }
