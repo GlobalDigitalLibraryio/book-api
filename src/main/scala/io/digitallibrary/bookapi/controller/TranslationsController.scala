@@ -91,7 +91,13 @@ trait TranslationsController {
 
 
     get("/supported-languages", operation(getSupportedLanguages)) {
-      supportedLanguageService.getSupportedLanguages
+      supportedLanguageService.getSupportedLanguages()
+    }
+
+    get("/:language/supported-languages", operation(getSupportedLanguages)) {
+      val crowdinLanguage = params("language")
+      val language = LanguageTag(crowdinLanguage)
+      supportedLanguageService.getSupportedLanguages(Some(language))
     }
 
     post("/", operation(sendResourceToTranslation)) {

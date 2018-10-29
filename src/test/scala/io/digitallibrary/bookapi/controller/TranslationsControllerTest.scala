@@ -10,6 +10,7 @@ package io.digitallibrary.bookapi.controller
 import io.digitallibrary.bookapi.model.api.Language
 import io.digitallibrary.bookapi.model.domain.{FileType, InTranslationFile, TranslationStatus}
 import io.digitallibrary.bookapi.{BookSwagger, TestData, TestEnvironment, UnitSuite}
+import io.digitallibrary.language.model.LanguageTag
 import org.mockito.Mockito.{times, verify, when}
 import org.mockito.ArgumentMatchers._
 import org.scalatra.swagger.Swagger
@@ -24,14 +25,14 @@ class TranslationsControllerTest extends UnitSuite with TestEnvironment with Sca
   addServlet(controller, "/*")
 
   test("that controller returns 200 ok") {
-    when(supportedLanguageService.getSupportedLanguages).thenReturn(Seq(Language("amh", "Amharic")))
+    when(supportedLanguageService.getSupportedLanguages(any[Option[LanguageTag]])).thenReturn(Seq(Language("amh", "Amharic")))
 
     get("/supported-languages") {
       status should be (200)
       body should be ("""[{"code":"amh","name":"Amharic"}]""")
     }
 
-    verify(supportedLanguageService, times(1)).getSupportedLanguages
+    verify(supportedLanguageService, times(1)).getSupportedLanguages()
   }
 
   test("that /file-proofread?project=test&language=nb&file_id=123 updates translation when all files are proofread") {

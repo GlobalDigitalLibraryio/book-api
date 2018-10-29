@@ -26,10 +26,10 @@ class SupportedLanguageServiceTest extends UnitSuite with TestEnvironment {
     when(crowdinClientBuilder.withGenericAccess).thenReturn(crowdinClientMock)
     when(crowdinClientMock.getSupportedLanguages).thenReturn(Success(Seq(oneLanguage)))
 
-    supportedLanguageService.getSupportedLanguages.size should be (1)
-    supportedLanguageService.getSupportedLanguages.size should be (1)
-    supportedLanguageService.getSupportedLanguages.size should be (1)
-    supportedLanguageService.getSupportedLanguages.size should be (1)
+    supportedLanguageService.getSupportedLanguages().size should be (1)
+    supportedLanguageService.getSupportedLanguages().size should be (1)
+    supportedLanguageService.getSupportedLanguages().size should be (1)
+    supportedLanguageService.getSupportedLanguages().size should be (1)
 
     verify(crowdinClientMock, times(1)).getSupportedLanguages
   }
@@ -42,7 +42,7 @@ class SupportedLanguageServiceTest extends UnitSuite with TestEnvironment {
     val invalidLanguage = SupportedLanguage("Invalid", "invalid", "invalid", "invalid", "invalid", "invalid", "invalid", "invalid", "invalid")
     when(crowdinClientMock.getSupportedLanguages).thenReturn(Success(Seq(validLanguage, invalidLanguage)))
 
-    new SupportedLanguageService().getSupportedLanguages should be (Seq(Language("eng", "English")))
+    new SupportedLanguageService().getSupportedLanguages() should be (Seq(Language("eng", "English")))
   }
 
 }
