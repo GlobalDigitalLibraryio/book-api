@@ -40,6 +40,13 @@ trait TranslationsController {
       headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted.")
       responseMessages(response400, response500))
 
+    private val getSupportedLanguagesForLanguage = (apiOperation[Seq[Language]]("List supported languages")
+      summary "Retrieves a list of all supported languages to translate to when translating from given language"
+      parameters(
+      headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
+      pathParam[String]("language").description("The language to translate from."))
+      responseMessages(response400, response500))
+
     private val sendResourceToTranslation = (apiOperation[TranslateResponse]("Send book to translation")
       summary "Sends a book to translation system"
       parameters (
@@ -91,7 +98,13 @@ trait TranslationsController {
 
 
     get("/supported-languages", operation(getSupportedLanguages)) {
-      supportedLanguageService.getSupportedLanguages
+      supportedLanguageService.getSupportedLanguages()
+    }
+
+    get("/:language/supported-languages", operation(getSupportedLanguagesForLanguage)) {
+      val crowdinLanguage = params("language")
+      val language = LanguageTag(crowdinLanguage)
+      supportedLanguageService.getSupportedLanguages(Some(language))
     }
 
     post("/", operation(sendResourceToTranslation)) {

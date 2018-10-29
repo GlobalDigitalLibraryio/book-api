@@ -133,7 +133,7 @@ trait TranslationService {
       
     def addTranslation(translateRequest: api.TranslateRequest, userId: String): Try[api.TranslateResponse] = {
       Try(LanguageTag(translateRequest.fromLanguage)).flatMap(fromLanguage => {
-        validateToLanguage(translateRequest.toLanguage).flatMap(toLanguage => {
+        validateToLanguage(fromLanguage, translateRequest.toLanguage).flatMap(toLanguage => {
           readService.withIdAndLanguage(translateRequest.bookId, fromLanguage) match {
             case None => Failure(new NotFoundException())
             case Some(originalBook) => {
@@ -206,9 +206,9 @@ trait TranslationService {
       })
     }
 
-    private def validateToLanguage(toLanguage: String): Try[String] = {
+    private def validateToLanguage(fromLanguage: LanguageTag, toLanguage: String): Try[String] = {
       Try(LanguageTag(toLanguage)).flatMap(_ => {
-        if (supportedLanguageService.getSupportedLanguages.exists(_.code == toLanguage))
+        if (supportedLanguageService.getSupportedLanguages(Some(fromLanguage)).exists(_.code == toLanguage))
           Success(toLanguage)
         else
           Failure(new ValidationException(errors = Seq(ValidationMessage("toLanguage", s"The language '$toLanguage' is not a supported language to translate to."))))

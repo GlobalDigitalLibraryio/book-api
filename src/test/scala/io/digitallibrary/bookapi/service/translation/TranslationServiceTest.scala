@@ -29,7 +29,7 @@ class TranslationServiceTest extends UnitSuite with TestEnvironment {
 
   test("that addTranslation returns a failure if from-language is not supported") {
     when(readService.withIdAndLanguage(any[Long], any[LanguageTag])).thenReturn(Some(TestData.Api.DefaultBook))
-    when(supportedLanguageService.getSupportedLanguages).thenReturn(Seq(api.Language("eng", "English")))
+    when(supportedLanguageService.getSupportedLanguages(any[Option[LanguageTag]])).thenReturn(Seq(api.Language("eng", "English")))
     when(crowdinClientBuilder.forSourceLanguage(any[LanguageTag])).thenReturn(Failure(new RuntimeException("Not supported fromLanguage")))
 
     val translateResponse = service.addTranslation(api.TranslateRequest(bookId = 1, fromLanguage = "nob", toLanguage = "eng"), "userId")
@@ -38,7 +38,7 @@ class TranslationServiceTest extends UnitSuite with TestEnvironment {
   }
 
   test("that addTranslation returns a failure if toLanguage is not supported") {
-    when(supportedLanguageService.getSupportedLanguages).thenReturn(Seq(api.Language("eng", "English")))
+    when(supportedLanguageService.getSupportedLanguages(any[Option[LanguageTag]])).thenReturn(Seq(api.Language("eng", "English")))
 
     val translateResponse = service.addTranslation(api.TranslateRequest(1, "nob", "fra"), "userId")
     translateResponse should be a 'Failure
@@ -55,7 +55,7 @@ class TranslationServiceTest extends UnitSuite with TestEnvironment {
     val crowdinClientMock = mock[CrowdinClient]
 
     when(readService.withIdAndLanguage(any[Long], any[LanguageTag])).thenReturn(Some(TestData.Api.DefaultBook))
-    when(supportedLanguageService.getSupportedLanguages).thenReturn(Seq(api.Language("nob", "Norwegian Bokmål")))
+    when(supportedLanguageService.getSupportedLanguages(any[Option[LanguageTag]])).thenReturn(Seq(api.Language("nob", "Norwegian Bokmål")))
     when(crowdinClientBuilder.forSourceLanguage(any[LanguageTag])).thenReturn(Success(crowdinClientMock))
 
     when(translationDbService.translationsForOriginalId(any[Long])).thenReturn(existingInTranslations)
@@ -77,7 +77,7 @@ class TranslationServiceTest extends UnitSuite with TestEnvironment {
     val crowdinClientMock = mock[CrowdinClient]
 
     when(readService.withIdAndLanguage(any[Long], any[LanguageTag])).thenReturn(Some(TestData.Api.DefaultBook))
-    when(supportedLanguageService.getSupportedLanguages).thenReturn(Seq(api.Language("nob", "Norwegian Bokmål")))
+    when(supportedLanguageService.getSupportedLanguages(any[Option[LanguageTag]])).thenReturn(Seq(api.Language("nob", "Norwegian Bokmål")))
     when(crowdinClientBuilder.forSourceLanguage(any[LanguageTag])).thenReturn(Success(crowdinClientMock))
 
     when(translationDbService.translationsForOriginalId(any[Long])).thenReturn(Seq(inTranslationToUpdate))
@@ -101,7 +101,7 @@ class TranslationServiceTest extends UnitSuite with TestEnvironment {
     val crowdinClientMock = mock[CrowdinClient]
 
     when(readService.withIdAndLanguage(any[Long], any[LanguageTag])).thenReturn(Some(TestData.Api.DefaultBook))
-    when(supportedLanguageService.getSupportedLanguages).thenReturn(Seq(api.Language("nob", "Norwegian Bokmål")))
+    when(supportedLanguageService.getSupportedLanguages(any[Option[LanguageTag]])).thenReturn(Seq(api.Language("nob", "Norwegian Bokmål")))
     when(crowdinClientBuilder.forSourceLanguage(any[LanguageTag])).thenReturn(Success(crowdinClientMock))
     when(translationDbService.translationsForOriginalId(any[Long])).thenReturn(Seq())
 
@@ -131,7 +131,7 @@ class TranslationServiceTest extends UnitSuite with TestEnvironment {
     val persistedNewTranslation = TestData.Domain.DefaultTranslation.copy(chapters = chapters)
 
     when(readService.withIdAndLanguage(any[Long], any[LanguageTag])).thenReturn(Some(TestData.Api.DefaultBook))
-    when(supportedLanguageService.getSupportedLanguages).thenReturn(Seq(api.Language("nob", "Norwegian Bokmål")))
+    when(supportedLanguageService.getSupportedLanguages(any[Option[LanguageTag]])).thenReturn(Seq(api.Language("nob", "Norwegian Bokmål")))
     when(crowdinClientBuilder.forSourceLanguage(any[LanguageTag])).thenReturn(Success(crowdinClientMock))
     when(translationDbService.translationsForOriginalId(any[Long])).thenReturn(Seq())
 
@@ -158,7 +158,7 @@ class TranslationServiceTest extends UnitSuite with TestEnvironment {
     val crowdinClientMock = mock[CrowdinClient]
 
     when(readService.withIdAndLanguage(any[Long], any[LanguageTag])).thenReturn(Some(TestData.Api.DefaultBook))
-    when(supportedLanguageService.getSupportedLanguages).thenReturn(Seq(api.Language("nob", "Norwegian Bokmål")))
+    when(supportedLanguageService.getSupportedLanguages(any[Option[LanguageTag]])).thenReturn(Seq(api.Language("nob", "Norwegian Bokmål")))
     when(crowdinClientBuilder.forSourceLanguage(any[LanguageTag])).thenReturn(Success(crowdinClientMock))
     when(translationDbService.translationsForOriginalId(any[Long])).thenReturn(Seq())
 

@@ -27,24 +27,46 @@ trait SupportedLanguageService {
       .expireAfterWrite(24.hours)
       .build[String, Seq[Language]]()
 
-    def getSupportedLanguages: Seq[Language] = {
-      cache.getIfPresent(DefaultKey) match {
+    def getSupportedLanguages(fromLanguage: Option[LanguageTag] = None): Seq[Language] = {
+      val cacheKey = s"$DefaultKey${fromLanguage.getOrElse("")}"
+
+      cache.getIfPresent(cacheKey) match {
         case Some(x) => x
         case None =>
-          val supportedLanguages = loadSupportedLanguages.sortBy(_.name)
-          cache.put(DefaultKey, supportedLanguages)
+          val supportedLanguages = loadSupportedLanguages(fromLanguage).sortBy(_.name)
+          cache.put(cacheKey, supportedLanguages)
           supportedLanguages
       }
     }
 
-    private def loadSupportedLanguages = crowdinClientBuilder.withGenericAccess.getSupportedLanguages match {
-      case Success(supportedLanguages) => supportedLanguages.flatMap(supportedLanguage => {
-        Try(LanguageTag(supportedLanguage.crowdinCode)) match {
-          case Success(validLanguage) => Some(Language(supportedLanguage.crowdinCode, validLanguage.displayName, if (validLanguage.isRightToLeft) Some(validLanguage.isRightToLeft) else None))
-          case Failure(_) => None
-        }
-      }).distinct
-      case Failure(ex) => throw ex
+    private def loadSupportedLanguages(fromLanguage: Option[LanguageTag]) = {
+      val defaultLanguages = crowdinClientBuilder.withGenericAccess.getSupportedLanguages match {
+        case Success(supportedLanguages) => supportedLanguages.flatMap(supportedLanguage => {
+          Try(LanguageTag(supportedLanguage.crowdinCode)) match {
+            case Success(validLanguage) => Some(Language(supportedLanguage.crowdinCode, validLanguage.displayName, if (validLanguage.isRightToLeft) Some(validLanguage.isRightToLeft) else None))
+            case Failure(_) => None
+          }
+        }).distinct
+        case Failure(ex) => throw ex
+      }
+
+      val targetLanguages = fromLanguage.map(languageTag => {
+        crowdinClientBuilder.forSourceLanguage(languageTag).flatMap(client => {
+          client.getTargetLanguages.map(noe => noe.flatMap(targetLanguage => {
+            Try(LanguageTag(targetLanguage.code)) match {
+              case Success(validLanguage) => Some(Language(targetLanguage.code, validLanguage.displayName, if (validLanguage.isRightToLeft) Some(validLanguage.isRightToLeft) else None))
+              case Failure(_) => None
+            }
+          }))})
+        })
+
+
+      val validTargetLanguages = targetLanguages match {
+        case None => Seq()
+        case Some(noe) => noe.getOrElse(Seq())
+      }
+
+      (defaultLanguages ++ validTargetLanguages).distinct
     }
   }
 }
