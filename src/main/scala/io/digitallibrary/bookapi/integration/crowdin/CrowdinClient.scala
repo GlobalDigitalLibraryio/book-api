@@ -54,7 +54,7 @@ class CrowdinClient(fromLanguage: String, projectIdentifier: String, projectKey:
 
     val response = gdlClient
       .fetch[AddFilesResponse](Http(AddFileUrl)
-      .postMulti(MultiPart(s"files[$filename]", filename, "application/json", write(metadata).getBytes)).timeout(2000, 40000))
+      .postMulti(MultiPart(s"files[$filename]", filename, "application/json", write(metadata).getBytes)).timeout(10000, 5 * 60 * 1000))
 
     response.map(res => CrowdinFile(None, 0, FileType.METADATA, res.stats.get.files.head)) match {
       case Success(x) => Success(x)
@@ -81,7 +81,7 @@ class CrowdinClient(fromLanguage: String, projectIdentifier: String, projectKey:
         MultiPart(s"files[$filename]", filename, "application/xhtml+xml", chapter.content.getBytes)
       })
 
-      gdlClient.fetch[AddFilesResponse](Http(AddFileUrl).postMulti(multiParts:_*).timeout(2000, 40000))
+      gdlClient.fetch[AddFilesResponse](Http(AddFileUrl).postMulti(multiParts:_*).timeout(10000, 5 * 60 * 1000))
     })
 
     val httpExceptions = uploadTries.filter(_.isFailure).map(_.failed.get)
