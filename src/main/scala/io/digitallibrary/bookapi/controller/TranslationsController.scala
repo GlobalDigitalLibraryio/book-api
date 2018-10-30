@@ -11,12 +11,12 @@ import io.digitallibrary.bookapi.BookApiProperties
 import io.digitallibrary.bookapi.BookApiProperties.{RoleWithAdminReadAccess, RoleWithWriteAccess}
 import io.digitallibrary.language.model.LanguageTag
 import io.digitallibrary.bookapi.model._
-import io.digitallibrary.bookapi.model.api.{Error, Language, SynchronizeResponse, TranslateRequest, TranslateResponse}
+import io.digitallibrary.bookapi.model.api.{CrowdinException, Error, Language, SynchronizeResponse, TranslateRequest, TranslateResponse}
 import io.digitallibrary.bookapi.model.domain.{Paging, Sort, TranslationStatus}
 import io.digitallibrary.bookapi.service.ReadService
 import io.digitallibrary.bookapi.service.translation.{SupportedLanguageService, TranslationService}
 import javax.servlet.http.HttpServletRequest
-import org.scalatra.{NoContent, NotFound, Ok}
+import org.scalatra.{InternalServerError, NoContent, NotFound, Ok}
 import org.scalatra.swagger.{ResponseMessage, Swagger, SwaggerSupport}
 
 import scala.util.{Failure, Success, Try}
@@ -150,8 +150,15 @@ trait TranslationsController {
       })
 
       translatedFileUpdated match {
-        case Failure(err) => errorHandler(err)
         case Success(_) => NoContent()
+        case Failure(c: CrowdinException) =>
+          logger.error(c.getMessage, c)
+          c.getErrors.foreach(error => logger.error(s"${c.getMessage}: ${error.code} - ${error.message}"))
+          c.getCauses.foreach(throwable => logger.error(c.getMessage, throwable))
+          InternalServerError(body = Error.TranslationError)
+        case Failure(err) =>
+          logger.error(Error.GenericError.toString, err)
+          NoContent()
       }
     }
 
