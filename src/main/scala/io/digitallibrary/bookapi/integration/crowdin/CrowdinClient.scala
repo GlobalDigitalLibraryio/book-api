@@ -66,7 +66,7 @@ class CrowdinClient(fromLanguage: String, projectIdentifier: String, projectKey:
   def fetchTranslatedMetaData(inTranslationFile: InTranslationFile, language: String): Try[BookMetaData] = {
     val url = exportFileUrl(inTranslationFile.filename, language)
 
-    gdlClient.doRequestAsString(Http(url).copy(compress = false)).flatMap(response => {
+    gdlClient.doRequestAsString(Http(url).copy(compress = false).timeout(10000, 5 * 60 * 1000)).flatMap(response => {
       gdlClient.parseResponse[BookMetaData](response).map(bookMetaData =>  {
         bookMetaData.copy(etag = response.header("ETag"))
       })
@@ -108,7 +108,7 @@ class CrowdinClient(fromLanguage: String, projectIdentifier: String, projectKey:
   def fetchTranslatedChapter(inTranslationFile: InTranslationFile, language: String): Try[TranslatedChapter] = {
     val url = exportFileUrl(inTranslationFile.filename, language)
 
-    gdlClient.doRequestAsString(Http(url).copy(compress = false)).map(response => {
+    gdlClient.doRequestAsString(Http(url).copy(compress = false).timeout(10000, 5 * 60 * 1000)).map(response => {
       TranslatedChapter(inTranslationFile.newChapterId, response.body, response.header("ETag"))
     })
   }
@@ -116,7 +116,7 @@ class CrowdinClient(fromLanguage: String, projectIdentifier: String, projectKey:
   def addDirectoryFor(translation: Translation): Try[String] = {
     val directoryName = CrowdinUtils.directoryNameFor(translation)
 
-    gdlClient.fetch[AddDirectoryResponse](Http(AddDirectoryUrl).postForm(Seq("name" -> directoryName)))
+    gdlClient.fetch[AddDirectoryResponse](Http(AddDirectoryUrl).postForm(Seq("name" -> directoryName)).timeout(10000, 5 * 60 * 1000))
       .map(_ => directoryName) match {
       case Success(x) => Success(x)
       case Failure(ex) => Failure(CrowdinException(s"Could not add directory $directoryName", ex))
@@ -125,7 +125,7 @@ class CrowdinClient(fromLanguage: String, projectIdentifier: String, projectKey:
 
   def deleteDirectoryFor(translation: Translation): Try[Unit] = {
     val directoryName = CrowdinUtils.directoryNameFor(translation)
-    val result = gdlClient.fetch[DeleteDirectoryResponse](Http(DeleteDirectoryUrl).postForm(Seq("name" -> directoryName)))
+    val result = gdlClient.fetch[DeleteDirectoryResponse](Http(DeleteDirectoryUrl).postForm(Seq("name" -> directoryName)).timeout(10000, 5 * 60 * 1000))
     result match {
       case Success(deleteDirectoryResponse) if deleteDirectoryResponse.success => Success()
       case Success(deleteDirectoryResponse) if deleteDirectoryResponse.dirNotFoundError => Success()
@@ -142,7 +142,7 @@ class CrowdinClient(fromLanguage: String, projectIdentifier: String, projectKey:
         val newCodeList = languages.map(_.code) :+ toLanguage
         val postParams = newCodeList.zipWithIndex.map(x => (s"languages[${x._2}]", x._1.toString))
 
-        gdlClient.fetch[EditProjectResponse](Http(EditProjectUrl).postForm(postParams)) match {
+        gdlClient.fetch[EditProjectResponse](Http(EditProjectUrl).postForm(postParams).timeout(10000, 5 * 60 * 1000)) match {
           case Success(EditProjectResponse(Some(Project(true)), _)) => Success()
           case Success(EditProjectResponse(_, Some(error))) => Failure(CrowdinException(error))
           case Success(_) => Failure(CrowdinException(s"Unknown error when adding $toLanguage to Crowdin"))
@@ -159,7 +159,7 @@ class CrowdinClient(fromLanguage: String, projectIdentifier: String, projectKey:
   }
 
   def getProjectDetails: Try[ProjectDetails] = {
-    gdlClient.fetch[ProjectDetails](Http(ProjectDetailsUrl)) match {
+    gdlClient.fetch[ProjectDetails](Http(ProjectDetailsUrl).timeout(10000, 5 * 60 * 1000)) match {
       case Success(x) => Success(x)
       case Failure(ex) => Failure(CrowdinException(ex))
     }
