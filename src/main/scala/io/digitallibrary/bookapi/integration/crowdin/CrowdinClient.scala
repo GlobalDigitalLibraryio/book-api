@@ -158,7 +158,7 @@ class CrowdinClient(fromLanguage: String, projectIdentifier: String, projectKey:
   }
 
   def getTargetLanguages: Try[Seq[TargetLanguage]] = {
-    getProjectDetails.map(_.languages)
+    getProjectDetails.map(_.languages.filter(lang => lang.canApprove != 0 && lang.canTranslate != 0))
   }
 
   def getProjectDetails: Try[ProjectDetails] = {
