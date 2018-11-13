@@ -89,6 +89,16 @@ trait InTranslationRepository {
         .single().apply()
     }
 
+    def forOriginalIdWithToLanguage(originalTranslationId: Long, toLanguage: LanguageTag)(implicit session: DBSession = ReadOnlyAutoSession): Option[InTranslation] = {
+      select
+        .from(InTranslation as tr)
+        .where.eq(tr.originalTranslationId, originalTranslationId)
+        .and.eq(tr.toLanguage, toLanguage.toString)
+        .toSQL
+        .map(InTranslation(tr))
+        .single().apply()
+    }
+
     def forOriginalId(originalTranslationId: Long)(implicit session: DBSession = ReadOnlyAutoSession): Seq[InTranslation] = {
       select
         .from(InTranslation as tr)

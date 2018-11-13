@@ -195,6 +195,13 @@ case class TranslateRequest(@(ApiModelProperty@field)(description = "The id of t
 case class TranslateResponse(@(ApiModelProperty@field)(description = "The id of the book that has been sent to translation") bookId: Long,
                              @(ApiModelProperty@field)(description = "The url of where the book can be translated") crowdinUrl: String)
 
+@ApiModel(description = "Information about the metadata of a book to be translated. Contains placeholder content")
+case class BookForTranslation(@(ApiModelProperty@field)(description = "The id of the book") id: Long,
+                              @(ApiModelProperty@field)(description = "The title of the book") title: String,
+                              @(ApiModelProperty@field)(description = "Description of the book") description: String,
+                              @(ApiModelProperty@field)(description = "Cover image information") coverImage: Option[CoverImage],
+                              @(ApiModelProperty@field)(description = "Information about the chapters in the book") chapters: Seq[ChapterSummary])
+
 @ApiModel(description = "Information about the response from a synchronize request")
 case class SynchronizeResponse(@(ApiModelProperty@field)(description = "The id of the book that has been sent to translation") bookId: Long,
                                @(ApiModelProperty@field)(description = "The url of where the book can be translated") crowdinUrl: String)

@@ -8,6 +8,7 @@
 package io.digitallibrary.bookapi.integration.crowdin
 
 import com.typesafe.scalalogging.LazyLogging
+import io.digitallibrary.bookapi.BookApiProperties
 import io.digitallibrary.bookapi.BookApiProperties.CrowdinTranslatorPlaceHolder
 import io.digitallibrary.network.GdlClient
 import io.digitallibrary.bookapi.model.api.{Book, Chapter, CrowdinException}
@@ -27,13 +28,12 @@ class LimitedCrowdinClient extends GdlClient with LazyLogging {
   protected val SupportedLanguagesUrl = s"$CrowdinBaseUrl/supported-languages?json"
 
   def getSupportedLanguages: Try[Seq[SupportedLanguage]] =
-    gdlClient.fetch[Seq[SupportedLanguage]](Http(SupportedLanguagesUrl))
+    gdlClient.fetch[Seq[SupportedLanguage]](Http(SupportedLanguagesUrl)).map(languages => languages.filter(_.iso6393 != BookApiProperties.CrowdinPseudoLanguage.toString()))
 }
 
 
 
 class CrowdinClient(fromLanguage: String, projectIdentifier: String, projectKey: String) extends LimitedCrowdinClient {
-
 
   private def urlFor(action: String) = s"$CrowdinBaseUrl/project/$projectIdentifier/$action?key=$projectKey&json"
   private def exportFileUrl(filename: String, language: String) = s"${urlFor("export-file")}&file=$filename&language=$language"
@@ -42,7 +42,6 @@ class CrowdinClient(fromLanguage: String, projectIdentifier: String, projectKey:
   private val AddDirectoryUrl = urlFor("add-directory")
   private val DeleteDirectoryUrl = urlFor("delete-directory")
   private val AddFileUrl = urlFor("add-file")
-
 
   def getProjectIdentifier: String = projectIdentifier
 
@@ -140,21 +139,26 @@ class CrowdinClient(fromLanguage: String, projectIdentifier: String, projectKey:
   }
 
   def addTargetLanguage(toLanguage: String): Try[Unit] = {
-    getTargetLanguages.flatMap(languages => {
-      if (!languages.exists(_.code == toLanguage)) {
-        val newCodeList = languages.map(_.code) :+ toLanguage
-        val postParams = newCodeList.zipWithIndex.map(x => (s"languages[${x._2}]", x._1.toString))
+    if (BookApiProperties.CrowdinPseudoLanguage.toString() == toLanguage) {
+      Success()
+    } else {
+      getTargetLanguages.flatMap(languages => {
+        if (!languages.exists(_.code == toLanguage)) {
+          val newCodeList = languages.map(_.code) :+ toLanguage
+          val postParams = newCodeList.zipWithIndex.map(x => (s"languages[${x._2}]", x._1.toString))
 
-        gdlClient.fetch[EditProjectResponse](Http(EditProjectUrl).postForm(postParams).timeout(ConnectionTimeoutInMs, ReadTimeOutInMs)) match {
-          case Success(EditProjectResponse(Some(Project(true)), _)) => Success()
-          case Success(EditProjectResponse(_, Some(error))) => Failure(CrowdinException(error))
-          case Success(_) => Failure(CrowdinException(s"Unknown error when adding $toLanguage to Crowdin"))
-          case Failure(ex) => Failure(CrowdinException(s"Could not add targetLanguage $toLanguage", ex))
+          gdlClient.fetch[EditProjectResponse](Http(EditProjectUrl).postForm(postParams).timeout(ConnectionTimeoutInMs, ReadTimeOutInMs)) match {
+            case Success(EditProjectResponse(Some(Project(true)), _)) => Success()
+            case Success(EditProjectResponse(_, Some(error))) => Failure(CrowdinException(error))
+            case Success(_) => Failure(CrowdinException(s"Unknown error when adding $toLanguage to Crowdin"))
+            case Failure(ex) => Failure(CrowdinException(s"Could not add targetLanguage $toLanguage", ex))
+          }
+        } else {
+          Success()
         }
-      } else {
-        Success()
-      }
-    })
+      })
+    }
+
   }
 
   def getTargetLanguages: Try[Seq[TargetLanguage]] = {

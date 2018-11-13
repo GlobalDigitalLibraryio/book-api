@@ -24,6 +24,7 @@ object BookApiProperties extends LazyLogging {
   val RoleWithAdminReadAccess = "admin:read"
   val SecretsFile = "book-api.secrets"
   val CrowdinProjectsKey = "CROWDIN_PROJECTS"
+  val CrowdinPseudoLanguage = LanguageTag("zea")
 
   val FeaturedContentAdminRole = "books:featured"
   val ApplicationPort = propOrElse("APPLICATION_PORT", "80").toInt

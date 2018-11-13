@@ -10,20 +10,18 @@ package io.digitallibrary.bookapi.service.translation
 import com.typesafe.scalalogging.LazyLogging
 import io.digitallibrary.bookapi.BookApiProperties
 import io.digitallibrary.bookapi.BookApiProperties.CrowdinTranslatorPlaceHolder
-import io.digitallibrary.language.model.LanguageTag
-import io.digitallibrary.network.AuthUser
 import io.digitallibrary.bookapi.integration.crowdin._
 import io.digitallibrary.bookapi.model._
 import io.digitallibrary.bookapi.model.api._
-import io.digitallibrary.bookapi.model.api.internal.NewTranslatedChapter
 import io.digitallibrary.bookapi.model.domain.{Book => _, Chapter => _, _}
 import io.digitallibrary.bookapi.repository.{ChapterRepository, TransactionHandler, TranslationRepository}
-import io.digitallibrary.bookapi.service.{ReadService, WriteService}
+import io.digitallibrary.bookapi.service.{ConverterService, ReadService, WriteService}
+import io.digitallibrary.language.model.LanguageTag
 
 import scala.util.{Failure, Success, Try}
 
 trait TranslationService {
-  this: CrowdinClientBuilder with ReadService with WriteService with SupportedLanguageService with TranslationDbService with MergeService with TranslationRepository with TransactionHandler with ChapterRepository =>
+  this: CrowdinClientBuilder with ReadService with WriteService with SupportedLanguageService with TranslationDbService with MergeService with TranslationRepository with TransactionHandler with ChapterRepository with ConverterService =>
   val translationService: TranslationService
 
 
@@ -70,7 +68,7 @@ trait TranslationService {
             case Some(inTranslation) => for {
                 crowdinClient <- crowdinClientBuilder.forSourceLanguage(inTranslation.fromLanguage)
                 original <- originalBook(inTranslation)
-                addedTranslation <- addTargetLanguageForTranslation(inTranslation, TranslateRequest(inTranslation.originalTranslationId, inTranslation.fromLanguage.toString, crowdinToLanguage), original, crowdinClient)
+                addedTranslation <- addTargetLanguageForTranslation(inTranslation, domain.TranslateRequest(inTranslation.originalTranslationId, inTranslation.fromLanguage.toString, crowdinToLanguage, None), original.id, LanguageTag(original.language.code), crowdinClient, status)
                 translatedFile <- fetchTranslatedFile(projectIdentifier, crowdinToLanguage, fileId, status)
               } yield translatedFile
           }
@@ -131,7 +129,7 @@ trait TranslationService {
     }
 
       
-    def addTranslation(translateRequest: api.TranslateRequest, userId: String): Try[api.TranslateResponse] = {
+    def addTranslation(translateRequest: domain.TranslateRequest): Try[api.TranslateResponse] = {
       Try(LanguageTag(translateRequest.fromLanguage)).flatMap(fromLanguage => {
         validateToLanguage(fromLanguage, translateRequest.toLanguage).flatMap(toLanguage => {
           readService.withIdAndLanguage(translateRequest.bookId, fromLanguage) match {
@@ -144,8 +142,8 @@ trait TranslationService {
                 val toAddLanguage = existingTranslations.find(tr => tr.fromLanguage == fromLanguage)
 
                 val inTranslationTry = (toAddUser, toAddLanguage) match {
-                  case (Some(addUser), _) => addUserToTranslation(addUser, userId)
-                  case (None, Some(addLanguage)) => addTargetLanguageForTranslation(addLanguage, translateRequest, originalBook, crowdinClient)
+                  case (Some(addUser), _) => addUserToTranslation(addUser, translateRequest.userId.get)
+                  case (None, Some(addLanguage)) => addTargetLanguageForTranslation(addLanguage, translateRequest, originalBook.id, LanguageTag(originalBook.language.code), crowdinClient)
                   case _ => createTranslation(translateRequest, originalBook, fromLanguage, toLanguage, crowdinClient)
                 }
 
@@ -166,17 +164,17 @@ trait TranslationService {
       }
     }
 
-    private def addTargetLanguageForTranslation(inTranslation: InTranslation, translateRequest: TranslateRequest, originalBook: Book, crowdinClient: CrowdinClient): Try[InTranslation] = {
+    private def addTargetLanguageForTranslation(inTranslation: InTranslation, translateRequest: domain.TranslateRequest, originalBookId: Long, originalBookLanguage: LanguageTag, crowdinClient: CrowdinClient, translationStatus: TranslationStatus.Value = TranslationStatus.IN_PROGRESS): Try[InTranslation] = {
       for {
         files <- Try(translationDbService.filesForTranslation(inTranslation.id.get))
         _ <- crowdinClient.addTargetLanguage(translateRequest.toLanguage)
-        newTranslation <- writeService.newTranslationForBook(originalBook, translateRequest)
-        persistedTranslation <- translationDbService.addTranslationWithFiles(inTranslation, files, newTranslation, translateRequest)
+        newTranslation <- writeService.newTranslationForBook(originalBookId, originalBookLanguage, translateRequest, translationStatus)
+        persistedTranslation <- translationDbService.addTranslationWithFiles(inTranslation, files, newTranslation, translateRequest, translationStatus)
       } yield persistedTranslation
     }
 
-    private def createTranslation(translateRequest: TranslateRequest, originalBook: Book, fromLanguage: LanguageTag, toLanguage: String, crowdinClient: CrowdinClient): Try[InTranslation] = {
-      writeService.newTranslationForBook(originalBook, translateRequest).flatMap(newTranslation => {
+    private def createTranslation(translateRequest: domain.TranslateRequest, originalBook: Book, fromLanguage: LanguageTag, toLanguage: String, crowdinClient: CrowdinClient): Try[InTranslation] = {
+      writeService.newTranslationForBook(originalBook.id, LanguageTag(originalBook.language.code), translateRequest).flatMap(newTranslation => {
         val chaptersToTranslate: Seq[Chapter] = newTranslation.chapters
           .filter(_.chapterType != ChapterType.License)
           .filter(_.containsText())
@@ -191,6 +189,7 @@ trait TranslationService {
           crowdinChapters <- crowdinClient.addChaptersFor(newTranslation, chaptersToTranslate)
           persistedTranslation <- translationDbService.newTranslation(translateRequest, newTranslation, crowdinMeta, crowdinChapters, crowdinClient.getProjectIdentifier)
           _ <- writeService.removeInTransportMark(originalBook)
+          pseudoFiles <- fetchPseudoFiles(persistedTranslation)
         } yield persistedTranslation
 
         inTranslation match {
@@ -204,6 +203,24 @@ trait TranslationService {
           case Failure(e) => Failure(e)
         }
       })
+    }
+
+    def fetchPseudoFiles(originalInTranslation: InTranslation): Try[SynchronizeResponse] = {
+      for {
+        crowdinClient <- crowdinClientBuilder.forSourceLanguage(originalInTranslation.fromLanguage)
+        pseudoInTranslation <- translationDbService.forOriginalIdWithToLanguage(originalInTranslation.originalTranslationId, BookApiProperties.CrowdinPseudoLanguage) match {
+          case Some(x) => Success(x)
+          case None => addTargetLanguageForTranslation(
+            originalInTranslation,
+            domain.TranslateRequest(originalInTranslation.originalTranslationId, originalInTranslation.fromLanguage.toString(), BookApiProperties.CrowdinPseudoLanguage.toString(), None),
+            originalInTranslation.originalTranslationId,
+            originalInTranslation.fromLanguage,
+            crowdinClient,
+            TranslationStatus.PSEUDO)
+        }
+        response <- fetchUpdatesFor(pseudoInTranslation)
+
+      } yield response
     }
 
     private def validateToLanguage(fromLanguage: LanguageTag, toLanguage: String): Try[String] = {
@@ -230,6 +247,14 @@ trait TranslationService {
 
     def inTranslationWithId(inTranslationId: Long): Option[InTranslation] = {
       translationDbService.translationWithId(inTranslationId)
+    }
+
+    def forTranslation(bookId: Long): Option[api.BookForTranslation] = {
+      readService.withIdAndLanguage(bookId, BookApiProperties.CrowdinPseudoLanguage).map(converterService.toBookForTranslation)
+    }
+
+    def forTranslationAndChapter(bookId: Long, chapterId: Long): Option[api.Chapter] = {
+      readService.chapterForBookWithLanguageAndId(bookId, BookApiProperties.CrowdinPseudoLanguage, chapterId)
     }
 
     private def newTranslationId(inTranslation: InTranslation): Try[Long] = {

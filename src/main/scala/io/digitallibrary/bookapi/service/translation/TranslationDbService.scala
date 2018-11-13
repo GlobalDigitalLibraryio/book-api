@@ -10,7 +10,7 @@ package io.digitallibrary.bookapi.service.translation
 import com.typesafe.scalalogging.LazyLogging
 import io.digitallibrary.language.model.LanguageTag
 import io.digitallibrary.network.AuthUser
-import io.digitallibrary.bookapi.model.api.{DBException, TranslateRequest}
+import io.digitallibrary.bookapi.model.api.DBException
 import io.digitallibrary.bookapi.model.crowdin.CrowdinFile
 import io.digitallibrary.bookapi.model.domain._
 import io.digitallibrary.bookapi.repository.{InTranslationFileRepository, InTranslationRepository, TransactionHandler}
@@ -37,6 +37,8 @@ trait TranslationDbService {
 
     def translationWithId(translationId: Long): Option[InTranslation] = inTranslationRepository.withId(translationId)
 
+    def forOriginalIdWithToLanguage(originalId: Long, toLanguage: LanguageTag): Option[InTranslation] = inTranslationRepository.forOriginalIdWithToLanguage(originalId, toLanguage)
+
     def newTranslation(translateRequest: TranslateRequest, translation: Translation, crowdinMeta: CrowdinFile, crowdinChapters: Seq[CrowdinFile], crowdinProject: String): Try[InTranslation] = {
       inTransaction { implicit session =>
         val persisted = for {
@@ -52,17 +54,17 @@ trait TranslationDbService {
       }
     }
 
-    def addTranslationWithFiles(inTranslation: InTranslation, files: Seq[InTranslationFile], newTranslation: Translation, translateRequest: TranslateRequest): Try[InTranslation] = {
+    def addTranslationWithFiles(inTranslation: InTranslation, files: Seq[InTranslationFile], newTranslation: Translation, translateRequest: TranslateRequest, translationStatus: TranslationStatus.Value = TranslationStatus.IN_PROGRESS): Try[InTranslation] = {
       inTransaction { implicit session =>
         val persisted = for {
           persistedTranslation <- Try(inTranslationRepository.add(converterService.asDomainInTranslation(translateRequest, newTranslation, inTranslation.crowdinProjectId)))
 
           persistedMetadata <- Try(files.find(_.fileType == FileType.METADATA)
-            .map(_.copy(id = None, revision = None, inTranslationId = persistedTranslation.id.get, translationStatus = TranslationStatus.IN_PROGRESS, etag = None)).map(inTranslationFileRepository.add))
+            .map(_.copy(id = None, revision = None, inTranslationId = persistedTranslation.id.get, translationStatus = translationStatus, etag = None)).map(inTranslationFileRepository.add))
 
           persistedFiles <- Try(files.flatMap(file => {
             newTranslation.chapters.find(_.seqNo == file.seqNo).map(chapter => {
-              file.copy(id = None, revision = None, inTranslationId = persistedTranslation.id.get, translationStatus = TranslationStatus.IN_PROGRESS, etag = None, newChapterId = chapter.id)
+              file.copy(id = None, revision = None, inTranslationId = persistedTranslation.id.get, translationStatus = translationStatus, etag = None, newChapterId = chapter.id)
             })
           }).map(inTranslationFileRepository.add))
 

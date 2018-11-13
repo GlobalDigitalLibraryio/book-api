@@ -31,6 +31,21 @@ trait ConverterService {
   val converterService: ConverterService
 
   class ConverterService extends LazyLogging {
+    def asDomainTranslateRequest(translateRequest: api.TranslateRequest, userId: String): TranslateRequest = domain.TranslateRequest(
+      translateRequest.bookId,
+      translateRequest.fromLanguage,
+      translateRequest.toLanguage,
+      Some(userId))
+
+
+    def toBookForTranslation(book: api.Book): api.BookForTranslation = api.BookForTranslation(
+        book.id,
+        book.title,
+        book.description,
+        book.coverImage,
+        book.chapters.map(chapter => {
+          api.ChapterSummary(chapter.id, chapter.seqNo, chapter.title, s"${Domain}${BookApiProperties.TranslationsPath}/${book.id}/chapters/${chapter.id}")
+        }))
 
     def toDomainChapter(chapter: api.Chapter, translationId: Long): domain.Chapter = {
       domain.Chapter(
@@ -370,10 +385,10 @@ trait ConverterService {
       api.Language(languageTag.toString, languageTag.localDisplayName.getOrElse(languageTag.displayName), if(languageTag.isRightToLeft) Some(languageTag.isRightToLeft) else None)
     }
 
-    def asDomainInTranslation(translationRequest: api.TranslateRequest, newTranslation: domain.Translation, crowdinProjectId: String) = domain.InTranslation(
+    def asDomainInTranslation(translationRequest: domain.TranslateRequest, newTranslation: domain.Translation, crowdinProjectId: String) = domain.InTranslation(
       id = None,
       revision = None,
-      userIds = Seq(AuthUser.get).flatten,
+      userIds = Seq(translationRequest.userId).flatten,
       originalTranslationId = translationRequest.bookId,
       newTranslationId = newTranslation.id,
       fromLanguage = LanguageTag(translationRequest.fromLanguage),
