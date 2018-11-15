@@ -115,7 +115,7 @@ trait TranslationService {
     }
 
     def forTranslation(translatedFrom: LanguageTag, bookId: Long): Option[api.BookForTranslation] = {
-      readService.withIdLanguageAndFromLanguage(bookId, BookApiProperties.CrowdinPseudoLanguage, translatedFrom).map(converterService.toBookForTranslation)
+      readService.withIdLanguageAndFromLanguage(bookId, BookApiProperties.CrowdinPseudoLanguage, translatedFrom).flatMap(converterService.toBookForTranslation)
     }
 
     def forTranslationAndChapter(bookId: Long, chapterId: Long): Option[api.Chapter] = {

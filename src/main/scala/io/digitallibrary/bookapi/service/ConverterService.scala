@@ -38,14 +38,18 @@ trait ConverterService {
       Some(userId))
 
 
-    def toBookForTranslation(book: api.Book): api.BookForTranslation = api.BookForTranslation(
-        book.id,
-        book.title,
-        book.description,
-        book.coverImage,
-        book.chapters.map(chapter => {
-          api.ChapterSummary(chapter.id, chapter.seqNo, chapter.title, s"${Domain}${BookApiProperties.TranslationsPath}/${book.id}/chapters/${chapter.id}")
-        }))
+    def toBookForTranslation(book: api.Book): Option[api.BookForTranslation] = {
+      book.translatedFrom.map(fromLanguage => {
+        api.BookForTranslation(
+          book.id,
+          book.title,
+          book.description,
+          book.coverImage,
+          book.chapters.map(chapter => {
+            api.ChapterSummary(chapter.id, chapter.seqNo, chapter.title, s"${Domain}${BookApiProperties.TranslationsPath}/${fromLanguage.toString}/${book.id}/chapters/${chapter.id}")
+          }))
+      })
+    }
 
     def toDomainChapter(chapter: api.Chapter, translationId: Long): domain.Chapter = {
       domain.Chapter(
