@@ -46,7 +46,7 @@ trait ConverterService {
           book.description,
           book.coverImage,
           book.chapters.map(chapter => {
-            api.ChapterSummary(chapter.id, chapter.seqNo, chapter.title, s"${Domain}${BookApiProperties.TranslationsPath}/${fromLanguage.toString}/${book.id}/chapters/${chapter.id}")
+            api.ChapterSummary(chapter.id, chapter.seqNo, chapter.title, s"${Domain}${BookApiProperties.TranslationsPath}/${fromLanguage.code}/${book.id}/chapters/${chapter.id}")
           }))
       })
     }
