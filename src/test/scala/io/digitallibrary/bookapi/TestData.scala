@@ -123,6 +123,8 @@ object TestData {
     val DefaultFeed = api.Feed(DefaultFeedDefinition, "default title", Some("default description"), Some("default-rel"), ZonedDateTime.now().minusDays(1), Seq(), DefaultFacets)
     val DefaultFeedEntry = api.FeedEntry(DefaultBook, Seq())
     val DefaultFeedCategory = api.FeedCategory("some-url", "some-title", 1)
+
+    val DefaultSynchronizeResponse = api.SynchronizeResponse(DefaultBook.id, "some-url")
   }
 
   object Domain {

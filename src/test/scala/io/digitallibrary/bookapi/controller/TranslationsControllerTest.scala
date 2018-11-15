@@ -36,14 +36,14 @@ class TranslationsControllerTest extends UnitSuite with TestEnvironment with Sca
   }
 
   test("that /file-proofread?project=test&language=nb&file_id=123 updates translation when all files are proofread") {
-    when(translationService.fetchTranslatedFile(any[String], any[String], any[String], any[TranslationStatus.Value])).thenReturn(Success(TestData.Domain.DefaultInTranslationFile))
-    when(translationService.allFilesHaveTranslationStatusGreatherOrEqualTo(any[InTranslationFile], any[TranslationStatus.Value])).thenReturn(true)
+    when(synchronizeService.fetchTranslatedFile(any[String], any[String], any[String], any[TranslationStatus.Value])).thenReturn(Success(TestData.Domain.DefaultInTranslationFile))
+    when(synchronizeService.allFilesHaveTranslationStatusGreatherOrEqualTo(any[InTranslationFile], any[TranslationStatus.Value])).thenReturn(true)
 
     get("/file-proofread?project=test&language=nb&file_id=123") {
       status should be (204)
     }
 
-    verify(translationService).markTranslationAs(any[InTranslationFile], any[TranslationStatus.Value])
+    verify(synchronizeService).markTranslationAs(any[InTranslationFile], any[TranslationStatus.Value])
   }
 
 }

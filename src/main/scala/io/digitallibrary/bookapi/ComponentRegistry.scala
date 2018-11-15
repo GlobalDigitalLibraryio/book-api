@@ -20,7 +20,7 @@ import io.digitallibrary.bookapi.model.domain.{AllTranslations, UnflaggedTransla
 import io.digitallibrary.bookapi.repository._
 import io.digitallibrary.bookapi.service._
 import io.digitallibrary.bookapi.service.search.{IndexBuilderService, IndexService, SearchService}
-import io.digitallibrary.bookapi.service.translation.{MergeService, SupportedLanguageService, TranslationDbService, TranslationService}
+import io.digitallibrary.bookapi.service.translation._
 import io.digitallibrary.network.GdlClient
 import scalikejdbc.{ConnectionPool, DataSourceConnectionPool}
 
@@ -76,6 +76,7 @@ object ComponentRegistry
   with ImportService
   with ExportController
   with ExportService
+  with SynchronizeService
 {
   implicit val swagger = new BookSwagger
 
@@ -157,6 +158,7 @@ object ComponentRegistry
   lazy val importService = new ImportService
   lazy val exportController = new ExportController
   lazy val exportService = new ExportService
+  lazy val synchronizeService = new SynchronizeService
 
   // Non-lazy because we want it to fail immediately if something goes wrong
   val feedLocalizationService = new FeedLocalizationService

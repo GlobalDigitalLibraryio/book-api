@@ -8,7 +8,6 @@
 package io.digitallibrary.bookapi
 
 import javax.sql
-
 import com.amazonaws.services.s3.AmazonS3
 import io.digitallibrary.network.GdlClient
 import io.digitallibrary.bookapi.controller._
@@ -17,7 +16,7 @@ import io.digitallibrary.bookapi.integration._
 import io.digitallibrary.bookapi.repository._
 import io.digitallibrary.bookapi.service._
 import io.digitallibrary.bookapi.service.search.{IndexBuilderService, IndexService, SearchService}
-import io.digitallibrary.bookapi.service.translation.{MergeService, SupportedLanguageService, TranslationDbService, TranslationService}
+import io.digitallibrary.bookapi.service.translation._
 import org.mockito.Mockito
 
 trait TestEnvironment
@@ -71,6 +70,7 @@ trait TestEnvironment
     with ImportService
     with ExportController
     with ExportService
+    with SynchronizeService
 {
 
   val dataSource = mock[sql.DataSource]
@@ -129,6 +129,7 @@ trait TestEnvironment
   val importService = mock[ImportService]
   val exportController = mock[ExportController]
   val exportService = mock[ExportService]
+  val synchronizeService = mock[SynchronizeService]
 
   def resetMocks() = {
     Mockito.reset(
@@ -177,7 +178,8 @@ trait TestEnvironment
       exportController,
       exportService,
       sourceController,
-      sourceRepository
+      sourceRepository,
+      synchronizeService
     )
   }
 }

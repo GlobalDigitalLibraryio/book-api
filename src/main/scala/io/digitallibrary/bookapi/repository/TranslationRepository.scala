@@ -46,6 +46,13 @@ trait TranslationRepository {
         .and.eq(t.language, language.toString))
     }
 
+    def forBookIdLanguageAndFromLanguage(bookId: Long, language: LanguageTag, fromLanguage: LanguageTag)(implicit session: DBSession = ReadOnlyAutoSession): Option[Translation] = {
+      translationWhere(sqls
+        .eq(t.bookId, bookId)
+        .and.eq(t.language, language.toString)
+        .and.eq(t.translatedFrom, fromLanguage.toString))
+    }
+
     def withId(translationId: Long)(implicit session: DBSession = ReadOnlyAutoSession): Option[Translation] = {
       translationWhere(sqls.eq(t.id, translationId))
     }

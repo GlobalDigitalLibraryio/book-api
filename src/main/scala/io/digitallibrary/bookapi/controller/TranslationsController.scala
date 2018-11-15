@@ -14,7 +14,7 @@ import io.digitallibrary.bookapi.model._
 import io.digitallibrary.bookapi.model.api.{BookForTranslation, CrowdinException, Error, Language, SynchronizeResponse, TranslateRequest, TranslateResponse}
 import io.digitallibrary.bookapi.model.domain.{Paging, Sort, TranslationStatus}
 import io.digitallibrary.bookapi.service.{ConverterService, ReadService}
-import io.digitallibrary.bookapi.service.translation.{SupportedLanguageService, TranslationService}
+import io.digitallibrary.bookapi.service.translation.{SupportedLanguageService, SynchronizeService, TranslationService}
 import javax.servlet.http.HttpServletRequest
 import org.scalatra.{InternalServerError, NoContent, NotFound, Ok}
 import org.scalatra.swagger.{ResponseMessage, Swagger, SwaggerSupport}
@@ -22,7 +22,7 @@ import org.scalatra.swagger.{ResponseMessage, Swagger, SwaggerSupport}
 import scala.util.{Failure, Success, Try}
 
 trait TranslationsController {
-  this: SupportedLanguageService with TranslationService with ReadService with ConverterService =>
+  this: SupportedLanguageService with TranslationService with SynchronizeService with ReadService with ConverterService =>
   val translationsController: TranslationsController
 
   class TranslationsController (implicit val swagger: Swagger) extends GdlController with SwaggerSupport {
@@ -48,10 +48,11 @@ trait TranslationsController {
       pathParam[String]("language").description("The language to translate from."))
       responseMessages(response400, response500))
 
-    private val getBookForTranslation = (apiOperation[BookForTranslation]("List supported languages")
+    private val getBookForTranslation = (apiOperation[BookForTranslation]("Get book for translation")
       summary "Retrieves the metadata for the book for translation"
       parameters(
       headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
+      pathParam[String]("language").description("The language the book is being translated from"),
       pathParam[String]("book_id").description("The id of the book to translate"))
       responseMessages(response400, response404, response500))
 
@@ -59,7 +60,8 @@ trait TranslationsController {
     summary "Retrieves the chapter for translation"
     parameters(
       headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
-      pathParam[String]("id").description("The id of the book to translate"),
+      pathParam[String]("language").description("The language the book is being translated from"),
+      pathParam[String]("book_id").description("The id of the book to translate"),
       pathParam[String]("chapter_id").description("The id of the chapter to translate"))
       responseMessages(response400, response404, response500))
 
@@ -112,16 +114,18 @@ trait TranslationsController {
       responseMessages(response400, response500)
       authorizations "oauth2")
 
-    get("/:id/?", operation(getBookForTranslation)) {
-      val bookId = long("id")
-      translationService.forTranslation(bookId) match {
+    get("/:language/:book_id/?", operation(getBookForTranslation)) {
+      val translatedFrom = LanguageTag(params("language"))
+      val bookId = long("book_id")
+      translationService.forTranslation(translatedFrom, bookId) match {
         case Some(x) => Success(x)
         case None => NotFound(s"Book with id $bookId not possible to translate")
       }
     }
 
-    get("/:id/chapters/:chapter_id/?", operation(getChapterForTranslation)) {
-      val bookId = long("id")
+    get("/:language/:book_id/chapters/:chapter_id/?", operation(getChapterForTranslation)) {
+      val translatedFrom = LanguageTag(params("language"))
+      val bookId = long("book_id")
       val chapterId = long("chapter_id")
       translationService.forTranslationAndChapter(bookId, chapterId) match {
         case Some(x) => Success(x)
@@ -151,8 +155,8 @@ trait TranslationsController {
       translationService.inTranslationWithId(inTranslationId) match {
         case None => NotFound(body = Error(Error.NOT_FOUND, s"No book is currently being translated with inTranslationId $inTranslationId"))
         case Some(inTranslation) => {
-          translationService.fetchPseudoFiles(inTranslation)
-          translationService.fetchUpdatesFor(inTranslation)
+          synchronizeService.fetchPseudoFiles(inTranslation)
+          synchronizeService.fetchUpdatesFor(inTranslation)
         }
       }
     }
@@ -180,9 +184,9 @@ trait TranslationsController {
       val language = LanguageTag(crowdinLanguage)
       val fileId = params("file_id")
 
-      val translatedFileUpdated = translationService.fetchTranslatedFile(projectIdentifier, crowdinLanguage, fileId, status).map(file => {
-        if(translationService.allFilesHaveTranslationStatusGreatherOrEqualTo(file, status)) {
-          translationService.markTranslationAs(file, status)
+      val translatedFileUpdated = synchronizeService.fetchTranslatedFile(projectIdentifier, crowdinLanguage, fileId, status).map(file => {
+        if(synchronizeService.allFilesHaveTranslationStatusGreatherOrEqualTo(file, status)) {
+          synchronizeService.markTranslationAs(file, status)
         }
       })
 
