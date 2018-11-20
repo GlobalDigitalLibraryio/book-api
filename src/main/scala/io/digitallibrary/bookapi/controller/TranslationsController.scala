@@ -41,6 +41,12 @@ trait TranslationsController {
       headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted.")
       responseMessages(response400, response500))
 
+    private val getTranslationProjects = (apiOperation[Map[String, String]]("Map language codes to translation projects")
+      summary "Retrieves all translation projects"
+      parameters
+      headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted.")
+      responseMessages(response400, response500))
+
     private val getSupportedLanguagesForLanguage = (apiOperation[Seq[Language]]("List supported languages")
       summary "Retrieves a list of all supported languages to translate to when translating from given language"
       parameters(
@@ -135,6 +141,10 @@ trait TranslationsController {
 
     get("/supported-languages", operation(getSupportedLanguages)) {
       supportedLanguageService.getSupportedLanguages()
+    }
+
+    get("/translation-projects", operation(getTranslationProjects)) {
+      BookApiProperties.CrowdinProjects.map(project => (LanguageTag(project.sourceLanguage).toString, project.projectIdentifier)).toMap
     }
 
     get("/:language/supported-languages", operation(getSupportedLanguagesForLanguage)) {
