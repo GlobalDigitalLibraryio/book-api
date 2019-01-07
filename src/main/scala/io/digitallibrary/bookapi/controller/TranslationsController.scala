@@ -16,6 +16,7 @@ import io.digitallibrary.bookapi.model.domain.{Paging, Sort, TranslationStatus}
 import io.digitallibrary.bookapi.service.ReadService
 import io.digitallibrary.bookapi.service.translation.{SupportedLanguageService, TranslationService}
 import javax.servlet.http.HttpServletRequest
+import org.postgresql.util.PSQLException
 import org.scalatra.{InternalServerError, NoContent, NotFound, Ok}
 import org.scalatra.swagger.{ResponseMessage, Swagger, SwaggerSupport}
 
@@ -156,6 +157,9 @@ trait TranslationsController {
           c.getErrors.foreach(error => logger.error(s"${c.getMessage}: ${error.code} - ${error.message}"))
           c.getCauses.foreach(throwable => logger.error(c.getMessage, throwable))
           InternalServerError(body = Error.TranslationError)
+        case Failure(p: PSQLException) if p.getMessage.contains("translation_uniq_book_id_language") =>
+          logger.error(Error.GenericError.toString, p)
+          InternalServerError(body = Error.GenericError)
         case Failure(err) =>
           logger.error(Error.GenericError.toString, err)
           NoContent()
