@@ -1,0 +1,1 @@
+ALTER TABLE translation ADD CONSTRAINT translation_uniq_book_id_language UNIQUE (book_id, language);
