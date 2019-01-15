@@ -46,7 +46,7 @@ trait SynchronizeService {
             case Some(inTranslation) => for {
               crowdinClient <- crowdinClientBuilder.forSourceLanguage(inTranslation.fromLanguage)
               original <- originalBook(inTranslation)
-              addedTranslation <- translationService.addTargetLanguageForTranslation(inTranslation, domain.TranslateRequest(inTranslation.originalTranslationId, inTranslation.fromLanguage.toString, crowdinToLanguage, None), original.id, LanguageTag(original.language.code), crowdinClient, status)
+              addedTranslation <- translationService.addTargetLanguageForTranslation(inTranslation, domain.TranslateRequest(inTranslation.originalTranslationId, inTranslation.fromLanguage.toString, crowdinToLanguage, None), original.id, LanguageTag(original.language.code), crowdinClient)
               translatedFile <- fetchTranslatedFile(projectIdentifier, crowdinToLanguage, fileId, status)
             } yield translatedFile
           }
