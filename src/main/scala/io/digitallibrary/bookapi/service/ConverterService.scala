@@ -356,6 +356,7 @@ trait ConverterService {
         translatedTo = toApiLanguage(translation.language),
         publisher = book.publisher,
         coverImage = toApiCoverImage(translation.coverphoto),
+        readingLevel = book.readingLevel,
         synchronizeUrl = s"${BookApiProperties.Domain}${BookApiProperties.TranslationsPath}/synchronized/${inTranslation.id.get}",
         crowdinUrl = CrowdinUtils.crowdinUrlToBook(book, inTranslation.crowdinProjectId, inTranslation.crowdinToLanguage))
     }

@@ -141,6 +141,7 @@ case class MyBook(@(ApiModelProperty@field)(description = "The id of the book") 
                   @(ApiModelProperty@field)(description = "The language this book has been translated to") translatedTo: Language,
                   @(ApiModelProperty@field)(description = "Information about publisher of the original book") publisher: Publisher,
                   @(ApiModelProperty@field)(description = "Cover image information") coverImage: Option[CoverImage],
+                  @(ApiModelProperty@field)(description = "Information about reading level") readingLevel: Option[String],
                   @(ApiModelProperty@field)(description = "Url to call to fetch latest translations from crowdin") synchronizeUrl: String,
                   @(ApiModelProperty@field)(description = "Url to Crowdin to continue translation") crowdinUrl: String)
 
