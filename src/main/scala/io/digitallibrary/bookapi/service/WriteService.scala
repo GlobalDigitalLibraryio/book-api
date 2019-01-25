@@ -190,8 +190,8 @@ trait WriteService {
       } yield api.internal.BookId(persistedBook.id.get)
     }
 
-    def newTranslationForBook(originalBook: api.Book, translateRequest: TranslateRequest): Try[domain.Translation] = {
-      unFlaggedTranslationsRepository.forBookIdAndLanguage(originalBook.id, LanguageTag(originalBook.language.code)) match {
+    def newTranslationForBook(originalBookId: Long, language: LanguageTag, translateRequest: domain.TranslateRequest, translationStatus: TranslationStatus.Value = TranslationStatus.IN_PROGRESS): Try[domain.Translation] = {
+      unFlaggedTranslationsRepository.forBookIdAndLanguage(originalBookId, language) match {
         case None => Failure(new NotFoundException())
         case Some(translation) => {
 
@@ -204,7 +204,7 @@ trait WriteService {
             language = LanguageTag(translateRequest.toLanguage),
             translatedFrom = Some(LanguageTag(translateRequest.fromLanguage)),
             publishingStatus = PublishingStatus.UNLISTED,
-            translationStatus = Some(TranslationStatus.IN_PROGRESS))
+            translationStatus = Some(translationStatus))
 
           Try {
             inTransaction { implicit session =>

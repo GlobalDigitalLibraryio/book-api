@@ -100,6 +100,13 @@ trait ReadService {
       } yield converterService.toApiBook(translation, unFlaggedTranslationsRepository.languagesFor(bookId), book)
     }
 
+    def withIdLanguageAndFromLanguage(bookId: Long, language: LanguageTag, fromLanguage: LanguageTag): Option[api.Book] = {
+      for {
+        translation <- getTranslationRepository.forBookIdLanguageAndFromLanguage(bookId, language, fromLanguage)
+        book <- bookRepository.withId(bookId)
+      } yield converterService.toApiBook(translation, unFlaggedTranslationsRepository.languagesFor(bookId), book)
+    }
+
     def withIdAndLanguageListingAllBooksIfAdmin(bookId: Long, language: LanguageTag): Option[api.Book] = {
       for {
         translation <- getTranslationRepository.forBookIdAndLanguage(bookId, language)

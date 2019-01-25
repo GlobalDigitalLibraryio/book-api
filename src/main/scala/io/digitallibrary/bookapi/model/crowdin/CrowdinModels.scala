@@ -15,7 +15,9 @@ case class CrowdinProject (sourceLanguage: String, projectIdentifier: String, pr
 case class ProjectDetails(languages: Seq[TargetLanguage], files: Seq[File], details: Details)
 case class Details (name: String)
 case class File (id: String)
-case class TargetLanguage(name: String, code: String, canTranslate: Long, canApprove: Long)
+case class TargetLanguage(name: String, code: String, canTranslate: Long, canApprove: Long) {
+  def isSupported: Boolean = canTranslate != 0 && canApprove != 0
+}
 case class EditProjectResponse(project: Option[Project], error: Option[Error])
 case class Project(success: Boolean)
 case class AddDirectoryResponse(success: Boolean)

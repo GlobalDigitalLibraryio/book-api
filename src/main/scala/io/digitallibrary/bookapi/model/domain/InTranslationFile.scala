@@ -45,6 +45,7 @@ object InTranslationFile extends SQLSyntaxSupport[InTranslationFile] {
 }
 
 object TranslationStatus extends Enumeration {
+  val PSEUDO: TranslationStatus.Value = Value(-1)
   val IN_PROGRESS: TranslationStatus.Value = Value(0)
   val TRANSLATED: TranslationStatus.Value = Value(1)
   val PROOFREAD: TranslationStatus.Value = Value(2)

@@ -37,25 +37,25 @@ class TranslationsControllerTest extends UnitSuite with TestEnvironment with Sca
   }
 
   test("that /file-proofread?project=test&language=nb&file_id=123 updates translation when all files are proofread") {
-    when(translationService.fetchTranslatedFile(any[String], any[String], any[String], any[TranslationStatus.Value])).thenReturn(Success(TestData.Domain.DefaultInTranslationFile))
-    when(translationService.allFilesHaveTranslationStatusGreatherOrEqualTo(any[InTranslationFile], any[TranslationStatus.Value])).thenReturn(true)
+    when(synchronizeService.fetchTranslatedFile(any[String], any[String], any[String], any[TranslationStatus.Value])).thenReturn(Success(TestData.Domain.DefaultInTranslationFile))
+    when(synchronizeService.allFilesHaveTranslationStatusGreatherOrEqualTo(any[InTranslationFile], any[TranslationStatus.Value])).thenReturn(true)
 
     get("/file-proofread?project=test&language=nb&file_id=123") {
       status should be (204)
     }
 
-    verify(translationService).markTranslationAs(any[InTranslationFile], any[TranslationStatus.Value])
+    verify(synchronizeService).markTranslationAs(any[InTranslationFile], any[TranslationStatus.Value])
   }
 
   test("that /file-translated?project=test&language=nb&file_id=123 returns 500 internal server error when PSQLException for unique constraint") {
-    when(translationService.fetchTranslatedFile(any[String], any[String], any[String], any[TranslationStatus.Value])).thenReturn(Failure(new PSQLException("translation_uniq_book_id_language", PSQLState.DATA_ERROR)))
+    when(synchronizeService.fetchTranslatedFile(any[String], any[String], any[String], any[TranslationStatus.Value])).thenReturn(Failure(new PSQLException("translation_uniq_book_id_language", PSQLState.DATA_ERROR)))
     get("/file-translated?project=test&language=nb&file_id=123") {
       status should be (500)
     }
   }
 
   test("that /file-translated?project=test&language=nb&file_id=123 returns 204 No Content for other PSQLException") {
-    when(translationService.fetchTranslatedFile(any[String], any[String], any[String], any[TranslationStatus.Value])).thenReturn(Failure(new PSQLException("some error", PSQLState.DATA_ERROR)))
+    when(synchronizeService.fetchTranslatedFile(any[String], any[String], any[String], any[TranslationStatus.Value])).thenReturn(Failure(new PSQLException("some error", PSQLState.DATA_ERROR)))
     get("/file-translated?project=test&language=nb&file_id=123") {
       status should be (204)
     }

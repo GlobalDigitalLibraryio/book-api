@@ -31,6 +31,25 @@ trait ConverterService {
   val converterService: ConverterService
 
   class ConverterService extends LazyLogging {
+    def asDomainTranslateRequest(translateRequest: api.TranslateRequest, userId: String): TranslateRequest = domain.TranslateRequest(
+      translateRequest.bookId,
+      translateRequest.fromLanguage,
+      translateRequest.toLanguage,
+      Some(userId))
+
+
+    def toBookForTranslation(book: api.Book): Option[api.BookForTranslation] = {
+      book.translatedFrom.map(fromLanguage => {
+        api.BookForTranslation(
+          book.id,
+          book.title,
+          book.description,
+          book.coverImage,
+          book.chapters.map(chapter => {
+            api.ChapterSummary(chapter.id, chapter.seqNo, chapter.title, s"${Domain}${BookApiProperties.TranslationsPath}/${fromLanguage.code}/${book.id}/chapters/${chapter.id}")
+          }))
+      })
+    }
 
     def toDomainChapter(chapter: api.Chapter, translationId: Long): domain.Chapter = {
       domain.Chapter(
@@ -337,6 +356,7 @@ trait ConverterService {
         translatedTo = toApiLanguage(translation.language),
         publisher = book.publisher,
         coverImage = toApiCoverImage(translation.coverphoto),
+        readingLevel = book.readingLevel,
         synchronizeUrl = s"${BookApiProperties.Domain}${BookApiProperties.TranslationsPath}/synchronized/${inTranslation.id.get}",
         crowdinUrl = CrowdinUtils.crowdinUrlToBook(book, inTranslation.crowdinProjectId, inTranslation.crowdinToLanguage))
     }
@@ -370,10 +390,10 @@ trait ConverterService {
       api.Language(languageTag.toString, languageTag.localDisplayName.getOrElse(languageTag.displayName), if(languageTag.isRightToLeft) Some(languageTag.isRightToLeft) else None)
     }
 
-    def asDomainInTranslation(translationRequest: api.TranslateRequest, newTranslation: domain.Translation, crowdinProjectId: String) = domain.InTranslation(
+    def asDomainInTranslation(translationRequest: domain.TranslateRequest, newTranslation: domain.Translation, crowdinProjectId: String) = domain.InTranslation(
       id = None,
       revision = None,
-      userIds = Seq(AuthUser.get).flatten,
+      userIds = Seq(translationRequest.userId).flatten,
       originalTranslationId = translationRequest.bookId,
       newTranslationId = newTranslation.id,
       fromLanguage = LanguageTag(translationRequest.fromLanguage),
