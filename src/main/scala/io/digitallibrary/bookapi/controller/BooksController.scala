@@ -8,7 +8,7 @@
 
 package io.digitallibrary.bookapi.controller
 
-import io.digitallibrary.bookapi.BookApiProperties.{DefaultLanguage, RoleWithWriteAccess}
+import io.digitallibrary.bookapi.BookApiProperties.{DefaultLanguage, RoleWithWriteAccess, RoleWithAdminReadAccess}
 import io.digitallibrary.bookapi.model.api
 import io.digitallibrary.bookapi.model.api.{Chapter, Error, ValidationError}
 import io.digitallibrary.bookapi.model.domain._
@@ -269,7 +269,7 @@ trait BooksController {
     }
 
     get("/flagged/?", operation(getFlaggedBooks)) {
-      assertHasRole(RoleWithWriteAccess)
+      assertHasRole(RoleWithAdminReadAccess)
 
       val pageSize = intOrDefault("page-size", 10).min(100).max(1)
       val page = intOrDefault("page", 1).max(1)
