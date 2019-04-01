@@ -7,7 +7,7 @@
 
 package io.digitallibrary.bookapi.model.domain
 
-case class PdfCss(source: Option[String], pageOrientation: PageOrientation.Value, fontNames: Seq[String]) {
+case class PdfCss(pageOrientation: PageOrientation.Value, fontNames: Seq[String]) {
 
   def asString: String = {
     val pageSize = pageOrientation match {
