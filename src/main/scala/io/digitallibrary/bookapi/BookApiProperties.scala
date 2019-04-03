@@ -28,7 +28,7 @@ object BookApiProperties extends LazyLogging {
 
   val FeaturedContentAdminRole = "books:featured"
   val ApplicationPort = propOrElse("APPLICATION_PORT", "80").toInt
-  val ContactEmail = "christergundersen@ndla.no"
+  val ContactEmail = "support@digitallibrary.io"
   val Environment = propOrElse("GDL_ENVIRONMENT", "local")
   lazy val Domain: String = Domains.get(Environment)
   val StorageName = s"$Environment.books.gdl"
