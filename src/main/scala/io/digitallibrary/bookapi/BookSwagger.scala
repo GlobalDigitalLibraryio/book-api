@@ -20,10 +20,10 @@ object BookApiInfo {
   val apiInfo = ApiInfo(
   "Book Api",
   "Documentation for the Book API of GDL",
-  "https://ndla.no",
+  "https://digitallibrary.io",
   BookApiProperties.ContactEmail,
-  "GPL v3.0",
-  "http://www.gnu.org/licenses/gpl-3.0.en.html")
+  "Apache License 2.0",
+  "https://www.apache.org/licenses/LICENSE-2.0")
 }
 
 class BookSwagger extends Swagger("2.0", "0.8", BookApiInfo.apiInfo) {
