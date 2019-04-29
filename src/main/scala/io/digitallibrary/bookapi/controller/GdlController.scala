@@ -150,5 +150,9 @@ abstract class GdlController extends ScalatraServlet with NativeJsonSupport with
       throw new AccessDeniedException("User is missing required role to perform this operation")
   }
 
+  def looksLikeAnUuid(id: String): Boolean = {
+    id.split("-").length == 5
+  }
+
 }
 

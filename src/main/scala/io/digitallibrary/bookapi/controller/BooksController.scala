@@ -8,7 +8,9 @@
 
 package io.digitallibrary.bookapi.controller
 
-import io.digitallibrary.bookapi.BookApiProperties.{DefaultLanguage, RoleWithWriteAccess, RoleWithAdminReadAccess}
+import java.util.UUID
+
+import io.digitallibrary.bookapi.BookApiProperties.{DefaultLanguage, RoleWithAdminReadAccess, RoleWithWriteAccess}
 import io.digitallibrary.bookapi.model.api
 import io.digitallibrary.bookapi.model.api.{Chapter, Error, ValidationError}
 import io.digitallibrary.bookapi.model.domain._
@@ -174,12 +176,20 @@ trait BooksController {
     }
 
     get("/:lang/:id/?", operation(getBook)) {
-      val id = long("id")
+      val id_or_uuid = params("id")
       val lang = LanguageTag(params("lang"))
 
-      readService.withIdAndLanguageListingAllBooksIfAdmin(id, lang) match {
-        case Some(x) => x
-        case None => NotFound(body = Error(Error.NOT_FOUND, s"No book with id $id and language $lang found"))
+      if (looksLikeAnUuid(id_or_uuid)){
+        readService.withUuid(id_or_uuid) match {
+          case Some(x) => x
+          case None => NotFound(body = Error(Error.NOT_FOUND, s"No book with id $id_or_uuid and language $lang found"))
+        }
+      } else {
+        val id = long("id")
+        readService.withIdAndLanguageListingAllBooksIfAdmin(id, lang) match {
+          case Some(x) => x
+          case None => NotFound(body = Error(Error.NOT_FOUND, s"No book with id $id and language $lang found"))
+        }
       }
     }
 

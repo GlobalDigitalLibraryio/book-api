@@ -77,13 +77,13 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
     }
   }
 
-  test("that GET/:lang/:id returns 400 when id is not numberic") {
+  test("that GET/:lang/:id returns 400 when id is not numeric and not an uuid") {
     get("/eng/abc") {
       status should equal (400)
     }
   }
 
-  test("that GET /:lang/:id returns 404 when not found") {
+  test("that GET /:lang/:id returns 404 when not found and id is a number") {
     when(readService.withIdAndLanguageListingAllBooksIfAdmin(any[Long], any[LanguageTag])).thenReturn(None)
 
     get("/eng/1") {
@@ -91,10 +91,27 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
     }
   }
 
-  test("that GET /:lang/:id returns book when found") {
+  test("that GET /:lang/:id returns 404 when not found and id is an uuid") {
+    when(readService.withUuid(any[String])).thenReturn(None)
+
+    get("/eng/123-123-123-123-123") {
+      status should equal (404)
+    }
+  }
+
+  test("that GET /:lang/:id returns book when id is a number and book is found") {
     when(readService.withIdAndLanguageListingAllBooksIfAdmin(any[Long], any[LanguageTag])).thenReturn(Some(TestData.Api.DefaultBook))
 
     get("/eng/1") {
+      status should equal (200)
+      val book = read[Book](body)
+      book.uuid should equal (TestData.Api.DefaultBook.uuid)
+    }
+  }
+
+  test("that GET /:lang/:id returns book when id is an uuid and book is found") {
+    when(readService.withUuid(any[String])).thenReturn(Some(TestData.Api.DefaultBook))
+    get("/en/123-123-123-123-123") {
       status should equal (200)
       val book = read[Book](body)
       book.uuid should equal (TestData.Api.DefaultBook.uuid)
