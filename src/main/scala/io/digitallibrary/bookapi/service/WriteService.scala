@@ -144,13 +144,11 @@ trait WriteService {
               }
 
               persistedPublisher.flatMap(p => {
-                existingBook.copy(
+                bookRepository.updateBook(existingBook.copy(
                   publisherId = p.id.get,
                   license = validLicense,
                   publisher = p,
-                  source = bookReplacement.source)
-
-                bookRepository.updateBook(existingBook)
+                  source = bookReplacement.source))
 
               })
             }
