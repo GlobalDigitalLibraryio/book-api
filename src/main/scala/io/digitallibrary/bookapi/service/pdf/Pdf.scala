@@ -29,7 +29,8 @@ case class Pdf(language: LanguageTag, chapters: Seq[api.Chapter], translation: d
     "bengali" -> FontDefinition("/NotoSansBengali-Regular.ttf", "Noto Sans Bengali"),
     "khmer" -> FontDefinition("/NotoSansKhmer-Regular.ttf", "Noto Sans Khmer"),
     "tamil" -> FontDefinition("/NotoSansTamil-Regular.ttf", "Noto Sans Tamil"),
-    "arabic" -> FontDefinition("/NotoNaskhArabic-Regular.ttf", "Noto Naskh Arabic")
+    "arabic" -> FontDefinition("/NotoNaskhArabic-Regular.ttf", "Noto Naskh Arabic"),
+    "newtailue" -> FontDefinition("/NotoSansNewTaiLue-Regular.ttf", "Noto Sans New Tai Lue")
   )
   val fontDefinitions = Map(
     LanguageTag("tir-et") -> fonts("ethiopic"),
@@ -42,7 +43,8 @@ case class Pdf(language: LanguageTag, chapters: Seq[api.Chapter], translation: d
     LanguageTag("khm") -> fonts("khmer"),
     LanguageTag("tam") -> fonts("tamil"),
     LanguageTag("ar-ae") -> fonts("arabic"),
-    LanguageTag("ar") -> fonts("arabic")
+    LanguageTag("ar") -> fonts("arabic"),
+    LanguageTag("khb") -> fonts("newtailue")
   )
 
   def create(): PdfRendererBuilder = {
