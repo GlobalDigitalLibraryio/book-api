@@ -34,12 +34,14 @@ trait FeaturedContentController {
 
     private val getAllFeaturedContentInDefaultLang = (apiOperation[Seq[api.FeaturedContent]]("getAllFeaturedContentInDefaultLang")
       summary "Returns all featured content in default language"
+      tags "Featured v1"
       notes "Returns all featured content in default language"
       parameters correlationIDParameter
       responseMessages response500)
 
     private val getAllFeaturedContentInLang = (apiOperation[Seq[api.FeaturedContent]]("getAllFeaturedContentInLang")
       summary "Returns all featured content in given language"
+      tags "Featured v1"
       notes "Returns all featured content in given language"
       parameters(correlationIDParameter,
       pathParam[String]("lang").description("Desired language for featured content specified in ISO 639-1/2 format."))
@@ -47,6 +49,7 @@ trait FeaturedContentController {
 
     private val addNewFeaturedContent = (apiOperation[FeaturedContentId]("addNewFeaturedContent")
       summary "Adds a new featured content"
+      tags "Featured v1"
       notes "Returns id of created featured content"
       parameters(correlationIDParameter, bodyParam[NewFeaturedContent]("JSON body"))
       responseMessages response500
@@ -54,6 +57,7 @@ trait FeaturedContentController {
 
     private val updateExistingFeaturedContent = (apiOperation[FeaturedContentId]("updateExistingFeaturedContent")
       summary "Updates an existing featured content"
+      tags "Featured v1"
       notes "Returns id of updated featured content"
       parameters(correlationIDParameter, bodyParam[FeaturedContent]("JSON body"))
       responseMessages response500
@@ -61,6 +65,7 @@ trait FeaturedContentController {
 
     private val deleteFeaturedContent = (apiOperation[FeaturedContentId]("deleteFeaturedContent")
       summary "Deletes an existing featured content"
+      tags "Featured v1"
       notes "Returns 200 OK if featured content was deleted"
       parameters(correlationIDParameter, pathParam[Long]("id").description("ID of featured content to delete"))
       responseMessages response500

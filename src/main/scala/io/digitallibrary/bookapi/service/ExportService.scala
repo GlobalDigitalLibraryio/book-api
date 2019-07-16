@@ -13,10 +13,10 @@ import java.util.zip.{ZipEntry, ZipOutputStream}
 import com.fasterxml.jackson.dataformat.csv.{CsvFactory, CsvGenerator, CsvSchema}
 import com.typesafe.scalalogging.LazyLogging
 import io.digitallibrary.bookapi.BookApiProperties
-import io.digitallibrary.bookapi.integration.ImageApiClient
-import io.digitallibrary.bookapi.model.api.BookHit
+import io.digitallibrary.bookapi.integration.{ImageApiClient, MediaApiClient}
+import io.digitallibrary.bookapi.model.api.{BookHit, BookHitV2}
 import io.digitallibrary.bookapi.model.domain.{CsvFormat, Paging, Sort}
-import io.digitallibrary.bookapi.service.search.SearchService
+import io.digitallibrary.bookapi.service.search.{SearchService, SearchServiceV2}
 import io.digitallibrary.language.model.LanguageTag
 import io.digitallibrary.bookapi.model._
 import io.digitallibrary.network.GdlClient
@@ -25,7 +25,7 @@ import scalaj.http.{Http, HttpOptions}
 import scala.util.{Failure, Success}
 
 trait ExportService {
-  this: SearchService with ReadService with GdlClient with ImageApiClient =>
+  this: SearchServiceV2 with ReadServiceV2 with GdlClient with MediaApiClient =>
 
   val exportService: ExportService
 
@@ -84,7 +84,7 @@ trait ExportService {
       CsvFormat.GooglePlay -> googlePlaySchema
     )
 
-    private val formatToGenerator: Map[CsvFormat.Value, (CsvGenerator, BookHit) => Unit] = Map(
+    private val formatToGenerator: Map[CsvFormat.Value, (CsvGenerator, BookHitV2) => Unit] = Map(
       CsvFormat.QualityAssurance -> writeQualityAssurance,
       CsvFormat.GooglePlay -> writeGooglePlay
     )
@@ -93,16 +93,16 @@ trait ExportService {
     val baseUrl: String = s"https://${BookApiProperties.Environment}.digitallibrary.io".replace("prod.", "")
 
     def getAllEPubsAsZipFile(language: LanguageTag, source: Option[String], outputStream: OutputStream): Unit = {
-      val firstPage = searchService.searchWithQuery(language, None, source, Paging(1, pageSize), Sort.ByIdAsc)
+      val firstPage = searchServiceV2.searchWithQuery(language, None, source, Paging(1, pageSize), Sort.ByIdAsc)
 
       val numberOfPages = (firstPage.totalCount / pageSize).toInt
       val books = firstPage.results ++
         (1 to numberOfPages).flatMap(i =>
-          searchService.searchWithQuery(language, None, source, Paging(i + 1, pageSize), Sort.ByIdAsc).results)
+          searchServiceV2.searchWithQuery(language, None, source, Paging(i + 1, pageSize), Sort.ByIdAsc).results)
 
       val zip = new ZipOutputStream(outputStream)
       books
-        .flatMap(b => readService.withIdAndLanguageForExport(b.id, language))
+        .flatMap(b => readServiceV2.withIdAndLanguageForExport(b.id, language))
         .filter(_.downloads.epub.isDefined)
         .foreach(book => {
           val urlToEpub = book.downloads.epub.get
@@ -120,19 +120,19 @@ trait ExportService {
     }
 
     def getAllCoverImagesAsZipFile(language: LanguageTag, source: Option[String], outputStream: OutputStream): Unit = {
-      val firstPage = searchService.searchWithQuery(language, None, source, Paging(1, pageSize), Sort.ByIdAsc)
+      val firstPage = searchServiceV2.searchWithQuery(language, None, source, Paging(1, pageSize), Sort.ByIdAsc)
 
       val numberOfPages = (firstPage.totalCount / pageSize).toInt
       val books = firstPage.results ++
         (1 to numberOfPages).flatMap(i =>
-          searchService.searchWithQuery(language, None, source, Paging(i + 1, pageSize), Sort.ByIdAsc).results)
+          searchServiceV2.searchWithQuery(language, None, source, Paging(i + 1, pageSize), Sort.ByIdAsc).results)
 
       val zip = new ZipOutputStream(outputStream)
       books
         .filter(_.coverImage.isDefined)
-        .flatMap(b => readService.withIdAndLanguageForExport(b.id, language))
+        .flatMap(b => readServiceV2.withIdAndLanguageForExport(b.id, language))
         .foreach(book => {
-          imageApiClient.downloadImage(book.coverPhoto.get.imageApiId) match {
+          mediaApiClient.downloadImage(book.coverPhoto.get.imageApiId) match {
             case Failure(error) => logger.error(s"Error when producing zip-archive with cover images for $language and $source. Could not download cover image with id ${book.coverPhoto.get.imageApiId}", error)
             case Success(downloadedImage) =>
               zip.putNextEntry(new ZipEntry(s"PKEY:${book.uuid}_frontcover.${downloadedImage.fileEnding}"))
@@ -146,12 +146,12 @@ trait ExportService {
     }
 
     def exportBooks(csvFormat: CsvFormat.Value, language: LanguageTag, source: Option[String], outputStream: OutputStream): Unit = {
-      val firstPage = searchService.searchWithQuery(language, None, source, Paging(1, pageSize), Sort.ByIdAsc)
+      val firstPage = searchServiceV2.searchWithQuery(language, None, source, Paging(1, pageSize), Sort.ByIdAsc)
 
       val numberOfPages = (firstPage.totalCount / pageSize).toInt
       val books = firstPage.results ++
         (1 to numberOfPages).flatMap(i =>
-          searchService.searchWithQuery(language, None, source, Paging(i + 1, pageSize), Sort.ByIdAsc).results)
+          searchServiceV2.searchWithQuery(language, None, source, Paging(i + 1, pageSize), Sort.ByIdAsc).results)
 
       val factory = new CsvFactory()
       val generator: CsvGenerator = factory.createGenerator(outputStream)
@@ -174,7 +174,7 @@ trait ExportService {
       }
     }
 
-    def writeQualityAssurance(generator: CsvGenerator, book: BookHit): Unit = {
+    def writeQualityAssurance(generator: CsvGenerator, book: BookHitV2): Unit = {
       val languageTag = LanguageTag(book.language.code)
       generator.writeStartArray()
       generator.writeRawValue(book.id.toString)
@@ -227,9 +227,9 @@ trait ExportService {
       generator.writeEndArray()
     }
 
-    def writeGooglePlay(generator: CsvGenerator, bookHit: BookHit): Unit = {
+    def writeGooglePlay(generator: CsvGenerator, bookHit: BookHitV2): Unit = {
       val languageTag = LanguageTag(bookHit.language.code)
-      readService.withIdAndLanguageForExport(bookHit.id, languageTag).foreach(book => {
+      readServiceV2.withIdAndLanguageForExport(bookHit.id, languageTag).foreach(book => {
         generator.writeStartArray()
         generator.writeRawValue(s"PKEY:${book.uuid}") // Identifier
         generator.writeString("Yes") // Enable for sale?

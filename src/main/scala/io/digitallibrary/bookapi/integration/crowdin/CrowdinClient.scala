@@ -11,7 +11,7 @@ import com.typesafe.scalalogging.LazyLogging
 import io.digitallibrary.bookapi.BookApiProperties
 import io.digitallibrary.bookapi.BookApiProperties.CrowdinTranslatorPlaceHolder
 import io.digitallibrary.network.GdlClient
-import io.digitallibrary.bookapi.model.api.{Book, Chapter, CrowdinException}
+import io.digitallibrary.bookapi.model.api.{Book, BookV2, Chapter, CrowdinException}
 import io.digitallibrary.bookapi.model.crowdin._
 import io.digitallibrary.bookapi.model.domain.{FileType, InTranslationFile, Translation}
 import org.json4s.DefaultFormats
@@ -180,6 +180,9 @@ object CrowdinUtils {
   def crowdinUrlToBook(book: Book, crowdinProjectId: String, toLanguage: String): String =
     s"https://crowdin.com/project/$crowdinProjectId/$toLanguage#/${directoryNameFor(book)}"
 
+  def crowdinUrlToBook(book: BookV2, crowdinProjectId: String, toLanguage: String): String =
+    s"https://crowdin.com/project/$crowdinProjectId/$toLanguage#/${directoryNameFor(book)}"
+
 
   def directoryName(id: Long, title: String) = {
     // The following are invalid characters at Crowdin: \ / : * ? " < > |
@@ -190,6 +193,7 @@ object CrowdinUtils {
   }
 
   def directoryNameFor(book: Book): String = directoryName(book.id, book.title)
+  def directoryNameFor(book: BookV2): String = directoryName(book.id, book.title)
   def directoryNameFor(translation: Translation): String = directoryName(translation.bookId, translation.title)
 
   def metadataFilenameFor(translation: Translation) = s"${directoryNameFor(translation)}/metadata.json"

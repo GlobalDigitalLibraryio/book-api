@@ -8,7 +8,10 @@
 package io.digitallibrary.bookapi.integration
 
 import com.amazonaws.services.s3.AmazonS3
+import com.amazonaws.services.apigateway.{AmazonApiGateway, AmazonApiGatewayClient}
 
 trait AmazonClient {
-  val amazonClient: AmazonS3
+  val amazonS3Client: AmazonS3
+  val awsApiGatewayClient: AmazonApiGateway
+
 }

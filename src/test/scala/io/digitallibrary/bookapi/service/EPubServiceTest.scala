@@ -46,17 +46,37 @@ class EPubServiceTest extends UnitSuite with TestEnvironment {
     }
   }
 
-  test("that createEPub creates a book with expected CoverPhoto") {
+  test("that createEPub creates a book with expected CoverPhoto, not migrated to media-service") {
     val translation = TestData.Domain.DefaultTranslation.copy(coverphoto = Some(1))
     val image = DownloadedImage(1, "image/png", "image-url.png", "png", "bytes".getBytes)
 
     when(unFlaggedTranslationsRepository.withUuId(any[String])(any[DBSession])).thenReturn(Some(translation))
     when(chapterRepository.chaptersForBookIdAndLanguage(any[Long], any[LanguageTag])(any[DBSession])).thenReturn(Seq())
-    when(imageApiClient.downloadImage(translation.coverphoto.get)).thenReturn(Success(image))
+    when(mediaApiClient.downloadImage(translation.coverphoto.get, None)).thenReturn(Failure(new RuntimeException("error")))
+    when(imageApiClient.downloadImage(translation.coverphoto.get, None)).thenReturn(Success(image))
 
     ePubService.createEPub(translation.language, translation.uuid) match {
       case None => fail("epub should be defined")
-      case Some(Failure(ex)) => fail("epub should be a success")
+      case Some(Failure(ex)) => ex.printStackTrace()
+      case Some(Success(book)) => {
+        val contents = JavaConverters.asScalaBuffer(book.getContents).toSeq
+        val coverImage = contents.find(_.getProperties == "cover-image").get
+        coverImage.getMediaType should equal (image.contentType)
+      }
+    }
+  }
+
+  test("that createEPub creates a book with expected CoverPhoto, migrated to media-service") {
+    val translation = TestData.Domain.DefaultTranslation.copy(coverphoto = Some(1))
+    val image = DownloadedImage(1, "image/png", "image-url.png", "png", "bytes".getBytes)
+
+    when(unFlaggedTranslationsRepository.withUuId(any[String])(any[DBSession])).thenReturn(Some(translation))
+    when(chapterRepository.chaptersForBookIdAndLanguage(any[Long], any[LanguageTag])(any[DBSession])).thenReturn(Seq())
+    when(mediaApiClient.downloadImage(translation.coverphoto.get, None)).thenReturn(Success(image))
+
+    ePubService.createEPub(translation.language, translation.uuid) match {
+      case None => fail("epub should be defined")
+      case Some(Failure(ex)) => ex.printStackTrace()
       case Some(Success(book)) => {
         val contents = JavaConverters.asScalaBuffer(book.getContents).toSeq
         val coverImage = contents.find(_.getProperties == "cover-image").get
@@ -70,7 +90,8 @@ class EPubServiceTest extends UnitSuite with TestEnvironment {
 
     when(unFlaggedTranslationsRepository.withUuId(any[String])(any[DBSession])).thenReturn(Some(translation))
     when(chapterRepository.chaptersForBookIdAndLanguage(any[Long], any[LanguageTag])(any[DBSession])).thenReturn(Seq())
-    when(imageApiClient.downloadImage(translation.coverphoto.get)).thenReturn(Failure(new RuntimeException("error")))
+    when(mediaApiClient.downloadImage(translation.coverphoto.get, None)).thenReturn(Failure(new RuntimeException("error")))
+    when(imageApiClient.downloadImage(translation.coverphoto.get, None)).thenReturn(Failure(new RuntimeException("error")))
 
     ePubService.createEPub(translation.language, translation.uuid) match {
       case None => fail("epub should be defined")

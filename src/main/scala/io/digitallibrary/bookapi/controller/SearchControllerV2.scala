@@ -13,15 +13,15 @@ import io.digitallibrary.bookapi.model.api
 import io.digitallibrary.bookapi.model.api.ValidationError
 import io.digitallibrary.bookapi.model.domain.{Paging, Sort}
 import io.digitallibrary.bookapi.service.ConverterService
-import io.digitallibrary.bookapi.service.search.SearchService
+import io.digitallibrary.bookapi.service.search.{SearchService, SearchServiceV2}
 import io.digitallibrary.language.model.LanguageTag
 import org.scalatra.swagger.{ResponseMessage, Swagger, SwaggerSupport}
 
-trait SearchController {
-  this: SearchService with ConverterService =>
-  val searchController: SearchController
+trait SearchControllerV2 {
+  this: SearchServiceV2 with ConverterService =>
+  val searchControllerV2: SearchControllerV2
 
-  class SearchController(implicit val swagger: Swagger) extends GdlController with SwaggerSupport {
+  class SearchControllerV2(implicit val swagger: Swagger) extends GdlController with SwaggerSupport {
     protected val applicationDescription = "API for searching books from GDL."
 
     def extractPageAndPageSize(): Paging = {
@@ -39,7 +39,7 @@ trait SearchController {
     val response404 = ResponseMessage(404, "Not found", Some("Error"))
     val response500 = ResponseMessage(500, "Unknown error", Some("Error"))
 
-    private val searchBooks = (apiOperation[api.SearchResult]("searchBooks")
+    private val searchBooks = (apiOperation[api.SearchResultV2]("searchBooks")
       summary s"Search for books in the default language $DefaultLanguage"
       description s"Returns a list of books in $DefaultLanguage"
       tags "Books v1"
@@ -52,7 +52,7 @@ trait SearchController {
       queryParam[Option[String]]("sort").description(s"Sorts result based on parameter. Possible values: ${Sort.values.mkString(",")}; Default value: ${Sort.ByRelevance}"))
       responseMessages response500)
 
-    private val searchBooksForLang = (apiOperation[api.SearchResult]("searchBooksForLang")
+    private val searchBooksForLang = (apiOperation[api.SearchResultV2]("searchBooksForLang")
       summary "Search for books in the provided language"
       description "Returns a list of books in the provided language"
       tags "Books v1"
@@ -72,14 +72,14 @@ trait SearchController {
       val sort = Sort.valueOf(paramOrNone("sort")).getOrElse(Sort.ByRelevance)
       paramOrNone("language") match {
         case Some(language) =>
-          searchService.searchWithQuery(
+          searchServiceV2.searchWithQuery(
             languageTag = LanguageTag(language),
             query = query,
             source = source,
             paging = extractPageAndPageSize(),
             sort = sort)
         case None =>
-          searchService.searchWithQueryForAllLanguages(
+          searchServiceV2.searchWithQueryForAllLanguages(
             query = query,
             source = source,
             paging = extractPageAndPageSize(),
@@ -92,7 +92,7 @@ trait SearchController {
       val source = paramOrNone("source")
       val sort = Sort.valueOf(paramOrNone("sort")).getOrElse(Sort.ByRelevance)
 
-      searchService.searchWithQuery(
+      searchServiceV2.searchWithQuery(
         languageTag = LanguageTag(params("lang")),
         query = query,
         source = source,

@@ -15,22 +15,39 @@ import io.digitallibrary.language.model.LanguageTag
 import io.digitallibrary.network.AuthUser
 import io.digitallibrary.bookapi.BookApiProperties.Domain
 import io.digitallibrary.bookapi.controller.NewFeaturedContent
-import io.digitallibrary.bookapi.integration.{ImageApiClient, ImageVariant}
+import io.digitallibrary.bookapi.integration.{ImageApiClient, ImageMediaVariant, ImageVariant, MediaApiClient}
 import io.digitallibrary.bookapi.integration.crowdin.CrowdinUtils
 import io.digitallibrary.bookapi.model.{api, _}
-import io.digitallibrary.bookapi.model.api.internal
+import io.digitallibrary.bookapi.model.api.{Book => _, Category => _, TranslateRequest => _, _}
 import io.digitallibrary.bookapi.model.api.internal.{NewChapter, NewEducationalAlignment, NewTranslation}
 import io.digitallibrary.bookapi.model.crowdin.CrowdinFile
 import io.digitallibrary.bookapi.model.domain._
 import io.digitallibrary.bookapi.{BookApiProperties, model}
 import io.digitallibrary.license.model.License
+import org.jsoup.Jsoup
+import org.jsoup.select.Elements
 
 
 trait ConverterService {
-  this: ImageApiClient with ContentConverter =>
+  this: ImageApiClient with MediaApiClient with ContentConverter =>
   val converterService: ConverterService
 
   class ConverterService extends LazyLogging {
+
+    def asV1Hit(hit: BookHitV2): BookHit = {
+      BookHit(hit.id,
+        hit.title,
+        hit.description,
+        hit.language,
+        hit.readingLevel,
+        hit.categories,
+        hit.coverImage.flatMap(x => toApiCoverImage(Some(x.imageId.toLong))),
+        hit.dateArrived,
+        hit.source,
+        hit.highlightTitle,
+        hit.highlightDescription)
+    }
+
     def asDomainTranslateRequest(translateRequest: api.TranslateRequest, userId: String): TranslateRequest = domain.TranslateRequest(
       translateRequest.bookId,
       translateRequest.fromLanguage,
@@ -253,6 +270,50 @@ trait ConverterService {
         chapter.chapterType.toString, apiContent.images)
     }
 
+    def toApiChapterV2(chapter: domain.Chapter, convertContent: Boolean = true): api.ChapterV2 = {
+      api.ChapterV2(
+        chapter.id.get,
+        chapter.revision.get,
+        chapter.seqNo,
+        chapter.title,
+        chapter.content,
+        chapter.chapterType.toString, getMediaList(chapter.content))
+    }
+
+    def getMediaList(content: String): Seq[Media] = {
+      var mediaList: Seq[Media] = Seq()
+
+      val document = Jsoup.parseBodyFragment(content)
+      val images: Elements = document.select("embed[data-resource='image']")
+      val audios: Elements = document.select("embed[data-resource='audio']")
+      val videos: Elements = document.select("embed[data-resource='video']")
+      for (i <- 0 until images.size()) {
+        val image = images.get(i)
+        val nodeId = image.attr("data-resource_id")
+        mediaList = mediaList :+ Media(getMediaUrl(MediaType.IMAGE, nodeId), MediaType.IMAGE.toString, nodeId)
+      }
+      for (i <- 0 until audios.size()) {
+        val audio = audios.get(i)
+        val nodeId = audio.attr("data-resource_id")
+        mediaList = mediaList :+ Media(getMediaUrl(MediaType.AUDIO, nodeId), MediaType.AUDIO.toString, nodeId)
+      }
+      for (i <- 0 until videos.size()) {
+        val video = videos.get(i)
+        val nodeId = video.attr("data-resource_id")
+        mediaList = mediaList :+ Media(getMediaUrl(MediaType.VIDEO, nodeId), MediaType.VIDEO.toString, nodeId)
+      }
+      mediaList
+    }
+
+    def getMediaUrl(mediaType: MediaType.Value, id: String): String = {
+      val url_path = mediaType match {
+        case MediaType.IMAGE => "images"
+        case MediaType.VIDEO => "videos"
+        case MediaType.AUDIO => "audio"
+      }
+      s"$Domain${BookApiProperties.MediaServicePath}/$url_path/$id"
+    }
+
     def toInternalApiBook(translation: domain.Translation, availableLanguages: Seq[LanguageTag], book: domain.Book): api.internal.Book = {
         model.api.internal.Book(
           id = book.id.get,
@@ -323,6 +384,44 @@ trait ConverterService {
           additionalInformation = translation.additionalInformation)
     }
 
+    def toApiBookV2(translation: domain.Translation, availableLanguages: Seq[LanguageTag], book: domain.Book): api.BookV2 = {
+      model.api.BookV2(
+        id = book.id.get,
+        revision = translation.revision.get,
+        externalId = translation.externalId,
+        uuid = translation.uuid,
+        title = translation.title,
+        description = translation.about,
+        translatedFrom = translation.translatedFrom.map(toApiLanguage),
+        language = toApiLanguage(translation.language),
+        availableLanguages = availableLanguages.map(toApiLanguage).sortBy(_.name),
+        license = toApiLicense(book.license),
+        publisher = toApiPublisher(book.publisher),
+        readingLevel = translation.readingLevel,
+        typicalAgeRange = translation.typicalAgeRange,
+        educationalUse = translation.educationalUse,
+        educationalRole = translation.educationalRole,
+        timeRequired = translation.timeRequired,
+        datePublished = translation.datePublished,
+        dateCreated = translation.dateCreated,
+        dateArrived = translation.dateArrived,
+        categories = toApiCategories(translation.categories),
+        coverImage = toApiCoverImageV2(translation.coverphoto),
+        downloads = toApiDownloads(translation),
+        tags = translation.tags,
+        contributors = toApiContributors(translation.contributors),
+        chapters = toApiChapterSummary(translation.chapters, translation.bookId, translation.language),
+        supportsTranslation = BookApiProperties.supportsTranslationFrom(translation.language) && translation.bookFormat.equals(BookFormat.HTML),
+        bookFormat = translation.bookFormat.toString,
+        pageOrientation = translation.pageOrientation.toString,
+        source = book.source,
+        publishingStatus = translation.publishingStatus.toString,
+        translationStatus = translation.translationStatus.map(_.toString),
+        additionalInformation = translation.additionalInformation)
+    }
+
+
+
     def toApiBookHit(translation: Option[domain.Translation], book: Option[domain.Book]): Option[api.BookHit] = {
       def toApiBookHitInternal(translation: domain.Translation, book: domain.Book): api.BookHit = {
         model.api.BookHit(
@@ -347,6 +446,30 @@ trait ConverterService {
       } yield api
     }
 
+    def toApiBookHitV2(translation: Option[domain.Translation], book: Option[domain.Book]): Option[api.BookHitV2] = {
+      def toApiBookHitV2Internal(translation: domain.Translation, book: domain.Book): api.BookHitV2 = {
+        model.api.BookHitV2(
+          id = book.id.get,
+          title = translation.title,
+          description = translation.about,
+          language = toApiLanguage(translation.language),
+          readingLevel = translation.readingLevel,
+          categories = toApiCategories(translation.categories),
+          coverImage = toApiCoverImageV2(translation.coverphoto),
+          dateArrived = translation.dateArrived,
+          source = book.source,
+          highlightTitle = None,
+          highlightDescription = None
+        )
+      }
+
+      for {
+        b <- book
+        t <- translation
+        api <- Some(toApiBookHitV2Internal(t, b))
+      } yield api
+    }
+
     def toApiMyBook(inTranslation: InTranslation, translation: domain.Translation, availableLanguages: Seq[LanguageTag], book: api.Book): api.MyBook = {
       api.MyBook(
         id = book.id,
@@ -356,6 +479,20 @@ trait ConverterService {
         translatedTo = toApiLanguage(translation.language),
         publisher = book.publisher,
         coverImage = toApiCoverImage(translation.coverphoto),
+        readingLevel = book.readingLevel,
+        synchronizeUrl = s"${BookApiProperties.Domain}${BookApiProperties.TranslationsPath}/synchronized/${inTranslation.id.get}",
+        crowdinUrl = CrowdinUtils.crowdinUrlToBook(book, inTranslation.crowdinProjectId, inTranslation.crowdinToLanguage))
+    }
+
+    def toApiMyBookV2(inTranslation: InTranslation, translation: domain.Translation, availableLanguages: Seq[LanguageTag], book: api.BookV2): api.MyBookV2 = {
+      api.MyBookV2(
+        id = book.id,
+        revision = book.revision,
+        title = translation.title,
+        translatedFrom = translation.translatedFrom.map(toApiLanguage),
+        translatedTo = toApiLanguage(translation.language),
+        publisher = book.publisher,
+        coverImage = toApiCoverImageV2(translation.coverphoto),
         readingLevel = book.readingLevel,
         synchronizeUrl = s"${BookApiProperties.Domain}${BookApiProperties.TranslationsPath}/synchronized/${inTranslation.id.get}",
         crowdinUrl = CrowdinUtils.crowdinUrlToBook(book, inTranslation.crowdinProjectId, inTranslation.crowdinToLanguage))
@@ -375,13 +512,37 @@ trait ConverterService {
       api.ImageVariant(variant.ratio, variant.x, variant.y, variant.width, variant.height)
     }
 
+    def asApiVariant(variant: ImageMediaVariant): api.ImageVariant = {
+      api.ImageVariant(variant.ratio, variant.x, variant.y, variant.width, variant.height)
+    }
+
     def toApiCoverImage(imageIdOpt: Option[Long]): Option[api.CoverImage] = {
-      imageIdOpt.flatMap(imageId =>
-        imageApiClient.imageMetaWithId(imageId))
-        .map(imageMeta => {
-          val variants = imageMeta.imageVariants.map(x => x.map(entry => entry._1 -> asApiVariant(entry._2)))
-          api.CoverImage(url = imageMeta.imageUrl, alttext = imageMeta.alttext.map(_.alttext), imageId = imageMeta.id, variants = variants)
-        })
+      imageIdOpt.flatMap(imageId => {
+        val imageMeta = mediaApiClient.imageMetaWithId(imageId)
+        imageMeta match {
+          case None => {
+            imageApiClient.imageMetaWithId(imageId).map(imageMeta => {
+              val variants = imageMeta.imageVariants.map(x => x.map(entry => entry._1 -> asApiVariant(entry._2)))
+              api.CoverImage(url = imageMeta.imageUrl, alttext = imageMeta.alttext.map(_.alttext), imageId = imageMeta.id, variants = variants)
+            })
+          }
+          case Some(x) => {
+            val variants_seq = x.imageVariants.map(variant => (variant.ratio, asApiVariant(variant)))
+            val variants = variants_seq match {
+              case first :: last => Some(variants_seq.toMap)
+              case _ => None
+            }
+            Option(api.CoverImage(url = x.resourceUrl, alttext = x.alttext, imageId = x.id, variants))
+          }
+        }
+      })
+    }
+
+    def toApiCoverImageV2(imageIdOpt: Option[Long]): Option[api.CoverImageV2] = {
+      imageIdOpt.map(imageId => {
+        val url = s"$Domain${BookApiProperties.MediaServicePath}/images/$imageId"
+        api.CoverImageV2(url, MediaType.IMAGE.toString, imageId.toString)
+      })
     }
 
     def toApiInternalCoverPhoto(imageIdOpt: Option[Long]): Option[api.internal.CoverPhoto] = imageIdOpt.map(api.internal.CoverPhoto)

@@ -30,6 +30,7 @@ trait CategoriesController {
     private val getCategoriesForLanguage = (apiOperation[Map[String, ReadingLevels]]("getCategoriesForLanguage")
       summary "Returns a hierarchy of categories and reading levels of books available in given language"
       description "Returns a hierarchy of categories and reading levels of books available in given language"
+      tags "Misc v1"
       parameters(
       headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
       pathParam[String]("lang").description("Desired language for books specified in ISO 639-1/2 format."))

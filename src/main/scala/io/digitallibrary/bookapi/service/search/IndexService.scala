@@ -89,7 +89,7 @@ trait IndexService extends LazyLogging {
       val actions: immutable.Seq[IndexDefinition] = for {
         translation <- translationList
         book: Option[domain.Book] = bookRepository.withId(translation.bookId)
-        source = write(converterService.toApiBookHit(Some(translation), book))
+        source = write(converterService.toApiBookHitV2(Some(translation), book))
       } yield IndexDefinition(indexAndType, id = Some(translation.id.get.toString), source = Some(source))
 
       esClient.execute(
@@ -149,8 +149,7 @@ trait IndexService extends LazyLogging {
         dateField("dateArrived"),
         keywordField("source"),
         objectField("coverImage").fields(
-          textField("url"),
-          textField("alttext")
+          textField("id")
         )
       ))
     }

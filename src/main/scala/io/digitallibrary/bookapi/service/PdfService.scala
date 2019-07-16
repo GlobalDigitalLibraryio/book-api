@@ -68,7 +68,7 @@ trait PdfService {
     }
 
     def getFromS3(uuid: String): Try[S3Object] = {
-      Try(amazonClient.getObject(new GetObjectRequest(BookApiProperties.StorageName, s"$uuid.pdf"))) match {
+      Try(amazonS3Client.getObject(new GetObjectRequest(BookApiProperties.StorageName, s"$uuid.pdf"))) match {
         case Success(success) => Success(success)
         case Failure(_) => Failure(new NotFoundException(s"Pdf with name $uuid.pdf does not exist"))
       }
@@ -79,7 +79,7 @@ trait PdfService {
       metadata.setContentType(contentType)
       metadata.setContentLength(size)
 
-      Try(amazonClient.putObject(new PutObjectRequest(BookApiProperties.StorageName, s"$uuid.pdf", stream, metadata))).map(_ => uuid)
+      Try(amazonS3Client.putObject(new PutObjectRequest(BookApiProperties.StorageName, s"$uuid.pdf", stream, metadata))).map(_ => uuid)
     }
   }
 }

@@ -7,21 +7,24 @@
 
 package io.digitallibrary.bookapi
 
+import com.amazonaws.services.apigateway.AmazonApiGateway
 import javax.sql
 import com.amazonaws.services.s3.AmazonS3
 import io.digitallibrary.network.GdlClient
 import io.digitallibrary.bookapi.controller._
 import io.digitallibrary.bookapi.integration.crowdin.CrowdinClientBuilder
 import io.digitallibrary.bookapi.integration._
+import io.digitallibrary.bookapi.model.api.{SearchResult, SearchResultV2}
 import io.digitallibrary.bookapi.repository._
 import io.digitallibrary.bookapi.service._
-import io.digitallibrary.bookapi.service.search.{IndexBuilderService, IndexService, SearchService}
+import io.digitallibrary.bookapi.service.search._
 import io.digitallibrary.bookapi.service.translation._
 import org.mockito.Mockito
 
 trait TestEnvironment
   extends DataSource
     with ReadService
+    with ReadServiceV2
     with SourceRepository
     with SourceController
     with WriteService
@@ -35,6 +38,7 @@ trait TestEnvironment
     with HealthController
     with GdlClient
     with ImageApiClient
+    with MediaApiClient
     with DownloadController
     with ValidationService
     with BookRepository
@@ -64,6 +68,7 @@ trait TestEnvironment
     with IndexBuilderService
     with IndexService
     with SearchService
+    with SearchServiceV2
     with SearchController
     with AmazonClient
     with CategoriesController
@@ -74,9 +79,11 @@ trait TestEnvironment
 {
 
   val dataSource = mock[sql.DataSource]
-  val amazonClient = mock[AmazonS3]
+  val amazonS3Client = mock[AmazonS3]
+  val awsApiGatewayClient = mock[AmazonApiGateway]
 
   val readService = mock[ReadService]
+  val readServiceV2 = mock[ReadServiceV2]
   val writeService = mock[WriteService]
   val converterService = mock[ConverterService]
 
@@ -94,6 +101,7 @@ trait TestEnvironment
 
   val gdlClient = mock[GdlClient]
   val imageApiClient = mock[ImageApiClient]
+  val mediaApiClient = mock[MediaApiClient]
   val downloadController = mock[DownloadController]
   val validationService = mock[ValidationService]
   val contentConverter = mock[ContentConverter]
@@ -124,6 +132,7 @@ trait TestEnvironment
   val indexBuilderService = mock[IndexBuilderService]
   val indexService = mock[IndexService]
   val searchService = mock[SearchService]
+  val searchServiceV2 = mock[SearchServiceV2]
   val searchController = mock[SearchController]
   val categoriesController = mock[CategoriesController]
   val importService = mock[ImportService]

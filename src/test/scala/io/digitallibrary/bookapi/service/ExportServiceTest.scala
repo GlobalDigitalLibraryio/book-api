@@ -11,7 +11,7 @@ import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 import java.time.LocalDate
 import java.util.zip.{ZipEntry, ZipInputStream}
 
-import io.digitallibrary.bookapi.model.api.{BookHit, Downloads, Language, SearchResult}
+import io.digitallibrary.bookapi.model.api._
 import io.digitallibrary.bookapi.model.domain.{CsvFormat, Paging, Sort}
 import io.digitallibrary.bookapi.{TestData, TestEnvironment, UnitSuite}
 import io.digitallibrary.language.model.LanguageTag
@@ -26,9 +26,9 @@ class ExportServiceTest extends UnitSuite with TestEnvironment {
 
   test("that export of books works as intended") {
     val outputStream = new ByteArrayOutputStream()
-    Mockito.when(searchService.searchWithQuery(any[LanguageTag], any[Option[String]], any[Option[String]], any[Paging], any[Sort.Value]))
-      .thenReturn(SearchResult(1L, 1, 1, Some(Language(TestData.LanguageCodeEnglish, "")),
-        Seq(BookHit(1, "This is a title", "Short description", Language(TestData.LanguageCodeEnglish, ""), None, Seq(), None, LocalDate.now(), "source", None, None)))
+    Mockito.when(searchServiceV2.searchWithQuery(any[LanguageTag], any[Option[String]], any[Option[String]], any[Paging], any[Sort.Value]))
+      .thenReturn(SearchResultV2(1L, 1, 1, Some(Language(TestData.LanguageCodeEnglish, "")),
+        Seq(BookHitV2(1, "This is a title", "Short description", Language(TestData.LanguageCodeEnglish, ""), None, Seq(), None, LocalDate.now(), "source", None, None)))
       )
     service.exportBooks(CsvFormat.QualityAssurance, LanguageTag(TestData.LanguageCodeEnglish), Some("all"), outputStream)
 
@@ -44,8 +44,8 @@ class ExportServiceTest extends UnitSuite with TestEnvironment {
 
   test("that export of no books gives csv with headers") {
     val outputStream = new ByteArrayOutputStream()
-    Mockito.when(searchService.searchWithQuery(any[LanguageTag], any[Option[String]], any[Option[String]], any[Paging], any[Sort.Value]))
-      .thenReturn(SearchResult(0L, 1, 0, Some(Language(TestData.LanguageCodeEnglish, "")), Seq()))
+    Mockito.when(searchServiceV2.searchWithQuery(any[LanguageTag], any[Option[String]], any[Option[String]], any[Paging], any[Sort.Value]))
+      .thenReturn(SearchResultV2(0L, 1, 0, Some(Language(TestData.LanguageCodeEnglish, "")), Seq()))
 
     service.exportBooks(CsvFormat.QualityAssurance, LanguageTag(TestData.LanguageCodeEnglish), Some("all"), outputStream)
     assert(outputStream.toString.contains("id,environment,language,title,description,source,url,approved,comment"))
@@ -53,15 +53,15 @@ class ExportServiceTest extends UnitSuite with TestEnvironment {
 
   test("that export of epubs creates a zip archive with all files") {
     val outputStream = new ByteArrayOutputStream()
-    Mockito.when(searchService.searchWithQuery(any[LanguageTag], any[Option[String]], any[Option[String]], any[Paging], any[Sort.Value]))
-      .thenReturn(SearchResult(2L, 1, 2, Some(Language(TestData.LanguageCodeEnglish, "")),
+    Mockito.when(searchServiceV2.searchWithQuery(any[LanguageTag], any[Option[String]], any[Option[String]], any[Paging], any[Sort.Value]))
+      .thenReturn(SearchResultV2(2L, 1, 2, Some(Language(TestData.LanguageCodeEnglish, "")),
         Seq(
-          BookHit(1, "This is the first title", "Short description", Language(TestData.LanguageCodeEnglish, ""), None, Seq(), None, LocalDate.now(), "source", None, None),
-          BookHit(2, "This is the second title", "Short description", Language(TestData.LanguageCodeEnglish, ""), None, Seq(), None, LocalDate.now(), "source", None, None)))
+          BookHitV2(1, "This is the first title", "Short description", Language(TestData.LanguageCodeEnglish, ""), None, Seq(), None, LocalDate.now(), "source", None, None),
+          BookHitV2(2, "This is the second title", "Short description", Language(TestData.LanguageCodeEnglish, ""), None, Seq(), None, LocalDate.now(), "source", None, None)))
       )
 
-    Mockito.when(readService.withIdAndLanguageForExport(eqTo(1L), any[LanguageTag])).thenReturn(Some(TestData.Internal.DefaultInternalBook.copy(uuid = "book-1-uuid", downloads = Downloads(Some("http://url-to-epub"), None))))
-    Mockito.when(readService.withIdAndLanguageForExport(eqTo(2L), any[LanguageTag])).thenReturn(Some(TestData.Internal.DefaultInternalBook.copy(uuid = "book-2-uuid", downloads = Downloads(Some("http://url-to-epub"), None))))
+    Mockito.when(readServiceV2.withIdAndLanguageForExport(eqTo(1L), any[LanguageTag])).thenReturn(Some(TestData.Internal.DefaultInternalBook.copy(uuid = "book-1-uuid", downloads = Downloads(Some("http://url-to-epub"), None))))
+    Mockito.when(readServiceV2.withIdAndLanguageForExport(eqTo(2L), any[LanguageTag])).thenReturn(Some(TestData.Internal.DefaultInternalBook.copy(uuid = "book-2-uuid", downloads = Downloads(Some("http://url-to-epub"), None))))
     Mockito.when(gdlClient.fetchBytes(any[HttpRequest])).thenReturn(Success("Content".getBytes))
 
     service.getAllEPubsAsZipFile(LanguageTag("en"), Some("storyweaver"), outputStream)
@@ -78,17 +78,17 @@ class ExportServiceTest extends UnitSuite with TestEnvironment {
 
   test("that export of epubs is still successfull even if one epub fails to download") {
     val outputStream = new ByteArrayOutputStream()
-    Mockito.when(searchService.searchWithQuery(any[LanguageTag], any[Option[String]], any[Option[String]], any[Paging], any[Sort.Value]))
-      .thenReturn(SearchResult(2L, 1, 2, Some(Language(TestData.LanguageCodeEnglish, "")),
+    Mockito.when(searchServiceV2.searchWithQuery(any[LanguageTag], any[Option[String]], any[Option[String]], any[Paging], any[Sort.Value]))
+      .thenReturn(SearchResultV2(2L, 1, 2, Some(Language(TestData.LanguageCodeEnglish, "")),
         Seq(
-          BookHit(1, "This is the first title", "Short description", Language(TestData.LanguageCodeEnglish, ""), None, Seq(), None, LocalDate.now(), "source", None, None),
-          BookHit(2, "This is the second title", "Short description", Language(TestData.LanguageCodeEnglish, ""), None, Seq(), None, LocalDate.now(), "source", None, None)))
+          BookHitV2(1, "This is the first title", "Short description", Language(TestData.LanguageCodeEnglish, ""), None, Seq(), None, LocalDate.now(), "source", None, None),
+          BookHitV2(2, "This is the second title", "Short description", Language(TestData.LanguageCodeEnglish, ""), None, Seq(), None, LocalDate.now(), "source", None, None)))
       )
 
     val url1 = "http://url-to-epub-1"
     val url2 = "http://url-to-epub-2"
-    Mockito.when(readService.withIdAndLanguageForExport(eqTo(1L), any[LanguageTag])).thenReturn(Some(TestData.Internal.DefaultInternalBook.copy(uuid = "book-1-uuid", downloads = Downloads(Some(url1), None))))
-    Mockito.when(readService.withIdAndLanguageForExport(eqTo(2L), any[LanguageTag])).thenReturn(Some(TestData.Internal.DefaultInternalBook.copy(uuid = "book-2-uuid", downloads = Downloads(Some(url2), None))))
+    Mockito.when(readServiceV2.withIdAndLanguageForExport(eqTo(1L), any[LanguageTag])).thenReturn(Some(TestData.Internal.DefaultInternalBook.copy(uuid = "book-1-uuid", downloads = Downloads(Some(url1), None))))
+    Mockito.when(readServiceV2.withIdAndLanguageForExport(eqTo(2L), any[LanguageTag])).thenReturn(Some(TestData.Internal.DefaultInternalBook.copy(uuid = "book-2-uuid", downloads = Downloads(Some(url2), None))))
 
     Mockito.when(gdlClient.fetchBytes(any[HttpRequest]))
       .thenReturn(Failure(new RuntimeException("Some-error")))

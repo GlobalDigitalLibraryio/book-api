@@ -24,6 +24,7 @@ trait LanguageController {
 
     private val getAllLanguages = (apiOperation[Seq[api.Language]]("getAllLanguages")
       summary s"Returns all languages with content in GDL"
+      tags "Misc v1"
       notes s"Returns all languages with content in GDL"
       parameters headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted.")
       responseMessages response500)

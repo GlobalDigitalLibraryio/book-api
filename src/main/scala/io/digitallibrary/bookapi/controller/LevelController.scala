@@ -26,6 +26,7 @@ trait LevelController {
 
     private val getAllLevels = (apiOperation[Seq[String]]("getAllLevels")
       summary s"Returns all levels with content in GDL"
+      tags "Misc v1"
       notes s"Returns all levels with content in GDL"
       parameters headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted.")
       authorizations "oauth2"
@@ -33,6 +34,7 @@ trait LevelController {
 
     private val getAllLevelsForLanguage = (apiOperation[Seq[String]]("getAllLevelsForLanguage")
       summary s"Returns all levels for specified language with content in GDL"
+      tags "Misc v1"
       notes s"Returns all levels for specified language with content in GDL"
       parameters(
         headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),

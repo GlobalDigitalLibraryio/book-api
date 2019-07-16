@@ -38,18 +38,21 @@ trait TranslationsController {
 
     private val getSupportedLanguages = (apiOperation[Seq[Language]]("List supported languages")
       summary "Retrieves a list of all supported languages to translate to"
+      tags "Translations v1"
       parameters
       headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted.")
       responseMessages(response400, response500))
 
     private val getTranslationProjects = (apiOperation[Map[String, String]]("Map language codes to translation projects")
       summary "Retrieves all translation projects"
+      tags "Translations v1"
       parameters
       headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted.")
       responseMessages(response400, response500))
 
     private val getSupportedLanguagesForLanguage = (apiOperation[Seq[Language]]("List supported languages")
       summary "Retrieves a list of all supported languages to translate to when translating from given language"
+      tags "Translations v1"
       parameters(
       headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
       pathParam[String]("language").description("The language to translate from."))
@@ -57,6 +60,7 @@ trait TranslationsController {
 
     private val getBookForTranslation = (apiOperation[BookForTranslation]("Get book for translation")
       summary "Retrieves the metadata for the book for translation"
+      tags "Translations v1"
       parameters(
       headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
       pathParam[String]("language").description("The language the book is being translated from"),
@@ -65,6 +69,7 @@ trait TranslationsController {
 
     private val getChapterForTranslation = (apiOperation[api.Chapter]("List supported languages")
     summary "Retrieves the chapter for translation"
+    tags "Translations v1"
     parameters(
       headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
       pathParam[String]("language").description("The language the book is being translated from"),
@@ -74,6 +79,7 @@ trait TranslationsController {
 
     private val sendResourceToTranslation = (apiOperation[TranslateResponse]("Send book to translation")
       summary "Sends a book to translation system"
+      tags "Translations v1"
       parameters (
       headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
       bodyParam[TranslateRequest])
@@ -82,6 +88,7 @@ trait TranslationsController {
 
     private val projectFileTranslated = (apiOperation[Unit]("Notify about a file that has been fully translated.")
       summary "Notifies about a file that has been translated fully"
+      tags "Translations v1"
       parameters (
         headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
         queryParam[String]("project").description("Project descriptor for translation system."),
@@ -93,6 +100,7 @@ trait TranslationsController {
 
     private val projectFileProofread = (apiOperation[Unit]("Notify about a file that has been fully proofread.")
       summary "Notifies about a file that has been proofread fully"
+      tags "Translations v1"
       parameters (
       headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
       queryParam[String]("project").description("Project descriptor for translation system."),
@@ -103,6 +111,7 @@ trait TranslationsController {
 
     private val listAllTranslatedBooks = (apiOperation[api.SearchResult]("List all books that have been translated fully through translation system.")
       summary "List all books that have been translated fully through translation system."
+      tags "Translations v1"
       parameters (
       headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
       queryParam[Option[Int]]("page-size").description("Return this many results per page."),
@@ -113,6 +122,7 @@ trait TranslationsController {
 
     private val listAllProofreadBooks = (apiOperation[api.SearchResult]("List all books that have been proofread fully through translation system.")
       summary "List all books that have been proofread fully through translation system."
+      tags "Translations v1"
       parameters (
       headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
       queryParam[Option[Int]]("page-size").description("Return this many results per page."),

@@ -10,6 +10,7 @@ package io.digitallibrary.bookapi.service.search
 import com.sksamuel.elastic4s.http.HttpClient
 import io.digitallibrary.language.model.LanguageTag
 import io.digitallibrary.bookapi.integration.E4sClient
+import io.digitallibrary.bookapi.model.api.SearchResult
 import io.digitallibrary.bookapi.model.domain.{Paging, Sort}
 import io.digitallibrary.bookapi.{TestData, TestEnvironment, UnitSuite}
 import io.digitallibrary.tag.IntegrationTest

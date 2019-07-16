@@ -31,6 +31,7 @@ trait ExportController {
       produces "text/csv"
       summary s"Export all books for language and source"
       description s"Returns a csv with books for language and source"
+      tags "Misc v1"
       parameters(
       headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
       pathParam[String]("lang").description("Export books for language specified in BCP-47 format."),
@@ -42,6 +43,7 @@ trait ExportController {
       produces "text/csv"
       summary s"Export all books for language and source on format for google play"
       description s"Returns a csv with books for language and source formatted for google play"
+      tags "Misc v1"
       parameters(
       headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
       pathParam[String]("lang").description("Export books for language specified in BCP-47 format."),
@@ -53,6 +55,7 @@ trait ExportController {
       produces "application/octet-stream"
       summary s"Export all books as epub files for language and source"
       description s"Export all books as epub files for language and source"
+      tags "Misc v1"
       parameters(
       headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
       pathParam[String]("lang").description("Export books for language specified in BCP-47 format."),
@@ -64,6 +67,7 @@ trait ExportController {
       produces "application/octet-stream"
       summary s"Export all cover images for language and source"
       description s"Export all cover images for language and source"
+      tags "Misc v1"
       parameters(
       headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
       pathParam[String]("lang").description("Export cover images for books in language specified in BCP-47 format."),

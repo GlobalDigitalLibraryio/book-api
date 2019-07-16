@@ -57,6 +57,7 @@ lazy val book_api = (project in file(".")).
       "org.postgresql" % "postgresql" % "42.2.1",
       "com.zaxxer" % "HikariCP" % "2.7.8",
       "com.amazonaws" % "aws-java-sdk-s3" % AwsSdkversion,
+      "com.amazonaws" % "aws-java-sdk-api-gateway" % AwsSdkversion,
       "org.flywaydb" % "flyway-core" % "4.0",
       "com.netaporter" %% "scala-uri" % "0.4.16",
       "org.scalatest" %% "scalatest" % ScalaTestVersion % "test",

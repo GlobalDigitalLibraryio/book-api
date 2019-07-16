@@ -11,15 +11,17 @@ package io.digitallibrary.bookapi
 import com.amazonaws.ClientConfiguration
 import com.amazonaws.client.builder.AwsClientBuilder
 import com.amazonaws.regions.Regions
+import com.amazonaws.services.apigateway.{AmazonApiGateway, AmazonApiGatewayClient, AmazonApiGatewayClientBuilder}
 import com.amazonaws.services.s3.{AmazonS3, AmazonS3ClientBuilder}
 import com.zaxxer.hikari.HikariDataSource
 import io.digitallibrary.bookapi.controller._
 import io.digitallibrary.bookapi.integration._
 import io.digitallibrary.bookapi.integration.crowdin.CrowdinClientBuilder
+import io.digitallibrary.bookapi.model.api.{SearchResult, SearchResultV2}
 import io.digitallibrary.bookapi.model.domain.{AllTranslations, UnflaggedTranslations}
 import io.digitallibrary.bookapi.repository._
 import io.digitallibrary.bookapi.service._
-import io.digitallibrary.bookapi.service.search.{IndexBuilderService, IndexService, SearchService}
+import io.digitallibrary.bookapi.service.search._
 import io.digitallibrary.bookapi.service.translation._
 import io.digitallibrary.network.GdlClient
 import scalikejdbc.{ConnectionPool, DataSourceConnectionPool}
@@ -28,6 +30,7 @@ object ComponentRegistry
   extends DataSource
   with LiveTransactionHandler
   with ReadService
+  with ReadServiceV2
   with WriteService
   with ElasticClient
   with ConverterService
@@ -41,6 +44,7 @@ object ComponentRegistry
   with SourceController
   with GdlClient
   with ImageApiClient
+  with MediaApiClient
   with DownloadController
   with ValidationService
   with BookRepository
@@ -70,6 +74,7 @@ object ComponentRegistry
   with IndexService
   with IndexBuilderService
   with SearchService
+  with SearchServiceV2
   with SearchController
   with CategoriesController
   with AmazonClient
@@ -77,6 +82,7 @@ object ComponentRegistry
   with ExportController
   with ExportService
   with SynchronizeService
+  with BooksControllerV2
 {
   implicit val swagger = new BookSwagger
 
@@ -88,7 +94,7 @@ object ComponentRegistry
   dataSource.setSchema(BookApiProperties.MetaSchema)
   ConnectionPool.singleton(new DataSourceConnectionPool(dataSource))
 
-  val amazonClient: AmazonS3 = {
+  val amazonS3Client: AmazonS3 = {
     val commonClient = AmazonS3ClientBuilder
       .standard()
       .withClientConfiguration(
@@ -106,7 +112,11 @@ object ComponentRegistry
     }).build()
   }
 
+  val awsApiGatewayClient: AmazonApiGateway =
+    AmazonApiGatewayClientBuilder.standard().withClientConfiguration(new ClientConfiguration().withTcpKeepAlive(false)).withRegion(Regions.EU_CENTRAL_1).build()
+
   lazy val booksController = new BooksController
+  lazy val booksControllerV2 = new BooksControllerV2
   lazy val healthController = new HealthController
   lazy val resourcesApp = new ResourcesApp
   lazy val internController = new InternController
@@ -115,12 +125,14 @@ object ComponentRegistry
   lazy val sourceController = new SourceController
 
   lazy val readService = new ReadService
+  lazy val readServiceV2 = new ReadServiceV2
   lazy val writeService = new WriteService
   lazy val converterService = new ConverterService
 
   lazy val esClient: E4sClient = EsClientFactory.getClient()
   lazy val gdlClient = new GdlClient
   lazy val imageApiClient = new ImageApiClient
+  lazy val mediaApiClient = new MediaApiClient
   lazy val downloadController = new DownloadController
   lazy val validationService = new ValidationService
   lazy val contentConverter = new ContentConverter
@@ -153,6 +165,7 @@ object ComponentRegistry
   lazy val indexService = new IndexService
   lazy val indexBuilderService = new IndexBuilderService
   lazy val searchService = new SearchService
+  lazy val searchServiceV2 = new SearchServiceV2
   lazy val searchController = new SearchController
   lazy val categoriesController = new CategoriesController
   lazy val importService = new ImportService
