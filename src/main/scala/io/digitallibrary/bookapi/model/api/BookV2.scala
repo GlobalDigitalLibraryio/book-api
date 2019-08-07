@@ -118,8 +118,21 @@ case class FeaturedContentV2(@(ApiModelProperty@field)(description = "The id of 
 case class BookForTranslationV2(@(ApiModelProperty@field)(description = "The id of the book") id: Long,
                               @(ApiModelProperty@field)(description = "The title of the book") title: String,
                               @(ApiModelProperty@field)(description = "Description of the book") description: String,
-                              @(ApiModelProperty@field)(description = "Cover image information") coverImage: Option[CoverImage],
+                              @(ApiModelProperty@field)(description = "Cover image information") coverImage: Option[CoverImageV2],
                               @(ApiModelProperty@field)(description = "Information about the chapters in the book") chapters: Seq[ChapterSummary])
+
+@ApiModel(description = "Information about an Entry in an OPDS-Feed")
+case class FeedEntryV2(@(ApiModelProperty@field)(description = "The book associated with this entry") book: BookV2,
+                     @(ApiModelProperty@field)(description = "The revision of the feed") categories: Seq[FeedCategory] = Seq())
+
+@ApiModel(description = "Information about an OPDS-Feed")
+case class FeedV2(@(ApiModelProperty@field)(description = "Definitions of the feed") feedDefinition: FeedDefinition,
+                @(ApiModelProperty@field)(description = "Title of the feed") title: String,
+                @(ApiModelProperty@field)(description = "Description of the feed") description: Option[String],
+                @(ApiModelProperty@field)(description = "rel attribute of each entry's link tag") rel: Option[String],
+                @(ApiModelProperty@field)(description = "When the feed was last updated") updated: ZonedDateTime,
+                @(ApiModelProperty@field)(description = "List of feed entries") content: Seq[FeedEntryV2],
+                @(ApiModelProperty@field)(description = "List of facets, which contain links to other feeds or variants of the current one") facets: Seq[Facet])
 
 object MediaType extends Enumeration {
   val IMAGE, AUDIO, VIDEO = Value

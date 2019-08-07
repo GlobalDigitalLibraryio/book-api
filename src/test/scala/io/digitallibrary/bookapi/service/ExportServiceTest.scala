@@ -60,8 +60,8 @@ class ExportServiceTest extends UnitSuite with TestEnvironment {
           BookHitV2(2, "This is the second title", "Short description", Language(TestData.LanguageCodeEnglish, ""), None, Seq(), None, LocalDate.now(), "source", None, None)))
       )
 
-    Mockito.when(readServiceV2.withIdAndLanguageForExport(eqTo(1L), any[LanguageTag])).thenReturn(Some(TestData.Internal.DefaultInternalBook.copy(uuid = "book-1-uuid", downloads = Downloads(Some("http://url-to-epub"), None))))
-    Mockito.when(readServiceV2.withIdAndLanguageForExport(eqTo(2L), any[LanguageTag])).thenReturn(Some(TestData.Internal.DefaultInternalBook.copy(uuid = "book-2-uuid", downloads = Downloads(Some("http://url-to-epub"), None))))
+    Mockito.when(readServiceV2.withIdAndLanguageForExport(eqTo(1L), any[LanguageTag])).thenReturn(Some(TestData.Internal.DefaultInternalBookV2.copy(uuid = "book-1-uuid", downloads = Downloads(Some("http://url-to-epub"), None))))
+    Mockito.when(readServiceV2.withIdAndLanguageForExport(eqTo(2L), any[LanguageTag])).thenReturn(Some(TestData.Internal.DefaultInternalBookV2.copy(uuid = "book-2-uuid", downloads = Downloads(Some("http://url-to-epub"), None))))
     Mockito.when(gdlClient.fetchBytes(any[HttpRequest])).thenReturn(Success("Content".getBytes))
 
     service.getAllEPubsAsZipFile(LanguageTag("en"), Some("storyweaver"), outputStream)
@@ -87,8 +87,8 @@ class ExportServiceTest extends UnitSuite with TestEnvironment {
 
     val url1 = "http://url-to-epub-1"
     val url2 = "http://url-to-epub-2"
-    Mockito.when(readServiceV2.withIdAndLanguageForExport(eqTo(1L), any[LanguageTag])).thenReturn(Some(TestData.Internal.DefaultInternalBook.copy(uuid = "book-1-uuid", downloads = Downloads(Some(url1), None))))
-    Mockito.when(readServiceV2.withIdAndLanguageForExport(eqTo(2L), any[LanguageTag])).thenReturn(Some(TestData.Internal.DefaultInternalBook.copy(uuid = "book-2-uuid", downloads = Downloads(Some(url2), None))))
+    Mockito.when(readServiceV2.withIdAndLanguageForExport(eqTo(1L), any[LanguageTag])).thenReturn(Some(TestData.Internal.DefaultInternalBookV2.copy(uuid = "book-1-uuid", downloads = Downloads(Some(url1), None))))
+    Mockito.when(readServiceV2.withIdAndLanguageForExport(eqTo(2L), any[LanguageTag])).thenReturn(Some(TestData.Internal.DefaultInternalBookV2.copy(uuid = "book-2-uuid", downloads = Downloads(Some(url2), None))))
 
     Mockito.when(gdlClient.fetchBytes(any[HttpRequest]))
       .thenReturn(Failure(new RuntimeException("Some-error")))

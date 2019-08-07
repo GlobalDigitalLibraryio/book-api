@@ -22,12 +22,12 @@ class MediaApiClientTest extends UnitSuite with TestEnvironment {
   override val gdlClient: GdlClient = new GdlClient
   val client = new MediaApiClient
 
-  test("parsing ContentType works with only contentType") {
+  test("that parsing ContentType works with only contentType") {
     val downloadedImageTry = client.downloadImage(id = 1, format = Some("jpg"))
     downloadedImageTry match {
       case Failure(ex) => ex.printStackTrace()
       case Success(downloadedImage) => {
-        val filename = s"/Users/kes/temp/${downloadedImage.filename}"
+        val filename = s"../temp/${downloadedImage.filename}"
         println(s"Filename will be $filename")
         val bos = new BufferedOutputStream(new FileOutputStream(filename))
         bos.write(downloadedImage.bytes)

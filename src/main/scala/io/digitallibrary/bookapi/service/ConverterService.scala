@@ -18,7 +18,7 @@ import io.digitallibrary.bookapi.controller.NewFeaturedContent
 import io.digitallibrary.bookapi.integration.{ImageApiClient, ImageMediaVariant, ImageVariant, MediaApiClient}
 import io.digitallibrary.bookapi.integration.crowdin.CrowdinUtils
 import io.digitallibrary.bookapi.model.{api, _}
-import io.digitallibrary.bookapi.model.api.{Book => _, Category => _, TranslateRequest => _, _}
+import io.digitallibrary.bookapi.model.api.{Book => _, BookV2 => _, Category => _, TranslateRequest => _, _}
 import io.digitallibrary.bookapi.model.api.internal.{NewChapter, NewEducationalAlignment, NewTranslation}
 import io.digitallibrary.bookapi.model.crowdin.CrowdinFile
 import io.digitallibrary.bookapi.model.domain._
@@ -68,6 +68,19 @@ trait ConverterService {
       })
     }
 
+    def toBookV2ForTranslation(book: api.BookV2): Option[api.BookForTranslationV2] = {
+      book.translatedFrom.map(fromLanguage => {
+        api.BookForTranslationV2(
+          book.id,
+          book.title,
+          book.description,
+          book.coverImage,
+          book.chapters.map(chapter => {
+            api.ChapterSummary(chapter.id, chapter.seqNo, chapter.title, s"${Domain}${BookApiProperties.TranslationsPath}/${fromLanguage.code}/${book.id}/chapters/${chapter.id}")
+          }))
+      })
+    }
+
     def toDomainChapter(chapter: api.Chapter, translationId: Long): domain.Chapter = {
       domain.Chapter(
         id = None,
@@ -79,7 +92,27 @@ trait ConverterService {
         chapterType = ChapterType.valueOf(chapter.chapterType).get)
     }
 
+    def toDomainChapterV2(chapter: api.ChapterV2, translationId: Long): domain.Chapter = {
+      domain.Chapter(
+        id = None,
+        revision = None,
+        translationId = translationId,
+        seqNo = chapter.seqNo,
+        title = chapter.title,
+        content = chapter.content,
+        chapterType = ChapterType.valueOf(chapter.chapterType).get)
+    }
+
     def mergeChapter(existing: domain.Chapter, replacement: api.Chapter): domain.Chapter = {
+      existing.copy(
+        seqNo = replacement.seqNo,
+        title = replacement.title,
+        content = replacement.content,
+        chapterType = ChapterType.valueOf(replacement.chapterType).get
+      )
+    }
+
+    def mergeChapterV2(existing: domain.Chapter, replacement: api.ChapterV2): domain.Chapter = {
       existing.copy(
         seqNo = replacement.seqNo,
         title = replacement.title,
@@ -113,7 +146,75 @@ trait ConverterService {
       )
     }
 
+    def mergeTranslationV2(existingTranslation: Translation, newBook: internal.BookV2, categories: Seq[Category]): domain.Translation = {
+      existingTranslation.copy(
+        externalId = newBook.externalId,
+        title = newBook.title,
+        about = newBook.description,
+        language = LanguageTag(newBook.language.code),
+        translatedFrom = newBook.translatedFrom.map(tf => LanguageTag(tf.code)),
+        datePublished = newBook.datePublished,
+        dateCreated = newBook.dateCreated,
+        categoryIds = categories.map(_.id.get),
+        coverphoto = newBook.coverPhoto.map(_.imageApiId),
+        tags = newBook.tags,
+        educationalUse = newBook.educationalUse,
+        educationalRole = newBook.educationalRole,
+        timeRequired = newBook.timeRequired,
+        typicalAgeRange = newBook.typicalAgeRange,
+        readingLevel = newBook.readingLevel,
+        dateArrived = newBook.dateArrived,
+        publishingStatus = PublishingStatus.PUBLISHED,
+        categories = categories,
+        bookFormat = BookFormat.valueOfOrDefault(newBook.bookFormat),
+        pageOrientation = PageOrientation.valueOfOrDefault(newBook.pageOrientation)
+      )
+    }
+
     def toDomainTranslation(newBook: internal.Book, persistedBook: Book, categories: Seq[Category]): domain.Translation = {
+      domain.Translation(
+        id = None,
+        revision = None,
+        bookId = persistedBook.id.get,
+        externalId = newBook.externalId,
+        uuid = UUID.randomUUID().toString,
+        title = newBook.title,
+        about = newBook.description,
+        numPages = None,
+        language = LanguageTag(newBook.language.code),
+        translatedFrom = newBook.translatedFrom.map(tf => LanguageTag(tf.code)),
+        datePublished = newBook.datePublished,
+        dateCreated = newBook.dateCreated,
+        categoryIds = categories.map(_.id.get),
+        coverphoto = newBook.coverPhoto.map(_.imageApiId),
+        tags = newBook.tags,
+        isBasedOnUrl = None,
+        educationalUse = newBook.educationalUse,
+        educationalRole = newBook.educationalRole,
+        eaId = None,
+        timeRequired = newBook.timeRequired,
+        typicalAgeRange = newBook.typicalAgeRange,
+        readingLevel = newBook.readingLevel,
+        interactivityType = None,
+        learningResourceType = None,
+        accessibilityApi = None,
+        accessibilityControl = None,
+        accessibilityFeature = None,
+        accessibilityHazard = None,
+        dateArrived = newBook.dateArrived,
+        publishingStatus = PublishingStatus.PUBLISHED,
+        translationStatus = None,
+        educationalAlignment = None,
+        chapters = Seq(),
+        contributors = Seq(),
+        categories = categories,
+        bookFormat = BookFormat.valueOfOrDefault(newBook.bookFormat),
+        pageOrientation = PageOrientation.valueOfOrDefault(newBook.pageOrientation),
+        additionalInformation = newBook.additionalInformation
+      )
+    }
+
+    def toDomainTranslationV2(newBook: internal.BookV2, persistedBook: Book, categories: Seq[Category]): domain.Translation = {
       domain.Translation(
         id = None,
         revision = None,
@@ -348,6 +449,40 @@ trait ConverterService {
           additionalInformation = translation.additionalInformation)
     }
 
+    def toInternalApiBookV2(translation: domain.Translation, availableLanguages: Seq[LanguageTag], book: domain.Book): api.internal.BookV2 = {
+      model.api.internal.BookV2(
+        id = book.id.get,
+        revision = book.revision.get,
+        externalId = translation.externalId,
+        uuid = translation.uuid,
+        title = translation.title,
+        description = translation.about,
+        translatedFrom = translation.translatedFrom.map(toApiLanguage),
+        language = toApiLanguage(translation.language),
+        availableLanguages = availableLanguages.map(toApiLanguage).sortBy(_.name),
+        license = toApiLicense(book.license),
+        publisher = toApiPublisher(book.publisher),
+        readingLevel = translation.readingLevel,
+        typicalAgeRange = translation.typicalAgeRange,
+        educationalUse = translation.educationalUse,
+        educationalRole = translation.educationalRole,
+        timeRequired = translation.timeRequired,
+        datePublished = translation.datePublished,
+        dateCreated = translation.dateCreated,
+        dateArrived = translation.dateArrived,
+        categories = toApiCategories(translation.categories),
+        coverPhoto = toApiInternalCoverPhoto(translation.coverphoto),
+        downloads = toApiDownloads(translation),
+        tags = translation.tags,
+        contributors = toApiContributors(translation.contributors),
+        chapters = translation.chapters.map(toApiChapterV2(_, convertContent = false)),
+        supportsTranslation = BookApiProperties.supportsTranslationFrom(translation.language) && translation.bookFormat.equals(BookFormat.HTML),
+        bookFormat = translation.bookFormat.toString,
+        source = book.source,
+        pageOrientation = translation.pageOrientation.toString,
+        additionalInformation = translation.additionalInformation)
+    }
+
     def toApiBook(translation: domain.Translation, availableLanguages: Seq[LanguageTag], book: domain.Book): api.Book = {
         model.api.Book(
           id = book.id.get,
@@ -495,7 +630,7 @@ trait ConverterService {
         coverImage = toApiCoverImageV2(translation.coverphoto),
         readingLevel = book.readingLevel,
         synchronizeUrl = s"${BookApiProperties.Domain}${BookApiProperties.TranslationsPath}/synchronized/${inTranslation.id.get}",
-        crowdinUrl = CrowdinUtils.crowdinUrlToBook(book, inTranslation.crowdinProjectId, inTranslation.crowdinToLanguage))
+        crowdinUrl = CrowdinUtils.crowdinUrlToBookV2(book, inTranslation.crowdinProjectId, inTranslation.crowdinToLanguage))
     }
 
 

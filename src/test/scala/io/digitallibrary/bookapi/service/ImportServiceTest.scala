@@ -18,7 +18,7 @@ class ImportServiceTest extends UnitSuite with TestEnvironment {
   test("that validCategories returns Failure with validation messages for each invalid category") {
     val invalidCategory1 = api.Category(2, 1, "This is invalid")
     val invalidCategory2 = api.Category(3, 1, "This is also invalid")
-    val book = TestData.Internal.DefaultInternalBook.copy(categories = Seq(invalidCategory1, invalidCategory2))
+    val book = TestData.Internal.DefaultInternalBookV2.copy(categories = Seq(invalidCategory1, invalidCategory2))
 
     when(categoryRepository.withName(anyString())(any[DBSession])).thenReturn(None)
 
@@ -33,7 +33,7 @@ class ImportServiceTest extends UnitSuite with TestEnvironment {
   test("that validCategories returns Success when all categories are valid") {
     val category1 = api.Category(2, 1, "category1")
     val category2 = api.Category(3, 1, "category2")
-    val book = TestData.Internal.DefaultInternalBook.copy(categories = Seq(category1, category2))
+    val book = TestData.Internal.DefaultInternalBookV2.copy(categories = Seq(category1, category2))
 
     when(categoryRepository.withName(eqTo("category1"))(any[DBSession])).thenReturn(Some(TestData.Domain.DefaultCategory.copy(name = "Category 1")))
     when(categoryRepository.withName(eqTo("category2"))(any[DBSession])).thenReturn(Some(TestData.Domain.DefaultCategory.copy(name = "Category 1")))
@@ -66,7 +66,7 @@ class ImportServiceTest extends UnitSuite with TestEnvironment {
 
   test("that persistContributorsUpdate removes contributors that no longer are part of book") {
     val translation = TestData.Domain.DefaultTranslation.copy(contributors = Seq(TestData.Domain.DefaultContributor))
-    val book = TestData.Internal.DefaultInternalBook.copy(contributors = Seq())
+    val book = TestData.Internal.DefaultInternalBookV2.copy(contributors = Seq())
 
     service.persistContributorsUpdate(translation, book)
     verify(contributorRepository).remove(any[domain.Contributor])(any[DBSession])
@@ -74,7 +74,7 @@ class ImportServiceTest extends UnitSuite with TestEnvironment {
 
   test("that persistContributorsUpdate adds contributors that are part of book") {
     val translation = TestData.Domain.DefaultTranslation.copy(contributors = Seq())
-    val book = TestData.Internal.DefaultInternalBook.copy(contributors = Seq(TestData.Api.author1))
+    val book = TestData.Internal.DefaultInternalBookV2.copy(contributors = Seq(TestData.Api.author1))
 
     when(personRepository.withName(anyString())(any[DBSession])).thenReturn(Some(TestData.Domain.DefaultPerson))
     when(contributorRepository.add(any[domain.Contributor])(any[DBSession])).thenReturn(TestData.Domain.DefaultContributor)
@@ -86,7 +86,7 @@ class ImportServiceTest extends UnitSuite with TestEnvironment {
 
   test("that persistChapterUpdates updates existing chapters") {
     val translation = TestData.Domain.DefaultTranslation
-    val book = TestData.Internal.DefaultInternalBook.copy(chapters = Seq(TestData.Api.Chapter1))
+    val book = TestData.Internal.DefaultInternalBookV2.copy(chapters = Seq(TestData.ApiV2.Chapter1))
 
     when(chapterRepository.forTranslationWithSeqNo(eqTo(translation.id.get), eqTo(TestData.Api.Chapter1.seqNo.toLong))(any[DBSession])).thenReturn(Some(TestData.Domain.DefaultChapter))
     when(chapterRepository.updateChapter(any[domain.Chapter])(any[DBSession])).thenReturn(TestData.Domain.DefaultChapter)
@@ -99,7 +99,7 @@ class ImportServiceTest extends UnitSuite with TestEnvironment {
 
   test("that persistChapterUpdates adds new chapters and deletes redundant chapters") {
     val translation = TestData.Domain.DefaultTranslation
-    val book = TestData.Internal.DefaultInternalBook.copy(chapters = Seq(TestData.Api.Chapter1))
+    val book = TestData.Internal.DefaultInternalBookV2.copy(chapters = Seq(TestData.ApiV2.Chapter1))
 
     when(chapterRepository.forTranslationWithSeqNo(eqTo(translation.id.get), eqTo(TestData.Api.Chapter1.seqNo.toLong))(any[DBSession])).thenReturn(None)
     when(chapterRepository.updateChapter(any[domain.Chapter])(any[DBSession])).thenReturn(TestData.Domain.DefaultChapter)

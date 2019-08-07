@@ -9,7 +9,7 @@
 package io.digitallibrary.bookapi.controller
 
 import io.digitallibrary.language.model.LanguageTag
-import io.digitallibrary.bookapi.model.api.internal.{Book, NewBook, NewChapter, NewTranslation}
+import io.digitallibrary.bookapi.model.api.internal.{BookV2, NewBook, NewChapter, NewTranslation}
 import io.digitallibrary.bookapi.model.api.{Error, ValidationException, ValidationMessage}
 import io.digitallibrary.bookapi.service._
 import io.digitallibrary.bookapi.service.search.{IndexBuilderService, IndexService}
@@ -18,8 +18,11 @@ import org.scalatra.{Conflict, InternalServerError, NotFound, Ok}
 
 import scala.util.{Failure, Success}
 
+/**
+  * ! This is only used internal by GDL for import and so on. So for v2, we just updates the services directly
+  */
 trait InternController {
-  this: WriteService with ReadService with ConverterService with ValidationService with FeedService with PdfService with IndexBuilderService with IndexService with ImportService =>
+  this: WriteService with ReadServiceV2 with ConverterService with ValidationService with FeedServiceV2 with PdfServiceV2 with IndexBuilderService with IndexService with ImportService =>
   val internController: InternController
 
   class InternController extends GdlController with FileUploadSupport{
@@ -37,19 +40,19 @@ trait InternController {
       val language = LanguageTag(params("lang"))
       val bookId = long("id")
 
-      readService.withIdAndLanguageForExport(bookId, language) match {
+      readServiceV2.withIdAndLanguageForExport(bookId, language) match {
         case Some(x) => x
         case None => NotFound(body = Error(Error.NOT_FOUND, s"No book with id $bookId and language $language found"))
       }
     }
 
     post("/import/book/") {
-      val newBook = extract[Book](request.body)
+      val newBook = extract[BookV2](request.body)
       importService.importBook(newBook)
     }
 
     post("/import/translation/:book_id/") {
-      val newBook = extract[Book](request.body)
+      val newBook = extract[BookV2](request.body)
       importService.importBookAsTranslation(newBook, long("book_id"))
     }
 
@@ -67,7 +70,7 @@ trait InternController {
       val newTranslation = extract[NewTranslation](request.body)
       val language = LanguageTag(newTranslation.language)
 
-      readService.withIdAndLanguage(bookId, language) match {
+      readServiceV2.withIdAndLanguage(bookId, language) match {
         case Some(_) => Conflict(body = Error(Error.ALREADY_EXISTS, s"A translation with language '${newTranslation.language}' already exists for book with id '$bookId'. Updating is not supported yet"))
         case None => writeService.newTranslationForBook(bookId, newTranslation) match {
           case Success(x) => x
@@ -104,7 +107,7 @@ trait InternController {
       val translationId = long("translationid")
       val seqno = long("seqno")
 
-      readService.chapterWithSeqNoForTranslation(translationId, seqno) match {
+      readServiceV2.chapterWithSeqNoForTranslation(translationId, seqno) match {
         case Some(x) => x
         case None => NotFound(body = Error(Error.NOT_FOUND, s"No chapter with seq_no $seqno for translation with id $translationId found"))
       }
@@ -125,7 +128,7 @@ trait InternController {
     get("/:externalId") {
       val externalId = params.get("externalId")
 
-      readService.withExternalId(externalId) match {
+      readServiceV2.withExternalId(externalId) match {
         case Some(x) => x
         case None => NotFound(body = Error(Error.NOT_FOUND, s"No book with id $externalId found"))
       }
@@ -135,7 +138,7 @@ trait InternController {
       val bookId = long("bookid")
       val externalId = params("externalid")
 
-      readService.translationWithExternalId(Some(externalId)) match {
+      readServiceV2.translationWithExternalId(Some(externalId)) match {
         case Some(x) => x
         case None => NotFound(body = Error(Error.NOT_FOUND, s"No translation for book $bookId with external_id $externalId found"))
       }
@@ -145,14 +148,14 @@ trait InternController {
       val translationId = long("translationid")
       val file = fileParams.getOrElse("file", throw new ValidationException(errors = Seq(ValidationMessage("file", "The request must contain a book file"))))
 
-      readService.uuidWithTranslationId(Some(translationId)) match {
-        case Some(uuid) => pdfService.uploadFromStream(file.getInputStream, uuid.uuid, file.contentType.get, file.size)
+      readServiceV2.uuidWithTranslationId(Some(translationId)) match {
+        case Some(uuid) => pdfServiceV2.uploadFromStream(file.getInputStream, uuid.uuid, file.contentType.get, file.size)
         case None => NotFound(body = Error(Error.NOT_FOUND, s"No translation with id $translationId found"))
       }
     }
 
     get("/feeds/") {
-      feedService.generateFeeds()
+      feedServiceV2.generateFeeds()
     }
 
     post("/index") {

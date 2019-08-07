@@ -27,12 +27,15 @@ trait TestEnvironment
     with ReadServiceV2
     with SourceRepository
     with SourceController
+    with SourceControllerV2
     with WriteService
+    with WriteServiceV2
     with ElasticClient
     with ConverterService
     with ContentConverter
     with TestTransactionHandler
     with BooksController
+    with BooksControllerV2
     with LanguageController
     with LevelController
     with HealthController
@@ -40,6 +43,7 @@ trait TestEnvironment
     with ImageApiClient
     with MediaApiClient
     with DownloadController
+    with DownloadControllerV2
     with ValidationService
     with BookRepository
     with CategoryRepository
@@ -51,16 +55,22 @@ trait TestEnvironment
     with PublisherRepository
     with EPubService
     with PdfService
+    with PdfServiceV2
     with FeedRepository
     with FeedService
+    with FeedServiceV2
     with FeedLocalizationService
     with OPDSController
+    with OPDSControllerV2
     with TranslationsController
+    with TranslationsControllerV2
     with SupportedLanguageService
     with CrowdinClientBuilder
     with FeaturedContentRepository
     with TranslationService
+    with TranslationServiceV2
     with FeaturedContentController
+    with FeaturedContentControllerV2
     with TranslationDbService
     with InTranslationRepository
     with InTranslationFileRepository
@@ -72,6 +82,7 @@ trait TestEnvironment
     with SearchController
     with AmazonClient
     with CategoriesController
+    with CategoriesControllerV2
     with ImportService
     with ExportController
     with ExportService
@@ -85,16 +96,20 @@ trait TestEnvironment
   val readService = mock[ReadService]
   val readServiceV2 = mock[ReadServiceV2]
   val writeService = mock[WriteService]
+  val writeServiceV2 = mock[WriteServiceV2]
   val converterService = mock[ConverterService]
 
   val resourcesApp = mock[ResourcesApp]
   val healthController = mock[HealthController]
   val booksController = mock[BooksController]
+  val booksControllerV2 = mock[BooksControllerV2]
   val languageController = mock[LanguageController]
   val levelController = mock[LevelController]
   val featuredContentController = mock[FeaturedContentController]
+  val featuredContentControllerV2 = mock[FeaturedContentControllerV2]
 
   val sourceController = mock[SourceController]
+  val sourceControllerV2 = mock[SourceControllerV2]
   val sourceRepository = mock[SourceRepository]
 
   val esClient = mock[E4sClient]
@@ -103,6 +118,7 @@ trait TestEnvironment
   val imageApiClient = mock[ImageApiClient]
   val mediaApiClient = mock[MediaApiClient]
   val downloadController = mock[DownloadController]
+  val downloadControllerV2 = mock[DownloadControllerV2]
   val validationService = mock[ValidationService]
   val contentConverter = mock[ContentConverter]
   val bookRepository = mock[BookRepository]
@@ -116,15 +132,20 @@ trait TestEnvironment
   val publisherRepository = mock[PublisherRepository]
   val ePubService = mock[EPubService]
   val pdfService = mock[PdfService]
+  val pdfServiceV2 = mock[PdfServiceV2]
   val feedRepository = mock[FeedRepository]
   val feedService = mock[FeedService]
+  val feedServiceV2 = mock[FeedServiceV2]
   val feedLocalizationService = mock[FeedLocalizationService]
   val opdsController = mock[OPDSController]
+  val opdsControllerV2 = mock[OPDSControllerV2]
   val translationsController = mock[TranslationsController]
+  val translationsControllerV2 = mock[TranslationsControllerV2]
   val supportedLanguageService = mock[SupportedLanguageService]
   val crowdinClientBuilder = mock[CrowdinClientBuilder]
   val featuredContentRepository = mock[FeaturedContentRepository]
   val translationService = mock[TranslationService]
+  val translationServiceV2 = mock[TranslationServiceV2]
   val translationDbService = mock[TranslationDbService]
   val inTranslationRepository = mock[InTranslationRepository]
   val inTranslationFileRepository = mock[InTranslationFileRepository]
@@ -135,6 +156,7 @@ trait TestEnvironment
   val searchServiceV2 = mock[SearchServiceV2]
   val searchController = mock[SearchController]
   val categoriesController = mock[CategoriesController]
+  val categoriesControllerV2 = mock[CategoriesControllerV2]
   val importService = mock[ImportService]
   val exportController = mock[ExportController]
   val exportService = mock[ExportService]
@@ -144,18 +166,23 @@ trait TestEnvironment
     Mockito.reset(
       dataSource,
       readService,
+      readServiceV2,
       writeService,
+      writeServiceV2,
       converterService,
       resourcesApp,
       healthController,
       booksController,
+      booksControllerV2,
       languageController,
       levelController,
       featuredContentController,
+      featuredContentControllerV2,
       esClient,
       gdlClient,
       imageApiClient,
       downloadController,
+      downloadControllerV2,
       validationService,
       contentConverter,
       bookRepository,
@@ -169,24 +196,31 @@ trait TestEnvironment
       publisherRepository,
       ePubService,
       pdfService,
+      pdfServiceV2,
       feedRepository,
       feedService,
+      feedServiceV2,
       feedLocalizationService,
       opdsController,
+      opdsControllerV2,
       translationsController,
+      translationsControllerV2,
       supportedLanguageService,
       crowdinClientBuilder,
       featuredContentRepository,
       translationService,
+      translationServiceV2,
       translationDbService,
       inTranslationRepository,
       inTranslationFileRepository,
       mergeService,
       categoriesController,
+      categoriesControllerV2,
       importService,
       exportController,
       exportService,
       sourceController,
+      sourceControllerV2,
       sourceRepository,
       synchronizeService
     )

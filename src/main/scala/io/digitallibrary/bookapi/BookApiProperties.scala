@@ -51,28 +51,41 @@ object BookApiProperties extends LazyLogging {
   val OpdsLevelParam = ":lev"
 
   val OpdsRootDefaultLanguageUrl = s"/v1/root.xml"
+  val OpdsRootDefaultLanguageUrlV2 = s"/v2/root.xml"
   val OpdsRootUrl = s"/v1/$OpdsLanguageParam/root.xml"
+  val OpdsRootUrlV2 = s"/v2/$OpdsLanguageParam/root.xml"
   val OpdsCategoryUrl = s"/v1/$OpdsLanguageParam/category/$OpdsCategoryParam/root.xml"
+  val OpdsCategoryUrlV2 = s"/v2/$OpdsLanguageParam/category/$OpdsCategoryParam/root.xml"
   val OpdsCategoryAndLevelUrl = s"/v1/$OpdsLanguageParam/category/$OpdsCategoryParam/level/$OpdsLevelParam.xml"
+  val OpdsCategoryAndLevelUrlV2 = s"/v2/$OpdsLanguageParam/category/$OpdsCategoryParam/level/$OpdsLevelParam.xml"
 
   val DownloadPath = "/book-api/download"
+  val DownloadPathV2 = "/book-api/v2/download"
   val Books = "books"
   val Opds = "opds"
+  // TODO: change these for support of v2?
   val CloudFrontBooks = getCloudFrontUrl(Environment, Books)
   val CloudFrontOpds = getCloudFrontUrl(Environment, Opds)
   val LanguagesPath = "/book-api/v1/languages"
+  val LanguagesPathV2 = "/book-api/v2/languages"
   val LevelsPath = "/book-api/v1/levels"
+  val LevelsPathV2 = "/book-api/v2/levels"
   val CategoriesPath = "/book-api/v1/categories"
+  val CategoriesPathV2 = "/book-api/v2/categories"
   val FeaturedContentPath = "/book-api/v1/featured"
+  val FeaturedContentPathV2 = "/book-api/v2/featured"
   val ApiPath = "/book-api/v1/books"
   val ApiPathV2 = "/book-api/v2/books"
   val ApiDocPath = "/book-api/api-docs"
   val ImagePath = "/image-api/v1/raw"
   val MediaServicePath = "/media-service/v1"
   val TranslationsPath = "/book-api/v1/translations"
+  val TranslationsPathV2 = "/book-api/v2/translations"
   val SearchPath = "/book-api/v1/search"
+  val SearchPathV2 = "/book-api/v2/search"
   val ExportPath = "/book-api/v1/export"
   val SourcePath = "/book-api/v1/sources"
+  val SourcePathV2 = "/book-api/v2/sources"
 
   val LoginEndpoint = "https://digitallibrary.eu.auth0.com/authorize"
 

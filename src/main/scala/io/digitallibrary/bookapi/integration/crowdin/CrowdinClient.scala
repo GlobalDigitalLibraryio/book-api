@@ -11,7 +11,7 @@ import com.typesafe.scalalogging.LazyLogging
 import io.digitallibrary.bookapi.BookApiProperties
 import io.digitallibrary.bookapi.BookApiProperties.CrowdinTranslatorPlaceHolder
 import io.digitallibrary.network.GdlClient
-import io.digitallibrary.bookapi.model.api.{Book, BookV2, Chapter, CrowdinException}
+import io.digitallibrary.bookapi.model.api._
 import io.digitallibrary.bookapi.model.crowdin._
 import io.digitallibrary.bookapi.model.domain.{FileType, InTranslationFile, Translation}
 import org.json4s.DefaultFormats
@@ -107,6 +107,38 @@ class CrowdinClient(fromLanguage: String, projectIdentifier: String, projectKey:
     }
   }
 
+
+  def addChaptersForV2(translation: Translation, chapters: Seq[ChapterV2]): Try[Seq[CrowdinFile]] = {
+    val uploadTries: Seq[Try[AddFilesResponse]] = chapters.sliding(20, 20).toList.map(window => {
+      val multiParts = window.map(chapter => {
+        val filename = CrowdinUtils.filenameForV2(translation, chapter)
+        MultiPart(s"files[$filename]", filename, "application/xhtml+xml", chapter.content.getBytes)
+      })
+
+      gdlClient.fetch[AddFilesResponse](Http(AddFileUrl).postMulti(multiParts:_*).timeout(ConnectionTimeoutInMs, ReadTimeOutInMs))
+    })
+
+    val httpExceptions = uploadTries.filter(_.isFailure).map(_.failed.get)
+    val crowdinExceptions = uploadTries.filter(req => req.isSuccess && !req.get.success).map(_.get.error.get)
+
+    if(httpExceptions.nonEmpty || crowdinExceptions.nonEmpty) {
+      Failure(new CrowdinException(s"Could not upload chapters for ${translation.id} (${translation.title})", crowdinExceptions, httpExceptions))
+    } else {
+      val addedFiles = uploadTries.flatMap(_.get.stats.get.files)
+      val result = addedFiles.flatMap(file => {
+        chapters.find(chapter => CrowdinUtils.filenameForV2(translation, chapter) == file.name).map(chapterForFile => {
+          CrowdinFile(Some(chapterForFile.id), chapterForFile.seqNo, FileType.CONTENT, file)
+        })
+      })
+
+      if (result.lengthCompare(addedFiles.length) == 0) {
+        Success(result)
+      } else {
+        Failure(CrowdinException(s"Inconsistent file-result for ${translation.id} (${translation.title})"))
+      }
+    }
+  }
+
   def fetchTranslatedChapter(inTranslationFile: InTranslationFile, language: String): Try[TranslatedChapter] = {
     val url = exportFileUrl(inTranslationFile.filename, language)
 
@@ -180,8 +212,8 @@ object CrowdinUtils {
   def crowdinUrlToBook(book: Book, crowdinProjectId: String, toLanguage: String): String =
     s"https://crowdin.com/project/$crowdinProjectId/$toLanguage#/${directoryNameFor(book)}"
 
-  def crowdinUrlToBook(book: BookV2, crowdinProjectId: String, toLanguage: String): String =
-    s"https://crowdin.com/project/$crowdinProjectId/$toLanguage#/${directoryNameFor(book)}"
+  def crowdinUrlToBookV2(book: BookV2, crowdinProjectId: String, toLanguage: String): String =
+    s"https://crowdin.com/project/$crowdinProjectId/$toLanguage#/${directoryNameForV2(book)}"
 
 
   def directoryName(id: Long, title: String) = {
@@ -193,13 +225,15 @@ object CrowdinUtils {
   }
 
   def directoryNameFor(book: Book): String = directoryName(book.id, book.title)
-  def directoryNameFor(book: BookV2): String = directoryName(book.id, book.title)
+  def directoryNameForV2(book: BookV2): String = directoryName(book.id, book.title)
   def directoryNameFor(translation: Translation): String = directoryName(translation.bookId, translation.title)
 
   def metadataFilenameFor(translation: Translation) = s"${directoryNameFor(translation)}/metadata.json"
 
   def filenameFor(translation: Translation, chapter: Chapter) = s"${directoryNameFor(translation)}/${chapter.id}.xhtml"
+  def filenameForV2(translation: Translation, chapter: ChapterV2) = s"${directoryNameFor(translation)}/${chapter.id}.xhtml"
   def filenameFor(book: Book, chapterId: Long) = s"${directoryNameFor(book)}/$chapterId.xhtml"
+  def filenameForV2(book: BookV2, chapterId: Long) = s"${directoryNameForV2(book)}/$chapterId.xhtml"
 }
 
 case class BookMetaData(title: String, description: String, translators: Option[String], etag: Option[String] = None)

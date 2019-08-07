@@ -123,6 +123,78 @@ object TestData {
     val DefaultFeed = api.Feed(DefaultFeedDefinition, "default title", Some("default description"), Some("default-rel"), ZonedDateTime.now().minusDays(1), Seq(), DefaultFacets)
     val DefaultFeedEntry = api.FeedEntry(DefaultBook, Seq())
     val DefaultFeedCategory = api.FeedCategory("some-url", "some-title", 1)
+    val DefaultSynchronizeResponse = api.SynchronizeResponse(DefaultBook.id, "some-url")
+  }
+
+  object ApiV2 {
+
+    val ChapterSummary1 = api.ChapterSummary(1, 1, Some("Title"), "some-url")
+    val Chapter1 = api.ChapterV2(1, 1, 1, Some("Title"), "Content", "Content", Seq())
+
+    val DefaultBook = api.BookV2(
+      id = 1,
+      revision = 1,
+      externalId = Some("external-1"),
+      uuid = DefaultUuid,
+      title = "Title",
+      description = "Description",
+      translatedFrom = None, language = Api.english,
+      availableLanguages = Seq(Api.english, Api.norwegian_bokmal),
+      license = Api.DefaultLicense,
+      publisher = Api.DefaultPublisher,
+      readingLevel = Some(Level1),
+      typicalAgeRange = Some(ageRangeDefault),
+      educationalUse = None,
+      educationalRole = None,
+      timeRequired = None,
+      datePublished = Some(today),
+      dateCreated = Some(yesterday),
+      dateArrived = today,
+      categories = Seq(Api.category1, Api.category2),
+      coverImage = None,
+      downloads = api.Downloads(Some(epub), None),
+      tags = Seq(),
+      contributors = Seq(Api.author1, Api.author2, Api.photographer, Api.illustrator),
+      chapters = Seq(ChapterSummary1),
+      supportsTranslation = true,
+      bookFormat = BookFormat.HTML.toString,
+      source = Api.DefaultSource.source,
+      pageOrientation = Api.DefaultPageOrientation,
+      publishingStatus = PublishingStatus.PUBLISHED.toString,
+      translationStatus = None,
+      additionalInformation = None)
+
+    val DefaultBookHit = api.BookHitV2(
+      id = 1,
+      title = "Title",
+      description = "Description",
+      language = Api.norwegian_bokmal,
+      readingLevel = Some("1"),
+      categories = Seq(
+        Category
+        (1, 1, "library_books")),
+      coverImage = None,
+      dateArrived = today,
+      source = Api.DefaultSource.source,
+      highlightTitle = Some("Title"),
+      highlightDescription = Some("Description"))
+
+    val BookInAmharic: api.BookHitV2 = DefaultBookHit.copy(language = Api.amharic)
+
+    val DefaultFeedDefinition = api.FeedDefinition(1, 1, "some-url", "some-uuid")
+    val DefaultFacets = Seq(
+      api.Facet("https://opds.test.digitallibrary.io/v1/ben/root.xml", "Bengali", "Languages", isActive = false),
+      api.Facet("https://opds.test.digitallibrary.io/v1/eng/root.xml", "English", "Languages", isActive = true),
+      api.Facet("https://opds.test.digitallibrary.io/v1/hin/root.xml", "Hindu", "Languages", isActive = false),
+      api.Facet("https://opds.test.digitallibrary.io/v1/eng/root.xml", "New arrivals", "Selection", isActive = false),
+      api.Facet("https://opds.test.digitallibrary.io/v1/eng/level1.xml", "Level 1", "Selection", isActive = false),
+      api.Facet("https://opds.test.digitallibrary.io/v1/eng/level2.xml", "Level 2", "Selection", isActive = true),
+      api.Facet("https://opds.test.digitallibrary.io/v1/eng/level3.xml", "Level 3", "Selection", isActive = false)
+    )
+    val DefaultFeed = api.FeedV2(DefaultFeedDefinition, "default title", Some("default description"), Some("default-rel"), ZonedDateTime.now().minusDays(1), Seq(), DefaultFacets)
+
+    val DefaultFeedEntry = api.FeedEntryV2(DefaultBook, Seq())
+    val DefaultFeedCategory = api.FeedCategory("some-url", "some-title", 1)
 
     val DefaultSynchronizeResponse = api.SynchronizeResponse(DefaultBook.id, "some-url")
   }
@@ -205,6 +277,39 @@ object TestData {
   object Internal {
     val DefaultNewTranslatedChapter = NewTranslatedChapter(1, Some("title"), "Some content", 1)
     val DefaultInternalBook = api.internal.Book(
+      id = 1,
+      revision = 1,
+      externalId = Some("1"),
+      uuid = "some-uuid",
+      title = "Some title",
+      description = "Some description",
+      translatedFrom = None,
+      language = api.Language("nb", "Norsk Bokmål"),
+      availableLanguages = Seq(),
+      license = Api.DefaultLicense,
+      publisher = Api.DefaultPublisher,
+      readingLevel = Some("1"),
+      typicalAgeRange = None,
+      educationalUse = None,
+      educationalRole = None,
+      timeRequired = None,
+      datePublished = None,
+      dateCreated = None,
+      dateArrived = today,
+      categories = Seq(),
+      coverPhoto = None,
+      downloads = api.Downloads(None, None),
+      tags = Seq(),
+      contributors = Seq(Api.author1),
+      chapters = Seq(),
+      supportsTranslation = false,
+      bookFormat = BookFormat.HTML.toString,
+      source = "storyweaver",
+      pageOrientation = PageOrientation.PORTRAIT.toString,
+      additionalInformation = None
+    )
+
+    val DefaultInternalBookV2 = api.internal.BookV2(
       id = 1,
       revision = 1,
       externalId = Some("1"),

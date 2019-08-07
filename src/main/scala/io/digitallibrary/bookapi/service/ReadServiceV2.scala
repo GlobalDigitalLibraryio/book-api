@@ -114,11 +114,11 @@ trait ReadServiceV2 {
       } yield converterService.toApiBookV2(translation, unFlaggedTranslationsRepository.languagesFor(bookId), book)
     }
 
-    def withIdAndLanguageForExport(bookId: Long, language: LanguageTag): Option[api.internal.Book] = { // TODO: Hva med V2 av api.internal.Book?
+    def withIdAndLanguageForExport(bookId: Long, language: LanguageTag): Option[api.internal.BookV2] = {
       for {
         translation <- unFlaggedTranslationsRepository.forBookIdAndLanguage(bookId, language)
         book <- bookRepository.withId(bookId)
-      } yield converterService.toInternalApiBook(translation, unFlaggedTranslationsRepository.languagesFor(bookId), book)
+      } yield converterService.toInternalApiBookV2(translation, unFlaggedTranslationsRepository.languagesFor(bookId), book)
     }
 
     def chaptersForIdAndLanguage(bookId: Long, language: LanguageTag): Seq[api.ChapterSummary] = {

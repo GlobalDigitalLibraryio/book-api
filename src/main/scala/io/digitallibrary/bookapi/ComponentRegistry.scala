@@ -11,14 +11,13 @@ package io.digitallibrary.bookapi
 import com.amazonaws.ClientConfiguration
 import com.amazonaws.client.builder.AwsClientBuilder
 import com.amazonaws.regions.Regions
-import com.amazonaws.services.apigateway.{AmazonApiGateway, AmazonApiGatewayClient, AmazonApiGatewayClientBuilder}
+import com.amazonaws.services.apigateway.{AmazonApiGateway, AmazonApiGatewayClientBuilder}
 import com.amazonaws.services.s3.{AmazonS3, AmazonS3ClientBuilder}
 import com.zaxxer.hikari.HikariDataSource
 import io.digitallibrary.bookapi.controller._
 import io.digitallibrary.bookapi.integration._
 import io.digitallibrary.bookapi.integration.crowdin.CrowdinClientBuilder
-import io.digitallibrary.bookapi.model.api.{SearchResult, SearchResultV2}
-import io.digitallibrary.bookapi.model.domain.{AllTranslations, UnflaggedTranslations}
+import io.digitallibrary.bookapi.model.domain.AllTranslations
 import io.digitallibrary.bookapi.repository._
 import io.digitallibrary.bookapi.service._
 import io.digitallibrary.bookapi.service.search._
@@ -32,20 +31,26 @@ object ComponentRegistry
   with ReadService
   with ReadServiceV2
   with WriteService
+  with WriteServiceV2
   with ElasticClient
   with ConverterService
   with ContentConverter
   with BooksController
   with LanguageController
+  with LanguageControllerV2
   with LevelController
+  with LevelControllerV2
   with InternController
   with HealthController
   with OPDSController
+  with OPDSControllerV2
   with SourceController
+  with SourceControllerV2
   with GdlClient
   with ImageApiClient
   with MediaApiClient
   with DownloadController
+  with DownloadControllerV2
   with ValidationService
   with BookRepository
   with CategoryRepository
@@ -58,12 +63,16 @@ object ComponentRegistry
   with SourceRepository
   with EPubService
   with PdfService
+  with PdfServiceV2
   with FeedRepository
   with FeedService
+  with FeedServiceV2
   with FeedLocalizationService
   with FeaturedContentRepository
   with FeaturedContentController
+  with FeaturedContentControllerV2
   with TranslationsController
+  with TranslationsControllerV2
   with SupportedLanguageService
   with CrowdinClientBuilder
   with TranslationService
@@ -76,7 +85,9 @@ object ComponentRegistry
   with SearchService
   with SearchServiceV2
   with SearchController
+  with SearchControllerV2
   with CategoriesController
+  with CategoriesControllerV2
   with AmazonClient
   with ImportService
   with ExportController
@@ -121,12 +132,16 @@ object ComponentRegistry
   lazy val resourcesApp = new ResourcesApp
   lazy val internController = new InternController
   lazy val opdsController = new OPDSController
+  lazy val opdsControllerV2 = new OPDSControllerV2
   lazy val featuredContentController = new FeaturedContentController
+  lazy val featuredContentControllerV2 = new FeaturedContentControllerV2
   lazy val sourceController = new SourceController
+  lazy val sourceControllerV2 = new SourceControllerV2
 
   lazy val readService = new ReadService
   lazy val readServiceV2 = new ReadServiceV2
   lazy val writeService = new WriteService
+  lazy val writeServiceV2 = new WriteServiceV2
   lazy val converterService = new ConverterService
 
   lazy val esClient: E4sClient = EsClientFactory.getClient()
@@ -134,10 +149,13 @@ object ComponentRegistry
   lazy val imageApiClient = new ImageApiClient
   lazy val mediaApiClient = new MediaApiClient
   lazy val downloadController = new DownloadController
+  lazy val downloadControllerV2 = new DownloadControllerV2
   lazy val validationService = new ValidationService
   lazy val contentConverter = new ContentConverter
   lazy val languageController = new LanguageController
+  lazy val languageControllerV2 = new LanguageControllerV2
   lazy val levelController = new LevelController
+  lazy val levelControllerV2 = new LevelControllerV2
   lazy val bookRepository = new BookRepository
   lazy val categoryRepository = new CategoryRepository
   lazy val chapterRepository = new ChapterRepository
@@ -152,9 +170,12 @@ object ComponentRegistry
 
   lazy val ePubService = new EPubService
   lazy val pdfService = new PdfService
+  lazy val pdfServiceV2 = new PdfServiceV2
   lazy val feedRepository = new FeedRepository
   lazy val feedService = new FeedService
+  lazy val feedServiceV2 = new FeedServiceV2
   lazy val translationsController = new TranslationsController
+  lazy val translationsControllerV2 = new TranslationsControllerV2
   lazy val supportedLanguageService = new SupportedLanguageService
   lazy val crowdinClientBuilder = new CrowdinClientBuilder
   lazy val translationService = new TranslationService
@@ -167,7 +188,9 @@ object ComponentRegistry
   lazy val searchService = new SearchService
   lazy val searchServiceV2 = new SearchServiceV2
   lazy val searchController = new SearchController
+  lazy val searchControllerV2 = new SearchControllerV2
   lazy val categoriesController = new CategoriesController
+  lazy val categoriesControllerV2 = new CategoriesControllerV2
   lazy val importService = new ImportService
   lazy val exportController = new ExportController
   lazy val exportService = new ExportService

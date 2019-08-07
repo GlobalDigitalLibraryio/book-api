@@ -1,21 +1,13 @@
-/*
- * Part of GDL book_api.
- * Copyright (C) 2017 Global Digital Library
- *
- * See LICENSE
- */
-
 package io.digitallibrary.bookapi.service
-
 
 import java.util.UUID
 
 import com.typesafe.scalalogging.LazyLogging
 import io.digitallibrary.bookapi.BookApiProperties
 import io.digitallibrary.bookapi.controller.NewFeaturedContent
-import io.digitallibrary.bookapi.model._
-import io.digitallibrary.bookapi.model.api.internal.{ChapterId, NewChapter, NewTranslation, TranslationId}
-import io.digitallibrary.bookapi.model.api.{CrowdinException, FeaturedContentId, NotFoundException, TranslateRequest, ValidationMessage}
+import io.digitallibrary.bookapi.model.api.{CrowdinException, FeaturedContentId, NotFoundException, ValidationMessage}
+import io.digitallibrary.bookapi.model.api.internal.{ChapterId, NewChapter, NewTranslation}
+import io.digitallibrary.bookapi.model.{api, domain}
 import io.digitallibrary.bookapi.model.domain._
 import io.digitallibrary.bookapi.repository._
 import io.digitallibrary.bookapi.service.search.IndexService
@@ -25,12 +17,11 @@ import io.digitallibrary.network.AuthUser
 
 import scala.util.{Failure, Success, Try}
 
-
-trait WriteService {
+trait WriteServiceV2 {
   this: TransactionHandler
     with ConverterService
     with ValidationService
-    with ReadService
+    with ReadServiceV2
     with IndexService
     with BookRepository
     with CategoryRepository
@@ -44,9 +35,9 @@ trait WriteService {
     with InTranslationRepository
   =>
 
-  val writeService: WriteService
+  val writeServiceV2: WriteServiceV2
 
-  class WriteService extends LazyLogging {
+  class WriteServiceV2 extends LazyLogging {
 
     def updateTranslation(translationToUpdate: Translation): Try[Translation] = {
       for {
@@ -282,7 +273,7 @@ trait WriteService {
                 person))
           }
           }
-          // TODO use v2?
+
           indexService.indexDocument(translation)
           translation
         }
@@ -394,7 +385,6 @@ trait WriteService {
             // Remove exceeding chapters if the update contains fewer chapters than the existing version
             chapterRepository.deleteChaptersExceptGivenSeqNumbers(translation.id.get, validTranslationReplacement.chapters.map(_.seqNo))
 
-            // TODO: update to v2
             indexService.indexDocument(translation)
             api.internal.TranslationId(translation.id.get)
           }
@@ -403,7 +393,7 @@ trait WriteService {
       })
     }
 
-    def addInTransportMark(book: api.Book): Try[Unit] = {
+    def addInTransportMark(book: api.BookV2): Try[Unit] = {
       unFlaggedTranslationsRepository.forBookIdAndLanguage(book.id, LanguageTag(book.language.code)) match {
         case None => Failure(new NotFoundException())
         case Some(inTransport) if inTransport.inTransport => Failure(CrowdinException("Book is currently being transported to Translation system"))
@@ -411,7 +401,7 @@ trait WriteService {
       }
     }
 
-    def removeInTransportMark(book: api.Book): Try[Unit] = {
+    def removeInTransportMark(book: api.BookV2): Try[Unit] = {
       unFlaggedTranslationsRepository
         .forBookIdAndLanguage(book.id, LanguageTag(book.language.code))
         .filter(_.inTransport)
@@ -433,3 +423,4 @@ trait WriteService {
   }
 
 }
+

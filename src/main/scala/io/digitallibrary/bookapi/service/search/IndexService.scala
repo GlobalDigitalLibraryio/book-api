@@ -56,7 +56,7 @@ trait IndexService extends LazyLogging {
       }
 
       val book: Option[domain.Book] = bookRepository.withId(translation.bookId)
-      val source = write(converterService.toApiBookHit(Some(translation), book))
+      val source = write(converterService.toApiBookHitV2(Some(translation), book))
 
       esClient.execute(
         indexInto(BookApiProperties.searchIndex(translation.language), BookApiProperties.SearchDocument)
