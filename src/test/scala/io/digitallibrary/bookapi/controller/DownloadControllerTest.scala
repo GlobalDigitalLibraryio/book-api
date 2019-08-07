@@ -67,8 +67,8 @@ class DownloadControllerTest extends UnitSuite with TestEnvironment with Scalatr
 
   test("that get /pdf/nob/123.pdf returns 200 ok") {
     val pdfStream = mock[PdfStream]
-    when(pdfStream.fileName).thenReturn(TestData.Api.DefaultBook.title)
-    when(pdfService.getPdf(LanguageTag("nob"), "123")).thenReturn(Some(pdfStream))
+    when(pdfStream.fileName).thenReturn(TestData.ApiV2.DefaultBook.title)
+    when(pdfServiceV2.getPdf(LanguageTag("nob"), "123")).thenReturn(Some(pdfStream))
     get("/pdf/nob/123.pdf") {
       status should equal (200)
       header.get("Content-Type") should equal (Some("application/octet-stream;charset=utf-8"))
@@ -76,7 +76,7 @@ class DownloadControllerTest extends UnitSuite with TestEnvironment with Scalatr
   }
 
   test("that get /pdf/nob/123.pdf returns 404 when no content found") {
-    when(pdfService.getPdf(LanguageTag("nob"), "123")).thenReturn(None)
+    when(pdfServiceV2.getPdf(LanguageTag("nob"), "123")).thenReturn(None)
     get("/pdf/nob/123.pdf") {
       status should equal (404)
     }

@@ -9,20 +9,20 @@ package io.digitallibrary.bookapi.controller
 
 import java.time.format.DateTimeFormatter
 import java.time.{LocalDate, ZoneId}
-import javax.servlet.http.HttpServletRequest
 
+import javax.servlet.http.HttpServletRequest
 import io.digitallibrary.language.model.LanguageTag
 import io.digitallibrary.bookapi.BookApiProperties
-import io.digitallibrary.bookapi.model.api.{Feed, FeedEntry}
+import io.digitallibrary.bookapi.model.api.{Feed, FeedV2, FeedEntryV2}
 import io.digitallibrary.bookapi.model.domain.{ContributorType, Paging}
-import io.digitallibrary.bookapi.service.{ConverterService, FeedService, ReadService}
+import io.digitallibrary.bookapi.service._
 import org.scalatra.NotFound
 
 import scala.util.Try
 import scala.xml.Elem
 
 trait OPDSController {
-  this: ReadService with ConverterService with FeedService =>
+  this: ReadServiceV2 with ConverterService with FeedService =>
   val opdsController: OPDSController
   val dtf: DateTimeFormatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME
   implicit val localDateOrdering: Ordering[LocalDate] = Ordering.by(_.toEpochDay)
@@ -70,7 +70,7 @@ trait OPDSController {
       acquisitionFeed(books, LevelFeed(lang, category, level), pagingStatus)
     }
 
-    private def acquisitionFeed(books: => Seq[FeedEntry], feedType: FeedType, pagingStatus: PagingStatus)(implicit request: HttpServletRequest) = {
+    private def acquisitionFeed(books: => Seq[FeedEntryV2], feedType: FeedType, pagingStatus: PagingStatus)(implicit request: HttpServletRequest) = {
       val lang = Try(LanguageTag(params("lang"))).getOrElse(defaultLanguage)
       feedService.feedForUrl(request.getRequestURI, feedType, books) match {
         case Some(feed) => render(feed, pagingStatus)
@@ -80,7 +80,7 @@ trait OPDSController {
       }
     }
 
-    private[controller] def render(feed: Feed, pagingStatus: PagingStatus): Elem = {
+    private[controller] def render(feed: FeedV2, pagingStatus: PagingStatus): Elem = {
       <feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/terms/" xmlns:opds="http://opds-spec.org/2010/catalog" xmlns:lrmi="http://purl.org/dcx/lrmi-terms/">
         <id>{feed.feedDefinition.uuid}</id>
         <title>{feed.title}</title>

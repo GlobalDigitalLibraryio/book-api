@@ -43,7 +43,6 @@ trait TestEnvironment
     with ImageApiClient
     with MediaApiClient
     with DownloadController
-    with DownloadControllerV2
     with ValidationService
     with BookRepository
     with CategoryRepository
@@ -58,10 +57,8 @@ trait TestEnvironment
     with PdfServiceV2
     with FeedRepository
     with FeedService
-    with FeedServiceV2
     with FeedLocalizationService
     with OPDSController
-    with OPDSControllerV2
     with TranslationsController
     with TranslationsControllerV2
     with SupportedLanguageService
@@ -118,7 +115,6 @@ trait TestEnvironment
   val imageApiClient = mock[ImageApiClient]
   val mediaApiClient = mock[MediaApiClient]
   val downloadController = mock[DownloadController]
-  val downloadControllerV2 = mock[DownloadControllerV2]
   val validationService = mock[ValidationService]
   val contentConverter = mock[ContentConverter]
   val bookRepository = mock[BookRepository]
@@ -135,10 +131,8 @@ trait TestEnvironment
   val pdfServiceV2 = mock[PdfServiceV2]
   val feedRepository = mock[FeedRepository]
   val feedService = mock[FeedService]
-  val feedServiceV2 = mock[FeedServiceV2]
   val feedLocalizationService = mock[FeedLocalizationService]
   val opdsController = mock[OPDSController]
-  val opdsControllerV2 = mock[OPDSControllerV2]
   val translationsController = mock[TranslationsController]
   val translationsControllerV2 = mock[TranslationsControllerV2]
   val supportedLanguageService = mock[SupportedLanguageService]
@@ -182,7 +176,6 @@ trait TestEnvironment
       gdlClient,
       imageApiClient,
       downloadController,
-      downloadControllerV2,
       validationService,
       contentConverter,
       bookRepository,
@@ -199,10 +192,8 @@ trait TestEnvironment
       pdfServiceV2,
       feedRepository,
       feedService,
-      feedServiceV2,
       feedLocalizationService,
       opdsController,
-      opdsControllerV2,
       translationsController,
       translationsControllerV2,
       supportedLanguageService,

@@ -7,9 +7,11 @@ import com.amazonaws.auth.{AWSCredentials, AWSStaticCredentialsProvider, BasicAW
 import com.amazonaws.regions.Regions
 import com.amazonaws.services.apigateway.{AmazonApiGateway, AmazonApiGatewayClientBuilder}
 import io.digitallibrary.bookapi.{TestEnvironment, UnitSuite}
+import org.scalatest.Ignore
 
 import scala.util.{Failure, Success}
 
+@Ignore
 class MediaApiClientTest extends UnitSuite with TestEnvironment {
 
 

@@ -22,7 +22,7 @@ import scala.util.{Failure, Success}
   * ! This is only used internal by GDL for import and so on. So for v2, we just updates the services directly
   */
 trait InternController {
-  this: WriteService with ReadServiceV2 with ConverterService with ValidationService with FeedServiceV2 with PdfServiceV2 with IndexBuilderService with IndexService with ImportService =>
+  this: WriteService with ReadServiceV2 with ConverterService with ValidationService with FeedService with PdfServiceV2 with IndexBuilderService with IndexService with ImportService =>
   val internController: InternController
 
   class InternController extends GdlController with FileUploadSupport{
@@ -155,7 +155,7 @@ trait InternController {
     }
 
     get("/feeds/") {
-      feedServiceV2.generateFeeds()
+      feedService.generateFeeds()
     }
 
     post("/index") {

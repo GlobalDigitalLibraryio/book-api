@@ -51,19 +51,13 @@ object BookApiProperties extends LazyLogging {
   val OpdsLevelParam = ":lev"
 
   val OpdsRootDefaultLanguageUrl = s"/v1/root.xml"
-  val OpdsRootDefaultLanguageUrlV2 = s"/v2/root.xml"
   val OpdsRootUrl = s"/v1/$OpdsLanguageParam/root.xml"
-  val OpdsRootUrlV2 = s"/v2/$OpdsLanguageParam/root.xml"
   val OpdsCategoryUrl = s"/v1/$OpdsLanguageParam/category/$OpdsCategoryParam/root.xml"
-  val OpdsCategoryUrlV2 = s"/v2/$OpdsLanguageParam/category/$OpdsCategoryParam/root.xml"
   val OpdsCategoryAndLevelUrl = s"/v1/$OpdsLanguageParam/category/$OpdsCategoryParam/level/$OpdsLevelParam.xml"
-  val OpdsCategoryAndLevelUrlV2 = s"/v2/$OpdsLanguageParam/category/$OpdsCategoryParam/level/$OpdsLevelParam.xml"
 
   val DownloadPath = "/book-api/download"
-  val DownloadPathV2 = "/book-api/v2/download"
   val Books = "books"
   val Opds = "opds"
-  // TODO: change these for support of v2?
   val CloudFrontBooks = getCloudFrontUrl(Environment, Books)
   val CloudFrontOpds = getCloudFrontUrl(Environment, Opds)
   val LanguagesPath = "/book-api/v1/languages"

@@ -43,14 +43,12 @@ object ComponentRegistry
   with InternController
   with HealthController
   with OPDSController
-  with OPDSControllerV2
   with SourceController
   with SourceControllerV2
   with GdlClient
   with ImageApiClient
   with MediaApiClient
   with DownloadController
-  with DownloadControllerV2
   with ValidationService
   with BookRepository
   with CategoryRepository
@@ -66,7 +64,6 @@ object ComponentRegistry
   with PdfServiceV2
   with FeedRepository
   with FeedService
-  with FeedServiceV2
   with FeedLocalizationService
   with FeaturedContentRepository
   with FeaturedContentController
@@ -132,7 +129,6 @@ object ComponentRegistry
   lazy val resourcesApp = new ResourcesApp
   lazy val internController = new InternController
   lazy val opdsController = new OPDSController
-  lazy val opdsControllerV2 = new OPDSControllerV2
   lazy val featuredContentController = new FeaturedContentController
   lazy val featuredContentControllerV2 = new FeaturedContentControllerV2
   lazy val sourceController = new SourceController
@@ -149,7 +145,6 @@ object ComponentRegistry
   lazy val imageApiClient = new ImageApiClient
   lazy val mediaApiClient = new MediaApiClient
   lazy val downloadController = new DownloadController
-  lazy val downloadControllerV2 = new DownloadControllerV2
   lazy val validationService = new ValidationService
   lazy val contentConverter = new ContentConverter
   lazy val languageController = new LanguageController
@@ -173,7 +168,6 @@ object ComponentRegistry
   lazy val pdfServiceV2 = new PdfServiceV2
   lazy val feedRepository = new FeedRepository
   lazy val feedService = new FeedService
-  lazy val feedServiceV2 = new FeedServiceV2
   lazy val translationsController = new TranslationsController
   lazy val translationsControllerV2 = new TranslationsControllerV2
   lazy val supportedLanguageService = new SupportedLanguageService

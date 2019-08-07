@@ -9,7 +9,7 @@ package io.digitallibrary.bookapi.service
 
 import io.digitallibrary.bookapi.BookApiProperties._
 import io.digitallibrary.bookapi.TestData.{LanguageCodeEnglish, LanguageCodeNorwegian}
-import io.digitallibrary.bookapi.model.api.{Facet, SearchResult}
+import io.digitallibrary.bookapi.model.api.{Facet, SearchResultV2}
 import io.digitallibrary.bookapi.model.domain.{Category, Paging, PublishingStatus}
 import io.digitallibrary.bookapi.{TestEnvironment, UnitSuite}
 import io.digitallibrary.language.model.LanguageTag
@@ -87,7 +87,7 @@ class FeedServiceTest extends UnitSuite with TestEnvironment {
   }
 
   test("that facetsForLanguage returns facets for languages, with languages alphabetically sorted") {
-    when(readService.listAvailablePublishedLanguagesAsLanguageTags).thenReturn(Seq("eng", "hin", "ben", "eng-latn-gb").map(LanguageTag(_)))
+    when(readServiceV2.listAvailablePublishedLanguagesAsLanguageTags).thenReturn(Seq("eng", "hin", "ben", "eng-latn-gb").map(LanguageTag(_)))
     feedService.facetsForLanguages(LanguageTag("eng")) should equal (Seq(
       Facet("http://local.digitallibrary.io/book-api/opds/v1/bn/root.xml", LanguageTag("ben").localDisplayName.get, "Languages", isActive = false),
       Facet("http://local.digitallibrary.io/book-api/opds/v1/en/root.xml", "English", "Languages", isActive = true),
@@ -98,7 +98,7 @@ class FeedServiceTest extends UnitSuite with TestEnvironment {
 
   test("that facetsForReadingLevels returns facets for reading levels, with reading levels numerically sorted and new arrivals at the bottom") {
     val language = LanguageTag("eng")
-    when(readService.listAvailablePublishedLevelsForLanguage(Some(language), Some("cat1"))).thenReturn(Seq("4", "1", "3", "2"))
+    when(readServiceV2.listAvailablePublishedLevelsForLanguage(Some(language), Some("cat1"))).thenReturn(Seq("4", "1", "3", "2"))
     feedService.facetsForReadingLevels(language, "cat1", Some("3")) should equal (Seq(
       Facet("http://local.digitallibrary.io/book-api/opds/v1/en/category/cat1/level/1.xml", "Level 1", "Selection", isActive = false),
       Facet("http://local.digitallibrary.io/book-api/opds/v1/en/category/cat1/level/2.xml", "Level 2", "Selection", isActive = false),
@@ -109,25 +109,25 @@ class FeedServiceTest extends UnitSuite with TestEnvironment {
   }
 
   test("that searchResultToPagingStatus returns correct status when there's more content ahead") {
-    val searchResult = mock[SearchResult]
+    val searchResult = mock[SearchResultV2]
     when(searchResult.totalCount).thenReturn(130)
     feedService.searchResultToPagingStatus(searchResult, Paging(1, 25)) should equal (MoreAhead(Paging(1, 25), lastPage = 6))
   }
 
   test("that searchResultToPagingStatus returns correct status when there's more content before") {
-    val searchResult = mock[SearchResult]
+    val searchResult = mock[SearchResultV2]
     when(searchResult.totalCount).thenReturn(50)
     feedService.searchResultToPagingStatus(searchResult, Paging(2, 25)) should equal (MoreBefore(Paging(2, 25)))
   }
 
   test("that searchResultToPagingStatus returns correct status when there's more content in both directions") {
-    val searchResult = mock[SearchResult]
+    val searchResult = mock[SearchResultV2]
     when(searchResult.totalCount).thenReturn(120)
     feedService.searchResultToPagingStatus(searchResult, Paging(3, 25)) should equal (MoreInBothDirections(Paging(3, 25), lastPage = 5))
   }
 
   test("that searchResultToPagingStatus returns correct status when there's only one page of content") {
-    val searchResult = mock[SearchResult]
+    val searchResult = mock[SearchResultV2]
     when(searchResult.totalCount).thenReturn(23)
     feedService.searchResultToPagingStatus(searchResult, Paging(1, 25)) should equal (OnlyOnePage(Paging(1, 25)))
   }
@@ -138,7 +138,7 @@ class FeedServiceTest extends UnitSuite with TestEnvironment {
       Category(None, None, "classroom_books") -> Set("decodable"),
       Category(None, None, "library_books") -> Set("1", "2")
     )
-    when(readService.listAvailablePublishedCategoriesForLanguage(language)).thenReturn(categoriesAndLevels)
+    when(readServiceV2.listAvailablePublishedCategoriesForLanguage(language)).thenReturn(categoriesAndLevels)
     feedService.facetsForCategories(language, currentCategory = None) should equal (Seq(
       Facet("http://local.digitallibrary.io/book-api/opds/v1/en/category/library_books/root.xml", "Some category", "Category", isActive = false),
       Facet("http://local.digitallibrary.io/book-api/opds/v1/en/category/classroom_books/root.xml", "Some category", "Category", isActive = false)
@@ -148,7 +148,7 @@ class FeedServiceTest extends UnitSuite with TestEnvironment {
   test("that facetsForReadingLevels are sorted with decodable first, then numeric levels ascending, then read-aloud and finally new arrivals") {
     val language = LanguageTag("eng")
     val levels = Seq("1", "2", "3", "4", "read-aloud", "decodable")
-    when(readService.listAvailablePublishedLevelsForLanguage(Some(language), Some("library_books"))).thenReturn(levels)
+    when(readServiceV2.listAvailablePublishedLevelsForLanguage(Some(language), Some("library_books"))).thenReturn(levels)
     feedService.facetsForReadingLevels(language, currentCategory = "library_books", currentReadingLevel = None).map(_.href.split('/').toList.last) should equal (Seq(
       "decodable.xml",
       "1.xml",

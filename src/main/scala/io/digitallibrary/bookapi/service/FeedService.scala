@@ -17,11 +17,11 @@ import io.digitallibrary.bookapi.model._
 import io.digitallibrary.bookapi.model.api._
 import io.digitallibrary.bookapi.model.domain.{Paging, PublishingStatus, Sort}
 import io.digitallibrary.bookapi.repository.{BookRepository, FeedRepository, TranslationRepository}
-import io.digitallibrary.bookapi.service.search.SearchService
+import io.digitallibrary.bookapi.service.search.SearchServiceV2
 import io.digitallibrary.language.model.LanguageTag
 
 trait FeedService {
-  this: FeedRepository with TranslationRepository with BookRepository with ReadService with ConverterService with SearchService with FeedLocalizationService =>
+  this: FeedRepository with TranslationRepository with BookRepository with ReadServiceV2 with ConverterService with SearchServiceV2 with FeedLocalizationService =>
   val feedService: FeedService
 
   sealed trait PagingStatus
@@ -39,7 +39,7 @@ trait FeedService {
   class FeedService extends LazyLogging {
     implicit val localDateOrdering: Ordering[LocalDate] = Ordering.by(_.toEpochDay)
 
-    def feedForUrl(url: String, feedType: FeedType, books: => Seq[FeedEntry]): Option[api.Feed] = {
+    def feedForUrl(url: String, feedType: FeedType, books: => Seq[FeedEntryV2]): Option[api.FeedV2] = {
 
       val facets = feedType match {
         case RootFeed(language) =>
@@ -56,7 +56,7 @@ trait FeedService {
       }
 
       feedRepository.forUrl(url.replace(BookApiProperties.OpdsPath,"")).map(feedDefinition => {
-        api.Feed(
+        api.FeedV2(
           feedDefinition = api.FeedDefinition(
             feedDefinition.id.get,
             feedDefinition.revision.get,
@@ -72,7 +72,7 @@ trait FeedService {
     }
 
     def facetsForLanguages(currentLanguage: LanguageTag): Seq[Facet] = {
-      readService.listAvailablePublishedLanguagesAsLanguageTags.sortBy(_.toString).map(lang => Facet(
+      readServiceV2.listAvailablePublishedLanguagesAsLanguageTags.sortBy(_.toString).map(lang => Facet(
         href = s"${
           BookApiProperties.CloudFrontOpds}${BookApiProperties.OpdsRootUrl
           .replace(BookApiProperties.OpdsLanguageParam, lang.toString)}",
@@ -81,10 +81,9 @@ trait FeedService {
         isActive = lang == currentLanguage))
     }
 
-    // TODO: write v2
     def facetsForCategories(currentLanguage: LanguageTag, currentCategory: Option[String]): Seq[Facet] = {
       val localization = feedLocalizationService.localizationFor(currentLanguage)
-      readService.listAvailablePublishedCategoriesForLanguage(currentLanguage).keys.toList.sortWith(categorySort).map(category => Facet(
+      readServiceV2.listAvailablePublishedCategoriesForLanguage(currentLanguage).keys.toList.sortWith(categorySort).map(category => Facet(
         href = s"${BookApiProperties.CloudFrontOpds}${BookApiProperties.OpdsCategoryUrl
           .replace(BookApiProperties.OpdsLanguageParam, currentLanguage.toString)
           .replace(BookApiProperties.OpdsCategoryParam, category.name)}",
@@ -112,11 +111,10 @@ trait FeedService {
       }
     }
 
-    // TODO: write v2
     def facetsForReadingLevels(currentLanguage: LanguageTag, currentCategory: String, currentReadingLevel: Option[String]): Seq[Facet] = {
       val localization = feedLocalizationService.localizationFor(currentLanguage)
       val group = "Selection"
-      readService.listAvailablePublishedLevelsForLanguage(Some(currentLanguage), Some(currentCategory))
+      readServiceV2.listAvailablePublishedLevelsForLanguage(Some(currentLanguage), Some(currentCategory))
         .sortBy(levelOrder).map(readingLevel =>
         Facet(
           href = s"${
@@ -142,11 +140,10 @@ trait FeedService {
         isActive = currentReadingLevel.isEmpty))
     }
 
-    // TODO: write v2
-    def allEntries(language: LanguageTag, paging: Paging): (PagingStatus, Seq[FeedEntry]) = {
+    def allEntries(language: LanguageTag, paging: Paging): (PagingStatus, Seq[FeedEntryV2]) = {
 
       val searchResult = {
-        searchService.searchWithCategoryAndLevel(
+        searchServiceV2.searchWithCategoryAndLevel(
           languageTag = language,
           category = None,
           readingLevel = None,
@@ -158,27 +155,24 @@ trait FeedService {
       (searchResultToPagingStatus(searchResult, paging), searchResultsToFeedEntries(searchResult.results, language))
     }
 
-    // TODO: write v2
-    def searchResultsToFeedEntries(bookHits: Seq[BookHit], language: LanguageTag): Seq[FeedEntry] = {
+    def searchResultsToFeedEntries(bookHits: Seq[BookHitV2], language: LanguageTag): Seq[FeedEntryV2] = {
        for {
         bookHit <- bookHits
         book <- fromHit(bookHit, feedLocalizationService.localizationFor(language))
-      } yield api.FeedEntry(book)
+      } yield api.FeedEntryV2(book)
     }
 
-    // TODO: write v2
-    def fromHit(bookHit: BookHit, feedLocalization: FeedLocalization): Option[Book] = {
+    def fromHit(bookHit: BookHitV2, feedLocalization: FeedLocalization): Option[BookV2] = {
       for {
         translation <- unFlaggedTranslationsRepository.forBookIdAndLanguage(bookHit.id, LanguageTag(bookHit.language.code))
         book <- bookRepository.withId(bookHit.id)
-        apiBook = converterService.toApiBook(translation, unFlaggedTranslationsRepository.languagesFor(bookHit.id), book)
+        apiBook = converterService.toApiBookV2(translation, unFlaggedTranslationsRepository.languagesFor(bookHit.id), book)
         apiBookWithLocalizedReadingLevel = apiBook.copy(readingLevel = apiBook.readingLevel.map(feedLocalization.levelTitle))
       } yield apiBookWithLocalizedReadingLevel
     }
 
-    // TODO: write v2
-    def entriesForLanguageAndCategory(language: LanguageTag, category: String, paging: Paging): (PagingStatus, Seq[FeedEntry]) = {
-      val searchResult = searchService.searchWithCategoryAndLevel(
+    def entriesForLanguageAndCategory(language: LanguageTag, category: String, paging: Paging): (PagingStatus, Seq[FeedEntryV2]) = {
+      val searchResult = searchServiceV2.searchWithCategoryAndLevel(
         languageTag = language,
         category = Some(category),
         readingLevel = None,
@@ -189,8 +183,8 @@ trait FeedService {
       (searchResultToPagingStatus(searchResult, paging), searchResultsToFeedEntries(searchResult.results, language))
     }
 
-    def entriesForLanguageCategoryAndLevel(language: LanguageTag, category: String, level: String, paging: Paging): (PagingStatus, Seq[FeedEntry]) = {
-      val searchResult = searchService.searchWithCategoryAndLevel(
+    def entriesForLanguageCategoryAndLevel(language: LanguageTag, category: String, level: String, paging: Paging): (PagingStatus, Seq[FeedEntryV2]) = {
+      val searchResult = searchServiceV2.searchWithCategoryAndLevel(
         languageTag = language,
         category = Some(category),
         readingLevel = Some(level),
@@ -201,7 +195,7 @@ trait FeedService {
       (searchResultToPagingStatus(searchResult, paging), searchResultsToFeedEntries(searchResult.results, language))
     }
 
-    def searchResultToPagingStatus(searchResult: SearchResult, paging: Paging): PagingStatus = {
+    def searchResultToPagingStatus(searchResult: SearchResultV2, paging: Paging): PagingStatus = {
       if (searchResult.totalCount > paging.pageSize) {
         val lastPage = Math.round(Math.ceil(searchResult.totalCount.toFloat / paging.pageSize)).toInt
         if (paging.page == lastPage) {

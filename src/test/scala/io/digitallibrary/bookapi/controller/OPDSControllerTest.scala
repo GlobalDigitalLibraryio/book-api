@@ -10,7 +10,7 @@ package io.digitallibrary.bookapi.controller
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
-import io.digitallibrary.bookapi.model.api.FeedEntry
+import io.digitallibrary.bookapi.model.api.{FeedEntry, FeedEntryV2}
 import io.digitallibrary.bookapi.model.domain.Paging
 import io.digitallibrary.bookapi.{TestData, TestEnvironment, UnitSuite}
 import io.digitallibrary.language.model.LanguageTag
@@ -25,10 +25,10 @@ class OPDSControllerTest extends UnitSuite with TestEnvironment with ScalatraFun
   addServlet(controller, "/*")
 
   test("that rendering of acquisition feeds includes all books with correct data") {
-    val entry1: FeedEntry = TestData.Api.DefaultFeedEntry
-    val entry2: FeedEntry = TestData.Api.DefaultFeedEntry.copy(categories = Seq(TestData.Api.DefaultFeedCategory))
+    val entry1: FeedEntryV2 = TestData.ApiV2.DefaultFeedEntry
+    val entry2: FeedEntryV2 = TestData.ApiV2.DefaultFeedEntry.copy(categories = Seq(TestData.ApiV2.DefaultFeedCategory))
 
-    val feed = TestData.Api.DefaultFeed.copy(content = Seq(entry1, entry2))
+    val feed = TestData.ApiV2.DefaultFeed.copy(content = Seq(entry1, entry2))
 
     val expectedXml =
       <feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/terms/" xmlns:opds="http://opds-spec.org/2010/catalog" xmlns:lrmi="http://purl.org/dcx/lrmi-terms/">
@@ -109,9 +109,9 @@ class OPDSControllerTest extends UnitSuite with TestEnvironment with ScalatraFun
   }
 
   test("that only first, next and last links are present and correct if there is more content ahead") {
-    val entry1: FeedEntry = TestData.Api.DefaultFeedEntry
-    val entry2: FeedEntry = TestData.Api.DefaultFeedEntry.copy(categories = Seq(TestData.Api.DefaultFeedCategory))
-    val feed = TestData.Api.DefaultFeed.copy(content = Seq(entry1, entry2))
+    val entry1: FeedEntryV2 = TestData.ApiV2.DefaultFeedEntry
+    val entry2: FeedEntryV2 = TestData.ApiV2.DefaultFeedEntry.copy(categories = Seq(TestData.ApiV2.DefaultFeedCategory))
+    val feed = TestData.ApiV2.DefaultFeed.copy(content = Seq(entry1, entry2))
     val generated = controller.render(feed, MoreAhead(Paging(page = 2, pageSize = 100), lastPage = 11))
     generated.mkString.contains("rel=\"previous\"") should be (false)
     generated.mkString.contains("<link href=\"some-url?page-size=100&amp;page=1\" rel=\"first\"/>") should be (true)
@@ -120,9 +120,9 @@ class OPDSControllerTest extends UnitSuite with TestEnvironment with ScalatraFun
   }
 
   test("that only first and previous links are present and correct if there is more content before") {
-    val entry1: FeedEntry = TestData.Api.DefaultFeedEntry
-    val entry2: FeedEntry = TestData.Api.DefaultFeedEntry.copy(categories = Seq(TestData.Api.DefaultFeedCategory))
-    val feed = TestData.Api.DefaultFeed.copy(content = Seq(entry1, entry2))
+    val entry1: FeedEntryV2 = TestData.ApiV2.DefaultFeedEntry
+    val entry2: FeedEntryV2 = TestData.ApiV2.DefaultFeedEntry.copy(categories = Seq(TestData.ApiV2.DefaultFeedCategory))
+    val feed = TestData.ApiV2.DefaultFeed.copy(content = Seq(entry1, entry2))
     val generated = controller.render(feed, MoreBefore(Paging(page = 3, pageSize = 100)))
     generated.mkString.contains("rel=\"next\"") should be (false)
     generated.mkString.contains("rel=\"last\"") should be (false)
@@ -131,9 +131,9 @@ class OPDSControllerTest extends UnitSuite with TestEnvironment with ScalatraFun
   }
 
   test("that first, previous, next and last links are present and correct if there is more content in both directions") {
-    val entry1: FeedEntry = TestData.Api.DefaultFeedEntry
-    val entry2: FeedEntry = TestData.Api.DefaultFeedEntry.copy(categories = Seq(TestData.Api.DefaultFeedCategory))
-    val feed = TestData.Api.DefaultFeed.copy(content = Seq(entry1, entry2))
+    val entry1: FeedEntryV2 = TestData.ApiV2.DefaultFeedEntry
+    val entry2: FeedEntryV2 = TestData.ApiV2.DefaultFeedEntry.copy(categories = Seq(TestData.ApiV2.DefaultFeedCategory))
+    val feed = TestData.ApiV2.DefaultFeed.copy(content = Seq(entry1, entry2))
     val generated = controller.render(feed, MoreInBothDirections(Paging(page = 3, pageSize = 100), lastPage = 15))
     generated.mkString.contains("<link href=\"some-url?page-size=100&amp;page=1\" rel=\"first\"/>") should be (true)
     generated.mkString.contains("<link href=\"some-url?page-size=100&amp;page=2\" rel=\"previous\"/>") should be (true)
@@ -142,9 +142,9 @@ class OPDSControllerTest extends UnitSuite with TestEnvironment with ScalatraFun
   }
 
   test("that only previous and next links are present when there is only 1 page to show") {
-    val entry1: FeedEntry = TestData.Api.DefaultFeedEntry
-    val entry2: FeedEntry = TestData.Api.DefaultFeedEntry.copy(categories = Seq(TestData.Api.DefaultFeedCategory))
-    val feed = TestData.Api.DefaultFeed.copy(content = Seq(entry1, entry2))
+    val entry1: FeedEntryV2 = TestData.ApiV2.DefaultFeedEntry
+    val entry2: FeedEntryV2 = TestData.ApiV2.DefaultFeedEntry.copy(categories = Seq(TestData.ApiV2.DefaultFeedCategory))
+    val feed = TestData.ApiV2.DefaultFeed.copy(content = Seq(entry1, entry2))
     val generated = controller.render(feed, OnlyOnePage(Paging(page = 1, pageSize = 10)))
     generated.mkString.contains("rel=\"previous\"") should be (false)
     generated.mkString.contains("rel=\"next\"") should be (false)
@@ -153,9 +153,9 @@ class OPDSControllerTest extends UnitSuite with TestEnvironment with ScalatraFun
   }
 
   test("that incorrect page number for single page is replaced by page=1") {
-    val entry1: FeedEntry = TestData.Api.DefaultFeedEntry
-    val entry2: FeedEntry = TestData.Api.DefaultFeedEntry.copy(categories = Seq(TestData.Api.DefaultFeedCategory))
-    val feed = TestData.Api.DefaultFeed.copy(content = Seq(entry1, entry2))
+    val entry1: FeedEntryV2 = TestData.ApiV2.DefaultFeedEntry
+    val entry2: FeedEntryV2 = TestData.ApiV2.DefaultFeedEntry.copy(categories = Seq(TestData.ApiV2.DefaultFeedCategory))
+    val feed = TestData.ApiV2.DefaultFeed.copy(content = Seq(entry1, entry2))
     val generated = controller.render(feed, OnlyOnePage(Paging(page = 2, pageSize = 10)))
     generated.mkString.contains("rel=\"previous\"") should be (false)
     generated.mkString.contains("rel=\"next\"") should be (false)
