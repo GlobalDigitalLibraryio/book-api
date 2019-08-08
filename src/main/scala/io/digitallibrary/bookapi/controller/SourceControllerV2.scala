@@ -11,7 +11,7 @@ trait SourceControllerV2 {
   val sourceControllerV2: SourceControllerV2
 
   class SourceControllerV2(implicit val swagger: Swagger) extends GdlController with SwaggerSupport {
-    protected val applicationDescription = "API for getting sources from GDL."
+    protected val applicationDescription = "V2 API for getting sources from GDL."
 
     val response400 = ResponseMessage(400, "Validation error", Some("ValidationError"))
     val response403 = ResponseMessage(403, "Access Denied", Some("Error"))

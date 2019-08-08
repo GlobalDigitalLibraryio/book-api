@@ -22,7 +22,7 @@ trait SearchControllerV2 {
   val searchControllerV2: SearchControllerV2
 
   class SearchControllerV2(implicit val swagger: Swagger) extends GdlController with SwaggerSupport {
-    protected val applicationDescription = "API for searching books from GDL."
+    protected val applicationDescription = "V2 API for searching books from GDL."
 
     def extractPageAndPageSize(): Paging = {
       Paging(
@@ -42,7 +42,7 @@ trait SearchControllerV2 {
     private val searchBooks = (apiOperation[api.SearchResultV2]("searchBooks")
       summary s"Search for books in the default language $DefaultLanguage"
       description s"Returns a list of books in $DefaultLanguage"
-      tags "Books v1"
+      tags "Books v2"
       parameters(
       headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
       queryParam[Option[Int]]("page-size").description("Return this many results per page."),
@@ -55,7 +55,7 @@ trait SearchControllerV2 {
     private val searchBooksForLang = (apiOperation[api.SearchResultV2]("searchBooksForLang")
       summary "Search for books in the provided language"
       description "Returns a list of books in the provided language"
-      tags "Books v1"
+      tags "Books v2"
       parameters(
       headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
       pathParam[String]("lang").description("Desired language for books specified in BCP-47 format."),

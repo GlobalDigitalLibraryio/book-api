@@ -17,7 +17,7 @@ trait LanguageControllerV2 {
   val languageControllerV2: LanguageControllerV2
 
   class LanguageControllerV2 (implicit val swagger: Swagger) extends GdlController with SwaggerSupport {
-    protected val applicationDescription = "API for retrieving all languages from the GDL"
+    protected val applicationDescription = "V2 API for retrieving all languages from the GDL"
 
     registerModel[api.Error]
     val response500 = ResponseMessage(500, "Unknown error", Some("Error"))

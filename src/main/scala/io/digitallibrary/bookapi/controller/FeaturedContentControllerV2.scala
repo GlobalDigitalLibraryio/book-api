@@ -26,7 +26,7 @@ trait FeaturedContentControllerV2 {
 
     registerModel[api.Error]
 
-    protected val applicationDescription = "API for retrieving featured content from GDL"
+    protected val applicationDescription = "V2 API for retrieving featured content from GDL"
 
     private val response500: ResponseMessage = ResponseMessage(500, "Unknown error", Some("Error"))
 

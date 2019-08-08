@@ -10,7 +10,7 @@ trait LevelControllerV2 {
   val levelControllerV2: LevelControllerV2
 
   class LevelControllerV2 (implicit val swagger: Swagger) extends GdlController with SwaggerSupport {
-    protected val applicationDescription = "API for retrieving all levels from GDL"
+    protected val applicationDescription = "V2 API for retrieving all levels from GDL"
 
     registerModel[api.Error]
     val response500 = ResponseMessage(500, "Unknown error", Some("Error"))

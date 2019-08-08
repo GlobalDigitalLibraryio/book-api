@@ -20,7 +20,7 @@ trait TranslationsControllerV2 {
   val translationsControllerV2: TranslationsControllerV2
 
   class TranslationsControllerV2 (implicit val swagger: Swagger) extends GdlController with SwaggerSupport {
-    protected val applicationDescription = "API for retrieving all languages from the GDL"
+    protected val applicationDescription = "V2 API for retrieving all languages from the GDL"
 
     registerModel[api.Error]
     registerModel[api.ValidationError]

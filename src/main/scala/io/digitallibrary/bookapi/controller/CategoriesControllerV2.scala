@@ -21,7 +21,7 @@ trait CategoriesControllerV2 {
   val categoriesControllerV2: CategoriesControllerV2
 
   class CategoriesControllerV2(implicit val swagger: Swagger) extends GdlController with SwaggerSupport {
-    protected val applicationDescription = "API for getting a hierarchy of categories and reading levels of published books."
+    protected val applicationDescription = "V2 API for getting a hierarchy of categories and reading levels of published books."
 
     val defaultLanguage = LanguageTag(BookApiProperties.DefaultLanguage)
 
