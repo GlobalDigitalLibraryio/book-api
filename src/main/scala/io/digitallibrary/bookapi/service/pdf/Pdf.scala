@@ -44,7 +44,14 @@ case class Pdf(language: LanguageTag, chapters: Seq[api.Chapter], translation: d
     LanguageTag("tam") -> fonts("tamil"),
     LanguageTag("ar-ae") -> fonts("arabic"),
     LanguageTag("ar") -> fonts("arabic"),
-    LanguageTag("khb") -> fonts("newtailue")
+    LanguageTag("khb") -> fonts("newtailue"),
+    LanguageTag("awa") -> fonts("devangari"),
+    LanguageTag("thl") -> fonts("devangari"),
+    LanguageTag("mai") -> fonts("devangari"),
+    LanguageTag("bho") -> fonts("devangari"),
+    LanguageTag("dty") -> fonts("devangari"),
+    LanguageTag("new") -> fonts("devangari"),
+    LanguageTag("ne-np") -> fonts("devangari")
   )
 
   def create(): PdfRendererBuilder = {

@@ -11,6 +11,8 @@ class PdfTest extends UnitSuite with TestEnvironment {
     pdf.fontDefinitions.get(LanguageTag("am")) should equal(Some(pdf.FontDefinition("/NotoSansEthiopic.ttf", "Noto Sans Ethiopic")))
     pdf.fontDefinitions.get(LanguageTag("km")) should equal(Some(pdf.FontDefinition("/NotoSansKhmer-Regular.ttf", "Noto Sans Khmer")))
     pdf.fontDefinitions.get(LanguageTag("khm")) should equal(Some(pdf.FontDefinition("/NotoSansKhmer-Regular.ttf", "Noto Sans Khmer")))
+    pdf.fontDefinitions.get(LanguageTag("mai")) should equal(Some(pdf.FontDefinition("/NotoSansDevanagari-Regular.ttf", "Noto Sans Devanagari")))
+    pdf.fontDefinitions.get(LanguageTag("awa")) should equal(Some(pdf.FontDefinition("/NotoSansDevanagari-Regular.ttf", "Noto Sans Devanagari")))
     pdf.fontDefinitions.get(LanguageTag("nob")) should be(None)
 
   }
