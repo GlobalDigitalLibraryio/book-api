@@ -164,7 +164,7 @@ trait ReadService {
     }
 
     private def getTranslationRepository: TranslationRepository = {
-      if(AuthUser.hasRole(BookApiProperties.RoleWithWriteAccess)) {
+      if(AuthUser.hasRole(BookApiProperties.RoleWithWriteAccess) || AuthUser.hasRole(BookApiProperties.RoleWithAdminReadAccess)) {
         allTranslationsRepository
       } else {
         unFlaggedTranslationsRepository
