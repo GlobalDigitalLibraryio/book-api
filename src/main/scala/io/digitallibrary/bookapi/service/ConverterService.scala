@@ -372,12 +372,13 @@ trait ConverterService {
     }
 
     def toApiChapterV2(chapter: domain.Chapter, convertContent: Boolean = true): api.ChapterV2 = {
+      val apiContent = contentConverter.toApiContent(chapter.content)
       api.ChapterV2(
         chapter.id.get,
         chapter.revision.get,
         chapter.seqNo,
         chapter.title,
-        chapter.content,
+        if (convertContent) apiContent.content else chapter.content,
         chapter.chapterType.toString, getMediaList(chapter.content))
     }
 
