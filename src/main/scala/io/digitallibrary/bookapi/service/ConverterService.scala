@@ -542,7 +542,7 @@ trait ConverterService {
         dateCreated = translation.dateCreated,
         dateArrived = translation.dateArrived,
         categories = toApiCategories(translation.categories),
-        coverImage = toApiCoverImageV2(translation.coverphoto),
+        coverImage = toApiCoverImageV2(translation.coverphoto, toApiLanguage(translation.language).code),
         downloads = toApiDownloads(translation),
         tags = translation.tags,
         contributors = toApiContributors(translation.contributors),
@@ -591,7 +591,7 @@ trait ConverterService {
           language = toApiLanguage(translation.language),
           readingLevel = translation.readingLevel,
           categories = toApiCategories(translation.categories),
-          coverImage = toApiCoverImageV2(translation.coverphoto),
+          coverImage = toApiCoverImageV2(translation.coverphoto, toApiLanguage(translation.language).code),
           dateArrived = translation.dateArrived,
           source = book.source,
           highlightTitle = None,
@@ -628,7 +628,7 @@ trait ConverterService {
         translatedFrom = translation.translatedFrom.map(toApiLanguage),
         translatedTo = toApiLanguage(translation.language),
         publisher = book.publisher,
-        coverImage = toApiCoverImageV2(translation.coverphoto),
+        coverImage = toApiCoverImageV2(translation.coverphoto, toApiLanguage(translation.language).code),
         readingLevel = book.readingLevel,
         synchronizeUrl = s"${BookApiProperties.Domain}${BookApiProperties.TranslationsPath}/synchronized/${inTranslation.id.get}",
         crowdinUrl = CrowdinUtils.crowdinUrlToBookV2(book, inTranslation.crowdinProjectId, inTranslation.crowdinToLanguage))
@@ -674,9 +674,9 @@ trait ConverterService {
       })
     }
 
-    def toApiCoverImageV2(imageIdOpt: Option[Long]): Option[api.CoverImageV2] = {
+    def toApiCoverImageV2(imageIdOpt: Option[Long], imageLanguage: String): Option[api.CoverImageV2] = {
       imageIdOpt.map(imageId => {
-        val url = s"$Domain${BookApiProperties.MediaServicePath}/images/$imageId"
+        val url = s"$Domain${BookApiProperties.MediaServicePath}/images/$imageId?language=$imageLanguage"
         api.CoverImageV2(url, MediaType.IMAGE.toString, imageId.toString)
       })
     }
