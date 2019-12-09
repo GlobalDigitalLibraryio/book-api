@@ -132,7 +132,7 @@ trait ExportService {
         .filter(_.coverImage.isDefined)
         .flatMap(b => readServiceV2.withIdAndLanguageForExport(b.id, language))
         .foreach(book => {
-          mediaApiClient.downloadImage(book.coverPhoto.get.imageApiId) match {
+          mediaApiClient.downloadImage(book.coverPhoto.get.imageApiId, language = language.toString()) match {
             case Failure(error) => logger.error(s"Error when producing zip-archive with cover images for $language and $source. Could not download cover image with id ${book.coverPhoto.get.imageApiId}", error)
             case Success(downloadedImage) =>
               zip.putNextEntry(new ZipEntry(s"PKEY:${book.uuid}_frontcover.${downloadedImage.fileEnding}"))

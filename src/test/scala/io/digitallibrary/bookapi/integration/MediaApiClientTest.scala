@@ -25,7 +25,7 @@ class MediaApiClientTest extends UnitSuite with TestEnvironment {
   val client = new MediaApiClient
 
   test("that parsing ContentType works with only contentType") {
-    val downloadedImageTry = client.downloadImage(id = 1, format = Some("jpg"))
+    val downloadedImageTry = client.downloadImage(id = 1, language = "en", format = Some("jpg"))
     downloadedImageTry match {
       case Failure(ex) => ex.printStackTrace()
       case Success(downloadedImage) => {

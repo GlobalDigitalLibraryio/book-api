@@ -25,8 +25,8 @@ trait MediaApiClient {
   val mediaApiClient: MediaApiClient
 
   class MediaApiClient extends LazyLogging {
-    def imageMetaWithId(id: Long, width: Option[Int] = None, format: Option[String] = None): Option[ImageMeta] = {
-      val q_params = Map("width" -> width, "format" -> format)
+    def imageMetaWithId(id: Long, language: String, width: Option[Int] = None, format: Option[String] = None): Option[ImageMeta] = {
+      val q_params = Map("width" -> width, "format" -> format, "language" -> language)
         .collect { case (key, Some(value)) => (key, value.toString) }
 
       val imageMeta = for {
@@ -43,10 +43,10 @@ trait MediaApiClient {
       }
     }
 
-    def downloadImage(id: Long, width: Option[Int] = None, format: Option[String] = Some("png")): Try[DownloadedImage] = {
+    def downloadImage(id: Long, language: String, width: Option[Int] = None, format: Option[String] = Some("png")): Try[DownloadedImage] = {
       import com.netaporter.uri.dsl._
 
-      imageMetaWithId(id, width, format) match {
+      imageMetaWithId(id, language, width, format ) match {
         case None => Failure(new NotFoundException(s"Image with id $id was not found"))
         case Some(imageMeta) => for {
           response <- Try(Http(imageMeta.resourceUrl).asBytes)

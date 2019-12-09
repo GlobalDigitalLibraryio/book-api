@@ -52,7 +52,7 @@ class EPubServiceTest extends UnitSuite with TestEnvironment {
 
     when(unFlaggedTranslationsRepository.withUuId(any[String])(any[DBSession])).thenReturn(Some(translation))
     when(chapterRepository.chaptersForBookIdAndLanguage(any[Long], any[LanguageTag])(any[DBSession])).thenReturn(Seq())
-    when(mediaApiClient.downloadImage(translation.coverphoto.get, None)).thenReturn(Failure(new RuntimeException("error")))
+    when(mediaApiClient.downloadImage(translation.coverphoto.get, translation.language.toString(), None )).thenReturn(Failure(new RuntimeException("error")))
     when(imageApiClient.downloadImage(translation.coverphoto.get, None)).thenReturn(Success(image))
 
     ePubService.createEPub(translation.language, translation.uuid) match {
@@ -72,7 +72,7 @@ class EPubServiceTest extends UnitSuite with TestEnvironment {
 
     when(unFlaggedTranslationsRepository.withUuId(any[String])(any[DBSession])).thenReturn(Some(translation))
     when(chapterRepository.chaptersForBookIdAndLanguage(any[Long], any[LanguageTag])(any[DBSession])).thenReturn(Seq())
-    when(mediaApiClient.downloadImage(translation.coverphoto.get, None)).thenReturn(Success(image))
+    when(mediaApiClient.downloadImage(translation.coverphoto.get, translation.language.toString(), None )).thenReturn(Success(image))
 
     ePubService.createEPub(translation.language, translation.uuid) match {
       case None => fail("epub should be defined")
@@ -90,7 +90,7 @@ class EPubServiceTest extends UnitSuite with TestEnvironment {
 
     when(unFlaggedTranslationsRepository.withUuId(any[String])(any[DBSession])).thenReturn(Some(translation))
     when(chapterRepository.chaptersForBookIdAndLanguage(any[Long], any[LanguageTag])(any[DBSession])).thenReturn(Seq())
-    when(mediaApiClient.downloadImage(translation.coverphoto.get, None)).thenReturn(Failure(new RuntimeException("error")))
+    when(mediaApiClient.downloadImage(translation.coverphoto.get, translation.language.toString(), None)).thenReturn(Failure(new RuntimeException("error")))
     when(imageApiClient.downloadImage(translation.coverphoto.get, None)).thenReturn(Failure(new RuntimeException("error")))
 
     ePubService.createEPub(translation.language, translation.uuid) match {

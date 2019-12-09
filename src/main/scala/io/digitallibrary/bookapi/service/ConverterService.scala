@@ -41,7 +41,7 @@ trait ConverterService {
         hit.language,
         hit.readingLevel,
         hit.categories,
-        hit.coverImage.flatMap(x => toApiCoverImage(Some(x.imageId.toLong))),
+        hit.coverImage.flatMap(x => toApiCoverImage(Some(x.imageId.toLong), hit.language.code)),
         hit.dateArrived,
         hit.source,
         hit.highlightTitle,
@@ -506,7 +506,7 @@ trait ConverterService {
           dateCreated = translation.dateCreated,
           dateArrived = translation.dateArrived,
           categories = toApiCategories(translation.categories),
-          coverImage = toApiCoverImage(translation.coverphoto),
+          coverImage = toApiCoverImage(translation.coverphoto, toApiLanguage(translation.language).code),
           downloads = toApiDownloads(translation),
           tags = translation.tags,
           contributors = toApiContributors(translation.contributors),
@@ -567,7 +567,7 @@ trait ConverterService {
           language = toApiLanguage(translation.language),
           readingLevel = translation.readingLevel,
           categories = toApiCategories(translation.categories),
-          coverImage = toApiCoverImage(translation.coverphoto),
+          coverImage = toApiCoverImage(translation.coverphoto, toApiLanguage(translation.language).code),
           dateArrived = translation.dateArrived,
           source = book.source,
           highlightTitle = None,
@@ -614,7 +614,7 @@ trait ConverterService {
         translatedFrom = translation.translatedFrom.map(toApiLanguage),
         translatedTo = toApiLanguage(translation.language),
         publisher = book.publisher,
-        coverImage = toApiCoverImage(translation.coverphoto),
+        coverImage = toApiCoverImage(translation.coverphoto, toApiLanguage(translation.language).code),
         readingLevel = book.readingLevel,
         synchronizeUrl = s"${BookApiProperties.Domain}${BookApiProperties.TranslationsPath}/synchronized/${inTranslation.id.get}",
         crowdinUrl = CrowdinUtils.crowdinUrlToBook(book, inTranslation.crowdinProjectId, inTranslation.crowdinToLanguage))
@@ -652,9 +652,9 @@ trait ConverterService {
       api.ImageVariant(variant.ratio, variant.x, variant.y, variant.width, variant.height)
     }
 
-    def toApiCoverImage(imageIdOpt: Option[Long]): Option[api.CoverImage] = {
+    def toApiCoverImage(imageIdOpt: Option[Long], language: String): Option[api.CoverImage] = {
       imageIdOpt.flatMap(imageId => {
-        val imageMeta = mediaApiClient.imageMetaWithId(imageId)
+        val imageMeta = mediaApiClient.imageMetaWithId(imageId, language)
         imageMeta match {
           case None => {
             imageApiClient.imageMetaWithId(imageId).map(imageMeta => {

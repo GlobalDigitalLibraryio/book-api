@@ -65,7 +65,7 @@ trait EPubService {
 
         // Add CoverPhoto if defined, throw exception when trouble
         translation.coverphoto.foreach(coverPhotoId => {
-          downloadImage(coverPhotoId) match {
+          downloadImage(coverPhotoId, translation.language.toString ) match {
             case Failure(ex) => throw ex
             case Success(downloadedImage) =>
               val coverImage = new Content(
@@ -83,7 +83,7 @@ trait EPubService {
         // Add images first (do not add more than one version of each image if image is used in multiple pages)
         val imageIdsToAdd = chapters.flatMap(_.imagesInChapter()).distinct
 
-        val images = imageIdsToAdd.map(idAndSize => downloadImage(idAndSize._1, idAndSize._2)).map(_.get)
+        val images = imageIdsToAdd.map(idAndSize => downloadImage(idAndSize._1, translation.language.toString, idAndSize._2 )).map(_.get)
         for (imageWithIndex <- images.zipWithIndex) {
           val image = imageWithIndex._1
           val imageNo = imageWithIndex._2
@@ -119,8 +119,8 @@ trait EPubService {
       }
     }
 
-    private def downloadImage(id: Long, width: Option[Int] = None): Try[DownloadedImage] = {
-      mediaApiClient.downloadImage(id, width) match {
+    private def downloadImage(id: Long, language: String, width: Option[Int] = None) = {
+      mediaApiClient.downloadImage(id, language, width) match {
         case Success(x) => Success(x)
         case Failure(_) => imageApiClient.downloadImage(id, width)
       }
