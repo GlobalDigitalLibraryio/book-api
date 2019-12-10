@@ -50,7 +50,7 @@ trait TranslationServiceV2 {
         val chaptersToTranslate: Seq[ChapterV2] = newTranslation.chapters
           .filter(_.chapterType != ChapterType.License)
           .filter(_.containsText())
-          .flatMap(ch => readServiceV2.chapterWithId(ch.id.get))
+          .flatMap(ch => readServiceV2.chapterWithId(ch.id.get, LanguageTag(toLanguage)))
 
         val inTranslation = for {
           _ <- writeServiceV2.addInTransportMark(originalBook)
@@ -111,8 +111,8 @@ trait TranslationServiceV2 {
       readServiceV2.withIdLanguageAndFromLanguage(bookId, BookApiProperties.CrowdinPseudoLanguage, translatedFrom).flatMap(converterService.toBookV2ForTranslation)
     }
 
-    def forTranslationAndChapter(bookId: Long, chapterId: Long): Option[api.ChapterV2] = {
-      readServiceV2.chapterWithId(chapterId)
+    def forTranslationAndChapter(bookId: Long, chapterId: Long, language: LanguageTag): Option[api.ChapterV2] = {
+      readServiceV2.chapterWithId(chapterId, language)
     }
   }
 }

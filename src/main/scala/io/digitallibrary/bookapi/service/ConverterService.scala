@@ -371,7 +371,7 @@ trait ConverterService {
         chapter.chapterType.toString, apiContent.images)
     }
 
-    def toApiChapterV2(chapter: domain.Chapter, convertContent: Boolean = true): api.ChapterV2 = {
+    def toApiChapterV2(chapter: domain.Chapter, convertContent: Boolean = true, language: String): api.ChapterV2 = {
       val apiContent = contentConverter.toApiContent(chapter.content)
       api.ChapterV2(
         chapter.id.get,
@@ -379,10 +379,10 @@ trait ConverterService {
         chapter.seqNo,
         chapter.title,
         if (convertContent) apiContent.content else chapter.content,
-        chapter.chapterType.toString, getMediaList(chapter.content))
+        chapter.chapterType.toString, getMediaList(chapter.content, language))
     }
 
-    def getMediaList(content: String): Seq[Media] = {
+    def getMediaList(content: String, language: String): Seq[Media] = {
       var mediaList: Seq[Media] = Seq()
 
       val document = Jsoup.parseBodyFragment(content)
@@ -392,28 +392,28 @@ trait ConverterService {
       for (i <- 0 until images.size()) {
         val image = images.get(i)
         val nodeId = image.attr("data-resource_id")
-        mediaList = mediaList :+ Media(getMediaUrl(MediaType.IMAGE, nodeId), MediaType.IMAGE.toString, nodeId)
+        mediaList = mediaList :+ Media(getMediaUrl(MediaType.IMAGE, nodeId, language), MediaType.IMAGE.toString, nodeId)
       }
       for (i <- 0 until audios.size()) {
         val audio = audios.get(i)
         val nodeId = audio.attr("data-resource_id")
-        mediaList = mediaList :+ Media(getMediaUrl(MediaType.AUDIO, nodeId), MediaType.AUDIO.toString, nodeId)
+        mediaList = mediaList :+ Media(getMediaUrl(MediaType.AUDIO, nodeId, language), MediaType.AUDIO.toString, nodeId)
       }
       for (i <- 0 until videos.size()) {
         val video = videos.get(i)
         val nodeId = video.attr("data-resource_id")
-        mediaList = mediaList :+ Media(getMediaUrl(MediaType.VIDEO, nodeId), MediaType.VIDEO.toString, nodeId)
+        mediaList = mediaList :+ Media(getMediaUrl(MediaType.VIDEO, nodeId, language), MediaType.VIDEO.toString, nodeId)
       }
       mediaList
     }
 
-    def getMediaUrl(mediaType: MediaType.Value, id: String): String = {
+    def getMediaUrl(mediaType: MediaType.Value, id: String, language: String): String = {
       val url_path = mediaType match {
         case MediaType.IMAGE => "images"
         case MediaType.VIDEO => "videos"
         case MediaType.AUDIO => "audio"
       }
-      s"$Domain${BookApiProperties.MediaServicePath}/$url_path/$id"
+      s"$Domain${BookApiProperties.MediaServicePath}/$url_path/$id?language=$language"
     }
 
     def toInternalApiBook(translation: domain.Translation, availableLanguages: Seq[LanguageTag], book: domain.Book): api.internal.Book = {
@@ -476,7 +476,7 @@ trait ConverterService {
         downloads = toApiDownloads(translation),
         tags = translation.tags,
         contributors = toApiContributors(translation.contributors),
-        chapters = translation.chapters.map(toApiChapterV2(_, convertContent = false)),
+        chapters = translation.chapters.map(toApiChapterV2(_, convertContent = false, toApiLanguage(translation.language).code)),
         supportsTranslation = BookApiProperties.supportsTranslationFrom(translation.language) && translation.bookFormat.equals(BookFormat.HTML),
         bookFormat = translation.bookFormat.toString,
         source = book.source,

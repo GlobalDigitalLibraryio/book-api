@@ -97,7 +97,7 @@ class TranslationServiceV2Test extends UnitSuite with TestEnvironment {
     when(crowdinClientBuilder.forSourceLanguage(any[LanguageTag])).thenReturn(Success(crowdinClientMock))
     when(translationDbService.translationsForOriginalId(any[Long])).thenReturn(Seq())
 
-    when(readServiceV2.chapterWithId(any[Long])).thenReturn(Some(TestData.ApiV2.Chapter1))
+    when(readServiceV2.chapterWithId(any[Long], any[LanguageTag])).thenReturn(Some(TestData.ApiV2.Chapter1))
 
     when(writeServiceV2.addInTransportMark(any[api.BookV2])).thenReturn(Success())
     when(writeServiceV2.removeInTransportMark(any[api.BookV2])).thenReturn(Success())
@@ -133,7 +133,7 @@ class TranslationServiceV2Test extends UnitSuite with TestEnvironment {
     when(translationDbService.translationsForOriginalId(any[Long])).thenReturn(Seq())
 
     when(writeServiceV2.newTranslationForBook(any[Long], any[LanguageTag], any[TranslateRequest], any[TranslationStatus.Value])).thenReturn(Success(persistedNewTranslation))
-    when(readServiceV2.chapterWithId(chapter1.id.get)).thenReturn(Some(TestData.ApiV2.Chapter1))
+    when(readServiceV2.chapterWithId(chapter1.id.get, LanguageTag(TestData.DefaultLanguage))).thenReturn(Some(TestData.ApiV2.Chapter1))
 
     when(writeServiceV2.addInTransportMark(any[api.BookV2])).thenReturn(Success())
     when(writeServiceV2.removeInTransportMark(any[api.BookV2])).thenReturn(Success())
@@ -148,8 +148,8 @@ class TranslationServiceV2Test extends UnitSuite with TestEnvironment {
     val response = serviceV2.addTranslation(TranslateRequest(1, "eng", "nob", Some("userId")))
     response should be a 'Success
 
-    verify(readServiceV2).chapterWithId(chapter1.id.get)
-    verify(readServiceV2, never()).chapterWithId(chapter2.id.get)
+    verify(readServiceV2).chapterWithId(chapter1.id.get, LanguageTag(TestData.DefaultLanguage))
+    verify(readServiceV2, never()).chapterWithId(chapter2.id.get, LanguageTag(TestData.DefaultLanguage))
   }
 
   test("v2: that addTranslate deletes directory in Crowdin when DB-updates fails") {
@@ -160,7 +160,7 @@ class TranslationServiceV2Test extends UnitSuite with TestEnvironment {
     when(crowdinClientBuilder.forSourceLanguage(any[LanguageTag])).thenReturn(Success(crowdinClientMock))
     when(translationDbService.translationsForOriginalId(any[Long])).thenReturn(Seq())
 
-    when(readServiceV2.chapterWithId(any[Long])).thenReturn(Some(TestData.ApiV2.Chapter1))
+    when(readServiceV2.chapterWithId(any[Long], any[LanguageTag])).thenReturn(Some(TestData.ApiV2.Chapter1))
 
     when(writeServiceV2.addInTransportMark(any[api.BookV2])).thenReturn(Success())
     when(writeServiceV2.removeInTransportMark(any[api.BookV2])).thenReturn(Success())
