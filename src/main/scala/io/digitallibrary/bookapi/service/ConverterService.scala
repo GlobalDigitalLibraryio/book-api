@@ -21,7 +21,7 @@ import io.digitallibrary.bookapi.model.{api, _}
 import io.digitallibrary.bookapi.model.api.{Book => _, BookV2 => _, Category => _, TranslateRequest => _, _}
 import io.digitallibrary.bookapi.model.api.internal.{NewChapter, NewEducationalAlignment, NewTranslation}
 import io.digitallibrary.bookapi.model.crowdin.CrowdinFile
-import io.digitallibrary.bookapi.model.domain._
+import io.digitallibrary.bookapi.model.domain.{Chapter, _}
 import io.digitallibrary.bookapi.{BookApiProperties, model}
 import io.digitallibrary.license.model.License
 import org.jsoup.Jsoup
@@ -371,14 +371,13 @@ trait ConverterService {
         chapter.chapterType.toString, apiContent.images)
     }
 
-    def toApiChapterV2(chapter: domain.Chapter, convertContent: Boolean = true): api.ChapterV2 = {
-      val apiContent = contentConverter.toApiContent(chapter.content)
+    def toApiChapterV2(chapter: Chapter): api.ChapterV2 = {
       api.ChapterV2(
         chapter.id.get,
         chapter.revision.get,
         chapter.seqNo,
         chapter.title,
-        if (convertContent) apiContent.content else chapter.content,
+        chapter.content,
         chapter.chapterType.toString, getMediaList(chapter.content))
     }
 
@@ -476,7 +475,7 @@ trait ConverterService {
         downloads = toApiDownloads(translation),
         tags = translation.tags,
         contributors = toApiContributors(translation.contributors),
-        chapters = translation.chapters.map(toApiChapterV2(_, convertContent = false)),
+        chapters = translation.chapters.map((chapter: Chapter) => toApiChapterV2(chapter)),
         supportsTranslation = BookApiProperties.supportsTranslationFrom(translation.language) && translation.bookFormat.equals(BookFormat.HTML),
         bookFormat = translation.bookFormat.toString,
         source = book.source,
