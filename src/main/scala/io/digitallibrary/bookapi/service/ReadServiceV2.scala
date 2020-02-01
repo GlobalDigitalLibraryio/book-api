@@ -129,12 +129,12 @@ trait ReadServiceV2 {
       chapterRepository.chapterForBookWithLanguageAndId(bookId, language, chapterId)
     }
 
-    def chapterForBookWithLanguageAndId(bookId: Long, language: LanguageTag, chapterId: Long): Option[api.ChapterV2] = {
-      chapterRepository.chapterForBookWithLanguageAndId(bookId, language, chapterId).map((chapter: Chapter) => converterService.toApiChapterV2(chapter))
+    def chapterForBookWithLanguageAndId(bookId: Long, language: LanguageTag, chapterId: Long, convertApi: Boolean = false): Option[api.ChapterV2] = {
+      chapterRepository.chapterForBookWithLanguageAndId(bookId, language, chapterId).map(converterService.toApiChapterV2(_, convertApi))
     }
 
     def chapterWithId(chapterId: Long): Option[api.ChapterV2] = {
-      chapterRepository.withId(chapterId).map((chapter: Chapter) => converterService.toApiChapterV2(chapter))
+      chapterRepository.withId(chapterId).map(converterService.toApiChapterV2(_))
     }
 
     def chapterWithSeqNoForTranslation(translationId: Long, seqno: Long): Option[api.internal.ChapterId] = {
