@@ -52,7 +52,7 @@ trait PdfServiceV2 {
     def createPdf(language: LanguageTag, uuid: String): Option[PdfRendererBuilder] = {
       unFlaggedTranslationsRepository.withUuId(uuid).map(translation => {
         PdfV2(language=language,
-          chapters=readServiceV2.chaptersForIdAndLanguage(translation.bookId, language).flatMap(ch => readServiceV2.chapterForBookWithLanguageAndId(translation.bookId, language, ch.id)),
+          chapters=readServiceV2.chaptersForIdAndLanguage(translation.bookId, language).flatMap(ch => readServiceV2.chapterForBookWithLanguageAndId(translation.bookId, language, ch.id, true)),
           translation=translation,
           source=bookRepository.withId(translation.bookId).map(_.source))
           .create()

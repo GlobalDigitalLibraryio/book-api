@@ -128,9 +128,9 @@ trait ReadServiceV2 {
     def domainChapterForBookWithLanguageAndId(bookId: Long, language: LanguageTag, chapterId: Long): Option[domain.Chapter] = {
       chapterRepository.chapterForBookWithLanguageAndId(bookId, language, chapterId)
     }
-
-    def chapterForBookWithLanguageAndId(bookId: Long, language: LanguageTag, chapterId: Long): Option[api.ChapterV2] = {
-      chapterRepository.chapterForBookWithLanguageAndId(bookId, language, chapterId).map(converterService.toApiChapterV2(_, convertContent = true,language.toString()))
+    
+    def chapterForBookWithLanguageAndId(bookId: Long, language: LanguageTag, chapterId: Long, convertApi: Boolean = false): Option[api.ChapterV2] = {
+      chapterRepository.chapterForBookWithLanguageAndId(bookId, language, chapterId).map(converterService.toApiChapterV2(_, convertApi, language.toString()))
     }
 
     def chapterWithId(chapterId: Long, languageTag: LanguageTag): Option[api.ChapterV2] = {

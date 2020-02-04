@@ -22,7 +22,7 @@ class PdfServiceV2Test extends UnitSuite with TestEnvironment {
     when(unFlaggedTranslationsRepository.withUuId(any[String])(any[DBSession])).thenReturn(Some(TestData.Domain.DefaultTranslation))
     when(bookRepository.withId(any[Long])(any[DBSession])).thenReturn(Some(TestData.Domain.DefaultBook))
     when(readServiceV2.chaptersForIdAndLanguage(any[Long], any[LanguageTag])).thenReturn(Seq(TestData.Api.ChapterSummary1))
-    when(readServiceV2.chapterForBookWithLanguageAndId(any[Long], any[LanguageTag], any[Long])).thenReturn(Some(TestData.ApiV2.Chapter1))
+    when(readServiceV2.chapterForBookWithLanguageAndId(any[Long], any[LanguageTag], any[Long], any[Boolean])).thenReturn(Some(TestData.ApiV2.Chapter1))
 
 
     val renderer = pdfServiceV2.createPdf(LanguageTag("amh"), "123-144-155")
@@ -35,7 +35,7 @@ class PdfServiceV2Test extends UnitSuite with TestEnvironment {
     when(unFlaggedTranslationsRepository.withUuId(any[String])(any[DBSession])).thenReturn(Some(TestData.Domain.DefaultTranslation))
     when(bookRepository.withId(any[Long])(any[DBSession])).thenReturn(Some(TestData.Domain.DefaultBook))
     when(readServiceV2.chaptersForIdAndLanguage(any[Long], any[LanguageTag])).thenReturn(Seq(TestData.Api.ChapterSummary1))
-    when(readServiceV2.chapterForBookWithLanguageAndId(any[Long], any[LanguageTag], any[Long])).thenReturn(Some(TestData.ApiV2.Chapter1))
+    when(readServiceV2.chapterForBookWithLanguageAndId(any[Long], any[LanguageTag], any[Long], any[Boolean])).thenReturn(Some(TestData.ApiV2.Chapter1))
 
     val pdf = pdfServiceV2.getPdf(LanguageTag("eng"), uuid)
     pdf.get.fileName should be ("Default translation title.pdf")
