@@ -354,11 +354,19 @@ trait ConverterService {
 
     def toApiChapterSummary(chapters: Seq[domain.Chapter], bookId: Long, language: LanguageTag): Seq[api.ChapterSummary] = chapters.map(c => toApiChapterSummary(c, bookId, language))
 
+    def toApiChapterSummaryV2(chapters: Seq[domain.Chapter], bookId: Long, language: LanguageTag): Seq[api.ChapterSummary] = chapters.map(c => toApiChapterSummaryV2(c, bookId, language))
+
     def toApiChapterSummary(chapter: domain.Chapter, bookId: Long, language: LanguageTag): api.ChapterSummary = api.ChapterSummary(
       chapter.id.get,
       chapter.seqNo,
       chapter.title,
       s"${Domain}${BookApiProperties.ApiPath}/${language.toString}/${bookId}/chapters/${chapter.id.get}")
+
+    def toApiChapterSummaryV2(chapter: domain.Chapter, bookId: Long, language: LanguageTag): api.ChapterSummary = api.ChapterSummary(
+      chapter.id.get,
+      chapter.seqNo,
+      chapter.title,
+      s"${Domain}${BookApiProperties.ApiPathV2}/${language.toString}/${bookId}/chapters/${chapter.id.get}")
 
     def toApiChapter(chapter: domain.Chapter, convertContent: Boolean = true): api.Chapter = {
       val apiContent = contentConverter.toApiContent(chapter.content)
@@ -546,7 +554,7 @@ trait ConverterService {
         downloads = toApiDownloads(translation),
         tags = translation.tags,
         contributors = toApiContributors(translation.contributors),
-        chapters = toApiChapterSummary(translation.chapters, translation.bookId, translation.language),
+        chapters = toApiChapterSummaryV2(translation.chapters, translation.bookId, translation.language),
         supportsTranslation = BookApiProperties.supportsTranslationFrom(translation.language) && translation.bookFormat.equals(BookFormat.HTML),
         bookFormat = translation.bookFormat.toString,
         pageOrientation = translation.pageOrientation.toString,
