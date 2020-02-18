@@ -131,5 +131,4 @@ resolvers ++= Seq(
   scala.util.Properties.envOrNone("NDLA_RELEASES").map(repo => "NDLA Release Sonatype Nexus Repository Manager" at repo)
 ).flatten
 
-resolvers += "OpenCollab Nexus Release Repo" at "http://nexus.opencollab.co.za/nexus/content/repositories/releases"
 resolvers += Resolver.mavenLocal
