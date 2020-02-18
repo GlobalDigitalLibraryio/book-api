@@ -22,7 +22,7 @@ import scala.util.{Failure, Success}
   * ! This is only used internal by GDL for import and so on. So for v2, we just updates the services directly
   */
 trait InternController {
-  this: WriteService with ReadServiceV2 with ConverterService with ValidationService with FeedService with PdfServiceV2 with IndexBuilderService with IndexService with ImportService =>
+  this: WriteServiceV2 with ReadServiceV2 with ConverterService with ValidationService with FeedService with PdfServiceV2 with IndexBuilderService with IndexService with ImportService =>
   val internController: InternController
 
   class InternController extends GdlController with FileUploadSupport{
@@ -30,7 +30,7 @@ trait InternController {
       val newBook = extract[NewBook](request.body)
 
       // TODO: Update book
-      writeService.newBook(newBook) match {
+      writeServiceV2.newBook(newBook) match {
         case Success(x) => x
         case Failure(ex) => throw ex
       }
@@ -59,7 +59,7 @@ trait InternController {
     put("/book/:id") {
       val bookId = long("id")
       val bookReplacement = extract[NewBook](request.body)
-      writeService.updateBook(bookId, bookReplacement) match {
+      writeServiceV2.updateBook(bookId, bookReplacement) match {
         case Success(x) => x
         case Failure(ex) => throw ex
       }
@@ -72,7 +72,7 @@ trait InternController {
 
       readServiceV2.withIdAndLanguage(bookId, language) match {
         case Some(_) => Conflict(body = Error(Error.ALREADY_EXISTS, s"A translation with language '${newTranslation.language}' already exists for book with id '$bookId'. Updating is not supported yet"))
-        case None => writeService.newTranslationForBook(bookId, newTranslation) match {
+        case None => writeServiceV2.newTranslationForBook(bookId, newTranslation) match {
           case Success(x) => x
           case Failure(ex) => throw ex
         }
@@ -84,7 +84,7 @@ trait InternController {
       val translationId = long("translationid")
       val translationReplacement = extract[NewTranslation](request.body)
 
-      writeService.updateTranslationForBook(bookId, translationId, translationReplacement) match {
+      writeServiceV2.updateTranslationForBook(bookId, translationId, translationReplacement) match {
         case None => NotFound(body = Error(Error.NOT_FOUND, s"No translation with id $translationId for book with id $bookId found"))
         case Some(Success(x)) => x
         case Some(Failure(ex)) => throw ex
@@ -96,7 +96,7 @@ trait InternController {
       val translationId = long("translationid")
       val newChapter = extract[NewChapter](request.body)
 
-      writeService.newChapter(translationId, newChapter) match {
+      writeServiceV2.newChapter(translationId, newChapter) match {
         case Success(x) => x
         case Failure(ex) => throw ex
       }
@@ -119,7 +119,7 @@ trait InternController {
       val chapterid = long("chapterid")
       val replacementChapter = extract[NewChapter](request.body)
 
-      writeService.updateChapter(chapterid, replacementChapter) match {
+      writeServiceV2.updateChapter(chapterid, replacementChapter) match {
         case Some(x) => x
         case None => NotFound(body = Error(Error.NOT_FOUND, s"No chapter with id $chapterid for translation with id $translationId found"))
       }
