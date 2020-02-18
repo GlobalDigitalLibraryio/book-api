@@ -67,4 +67,5 @@ case class BookV2(id: Long,
                 bookFormat: String,
                 source: String,
                 pageOrientation: String,
-                additionalInformation: Option[String])
+                additionalInformation: Option[String],
+                bookType: String)

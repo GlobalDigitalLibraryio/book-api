@@ -181,7 +181,8 @@ trait TranslationRepository {
           t.inTransport -> translation.inTransport,
           t.tags -> tagBinder,
           t.categoryIds -> categoryBinder,
-          t.additionalInformation -> translation.additionalInformation
+          t.additionalInformation -> translation.additionalInformation,
+          t.bookType -> translation.bookType.toString
         ).toSQL.updateAndReturnGeneratedKey().apply()
 
       translation.copy(id = Some(id), revision = Some(startRevision))
@@ -235,7 +236,8 @@ trait TranslationRepository {
           t.inTransport -> replacement.inTransport,
           t.tags -> tagBinder,
           t.categoryIds -> categoryBinder,
-          t.additionalInformation -> replacement.additionalInformation
+          t.additionalInformation -> replacement.additionalInformation,
+          t.bookType -> replacement.bookType.toString
         )
         .where
         .eq(t.id, replacement.id)

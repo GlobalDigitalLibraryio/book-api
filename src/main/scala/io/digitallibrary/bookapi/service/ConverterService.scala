@@ -210,7 +210,8 @@ trait ConverterService {
         categories = categories,
         bookFormat = BookFormat.valueOfOrDefault(newBook.bookFormat),
         pageOrientation = PageOrientation.valueOfOrDefault(newBook.pageOrientation),
-        additionalInformation = newBook.additionalInformation
+        additionalInformation = newBook.additionalInformation,
+        bookType = BookType.BOOK // Sets v1 to default BOOK since we dont have anything else in v1
       )
     }
 
@@ -253,7 +254,8 @@ trait ConverterService {
         categories = categories,
         bookFormat = BookFormat.valueOfOrDefault(newBook.bookFormat),
         pageOrientation = PageOrientation.valueOfOrDefault(newBook.pageOrientation),
-        additionalInformation = newBook.additionalInformation
+        additionalInformation = newBook.additionalInformation,
+        bookType = BookType.valueOfOrDefault(newBook.bookType)
       )
     }
 
@@ -318,7 +320,8 @@ trait ConverterService {
         categories = Seq(),
         bookFormat = BookFormat.valueOfOrDefault(newTranslation.bookFormat),
         pageOrientation = PageOrientation.valueOfOrDefault(newTranslation.pageOrientation),
-        additionalInformation = newTranslation.additionalInformation
+        additionalInformation = newTranslation.additionalInformation,
+        bookType =BookType.valueOfOrDefault(newTranslation.bookType)
       )
     }
 
@@ -489,7 +492,8 @@ trait ConverterService {
         bookFormat = translation.bookFormat.toString,
         source = book.source,
         pageOrientation = translation.pageOrientation.toString,
-        additionalInformation = translation.additionalInformation)
+        additionalInformation = translation.additionalInformation,
+        bookType = translation.bookType.toString)
     }
 
     def toApiBook(translation: domain.Translation, availableLanguages: Seq[LanguageTag], book: domain.Book): api.Book = {
@@ -561,7 +565,8 @@ trait ConverterService {
         source = book.source,
         publishingStatus = translation.publishingStatus.toString,
         translationStatus = translation.translationStatus.map(_.toString),
-        additionalInformation = translation.additionalInformation)
+        additionalInformation = translation.additionalInformation,
+        bookType = translation.bookType.toString)
     }
 
 

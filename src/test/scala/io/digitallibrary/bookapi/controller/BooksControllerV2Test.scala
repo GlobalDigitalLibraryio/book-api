@@ -99,7 +99,7 @@ class BooksControllerV2Test extends UnitSuite with TestEnvironment with Scalatra
     test("v2: that PUT /:lang/:id updates book, with only certain fields modified") {
         when(readServiceV2.translationWithIdAndLanguageListingAllTranslationsIfAdmin(any[Long], any[LanguageTag])).thenReturn(Some(TestData.Domain.DefaultTranslation))
         when(readServiceV2.withIdAndLanguage(any[Long], any[LanguageTag])).thenReturn(Some(TestData.ApiV2.DefaultBook))
-        when(writeService.updateTranslation(any[domain.Translation])).thenReturn(Success(TestData.Domain.DefaultTranslation))
+        when(writeServiceV2.updateTranslation(any[domain.Translation])).thenReturn(Success(TestData.Domain.DefaultTranslation))
 
         val payload = """{
                         |	"id": 1,
@@ -163,13 +163,14 @@ class BooksControllerV2Test extends UnitSuite with TestEnvironment with Scalatra
                         |	"bookFormat": "HTML",
                         |	"source": "storyweaver",
                         | "pageOrientation": "LANDSCAPE",
-                        | "publishingStatus": "FLAGGED"
+                        | "publishingStatus": "FLAGGED",
+                        | "bookType": "BOOK"
                         |}""".stripMargin.getBytes
 
         put("/eng/1", payload, headers = Seq(("Authorization", s"Bearer ${TestData.validTestTokenWithWriteRole}"))) {
             status should equal (200)
             // TODO: update this to verify coverphoto?
-            verify(writeService).updateTranslation(TestData.Domain.DefaultTranslation.copy(title = "new title", about = "new description", pageOrientation = PageOrientation.LANDSCAPE, publishingStatus = PublishingStatus.FLAGGED))
+            verify(writeServiceV2).updateTranslation(TestData.Domain.DefaultTranslation.copy(title = "new title", about = "new description", pageOrientation = PageOrientation.LANDSCAPE, publishingStatus = PublishingStatus.FLAGGED))
         }
     }
 }

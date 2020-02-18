@@ -6,7 +6,7 @@ import io.digitallibrary.bookapi.model.api.{Chapter, Error, ValidationError}
 import io.digitallibrary.bookapi.model.domain._
 import io.digitallibrary.bookapi.service.search.SearchServiceV2
 import io.digitallibrary.bookapi.service.translation.MergeService
-import io.digitallibrary.bookapi.service.{ContentConverter, ReadServiceV2, WriteService}
+import io.digitallibrary.bookapi.service.{ContentConverter, ReadServiceV2, WriteServiceV2}
 import io.digitallibrary.language.model.LanguageTag
 import org.scalatra._
 import org.scalatra.swagger.{ResponseMessage, Swagger, SwaggerSupport}
@@ -15,7 +15,7 @@ import scala.util.{Failure, Success}
 
 
 trait BooksControllerV2 {
-  this: ReadServiceV2 with WriteService with SearchServiceV2 with MergeService with ContentConverter =>
+  this: ReadServiceV2 with WriteServiceV2 with SearchServiceV2 with MergeService with ContentConverter =>
   val booksControllerV2: BooksControllerV2
 
   class BooksControllerV2(implicit val swagger: Swagger) extends GdlController with SwaggerSupport with CorsSupport {
@@ -194,12 +194,12 @@ trait BooksControllerV2 {
       val id = long("id")
       val lang = LanguageTag(params("lang"))
 
-      val updatedBook = extract[api.Book](request.body)
+      val updatedBook = extract[api.BookV2](request.body)
 
       readServiceV2.translationWithIdAndLanguageListingAllTranslationsIfAdmin(id, lang) match {
         case Some(existingBook) =>
           val pageOrientationToUpdate = PageOrientation.valueOf(updatedBook.pageOrientation).getOrElse(existingBook.pageOrientation)
-          writeService.updateTranslation(existingBook.copy(
+          writeServiceV2.updateTranslation(existingBook.copy(
             title = updatedBook.title,
             about = updatedBook.description,
             pageOrientation = pageOrientationToUpdate,
@@ -244,7 +244,7 @@ trait BooksControllerV2 {
         case Some(existingChapter) =>
           val chapterTypeToUpdate = ChapterType.valueOf(updatedChapter.chapterType).getOrElse(existingChapter.chapterType)
 
-          val updated = writeService.updateChapter(existingChapter.copy(
+          val updated = writeServiceV2.updateChapter(existingChapter.copy(
             content = mergeService.mergeContents(existingChapter.content, updatedChapter.content),
             chapterType = chapterTypeToUpdate))
 

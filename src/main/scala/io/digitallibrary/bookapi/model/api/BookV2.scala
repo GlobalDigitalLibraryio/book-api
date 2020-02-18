@@ -70,7 +70,8 @@ case class BookV2(@(ApiModelProperty@field)(description = "The id of the book") 
                 @(ApiModelProperty@field)(description = "The source of the book") source: String,
                 @(ApiModelProperty@field)(description = "The publishing status of this book") publishingStatus: String,
                 @(ApiModelProperty@field)(description = "The translation status of this book") translationStatus: Option[String],
-                @(ApiModelProperty@field)(description = "Optional additional information about the book") additionalInformation: Option[String])
+                @(ApiModelProperty@field)(description = "Optional additional information about the book") additionalInformation: Option[String],
+                @(ApiModelProperty@field)(description = "The type of the book. BOOK or VIDEO") bookType: String)
 
 @ApiModel(description = "Information about book search hit")
 case class BookHitV2(@(ApiModelProperty@field)(description = "The id of the book") id: Long,

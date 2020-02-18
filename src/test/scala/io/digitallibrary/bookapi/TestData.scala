@@ -14,7 +14,7 @@ import io.digitallibrary.bookapi.integration.crowdin.{BookMetaData, TranslatedCh
 import io.digitallibrary.bookapi.model._
 import io.digitallibrary.bookapi.model.api._
 import io.digitallibrary.bookapi.model.api.internal.NewTranslatedChapter
-import io.digitallibrary.bookapi.model.domain.{BookFormat, ChapterType, ContributorType, PageOrientation, PublishingStatus}
+import io.digitallibrary.bookapi.model.domain.{BookFormat, BookType, ChapterType, ContributorType, PageOrientation, PublishingStatus}
 import io.digitallibrary.language.model.LanguageTag
 
 object TestData {
@@ -162,7 +162,8 @@ object TestData {
       pageOrientation = Api.DefaultPageOrientation,
       publishingStatus = PublishingStatus.PUBLISHED.toString,
       translationStatus = None,
-      additionalInformation = None)
+      additionalInformation = None,
+      bookType = BookType.BOOK.toString)
 
     val DefaultBookHit = api.BookHitV2(
       id = 1,
@@ -258,7 +259,8 @@ object TestData {
       categories = Seq(DefaultCategory),
       bookFormat = BookFormat.HTML,
       pageOrientation = PageOrientation.PORTRAIT,
-      additionalInformation = None
+      additionalInformation = None,
+      bookType = BookType.BOOK
     )
 
     val AmharicTranslation: domain.Translation = DefaultTranslation.copy(id = Some(2), language = LanguageTag(LanguageCodeAmharic))
@@ -339,7 +341,8 @@ object TestData {
       bookFormat = BookFormat.HTML.toString,
       source = "storyweaver",
       pageOrientation = PageOrientation.PORTRAIT.toString,
-      additionalInformation = None
+      additionalInformation = None,
+      bookType = BookType.BOOK.toString
     )
   }
 

@@ -54,7 +54,8 @@ case class Translation(id: Option[Long],
                        bookFormat: BookFormat.Value,
                        pageOrientation: PageOrientation.Value,
                        additionalInformation: Option[String],
-                       inTransport: Boolean = false)
+                       inTransport: Boolean = false,
+                       bookType: BookType.Value)
 
 object PageOrientation extends Enumeration {
   val PORTRAIT, LANDSCAPE = Value
@@ -95,6 +96,14 @@ object BookFormat extends Enumeration {
 
   def valueOfOrDefault(s: String): BookFormat.Value = {
     BookFormat.values.find(_.toString == s.toUpperCase).getOrElse(HTML)
+  }
+}
+
+object BookType extends Enumeration {
+  val BOOK, VIDEO = Value
+
+  def valueOfOrDefault(s: String): BookType.Value = {
+    BookType.values.find(_.toString == s.toUpperCase).getOrElse(BOOK)
   }
 }
 
@@ -141,7 +150,8 @@ sealed trait TranslationView extends SQLSyntaxSupport[Translation] {
     contributors = Seq(),
     categories = Seq(),
     additionalInformation = rs.stringOpt(t.additionalInformation),
-    inTransport = rs.boolean(t.inTransport)
+    inTransport = rs.boolean(t.inTransport),
+    bookType = BookType.valueOfOrDefault(rs.string(t.bookType))
   )
 
   def apply(t: ResultName[Translation], ea: ResultName[EducationalAlignment])(rs: WrappedResultSet): Translation = {

@@ -77,7 +77,8 @@ trait RepositoryTestHelpers {
       categories = Seq(category),
       bookFormat = BookFormat.HTML,
       pageOrientation = PageOrientation.PORTRAIT,
-      additionalInformation = None)
+      additionalInformation = None,
+      bookType = BookType.BOOK)
 
     unFlaggedTranslationsRepository.add(translationDef)
   }
