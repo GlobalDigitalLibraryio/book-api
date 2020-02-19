@@ -29,16 +29,32 @@ trait MergeService {
       val originalDoc = Jsoup.parseBodyFragment(originalContent)
 
       val newDoc = Jsoup.parseBodyFragment(
-        Jsoup.clean(newContent, Whitelist.basicWithImages().removeTags("a"))
+        Jsoup.clean(newContent, Whitelist.basicWithImages()
+          .removeTags("a")
+          .addTags("video").addAttributes("video", "align", "alt", "height", "src", "title", "width")
+          .addProtocols("video", "src", "http", "https")
+        )
       )
 
       val embedElements = originalDoc.select("embed[data-resource]").asScala
       val imgElements = newDoc.getElementsByTag("img").asScala
+      val check = newDoc.getAllElements
+      val videoElements = newDoc.getElementsByTag("video").asScala
 
-      embedElements.zipAll(imgElements, "", "").foreach {
-        case (embed: Element, img: Element) => img.replaceWith(embed)
-        case (_, img: Element) => img.remove()
-        case (_, _) => Unit
+      if(imgElements.nonEmpty) {
+        embedElements.zipAll(imgElements, "", "").foreach {
+          case (embed: Element, img: Element) => img.replaceWith(embed)
+          case (_, img: Element) => img.remove()
+          case (_, _) => Unit
+        }
+      }
+
+      if(videoElements.nonEmpty) {
+        embedElements.zipAll(videoElements, "", "").foreach {
+          case (embed: Element, video: Element) => video.replaceWith(embed)
+          case (_, video: Element) => video.remove()
+          case (_, _) => Unit
+        }
       }
       newDoc.body().html()
     }

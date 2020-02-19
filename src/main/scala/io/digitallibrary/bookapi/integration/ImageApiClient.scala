@@ -22,7 +22,7 @@ trait ImageApiClient {
 
   class ImageApiClient extends LazyLogging {
 
-    def downloadImage(id: Long, width: Option[Int] = None): Try[DownloadedImage] = {
+    def downloadImage(id: Long, width: Option[Int] = None): Try[DownloadedMedia] = {
       import com.netaporter.uri.dsl._
 
       imageUrlFor(id, width) match {
@@ -32,7 +32,7 @@ trait ImageApiClient {
           contentType <- extractContentType(response)
           fileEnding <- MediaType.fileEndingFor(contentType).map(Success(_)).getOrElse(Failure(new RuntimeException("ContentType not supported")))
           fileName <- Success(s"${url.url.pathParts.last.part}.$fileEnding")
-        } yield DownloadedImage(id, contentType, fileName, fileEnding, response.body)
+        } yield DownloadedMedia(id, contentType, fileName, fileEnding, response.body)
       }
     }
 
@@ -75,7 +75,7 @@ case class ImageMetaInformation(id: String, metaUrl: String, imageUrl: String, s
 case class ImageVariant(ratio: String, revision: Option[Int], x: Int, y: Int, width: Int, height: Int)
 case class Alttext(alttext: String, language: String)
 case class ImageUrl(id: String, url: String, alttext: Option[String])
-case class DownloadedImage(id: Long, contentType: String, filename: String, fileEnding: String, bytes: Array[Byte])
+case class DownloadedMedia(id: Long, contentType: String, filename: String, fileEnding: String, bytes: Array[Byte])
 object MediaType {
   private val mediaTypeToFileEnding = Map(
     "application/xhtml+xml" -> "xhtml",
@@ -85,7 +85,10 @@ object MediaType {
     "image/png" -> "png",
     "image/webp" -> "webp",
     "text/css" -> "css",
-    "application/epub+zip" -> "epub"
+    "application/epub+zip" -> "epub",
+    "video/mp4" -> "mp4",
+    "audio/mp4" -> "mp4",
+    "application/mp4" -> "mp4"
   )
 
   def fileEndingFor(mediaType: String): Option[String] = {

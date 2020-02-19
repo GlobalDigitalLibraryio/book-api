@@ -7,7 +7,7 @@
 
 package io.digitallibrary.bookapi.service
 
-import io.digitallibrary.bookapi.integration.{Alttext, DownloadedImage, ImageMetaInformation, ImageUrl}
+import io.digitallibrary.bookapi.integration.{Alttext, DownloadedMedia, ImageMetaInformation, ImageUrl}
 import io.digitallibrary.bookapi.model.api.NotFoundException
 import io.digitallibrary.bookapi.{TestEnvironment, UnitSuite}
 import org.mockito.Mockito._
@@ -60,8 +60,8 @@ class ContentConverterTest extends UnitSuite with TestEnvironment {
       """.stripMargin
 
     val images = Seq(
-      DownloadedImage(1, "image/jpeg", "some-url.jpg", "jpg", dummyBytes),
-      DownloadedImage(2, "image/jpeg", "some-url.jpg", "jpg", dummyBytes))
+      DownloadedMedia(1, "image/jpeg", "some-url.jpg", "jpg", dummyBytes),
+      DownloadedMedia(2, "image/jpeg", "some-url.jpg", "jpg", dummyBytes))
 
     intercept[NotFoundException] {
       service.toEPubContent(content, images)
@@ -90,8 +90,8 @@ class ContentConverterTest extends UnitSuite with TestEnvironment {
       """.stripMargin
 
     val images = Seq(
-      DownloadedImage(1, "image/jpeg", "some-url-1.jpg", "jpg", dummyBytes),
-      DownloadedImage(2, "image/jpeg", "some-url-2.jpg", "jpg", dummyBytes))
+      DownloadedMedia(1, "image/jpeg", "some-url-1.jpg", "jpg", dummyBytes),
+      DownloadedMedia(2, "image/jpeg", "some-url-2.jpg", "jpg", dummyBytes))
 
     val epubContent = service.toEPubContent(content, images)
     epubContent should equal (expectedEpubContent)

@@ -25,16 +25,22 @@ trait MediaApiClient {
   val mediaApiClient: MediaApiClient
 
   class MediaApiClient extends LazyLogging {
-    def imageMetaWithId(id: Long, language: String, width: Option[Int] = None, format: Option[String] = None): Option[ImageMeta] = {
+    def mediaMetaWithId(id: Long, language: String, width: Option[Int] = None, format: Option[String] = None, mediaType: String = "IMAGE"): Option[ImageMeta] = {
       val q_params = Map("width" -> width, "format" -> format, "language" -> language)
         .collect { case (key, Some(value)) => (key, value.toString) }
 
-      val imageMeta = for {
+      val urlResource = mediaType match {
+        case "IMAGE" => "images"
+        case "VIDEO" => "videos"
+        case "AUDIO" => "audios"
+      }
+
+      val mediaMeta = for {
         endpoint <- endpoint()
-        response <- doRequest(Http(s"$endpoint${BookApiProperties.MediaServicePath}/images/$id").params(q_params))
+        response <- doRequest(Http(s"$endpoint${BookApiProperties.MediaServicePath}/$urlResource/$id").params(q_params))
       } yield response
 
-      imageMeta match {
+      mediaMeta match {
         case Success(x) => Option(x)
         case Failure(ex: Throwable) => {
           logger.error(s"Got ${ex.getClass.getSimpleName} when calling: ${ex.getMessage}")
@@ -43,17 +49,31 @@ trait MediaApiClient {
       }
     }
 
-    def downloadImage(id: Long, language: String, width: Option[Int] = None, format: Option[String] = Some("png")): Try[DownloadedImage] = {
+    def downloadImage(id: Long, language: String, width: Option[Int] = None, format: Option[String] = Some("png")): Try[DownloadedMedia] = {
       import com.netaporter.uri.dsl._
 
-      imageMetaWithId(id, language, width, format ) match {
+      mediaMetaWithId(id, language, width, format) match {
         case None => Failure(new NotFoundException(s"Image with id $id was not found"))
         case Some(imageMeta) => for {
           response <- Try(Http(imageMeta.resourceUrl).asBytes)
           contentType <- extractContentType(response)
           fileEnding <- MediaType.fileEndingFor(contentType).map(Success(_)).getOrElse(Failure(new RuntimeException("ContentType not supported")))
           filename <- Success(s"${imageMeta.resourceUrl.pathParts.last.part}")
-        } yield DownloadedImage(id, contentType, filename, fileEnding, response.body)
+        } yield DownloadedMedia(id, contentType, filename, fileEnding, response.body)
+      }
+    }
+
+    def downloadVideo(id: Long, language: String, width: Option[Int] = None, format: Option[String] = Some("mp4")): Try[DownloadedMedia] = {
+      import com.netaporter.uri.dsl._
+
+      mediaMetaWithId(id, language, width, format) match {
+        case None => Failure(new NotFoundException(s"Video with id $id was not found"))
+        case Some(videoMeta) => for {
+          response <- Try(Http(videoMeta.resourceUrl).asBytes)
+          contentType <- extractContentType(response)
+          fileEnding <- MediaType.fileEndingFor(contentType).map(Success(_)).getOrElse(Failure(new RuntimeException("ContentType not supported")))
+          filename <- Success(s"${videoMeta.resourceUrl.pathParts.last.part}")
+        } yield DownloadedMedia(id, contentType, filename, fileEnding, response.body)
       }
     }
 
@@ -95,7 +115,10 @@ object MediaMediaType {
     "image/png" -> "png",
     "image/webp" -> "webp",
     "text/css" -> "css",
-    "application/epub+zip" -> "epub"
+    "application/epub+zip" -> "epub",
+    "video/mp4" -> "mp4",
+    "audio/mp4" -> "mp4",
+    "application/mp4" -> "mp4"
   )
 
   def fileEndingFor(mediaType: String): Option[String] = {

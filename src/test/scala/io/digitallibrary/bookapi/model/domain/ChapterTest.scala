@@ -24,7 +24,7 @@ class ChapterTest extends UnitSuite {
       """.stripMargin
 
     val chapter = TestData.Domain.DefaultChapter.copy(content = contentWithoutImages)
-    chapter.imagesInChapter() should equal(Seq())
+    chapter.mediaInChapter() should equal(Seq())
   }
 
   test("that extracting imageIds from chapter content returns all image ids") {
@@ -43,7 +43,7 @@ class ChapterTest extends UnitSuite {
       """.stripMargin
 
     val chapter = TestData.Domain.DefaultChapter.copy(content = contentWithImages)
-    chapter.imagesInChapter() should equal(Seq((1, None), (2, None), (3, None)))
+    chapter.mediaInChapter() should equal(Seq((1, None), (2, None), (3, None)))
   }
 
   test("that containsText returns false for a chapter with only images and empty tags") {

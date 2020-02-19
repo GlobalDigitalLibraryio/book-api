@@ -108,6 +108,21 @@ object TestData {
       highlightTitle = Some("Title"),
       highlightDescription = Some("Description"))
 
+    val DefaultBookHitV2 = api.BookHitV2(
+      id = 1,
+      title = "Title",
+      description = "Description",
+      language = norwegian_bokmal,
+      readingLevel = Some("1"),
+      categories = Seq(
+        Category
+        (1, 1, "library_books")),
+      coverImage = None,
+      dateArrived = today,
+      source = DefaultSource.source,
+      highlightTitle = Some("Title"),
+      highlightDescription = Some("Description"))
+
     val BookInAmharic: api.BookHit = DefaultBookHit.copy(language = amharic)
 
     val DefaultFeedDefinition = api.FeedDefinition(1, 1, "some-url", "some-uuid")
@@ -261,6 +276,48 @@ object TestData {
       pageOrientation = PageOrientation.PORTRAIT,
       additionalInformation = None,
       bookType = BookType.BOOK
+    )
+
+    val DefaultTranslationVideo: domain.Translation = domain.Translation(
+      id = Some(2),
+      revision = Some(1),
+      bookId = DefaultBook.id.get,
+      externalId = Some("ext-id"),
+      uuid = DefaultUuid,
+      title = "Default translation title",
+      about = "Default translation description",
+      numPages = Some(10),
+      language = LanguageTag(DefaultLanguage),
+      translatedFrom = None,
+      datePublished = Some(today),
+      dateCreated = Some(yesterday),
+      dateArrived = today,
+      publishingStatus = domain.PublishingStatus.PUBLISHED,
+      translationStatus = None,
+      categoryIds = Seq(DefaultCategory.id.get),
+      coverphoto = None,
+      tags = Seq("tag1", "tag2"),
+      isBasedOnUrl = None,
+      educationalUse = None,
+      educationalRole = None,
+      eaId = None,
+      timeRequired = None,
+      typicalAgeRange = None,
+      readingLevel = Some("1"),
+      interactivityType = None,
+      learningResourceType = None,
+      accessibilityApi = None,
+      accessibilityControl = None,
+      accessibilityFeature = None,
+      accessibilityHazard = None,
+      educationalAlignment = None,
+      chapters = Seq(DefaultChapter),
+      contributors = Seq(DefaultContributor),
+      categories = Seq(DefaultCategory),
+      bookFormat = BookFormat.HTML,
+      pageOrientation = PageOrientation.PORTRAIT,
+      additionalInformation = None,
+      bookType = BookType.VIDEO
     )
 
     val AmharicTranslation: domain.Translation = DefaultTranslation.copy(id = Some(2), language = LanguageTag(LanguageCodeAmharic))

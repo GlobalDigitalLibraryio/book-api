@@ -12,10 +12,10 @@ import com.typesafe.scalalogging.LazyLogging
 import coza.opencollab.epub.creator.model.contributor.Contributor
 import coza.opencollab.epub.creator.model.{Content, EpubBook, TocLink}
 import io.digitallibrary.language.model.LanguageTag
-import io.digitallibrary.bookapi.integration.{DownloadedImage, ImageApiClient, MediaApiClient}
+import io.digitallibrary.bookapi.integration.{DownloadedMedia, ImageApiClient, MediaApiClient}
 import io.digitallibrary.bookapi.model._
 import io.digitallibrary.bookapi.model.api.NotFoundException
-import io.digitallibrary.bookapi.model.domain.{BookFormat, ContributorType, EPubChapter, EPubCss}
+import io.digitallibrary.bookapi.model.domain.{BookFormat, BookType, ContributorType, EPubChapter, EPubCss}
 import io.digitallibrary.bookapi.repository.{ChapterRepository, TranslationRepository}
 
 import scala.util.{Failure, Success, Try}
@@ -65,7 +65,7 @@ trait EPubService {
 
         // Add CoverPhoto if defined, throw exception when trouble
         translation.coverphoto.foreach(coverPhotoId => {
-          downloadImage(coverPhotoId, translation.language.toString ) match {
+          downloadMedia(coverPhotoId, translation.language.toString, None, Some("IMAGE") ) match {
             case Failure(ex) => throw ex
             case Success(downloadedImage) =>
               val coverImage = new Content(
@@ -79,26 +79,47 @@ trait EPubService {
               book.addContent(coverImage)
           }
         })
-
         // Add images first (do not add more than one version of each image if image is used in multiple pages)
-        val imageIdsToAdd = chapters.flatMap(_.imagesInChapter()).distinct
+        val mediaIdsToAdd = chapters.flatMap(_.mediaInChapter()).distinct
+        val mediaType = if (translation.bookType == BookType.BOOK) "IMAGE" else translation.bookType.toString
 
-        val images = imageIdsToAdd.map(idAndSize => downloadImage(idAndSize._1, translation.language.toString, idAndSize._2 )).map(_.get)
-        for (imageWithIndex <- images.zipWithIndex) {
-          val image = imageWithIndex._1
-          val imageNo = imageWithIndex._2
+        val medias = mediaIdsToAdd.map(idAndSize => downloadMedia(idAndSize._1, translation.language.toString, idAndSize._2, Some(mediaType))).map(_.get)
 
-          val epubImage = new Content(
-            image.contentType,
-            image.filename,
-            s"image-${image.id}-$imageNo",
-            null,
-            image.bytes)
-          epubImage.setToc(false)
-          epubImage.setSpine(false)
+        if(translation.bookType == BookType.BOOK) {
+          for (imageWithIndex <- medias.zipWithIndex) {
+            val image = imageWithIndex._1
+            val imageNo = imageWithIndex._2
 
-          if(!bookContainsHref(book, epubImage.getHref)) {
-            book.addContent(epubImage)
+            val epubImage = new Content(
+              image.contentType,
+              image.filename,
+              s"image-${image.id}-$imageNo",
+              null,
+              image.bytes)
+            epubImage.setToc(false)
+            epubImage.setSpine(false)
+
+            if (!bookContainsHref(book, epubImage.getHref)) {
+              book.addContent(epubImage)
+            }
+          }
+        } else {
+          for (videoWithIndex <- medias.zipWithIndex) {
+            val video = videoWithIndex._1
+            val videoNo = videoWithIndex._2
+
+            val epubVideo = new Content(
+              video.contentType,
+              video.filename,
+              s"video-${video.id}-$videoNo",
+              null,
+              video.bytes)
+            epubVideo.setToc(false)
+            epubVideo.setSpine(false)
+
+            if (!bookContainsHref(book, epubVideo.getHref)) {
+              book.addContent(epubVideo)
+            }
           }
         }
 
@@ -106,7 +127,7 @@ trait EPubService {
         val tocLinks = chapters.map(chapter => {
           val ePubChapter = EPubChapter(
             chapter.seqNo,
-            contentConverter.toEPubContent(chapter.content, images),
+            contentConverter.toEPubContent(chapter.content, medias),
             ePubCss)
 
           book.addContent(new Content(ePubChapter.mimeType, ePubChapter.href, ePubChapter.id, null, ePubChapter.asBytes))
@@ -119,11 +140,19 @@ trait EPubService {
       }
     }
 
-    private def downloadImage(id: Long, language: String, width: Option[Int] = None) = {
-      mediaApiClient.downloadImage(id, language, width) match {
-        case Success(x) => Success(x)
-        case Failure(_) => imageApiClient.downloadImage(id, width)
+  private def downloadMedia(id: Long, language: String, width: Option[Int] = None, mediaType: Option[String] = Some("IMAGE")) = {
+      mediaType match {
+        case Some("IMAGE") => mediaApiClient.downloadImage(id, language, width) match {
+          case Success(x) => Success(x)
+          case Failure(_) => imageApiClient.downloadImage(id, width)
+        }
+        case Some("VIDEO") => mediaApiClient.downloadVideo(id, language, width) match {
+          case Success(x) => Success(x)
+          case Failure(ex) => Failure(ex)
+        }
+        case None => Failure(new NotFoundException(s"${mediaType.get} with id $id was not found"))
       }
     }
   }
+
 }

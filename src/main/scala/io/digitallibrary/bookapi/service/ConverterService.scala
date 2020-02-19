@@ -667,7 +667,7 @@ trait ConverterService {
 
     def toApiCoverImage(imageIdOpt: Option[Long], language: String): Option[api.CoverImage] = {
       imageIdOpt.flatMap(imageId => {
-        val imageMeta = mediaApiClient.imageMetaWithId(imageId, language)
+        val imageMeta = mediaApiClient.mediaMetaWithId(imageId, language, mediaType = "IMAGE")
         imageMeta match {
           case None => {
             imageApiClient.imageMetaWithId(imageId).map(imageMeta => {

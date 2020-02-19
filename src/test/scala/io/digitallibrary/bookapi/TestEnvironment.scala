@@ -77,6 +77,7 @@ trait TestEnvironment
     with SearchService
     with SearchServiceV2
     with SearchController
+    with SearchControllerV2
     with AmazonClient
     with CategoriesController
     with CategoriesControllerV2
@@ -149,6 +150,7 @@ trait TestEnvironment
   val searchService = mock[SearchService]
   val searchServiceV2 = mock[SearchServiceV2]
   val searchController = mock[SearchController]
+  val searchControllerV2 = mock[SearchControllerV2]
   val categoriesController = mock[CategoriesController]
   val categoriesControllerV2 = mock[CategoriesControllerV2]
   val importService = mock[ImportService]

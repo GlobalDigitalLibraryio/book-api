@@ -31,6 +31,24 @@ class MergeServiceTest extends UnitSuite with TestEnvironment {
       |<img src="https://images.test.digitallibrary.io/123.jpg" />
       |""".stripMargin
 
+  private val originalHtmlVideo =
+    """<embed data-resource="video" data-resource_id="556"/>
+      |<embed data-resource="video" data-resource_id="557"/>
+      |<p>
+      | There was a large boulder on the grassy plain. He stumbled and fell down.
+      |</p>
+      |<embed data-resource="video" data-resource_id="558"/>
+      |""".stripMargin
+
+  private val translatedHtmlVideo =
+    """<video src="https://images.test.digitallibrary.io/TYnPhXd4.mp4" />
+      |<video src="https://images.test.digitallibrary.io/abct.mp4" />
+      |<p>
+      | Hjorten traff en stor stein på den grønne sletten. Han snublet og falt.
+      |</p>
+      |<video src="https://images.test.digitallibrary.io/123.mp4" />
+      |""".stripMargin
+
   test("that img-tags are replaced with embed-tags") {
     val original = TestData.Domain.DefaultChapter.copy(content = originalHtml)
     val translated = TestData.Crowdin.DefaultTranslatedChapter.copy(content = translatedHtml)
@@ -43,6 +61,20 @@ class MergeServiceTest extends UnitSuite with TestEnvironment {
     embedElements.get(1).toString should equal ("<embed data-resource=\"image\" data-resource_id=\"557\">")
     embedElements.get(2).toString should equal ("<embed data-resource=\"image\" data-resource_id=\"558\">")
     newContentDoc.getElementsByTag("img").size() should be (0)
+  }
+
+  test("that video-tags are replaced with embed-tags") {
+    val original = TestData.Domain.DefaultChapter.copy(content = originalHtmlVideo)
+    val translated = TestData.Crowdin.DefaultTranslatedChapter.copy(content = translatedHtmlVideo)
+
+    val newChapter = service.mergeChapter(original, translated)
+    val newContentDoc = Jsoup.parseBodyFragment(newChapter.content)
+    val embedElements = newContentDoc.select("embed[data-resource]")
+    embedElements.size() should be (3)
+    embedElements.get(0).toString should equal ("<embed data-resource=\"video\" data-resource_id=\"556\">")
+    embedElements.get(1).toString should equal ("<embed data-resource=\"video\" data-resource_id=\"557\">")
+    embedElements.get(2).toString should equal ("<embed data-resource=\"video\" data-resource_id=\"558\">")
+    newContentDoc.getElementsByTag("video").size() should be (0)
   }
 
   test("that unwanted html-tags are stripped, but content kept") {

@@ -7,7 +7,7 @@
 
 package io.digitallibrary.bookapi.service
 
-import io.digitallibrary.bookapi.integration.{DownloadedImage, ImageMetaInformation}
+import io.digitallibrary.bookapi.integration.{DownloadedMedia, ImageMetaInformation}
 import io.digitallibrary.bookapi.{TestData, TestEnvironment, UnitSuite}
 import io.digitallibrary.language.model.LanguageTag
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
@@ -48,7 +48,7 @@ class EPubServiceTest extends UnitSuite with TestEnvironment {
 
   test("that createEPub creates a book with expected CoverPhoto, not migrated to media-service") {
     val translation = TestData.Domain.DefaultTranslation.copy(coverphoto = Some(1))
-    val image = DownloadedImage(1, "image/png", "image-url.png", "png", "bytes".getBytes)
+    val image = DownloadedMedia(1, "image/png", "image-url.png", "png", "bytes".getBytes)
 
     when(unFlaggedTranslationsRepository.withUuId(any[String])(any[DBSession])).thenReturn(Some(translation))
     when(chapterRepository.chaptersForBookIdAndLanguage(any[Long], any[LanguageTag])(any[DBSession])).thenReturn(Seq())
@@ -68,7 +68,7 @@ class EPubServiceTest extends UnitSuite with TestEnvironment {
 
   test("that createEPub creates a book with expected CoverPhoto, migrated to media-service") {
     val translation = TestData.Domain.DefaultTranslation.copy(coverphoto = Some(1))
-    val image = DownloadedImage(1, "image/png", "image-url.png", "png", "bytes".getBytes)
+    val image = DownloadedMedia(1, "image/png", "image-url.png", "png", "bytes".getBytes)
 
     when(unFlaggedTranslationsRepository.withUuId(any[String])(any[DBSession])).thenReturn(Some(translation))
     when(chapterRepository.chaptersForBookIdAndLanguage(any[Long], any[LanguageTag])(any[DBSession])).thenReturn(Seq())
@@ -107,7 +107,7 @@ class EPubServiceTest extends UnitSuite with TestEnvironment {
     when(unFlaggedTranslationsRepository.withUuId(any[String])(any[DBSession])).thenReturn(Some(translation))
     when(chapterRepository.chaptersForBookIdAndLanguage(any[Long], any[LanguageTag])(any[DBSession])).thenReturn(translation.chapters)
 
-    when(contentConverter.toEPubContent(any[String], any[Seq[DownloadedImage]])).thenReturn("Content-of-chapter")
+    when(contentConverter.toEPubContent(any[String], any[Seq[DownloadedMedia]])).thenReturn("Content-of-chapter")
 
     ePubService.createEPub(translation.language, translation.uuid) match {
       case None => fail("epub should be defined")
@@ -121,15 +121,15 @@ class EPubServiceTest extends UnitSuite with TestEnvironment {
     }
   }
 
-  test("that createEpub creates a book with expected chapter with image") {
+  test("that createEpub creates a book with expected chapter with image - old imageAPI") {
     val translation = TestData.Domain.DefaultTranslation
     val chapter = TestData.Domain.DefaultChapter.copy(content = """<p><embed data-resource="image" data-resource_id="1"/></p>""")
-    val image = DownloadedImage(1, "image/png", "image-url.png", "png", "bytes".getBytes)
+    val image = DownloadedMedia(1, "image/png", "image-url.png", "png", "bytes".getBytes)
 
     when(unFlaggedTranslationsRepository.withUuId(any[String])(any[DBSession])).thenReturn(Some(translation))
     when(chapterRepository.chaptersForBookIdAndLanguage(any[Long], any[LanguageTag])(any[DBSession])).thenReturn(Seq(chapter))
 
-    when(contentConverter.toEPubContent(any[String], any[Seq[DownloadedImage]])).thenReturn("Content-of-chapter")
+    when(contentConverter.toEPubContent(any[String], any[Seq[DownloadedMedia]])).thenReturn("Content-of-chapter")
     when(imageApiClient.downloadImage(1, None)).thenReturn(Success(image))
 
     ePubService.createEPub(translation.language, translation.uuid) match {
@@ -144,12 +144,59 @@ class EPubServiceTest extends UnitSuite with TestEnvironment {
     }
   }
 
+  test("that createEpub creates a book with expected chapter with image - media-service") {
+    val translation = TestData.Domain.DefaultTranslation
+    val chapter = TestData.Domain.DefaultChapter.copy(content = """<p><embed data-resource="image" data-resource_id="1"/></p>""")
+    val image = DownloadedMedia(1, "image/png", "image-url.png", "png", "bytes".getBytes)
+
+    when(unFlaggedTranslationsRepository.withUuId(any[String])(any[DBSession])).thenReturn(Some(translation))
+    when(chapterRepository.chaptersForBookIdAndLanguage(any[Long], any[LanguageTag])(any[DBSession])).thenReturn(Seq(chapter))
+
+    when(contentConverter.toEPubContent(any[String], any[Seq[DownloadedMedia]])).thenReturn("Content-of-chapter")
+    when(mediaApiClient.downloadImage(1, "nb", None)).thenReturn(Success(image))
+
+    ePubService.createEPub(translation.language, translation.uuid) match {
+      case None => fail("epub should be defined")
+      case Some(Failure(ex)) => fail("epub should be a success")
+      case Some(Success(book)) => {
+        val contents = JavaConverters.asScalaBuffer(book.getContents).toSeq
+        contents.size should be (3)
+        contents.exists(_.getHref == s"chapter-${translation.chapters.head.seqNo}.xhtml") should be (true)
+        contents.exists(_.getHref == "image-url.png") should be (true)
+      }
+    }
+  }
+
+  test("that createEpub creates a book with expected chapter with video") {
+    val translation = TestData.Domain.DefaultTranslationVideo
+    val chapter = TestData.Domain.DefaultChapter.copy(content = """<p><embed data-resource="video" data-resource_id="1"/></p>""")
+    val video = DownloadedMedia(1, "video/mp4", "video-url.mp4", "mp4", "bytes".getBytes)
+
+    when(unFlaggedTranslationsRepository.withUuId(any[String])(any[DBSession])).thenReturn(Some(translation))
+    when(chapterRepository.chaptersForBookIdAndLanguage(any[Long], any[LanguageTag])(any[DBSession])).thenReturn(Seq(chapter))
+
+    when(contentConverter.toEPubContent(any[String], any[Seq[DownloadedMedia]])).thenReturn("Content-of-chapter")
+    when(mediaApiClient.downloadVideo(1, translation.language.toString, None)).thenReturn(Success(video))
+
+    ePubService.createEPub(translation.language, translation.uuid) match {
+      case None => fail("epub should be defined")
+      case Some(Failure(ex)) => fail("epub should be a success", ex)
+      case Some(Success(book)) => {
+        val contents = JavaConverters.asScalaBuffer(book.getContents).toSeq
+        contents.size should be (3)
+        contents.exists(_.getHref == s"chapter-${translation.chapters.head.seqNo}.xhtml") should be (true)
+        contents.exists(_.getHref == "video-url.mp4") should be (true)
+      }
+    }
+  }
+
   test("that createEpub returns failure when download of chapter-image fails") {
     val translation = TestData.Domain.DefaultTranslation
     val chapter = TestData.Domain.DefaultChapter.copy(content = """<p><embed data-resource="image" data-resource_id="1"/></p>""")
 
     when(unFlaggedTranslationsRepository.withUuId(any[String])(any[DBSession])).thenReturn(Some(translation))
     when(chapterRepository.chaptersForBookIdAndLanguage(any[Long], any[LanguageTag])(any[DBSession])).thenReturn(Seq(chapter))
+    when(mediaApiClient.downloadImage(any[Long], any[String], any[Option[Int]], any[Option[String]])).thenReturn(Failure(new RuntimeException("media-error")))
     when(imageApiClient.downloadImage(1, None)).thenReturn(Failure(new RuntimeException("image-download-error")))
 
     ePubService.createEPub(translation.language, translation.uuid) match {

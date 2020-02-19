@@ -22,16 +22,35 @@ case class Chapter(id: Option[Long],
                    content: String,
                    chapterType: ChapterType.Value) {
 
-  def imagesInChapter(): Seq[(Long, Option[Int])] = {
+  def mediaInChapter(): Seq[(Long, Option[Int])] = {
+    var medias: Seq[(Long, Option[Int])] = Seq()
+
     val document = Jsoup.parseBodyFragment(content)
     val images: Elements = document.select("embed[data-resource='image']")
+    val audios: Elements = document.select("embed[data-resource='audio']")
+    val videos: Elements = document.select("embed[data-resource='video']")
 
-    for {
-      i <- 0 until images.size()
-      image = images.get(i)
-      nodeId = image.attr("data-resource_id")
-      size = if (image.hasAttr("data-resource_size")) Some(image.attr("data-resource_size").toInt) else None
-    } yield (nodeId.toLong, size)
+    for (i <- 0 until images.size()) {
+      val image = images.get(i)
+      val nodeId = image.attr("data-resource_id")
+      val size = if (image.hasAttr("data-resource_size")) Some(image.attr("data-resource_size").toInt) else None
+      medias = medias :+ (nodeId.toLong, size)
+    }
+
+    for (i <- 0 until videos.size()) {
+      val video = videos.get(i)
+      val nodeId = video.attr("data-resource_id")
+      val size = if (video.hasAttr("data-resource_size")) Some(video.attr("data-resource_size").toInt) else None
+      medias = medias :+ (nodeId.toLong, size)
+    }
+
+    for (i <- 0 until audios.size()) {
+      val audio = audios.get(i)
+      val nodeId = audios.attr("data-resource_id")
+      val size = if (audio.hasAttr("data-resource_size")) Some(audio.attr("data-resource_size").toInt) else None
+      medias = medias :+ (nodeId.toLong, size)
+    }
+    medias
   }
 
   def containsText(): Boolean = {
