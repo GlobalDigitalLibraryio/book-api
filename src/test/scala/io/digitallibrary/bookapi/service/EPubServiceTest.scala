@@ -130,6 +130,7 @@ class EPubServiceTest extends UnitSuite with TestEnvironment {
     when(chapterRepository.chaptersForBookIdAndLanguage(any[Long], any[LanguageTag])(any[DBSession])).thenReturn(Seq(chapter))
 
     when(contentConverter.toEPubContent(any[String], any[Seq[DownloadedMedia]])).thenReturn("Content-of-chapter")
+    when(mediaApiClient.downloadImage(1, "nb", None)).thenReturn(Failure(new RuntimeException("error")))
     when(imageApiClient.downloadImage(1, None)).thenReturn(Success(image))
 
     ePubService.createEPub(translation.language, translation.uuid) match {

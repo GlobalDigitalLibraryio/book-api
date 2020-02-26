@@ -688,9 +688,18 @@ trait ConverterService {
     }
 
     def toApiCoverImageV2(imageIdOpt: Option[Long], imageLanguage: String): Option[api.CoverImageV2] = {
-      imageIdOpt.map(imageId => {
-        val url = s"$Domain${BookApiProperties.MediaServicePath}/images/$imageId?language=$imageLanguage"
-        api.CoverImageV2(url, MediaType.IMAGE.toString, imageId.toString)
+      imageIdOpt.flatMap(imageId => {
+        val imageMeta = mediaApiClient.mediaMetaWithId(imageId, imageLanguage, mediaType = "IMAGE")
+        imageMeta match {
+          case None => {
+            imageApiClient.imageMetaWithId(imageId).map(imageMeta => {
+              api.CoverImageV2(url = imageMeta.imageUrl, MediaType.IMAGE.toString, imageId = imageMeta.id)
+            })
+          }
+          case Some(x) => {
+            Option(api.CoverImageV2(url = x.resourceUrl, MediaType.IMAGE.toString, imageId = x.id))
+          }
+        }
       })
     }
 

@@ -85,6 +85,7 @@ trait EPubService {
 
         val medias = mediaIdsToAdd.map(idAndSize => downloadMedia(idAndSize._1, translation.language.toString, idAndSize._2, Some(mediaType))).map(_.get)
 
+        // TODO: What if the epub has both image and video on the page?
         if(translation.bookType == BookType.BOOK) {
           for (imageWithIndex <- medias.zipWithIndex) {
             val image = imageWithIndex._1
