@@ -693,7 +693,7 @@ trait ConverterService {
         imageMeta match {
           case None => {
             imageApiClient.imageMetaWithId(imageId).map(imageMeta => {
-              api.CoverImageV2(url = imageMeta.metaUrl, MediaType.IMAGE.toString, imageId = imageMeta.id)
+              api.CoverImageV2(url = imageMeta.imageUrl, MediaType.IMAGE.toString, imageId = imageMeta.id)
             })
           }
           case Some(x) => {
