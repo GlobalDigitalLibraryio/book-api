@@ -697,7 +697,8 @@ trait ConverterService {
             })
           }
           case Some(x) => {
-            Option(api.CoverImageV2(url = x.resourceUrl, MediaType.IMAGE.toString, imageId = x.id))
+            val url = s"$Domain${BookApiProperties.MediaServicePath}/images/${x.id}?language=$imageLanguage"
+            Option(api.CoverImageV2(url = url, MediaType.IMAGE.toString, imageId = x.id))
           }
         }
       })
