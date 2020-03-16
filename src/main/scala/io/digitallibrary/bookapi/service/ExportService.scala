@@ -190,7 +190,7 @@ trait ExportService {
       generator.writeRawValue("")
       generator.writeRawValue("")
       generator.writeRawValue(book.readingLevel.getOrElse(""))
-      generator.writeRawValue(book.coverImage.map(i => i.url).getOrElse(""))
+      generator.writeRawValue(book.coverImage.map(i => s"\"${i.url}\"").getOrElse(""))
       generator.writeRawValue(s"$baseUrl/${languageTag.toString}/books/read/${book.id}")
       generator.writeEndArray()
     }
