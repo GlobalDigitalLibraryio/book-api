@@ -11,6 +11,8 @@ import java.io.{FileOutputStream, OutputStream}
 import java.util.zip.{ZipEntry, ZipOutputStream}
 
 import com.fasterxml.jackson.dataformat.csv.{CsvFactory, CsvGenerator, CsvSchema}
+import com.netaporter.uri.Uri
+import com.netaporter.uri.config.UriConfig
 import com.typesafe.scalalogging.LazyLogging
 import io.digitallibrary.bookapi.BookApiProperties
 import io.digitallibrary.bookapi.integration.ImageApiClient
@@ -21,6 +23,7 @@ import io.digitallibrary.language.model.LanguageTag
 import io.digitallibrary.bookapi.model._
 import io.digitallibrary.network.GdlClient
 import scalaj.http.{Http, HttpOptions}
+import com.netaporter.uri.dsl._
 
 import scala.util.{Failure, Success}
 
@@ -30,6 +33,7 @@ trait ExportService {
   val exportService: ExportService
 
   class ExportService extends LazyLogging {
+    implicit val config: UriConfig = UriConfig.conservative
 
     val qaSchema: CsvSchema = CsvSchema.builder()
       .addColumn("id")
@@ -41,6 +45,9 @@ trait ExportService {
       .addColumn("url")
       .addColumn("approved")
       .addColumn("comment")
+      .addColumn("level")
+      .addColumn("cover-url")
+      .addColumn("embed-url")
       .build().withHeader()
 
     val googlePlaySchema: CsvSchema = CsvSchema.builder()
@@ -186,6 +193,9 @@ trait ExportService {
       generator.writeRawValue(s"$baseUrl/${languageTag.toString}/books/details/${book.id}")
       generator.writeRawValue("")
       generator.writeRawValue("")
+      generator.writeRawValue(book.readingLevel.getOrElse(""))
+      generator.writeRawValue(book.coverImage.map(i => Uri.parse(i.url).toString).getOrElse(""))
+      generator.writeRawValue(s"$baseUrl/${languageTag.toString}/books/read/${book.id}")
       generator.writeEndArray()
     }
 
