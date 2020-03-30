@@ -28,9 +28,9 @@ class ExportServiceTest extends UnitSuite with TestEnvironment {
     val outputStream = new ByteArrayOutputStream()
     Mockito.when(searchService.searchWithQuery(any[LanguageTag], any[Option[String]], any[Option[String]], any[Paging], any[Sort.Value]))
       .thenReturn(SearchResult(1L, 1, 1, Some(Language(TestData.LanguageCodeEnglish, "")),
-        Seq(BookHit(1, "This is a title", "Short description", Language(TestData.LanguageCodeEnglish, ""), None, Seq(), None, LocalDate.now(), "source", None, None)))
+        Seq(BookHit(1, "This is a title", "Short description", Language(TestData.LanguageCodeEnglish, ""), None, Seq(), None, LocalDate.now(), "source", None, None, TestData.Api.DefaultLicense)))
       )
-    service.exportBooks(CsvFormat.QualityAssurance, LanguageTag(TestData.LanguageCodeEnglish), Some("all"), outputStream)
+    service.exportBooks(CsvFormat.QualityAssurance, Some(LanguageTag(TestData.LanguageCodeEnglish)), Some("all"), outputStream)
 
     val csvArr = outputStream.toString.split("\n").map(_.split(",").map(_.trim))
     csvArr(1)(0) should equal ("1")
@@ -47,7 +47,7 @@ class ExportServiceTest extends UnitSuite with TestEnvironment {
     Mockito.when(searchService.searchWithQuery(any[LanguageTag], any[Option[String]], any[Option[String]], any[Paging], any[Sort.Value]))
       .thenReturn(SearchResult(0L, 1, 0, Some(Language(TestData.LanguageCodeEnglish, "")), Seq()))
 
-    service.exportBooks(CsvFormat.QualityAssurance, LanguageTag(TestData.LanguageCodeEnglish), Some("all"), outputStream)
+    service.exportBooks(CsvFormat.QualityAssurance, Some(LanguageTag(TestData.LanguageCodeEnglish)), Some("all"), outputStream)
     assert(outputStream.toString.contains("id,environment,language,title,description,source,url,approved,comment"))
   }
 
@@ -56,8 +56,8 @@ class ExportServiceTest extends UnitSuite with TestEnvironment {
     Mockito.when(searchService.searchWithQuery(any[LanguageTag], any[Option[String]], any[Option[String]], any[Paging], any[Sort.Value]))
       .thenReturn(SearchResult(2L, 1, 2, Some(Language(TestData.LanguageCodeEnglish, "")),
         Seq(
-          BookHit(1, "This is the first title", "Short description", Language(TestData.LanguageCodeEnglish, ""), None, Seq(), None, LocalDate.now(), "source", None, None),
-          BookHit(2, "This is the second title", "Short description", Language(TestData.LanguageCodeEnglish, ""), None, Seq(), None, LocalDate.now(), "source", None, None)))
+          BookHit(1, "This is the first title", "Short description", Language(TestData.LanguageCodeEnglish, ""), None, Seq(), None, LocalDate.now(), "source", None, None, TestData.Api.DefaultLicense),
+          BookHit(2, "This is the second title", "Short description", Language(TestData.LanguageCodeEnglish, ""), None, Seq(), None, LocalDate.now(), "source", None, None, TestData.Api.DefaultLicense)))
       )
 
     Mockito.when(readService.withIdAndLanguageForExport(eqTo(1L), any[LanguageTag])).thenReturn(Some(TestData.Internal.DefaultInternalBook.copy(uuid = "book-1-uuid", downloads = Downloads(Some("http://url-to-epub"), None))))
@@ -81,8 +81,8 @@ class ExportServiceTest extends UnitSuite with TestEnvironment {
     Mockito.when(searchService.searchWithQuery(any[LanguageTag], any[Option[String]], any[Option[String]], any[Paging], any[Sort.Value]))
       .thenReturn(SearchResult(2L, 1, 2, Some(Language(TestData.LanguageCodeEnglish, "")),
         Seq(
-          BookHit(1, "This is the first title", "Short description", Language(TestData.LanguageCodeEnglish, ""), None, Seq(), None, LocalDate.now(), "source", None, None),
-          BookHit(2, "This is the second title", "Short description", Language(TestData.LanguageCodeEnglish, ""), None, Seq(), None, LocalDate.now(), "source", None, None)))
+          BookHit(1, "This is the first title", "Short description", Language(TestData.LanguageCodeEnglish, ""), None, Seq(), None, LocalDate.now(), "source", None, None, TestData.Api.DefaultLicense),
+          BookHit(2, "This is the second title", "Short description", Language(TestData.LanguageCodeEnglish, ""), None, Seq(), None, LocalDate.now(), "source", None, None, TestData.Api.DefaultLicense)))
       )
 
     val url1 = "http://url-to-epub-1"

@@ -107,13 +107,14 @@ trait ExportController {
       assertHasRole(RoleWithAdminReadAccess)
 
       val language = LanguageTag(params("lang"))
+      val searchLanguage = if (params("lang").equals("all")) None else Some(language)
       val source = params("source")
       val searchSource = if (source.equals("all")) None else Some(source)
 
       contentType = "text/csv"
       response.setHeader("Content-Disposition", s"""attachment; filename="books-${BookApiProperties.Environment}-$language-$source-$fileEnding.csv" """)
 
-      exportService.exportBooks(format, language, searchSource, response.getOutputStream)
+      exportService.exportBooks(format, searchLanguage, searchSource, response.getOutputStream)
     }
   }
 }

@@ -48,6 +48,7 @@ trait ExportService {
       .addColumn("level")
       .addColumn("cover-url")
       .addColumn("embed-url")
+      .addColumn("license")
       .build().withHeader()
 
     val googlePlaySchema: CsvSchema = CsvSchema.builder()
@@ -152,13 +153,15 @@ trait ExportService {
       zip.close()
     }
 
-    def exportBooks(csvFormat: CsvFormat.Value, language: LanguageTag, source: Option[String], outputStream: OutputStream): Unit = {
-      val firstPage = searchService.searchWithQuery(language, None, source, Paging(1, pageSize), Sort.ByIdAsc)
+    def exportBooks(csvFormat: CsvFormat.Value, language: Option[LanguageTag], source: Option[String], outputStream: OutputStream): Unit = {
+      val firstPage = if(language.isEmpty) searchService.searchWithQueryForAllLanguages(None, source, Paging(1, pageSize), Sort.ByIdAsc)
+      else searchService.searchWithQuery(language.get, None, source, Paging(1, pageSize), Sort.ByIdAsc)
 
       val numberOfPages = (firstPage.totalCount / pageSize).toInt
       val books = firstPage.results ++
         (1 to numberOfPages).flatMap(i =>
-          searchService.searchWithQuery(language, None, source, Paging(i + 1, pageSize), Sort.ByIdAsc).results)
+          if(language.isEmpty) searchService.searchWithQueryForAllLanguages(None, source, Paging(i + 1, pageSize), Sort.ByIdAsc).results
+          else searchService.searchWithQuery(language.get, None, source, Paging(i + 1, pageSize), Sort.ByIdAsc).results)
 
       val factory = new CsvFactory()
       val generator: CsvGenerator = factory.createGenerator(outputStream)
@@ -196,6 +199,7 @@ trait ExportService {
       generator.writeRawValue(book.readingLevel.getOrElse(""))
       generator.writeRawValue(book.coverImage.map(i => Uri.parse(i.url).toString).getOrElse(""))
       generator.writeRawValue(s"$baseUrl/${languageTag.toString}/books/read/${book.id}")
+      generator.writeString(book.license.name)
       generator.writeEndArray()
     }
 

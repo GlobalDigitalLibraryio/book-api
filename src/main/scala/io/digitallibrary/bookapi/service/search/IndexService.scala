@@ -151,6 +151,11 @@ trait IndexService extends LazyLogging {
         objectField("coverImage").fields(
           textField("url"),
           textField("alttext")
+        ),
+        objectField("license").fields(
+          textField("name"),
+          textField("description"),
+          textField("url")
         )
       ))
     }
