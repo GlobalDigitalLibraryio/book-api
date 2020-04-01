@@ -106,7 +106,8 @@ object TestData {
       dateArrived = today,
       source = DefaultSource.source,
       highlightTitle = Some("Title"),
-      highlightDescription = Some("Description"))
+      highlightDescription = Some("Description"),
+      license = DefaultLicense)
 
     val BookInAmharic: api.BookHit = DefaultBookHit.copy(language = amharic)
 

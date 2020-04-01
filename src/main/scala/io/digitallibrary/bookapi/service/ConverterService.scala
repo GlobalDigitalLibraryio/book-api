@@ -336,7 +336,8 @@ trait ConverterService {
           dateArrived = translation.dateArrived,
           source = book.source,
           highlightTitle = None,
-          highlightDescription = None
+          highlightDescription = None,
+          license = toApiLicense(book.license)
         )
       }
 
