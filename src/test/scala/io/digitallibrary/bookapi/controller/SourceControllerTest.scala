@@ -20,7 +20,7 @@ class SourceControllerTest extends UnitSuite with TestEnvironment with ScalatraF
   }
 
   test("that GET /eng returns a list of sources for a valid language") {
-    when(readService.listSourcesForLanguage(any[LanguageTag])).thenReturn(Seq(TestData.Api.DefaultSource))
+    when(readService.listSourcesForLanguage(any[Option[LanguageTag]])).thenReturn(Seq(TestData.Api.DefaultSource))
 
     get("/eng", headers = Seq(("Authorization", s"Bearer ${TestData.validTestTokenWithAdminReadRole}"))) {
       status should equal(200)
@@ -29,7 +29,7 @@ class SourceControllerTest extends UnitSuite with TestEnvironment with ScalatraF
   }
 
   test("that GET /eng returns a list of sources for a valid language with multiple sources") {
-    when(readService.listSourcesForLanguage(any[LanguageTag])).thenReturn(Seq(TestData.Api.DefaultSource, TestData.Api.SecondarySource))
+    when(readService.listSourcesForLanguage(any[Option[LanguageTag]])).thenReturn(Seq(TestData.Api.DefaultSource, TestData.Api.SecondarySource))
 
     get("/eng" , headers = Seq(("Authorization", s"Bearer ${TestData.validTestTokenWithAdminReadRole}"))) {
       status should equal(200)
@@ -45,7 +45,7 @@ class SourceControllerTest extends UnitSuite with TestEnvironment with ScalatraF
 
 
   test("that GET /eng returns empty list when there is no sources") {
-    when(readService.listSourcesForLanguage(any[LanguageTag])).thenReturn(Seq())
+    when(readService.listSourcesForLanguage(any[Option[LanguageTag]])).thenReturn(Seq())
 
     get("/eng", headers = Seq(("Authorization", s"Bearer ${TestData.validTestTokenWithAdminReadRole}"))) {
       status should equal(200)
@@ -54,7 +54,7 @@ class SourceControllerTest extends UnitSuite with TestEnvironment with ScalatraF
   }
 
   test("that GET /eng returns 403 when not authorized") {
-    when(readService.listSourcesForLanguage(any[LanguageTag])).thenReturn(Seq(TestData.Api.DefaultSource))
+    when(readService.listSourcesForLanguage(any[Option[LanguageTag]])).thenReturn(Seq(TestData.Api.DefaultSource))
 
     get("/eng", headers = Seq(("Authorization", s"Bearer ${TestData.invalidTestToken}"))) {
       status should equal (403)

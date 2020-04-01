@@ -125,7 +125,7 @@ case class BookHit(@(ApiModelProperty@field)(description = "The id of the book")
                    @(ApiModelProperty@field)(description = "The source of the book") source: String,
                    @(ApiModelProperty@field)(description = "The highlighted title of the book") highlightTitle: Option[String],
                    @(ApiModelProperty@field)(description = "The Highlighted description of the book") highlightDescription: Option[String],
-                   @(ApiModelProperty@field)(description = "Licensing information") license: License)
+                   @(ApiModelProperty@field)(description = "Licensing information") license: Option[License])
 
 @ApiModel(description = "Information about search results")
 case class SearchResult(@(ApiModelProperty@field)(description = "The total number of books matching this query") totalCount: Long,
