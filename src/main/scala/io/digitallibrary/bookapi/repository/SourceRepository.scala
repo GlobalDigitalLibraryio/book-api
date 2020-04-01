@@ -19,5 +19,13 @@ trait SourceRepository {
         .toSQL
         .map(rs => Source(rs.string(1), rs.long(2))).list().apply()
     }
+
+    def getAllSources()(implicit  session: DBSession = ReadOnlyAutoSession): Seq[Source] = {
+      select(book.source, sqls.count)
+        .from(Book as book)
+        .groupBy(book.source)
+        .toSQL
+        .map(rs => Source(rs.string(1), rs.long(2))).list().apply()
+    }
   }
 }
