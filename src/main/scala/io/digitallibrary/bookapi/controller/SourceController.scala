@@ -36,7 +36,7 @@ trait SourceController {
     get("/:lang", operation(getSourcesForLanguage)) {
       assertHasRole(RoleWithAdminReadAccess)
 
-      val language = if(params("lang").eq("all")) None else Some(LanguageTag(params("lang")))
+      val language = if(params("lang") == "all") None else Some(LanguageTag(params("lang")))
       readService.listSourcesForLanguage(language)
     }
 
