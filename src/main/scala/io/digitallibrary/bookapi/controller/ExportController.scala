@@ -107,7 +107,7 @@ trait ExportController {
       assertHasRole(RoleWithAdminReadAccess)
 
       val language = LanguageTag(params("lang"))
-      val searchLanguage = if (params("lang").equals("all")) None else Some(language)
+      val searchLanguage = if (params("lang") == "all") None else Some(language)
       val source = params("source")
       val searchSource = if (source.equals("all")) None else Some(source)
 
