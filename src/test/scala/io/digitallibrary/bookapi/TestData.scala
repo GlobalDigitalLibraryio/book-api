@@ -42,7 +42,7 @@ object TestData {
     val norwegian_bokmal = api.Language(LanguageCodeNorwegian, "Bokmål, Norwegian")
     val amharic = api.Language(LanguageCodeAmharic, "Amharic")
 
-    val DefaultLicense = api.License("lisens", Some("beskrivelse"), Some("url"))
+    val DefaultLicense = Some(api.License("lisens", Some("beskrivelse"), Some("url")))
     val DefaultPublisher = api.Publisher(1, 1, "Some Publisher")
     val DefaultSource = api.Source("storyweaver", 2)
     val SecondarySource = api.Source("bookdash", 3)
@@ -69,7 +69,7 @@ object TestData {
       description = "Description",
       translatedFrom = None, language = english,
       availableLanguages = Seq(english, norwegian_bokmal),
-      license = DefaultLicense,
+      license = DefaultLicense.get,
       publisher = DefaultPublisher,
       readingLevel = Some(Level1),
       typicalAgeRange = Some(ageRangeDefault),
@@ -215,7 +215,7 @@ object TestData {
       translatedFrom = None,
       language = api.Language("nb", "Norsk Bokmål"),
       availableLanguages = Seq(),
-      license = Api.DefaultLicense,
+      license = Api.DefaultLicense.get,
       publisher = Api.DefaultPublisher,
       readingLevel = Some("1"),
       typicalAgeRange = None,

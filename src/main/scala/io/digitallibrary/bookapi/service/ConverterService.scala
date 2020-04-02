@@ -337,7 +337,7 @@ trait ConverterService {
           source = book.source,
           highlightTitle = None,
           highlightDescription = None,
-          license = toApiLicense(book.license)
+          license = Some(toApiLicense(book.license))
         )
       }
 

@@ -171,9 +171,9 @@ trait ReadService {
       }
     }
 
-    def listSourcesForLanguage(language: LanguageTag): Seq[api.Source] = {
-      sourceRepository.getSources(language).map(source => api.Source(source.source, source.count))
+    def listSourcesForLanguage(language: Option[LanguageTag]): Seq[api.Source] = {
+      if(language.nonEmpty) sourceRepository.getSources(language.get).map(source => api.Source(source.source, source.count))
+      else sourceRepository.getAllSources().map(source => api.Source(source.source, source.count))
     }
-
   }
 }

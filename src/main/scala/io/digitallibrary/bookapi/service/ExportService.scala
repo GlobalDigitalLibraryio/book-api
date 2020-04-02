@@ -16,7 +16,7 @@ import com.netaporter.uri.config.UriConfig
 import com.typesafe.scalalogging.LazyLogging
 import io.digitallibrary.bookapi.BookApiProperties
 import io.digitallibrary.bookapi.integration.ImageApiClient
-import io.digitallibrary.bookapi.model.api.BookHit
+import io.digitallibrary.bookapi.model.api.{BookHit, License}
 import io.digitallibrary.bookapi.model.domain.{CsvFormat, Paging, Sort}
 import io.digitallibrary.bookapi.service.search.SearchService
 import io.digitallibrary.language.model.LanguageTag
@@ -199,7 +199,7 @@ trait ExportService {
       generator.writeRawValue(book.readingLevel.getOrElse(""))
       generator.writeRawValue(book.coverImage.map(i => Uri.parse(i.url).toString).getOrElse(""))
       generator.writeRawValue(s"$baseUrl/${languageTag.toString}/books/read/${book.id}")
-      generator.writeString(book.license.name)
+      generator.writeString(book.license.getOrElse(License("", Some(""), Some(""))).name)
       generator.writeEndArray()
     }
 
