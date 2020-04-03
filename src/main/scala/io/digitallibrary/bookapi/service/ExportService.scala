@@ -198,7 +198,7 @@ trait ExportService {
       generator.writeRawValue("")
       generator.writeRawValue(book.readingLevel.getOrElse(""))
       generator.writeRawValue(book.coverImage.map(i => Uri.parse(i.url).toString).getOrElse(""))
-      generator.writeRawValue(s"$baseUrl/${languageTag.toString}/books/read/${book.id}")
+      generator.writeRawValue(s"$baseUrl/${languageTag.toString}/books/embed/${book.id}")
       generator.writeString(book.license.getOrElse(License("", Some(""), Some(""))).name)
       generator.writeEndArray()
     }
