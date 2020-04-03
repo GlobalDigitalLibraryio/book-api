@@ -40,6 +40,8 @@ class ExportServiceTest extends UnitSuite with TestEnvironment {
     csvArr(1)(4) should equal (""""Short description"""")
     csvArr(1)(5) should equal ("source")
     csvArr(1)(6) should equal ("https://local.digitallibrary.io/en/books/details/1")
+    csvArr(1)(11) should equal ("https://local.digitallibrary.io/en/books/embed/1")
+    csvArr(1)(12) should equal ("lisens")
   }
 
   test("that export of no books gives csv with headers") {
