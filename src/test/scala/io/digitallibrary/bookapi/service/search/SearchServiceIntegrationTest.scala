@@ -26,21 +26,21 @@ class SearchServiceIntegrationTest extends UnitSuite with TestEnvironment {
 
     when(bookRepository.withId(1)).thenReturn(Some(TestData.Domain.DefaultBook))
 
-    when(converterService.toApiBookHit(Some(TestData.Domain.DefaultTranslation), Some(TestData.Domain.DefaultBook))).thenReturn(Some(TestData.Api.DefaultBookHit))
+    when(converterService.toApiBookHit(Some(TestData.Domain.DefaultTranslation), Some(Seq()), Some(TestData.Domain.DefaultBook))).thenReturn(Some(TestData.Api.DefaultBookHit))
     indexService.indexDocument(TestData.Domain.DefaultTranslation)
 
     val additionalTranslation = TestData.Domain.DefaultTranslation.copy(id = Some(2), title = "Different")
-    when(converterService.toApiBookHit(Some(additionalTranslation), Some(TestData.Domain.DefaultBook))).thenReturn(Some(TestData.Api.DefaultBookHit.copy(id = 2, title = "Different title", description = "Title")))
+    when(converterService.toApiBookHit(Some(additionalTranslation), Some(Seq()), Some(TestData.Domain.DefaultBook))).thenReturn(Some(TestData.Api.DefaultBookHit.copy(id = 2, title = "Different title", description = "Title")))
     indexService.indexDocument(additionalTranslation)
 
-    when(converterService.toApiBookHit(Some(TestData.Domain.AmharicTranslation), Some(TestData.Domain.DefaultBook))).thenReturn(Some(TestData.Api.BookInAmharic))
+    when(converterService.toApiBookHit(Some(TestData.Domain.AmharicTranslation), Some(Seq()), Some(TestData.Domain.DefaultBook))).thenReturn(Some(TestData.Api.BookInAmharic))
     indexService.indexDocument(TestData.Domain.AmharicTranslation)
 
     val bookWithDifferentSource = TestData.Domain.DefaultBook.copy(source = "some_unknown_source")
     val translationWithDifferentSource = TestData.Domain.DefaultTranslation.copy(id = Some(3), bookId = 2, title = "Some stuff here...", language = LanguageTag("en"))
     val bookHitWithDifferentSource = TestData.Api.DefaultBookHit.copy(id = 3, title = "Some stuff here...", source = "some_unknown_source", language = TestData.Api.english)
     when(bookRepository.withId(2)).thenReturn(Some(bookWithDifferentSource))
-    when(converterService.toApiBookHit(Some(translationWithDifferentSource), Some(bookWithDifferentSource))).thenReturn(Some(bookHitWithDifferentSource))
+    when(converterService.toApiBookHit(Some(translationWithDifferentSource), Some(Seq()), Some(bookWithDifferentSource))).thenReturn(Some(bookHitWithDifferentSource))
     indexService.indexDocument(translationWithDifferentSource)
   }
 

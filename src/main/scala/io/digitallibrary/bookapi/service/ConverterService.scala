@@ -323,13 +323,14 @@ trait ConverterService {
           additionalInformation = translation.additionalInformation)
     }
 
-    def toApiBookHit(translation: Option[domain.Translation], book: Option[domain.Book]): Option[api.BookHit] = {
-      def toApiBookHitInternal(translation: domain.Translation, book: domain.Book): api.BookHit = {
+    def toApiBookHit(translation: Option[domain.Translation], availableLanguages: Option[Seq[LanguageTag]], book: Option[domain.Book]): Option[api.BookHit] = {
+      def toApiBookHitInternal(translation: domain.Translation, availableLanguages: Seq[LanguageTag], book: domain.Book): api.BookHit = {
         model.api.BookHit(
           id = book.id.get,
           title = translation.title,
           description = translation.about,
           language = toApiLanguage(translation.language),
+          availableLanguages = availableLanguages.map(toApiLanguage).sortBy(_.name),
           readingLevel = translation.readingLevel,
           categories = toApiCategories(translation.categories),
           coverImage = toApiCoverImage(translation.coverphoto),
@@ -343,8 +344,9 @@ trait ConverterService {
 
       for {
         b <- book
+        al <- availableLanguages
         t <- translation
-        api <- Some(toApiBookHitInternal(t, b))
+        api <- Some(toApiBookHitInternal(t, al, b))
       } yield api
     }
 

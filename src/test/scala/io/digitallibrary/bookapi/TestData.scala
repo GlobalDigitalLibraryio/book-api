@@ -98,6 +98,7 @@ object TestData {
       title = "Title",
       description = "Description",
       language = norwegian_bokmal,
+      availableLanguages = Seq(english, norwegian_bokmal),
       readingLevel = Some("1"),
       categories = Seq(
         Category
