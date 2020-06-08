@@ -118,6 +118,7 @@ case class BookHit(@(ApiModelProperty@field)(description = "The id of the book")
                    @(ApiModelProperty@field)(description = "The title of the book") title: String,
                    @(ApiModelProperty@field)(description = "Description of the book") description: String,
                    @(ApiModelProperty@field)(description = "Current language") language: Language,
+                   @(ApiModelProperty@field)(description = "Languages available") availableLanguages: Seq[Language],
                    @(ApiModelProperty@field)(description = "Information about reading level") readingLevel: Option[String],
                    @(ApiModelProperty@field)(description = "Information about categories") categories: Seq[Category],
                    @(ApiModelProperty@field)(description = "Cover image information") coverImage: Option[CoverImage],
