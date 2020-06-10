@@ -126,7 +126,7 @@ trait BooksController {
       parameters(
       headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
       queryParam[Option[String]]("sort").description(s"Sorts result based on parameter. Possible values: ${MyBooksSort.values.mkString(",")}; Default value: ${MyBooksSort.ByIdAsc}"))
-      responseMessages (response403, response500)
+      responseMessages(response403, response500)
       authorizations "oauth2")
 
     private val getFlaggedBooks = (apiOperation[api.SearchResult]("getFlaggedBooks")
@@ -201,7 +201,7 @@ trait BooksController {
             publishingStatus = PublishingStatus.valueOf(updatedBook.publishingStatus).getOrElse(existingBook.publishingStatus),
             additionalInformation = updatedBook.additionalInformation.filter(_.trim.nonEmpty),
             revision = Some(updatedBook.revision.toInt)
-        )) match {
+          )) match {
             case Success(updated) => readService.withIdAndLanguage(updated.id.get, updated.language)
             case Failure(failure) => errorHandler(failure)
           }
@@ -238,9 +238,8 @@ trait BooksController {
       readService.domainChapterForBookWithLanguageAndId(bookId, lang, chapterId) match {
         case Some(existingChapter) =>
           val chapterTypeToUpdate = ChapterType.valueOf(updatedChapter.chapterType).getOrElse(existingChapter.chapterType)
-
           val updated = writeService.updateChapter(existingChapter.copy(
-            content = mergeService.mergeContents(existingChapter.content, updatedChapter.content),
+            content = mergeService.mergeContents(existingChapter.content, updatedChapter.content, book = readService.withIdAndLanguageListingAllBooksIfAdmin(bookId, lang).get),
             chapterType = chapterTypeToUpdate))
 
           updated.copy(content = contentConverter.toApiContent(updated.content).content)

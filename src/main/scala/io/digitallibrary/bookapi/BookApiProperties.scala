@@ -76,6 +76,7 @@ object BookApiProperties extends LazyLogging {
 
   val ImageApiHost = propOrElse("IMAGE_API_SERVER","image-api.gdl-local")
   val InternalImageApiUrl = s"$ImageApiHost/image-api/v2/images"
+  val InternInternalImageApiUrl = s"$ImageApiHost/intern"
 
   val CoverPhotoTumbSize = 200
 
