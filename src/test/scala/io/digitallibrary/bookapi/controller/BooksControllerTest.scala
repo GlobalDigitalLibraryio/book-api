@@ -249,7 +249,7 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
   test("that PUT /:lang/:bookid/chapters/:chapterid changes only chapter content and chapterType") {
     when(readService.domainChapterForBookWithLanguageAndId(any[Long], any[LanguageTag], any[Long])).thenReturn(Some(TestData.Domain.DefaultChapter))
     when(readService.withIdAndLanguageListingAllBooksIfAdmin(any[Long], any[LanguageTag])).thenReturn(Some(TestData.Api.DefaultBook))
-    when(mergeService.mergeContents(TestData.Domain.DefaultChapter.content, "my updated content", TestData.Api.DefaultBook)).thenReturn("my updated content")
+    when(mergeService.mergeContents(TestData.Domain.DefaultChapter.content, "my updated content", Some(TestData.Api.DefaultBook))).thenReturn("my updated content")
     when(writeService.updateChapter(any[domain.Chapter])).thenReturn(TestData.Domain.DefaultChapter)
     when(contentConverter.toApiContent(any[String])).thenReturn(ApiContent("", Seq()))
     val payload =
@@ -272,7 +272,7 @@ class BooksControllerTest extends UnitSuite with TestEnvironment with ScalatraFu
   test("that PUT /:lang/:bookid/chapters/:chapterid converts Picture-tags back to embed-tags") {
     when(readService.domainChapterForBookWithLanguageAndId(any[Long], any[LanguageTag], any[Long])).thenReturn(Some(TestData.Domain.DefaultChapter))
     when(readService.withIdAndLanguageListingAllBooksIfAdmin(any[Long], any[LanguageTag])).thenReturn(Some(TestData.Api.DefaultBook))
-    when(mergeService.mergeContents(any[String], any[String], any[Book])).thenReturn("<embed ...> <br /> Some content here")
+    when(mergeService.mergeContents(any[String], any[String], Some(any[Book]))).thenReturn("<embed ...> <br /> Some content here")
     when(writeService.updateChapter(any[domain.Chapter])).thenReturn(TestData.Domain.DefaultChapter)
     when(contentConverter.toApiContent(any[String])).thenReturn(ApiContent("", Seq()))
     val pictureContent =

@@ -75,10 +75,13 @@ object BookApiProperties extends LazyLogging {
   val LoginEndpoint = "https://digitallibrary.eu.auth0.com/authorize"
 
   val ImageApiHost = propOrElse("IMAGE_API_SERVER","image-api.gdl-local")
-  val InternalImageApiUrl = s"$ImageApiHost/image-api/v2/images"
-  val InternInternalImageApiUrl = s"$ImageApiHost/intern"
+  val ImageApiUrl = s"$ImageApiHost/image-api/v2/images"
+  val InternalImageApiUrl = s"$ImageApiHost/intern"
 
   val CoverPhotoTumbSize = 200
+
+  val CloudinaryCloudNameKey = "CLOUDINARY_CLOUD_NAME"
+  val CloudinaryCloudName: String = prop(CloudinaryCloudNameKey)
 
   lazy val MetaUserName = prop(PropertyKeys.MetaUserNameKey)
   lazy val MetaPassword = prop(PropertyKeys.MetaPasswordKey)
@@ -107,7 +110,7 @@ object BookApiProperties extends LazyLogging {
   def supportsTranslationFrom(language: LanguageTag): Boolean =
     CrowdinProjects.exists(_.sourceLanguage == language.toString)
 
-  lazy val secrets = readSecrets(SecretsFile, Set(CrowdinProjectsKey)) match {
+  lazy val secrets = readSecrets(SecretsFile, Set(CrowdinProjectsKey, CloudinaryCloudNameKey)) match {
     case Success(values) => values
     case Failure(exception) => throw new RuntimeException(s"Unable to load remote secrets from $SecretsFile", exception)
   }

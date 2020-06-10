@@ -13,6 +13,7 @@ import java.security.MessageDigest
 
 import org.apache.commons.codec.binary.Hex
 import com.typesafe.scalalogging.LazyLogging
+import io.digitallibrary.bookapi.BookApiProperties
 import io.digitallibrary.bookapi.integration.ImageApiClient
 import io.digitallibrary.bookapi.integration.crowdin.TranslatedChapter
 import io.digitallibrary.bookapi.model.api.Book
@@ -32,7 +33,7 @@ trait MergeService {
 
   class MergeService extends LazyLogging {
 
-    def mergeContents(originalContent: String, newContent: String, book: Book = null): String = {
+    def mergeContents(originalContent: String, newContent: String, book: Option[Book] = None): String = {
       val originalDoc = Jsoup.parseBodyFragment(originalContent)
 
       val newDoc = Jsoup.parseBodyFragment(
@@ -42,49 +43,59 @@ trait MergeService {
       val embedElements = originalDoc.select("embed[data-resource]").asScala
       val imgElements = newDoc.getElementsByTag("img").asScala
 
-
-      if (book != null) {
-        val embedUrls = embedElements.map { embed => imageApiClient.imageUrlFor(embed.attr("data-resource_id").toLong).get.url }
-        for (img <- imgElements) {
-          val imageUrl = img.attr("src")
-          if (embedUrls.contains(imageUrl)) {
-            img.replaceWith(embedElements(embedUrls.indexOf(imageUrl)))
-          }
-          else {
-            // Upload new image to image-api
-            val bufferedImage = ImageIO.read(new URL(imageUrl))
-            val outputStream = new ByteArrayOutputStream()
-            try {
-              ImageIO.write(bufferedImage, "jpg", outputStream)
-            } catch {
-              case e: javax.imageio.IIOException => {
-                ImageIO.write(bufferedImage, "png", outputStream)
+      book match {
+        case Some(b) => {
+          val embedUrls = embedElements.map { embed => imageApiClient.imageUrlFor(embed.attr("data-resource_id").toLong).get.url }
+          for (img <- imgElements) {
+            val imageUrl = img.attr("src")
+            if (imageUrl.contains(BookApiProperties.CloudinaryCloudName)) {
+              if (embedUrls.contains(imageUrl)) {
+                img.replaceWith(embedElements(embedUrls.indexOf(imageUrl)))
+              }
+              else {
+                // Upload new image to image-api
+                val bufferedImage = ImageIO.read(new URL(imageUrl))
+                val outputStream = new ByteArrayOutputStream()
+                try {
+                  ImageIO.write(bufferedImage, "jpg", outputStream)
+                } catch {
+                  case e: javax.imageio.IIOException => {
+                    ImageIO.write(bufferedImage, "png", outputStream)
+                  }
+                }
+                val data = outputStream.toByteArray
+                outputStream.close()
+                val md = MessageDigest.getInstance("MD5")
+                md.update(data)
+                val hash = md.digest()
+                val externalId = s"${b.externalId.get}-${Hex.encodeHexString(hash)}"
+                val filename = s"${b.title}-${externalId}"
+                val title = s"${b.title}-${externalId}"
+                val alttext = img.attr("alttext")
+                val language = b.language.code
+                val license = b.license.name
+                val origin = b.source
+                val author = b.source
+                val metadata = imageApiClient.createImage(externalId, filename, title, alttext, language, license, origin, author, data)
+                metadata match {
+                  case Some(metadata) =>
+                    val embed = "<embed data-resource=\"image\" data-resource_id=\"" + metadata.id + "\"/>";
+                    img.replaceWith(Jsoup.parseBodyFragment(embed).select("embed[data-resource]").asScala.head)
+                  case (_) => img.remove()
+                }
               }
             }
-            val data = outputStream.toByteArray
-            outputStream.close()
-            val md = MessageDigest.getInstance("MD5")
-            md.update(data)
-            val hash = md.digest()
-            val externalId = s"${book.externalId.get}-${Hex.encodeHexString(hash)}"
-            val filename = s"${book.title}-${externalId}"
-            val title = s"${book.title}-${externalId}"
-            val alttext = img.attr("alttext")
-            val language = book.language.code
-            val license = book.license.name
-            val origin = book.source
-            val author = book.source
-            val metadata = imageApiClient.createImage(externalId, filename, title, alttext, language, license, origin, author, data)
-            val embed = "<embed data-resource=\"image\" data-resource_id=\"" + metadata.get.id + "\"/>";
-            img.replaceWith(Jsoup.parseBodyFragment(embed).select("embed[data-resource]").asScala.head)
+            else{
+              img.remove()
+            }
           }
         }
-      }
-      else {
-        embedElements.zipAll(imgElements, "", "").foreach {
-          case (embed: Element, img: Element) => img.replaceWith(embed)
-          case (_, img: Element) => img.remove()
-          case (_, _) => Unit
+        case (_) => {
+          embedElements.zipAll(imgElements, "", "").foreach {
+            case (embed: Element, img: Element) => img.replaceWith(embed)
+            case (_, img: Element) => img.remove()
+            case (_, _) => Unit
+          }
         }
       }
       newDoc.body().html()
@@ -112,5 +123,4 @@ trait MergeService {
       originalChapter.copy(content = mergeContents(originalChapter.content, translatedChapter.content))
     }
   }
-
 }

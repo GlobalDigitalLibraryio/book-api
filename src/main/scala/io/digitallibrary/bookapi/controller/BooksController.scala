@@ -239,7 +239,7 @@ trait BooksController {
         case Some(existingChapter) =>
           val chapterTypeToUpdate = ChapterType.valueOf(updatedChapter.chapterType).getOrElse(existingChapter.chapterType)
           val updated = writeService.updateChapter(existingChapter.copy(
-            content = mergeService.mergeContents(existingChapter.content, updatedChapter.content, book = readService.withIdAndLanguageListingAllBooksIfAdmin(bookId, lang).get),
+            content = mergeService.mergeContents(existingChapter.content, updatedChapter.content, book = readService.withIdAndLanguageListingAllBooksIfAdmin(bookId, lang)),
             chapterType = chapterTypeToUpdate))
 
           updated.copy(content = contentConverter.toApiContent(updated.content).content)
