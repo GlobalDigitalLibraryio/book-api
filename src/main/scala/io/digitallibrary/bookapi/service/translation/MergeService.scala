@@ -10,6 +10,7 @@ package io.digitallibrary.bookapi.service.translation
 import java.io.ByteArrayOutputStream
 import java.net.URL
 import java.security.MessageDigest
+import javax.imageio.ImageIO
 
 import org.apache.commons.codec.binary.Hex
 import com.typesafe.scalalogging.LazyLogging
@@ -20,7 +21,6 @@ import io.digitallibrary.bookapi.model.api.Book
 import io.digitallibrary.bookapi.model.api.internal.NewTranslatedChapter
 import io.digitallibrary.bookapi.model.domain.{Chapter, Translation}
 import io.digitallibrary.bookapi.repository.ChapterRepository
-import javax.imageio.ImageIO
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
 import org.jsoup.safety.Whitelist
@@ -33,7 +33,7 @@ trait MergeService {
 
   class MergeService extends LazyLogging {
 
-    def mergeContents(originalContent: String, newContent: String, book: Option[Book] = None): String = {
+    def mergeContents(originalContent: String, newContent: String, book: Option[Book]): String = {
       val originalDoc = Jsoup.parseBodyFragment(originalContent)
 
       val newDoc = Jsoup.parseBodyFragment(
@@ -120,7 +120,7 @@ trait MergeService {
     }
 
     def mergeChapter(originalChapter: Chapter, translatedChapter: TranslatedChapter): Chapter = {
-      originalChapter.copy(content = mergeContents(originalChapter.content, translatedChapter.content))
+      originalChapter.copy(content = mergeContents(originalChapter.content, translatedChapter.content, None))
     }
   }
 }

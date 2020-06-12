@@ -110,7 +110,7 @@ object BookApiProperties extends LazyLogging {
   def supportsTranslationFrom(language: LanguageTag): Boolean =
     CrowdinProjects.exists(_.sourceLanguage == language.toString)
 
-  lazy val secrets = readSecrets(SecretsFile, Set(CrowdinProjectsKey, CloudinaryCloudNameKey)) match {
+  lazy val secrets = readSecrets(SecretsFile) match {
     case Success(values) => values
     case Failure(exception) => throw new RuntimeException(s"Unable to load remote secrets from $SecretsFile", exception)
   }
