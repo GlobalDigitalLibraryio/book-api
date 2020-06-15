@@ -11,9 +11,10 @@ import com.typesafe.scalalogging.LazyLogging
 import io.digitallibrary.bookapi.BookApiProperties
 import io.digitallibrary.bookapi.model.api.NotFoundException
 import io.digitallibrary.network.GdlClient
+import io.digitallibrary.network.AuthUser
 
 import scala.util.{Failure, Success, Try}
-import scalaj.http.{Http, HttpRequest, HttpResponse}
+import scalaj.http.{Http, HttpRequest, HttpResponse, MultiPart}
 
 
 trait ImageApiClient {
@@ -21,6 +22,52 @@ trait ImageApiClient {
   val imageApiClient: ImageApiClient
 
   class ImageApiClient extends LazyLogging {
+
+    def createImage(externalId: String,
+                    filename: String,
+                    title: String,
+                    alttext: String,
+                    language: String,
+                    license: String,
+                    origin: String,
+                    author: String,
+                    imageData: Array[Byte]): Option[ImageMetaInformation] = {
+      gdlClient.fetch[ImageMetaInformation](Http(s"http://${BookApiProperties.InternalImageApiUrl}/extern/${externalId}")) match {
+        case Success(metaInfo) => Some(metaInfo)
+        case Failure(ex: Throwable) => {
+          val metadata =
+            s"""{
+               |  "externalId": "${externalId}",
+               |  "title": "${title}",
+               |  "language": "${language}",
+               |  "alttext": "${alttext}",
+               |  "caption": "",
+               |  "copyright": {
+               |    "license": {
+               |      "license": "${license}",
+               |      "description": "Creative Commons"
+               |    },
+               |    "origin": "${origin}",
+               |    "creators": [
+               |      {
+               |        "type": "Photographer",
+               |        "name": "${author}"
+               |      }
+               |    ]
+               |  }
+               |}""".stripMargin
+          doRequest(Http(s"http://${BookApiProperties.ImageApiUrl}/")
+            .header("Content-Type", "multipart/form-data")
+            .header("Authorization", AuthUser.getHeader.get)
+            .postForm(Seq(("metadata", metadata)))
+            .postMulti(MultiPart("file", title + ".jpg", "image/jpeg", imageData)))
+        }
+      }
+    }
+
+    def getMetadataForImageWithExternalId(externalId: String): Option[ImageMetaInformation] ={
+      doRequest(Http(s"http://${BookApiProperties.InternalImageApiUrl}/extern/${externalId}"))
+    }
 
     def downloadImage(id: Long, width: Option[Int] = None): Try[DownloadedImage] = {
       import com.netaporter.uri.dsl._
@@ -46,7 +93,7 @@ trait ImageApiClient {
         case Some(width) => s"?width=$width"
       }
 
-      val request = Http(s"http://${BookApiProperties.InternalImageApiUrl}/$id/imageUrl$widthAppendix")
+      val request = Http(s"http://${BookApiProperties.ImageApiUrl}/$id/imageUrl$widthAppendix")
       gdlClient.fetch[ImageUrl](request) match {
         case Success(imageUrl) => Some(imageUrl)
         case Failure(ex: Throwable) =>
@@ -56,12 +103,12 @@ trait ImageApiClient {
     }
 
     def imageMetaWithId(id: Long): Option[ImageMetaInformation] = doRequest(
-      Http(s"http://${BookApiProperties.InternalImageApiUrl}/$id"))
+      Http(s"http://${BookApiProperties.ImageApiUrl}/$id"))
 
     private def doRequest(httpRequest: HttpRequest): Option[ImageMetaInformation] = {
       gdlClient.fetch[ImageMetaInformation](httpRequest) match {
         case Success(metaInfo) => Some(metaInfo)
-        case Failure(ex: Throwable) =>  {
+        case Failure(ex: Throwable) => {
           logger.error(s"Got ${ex.getClass.getSimpleName} when calling ${httpRequest.url}: ${ex.getMessage}")
           None
         }
