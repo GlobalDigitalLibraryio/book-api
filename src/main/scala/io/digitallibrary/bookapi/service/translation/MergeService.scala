@@ -68,7 +68,7 @@ trait MergeService {
                 val md = MessageDigest.getInstance("MD5")
                 md.update(data)
                 val hash = md.digest()
-                val externalId = s"${b.externalId.get}-${Hex.encodeHexString(hash)}"
+                val externalId = s"${b.externalId.getOrElse("")}-${Hex.encodeHexString(hash)}"
                 val filename = s"${b.title}-${externalId}"
                 val title = s"${b.title}-${externalId}"
                 val alttext = img.attr("alttext")
