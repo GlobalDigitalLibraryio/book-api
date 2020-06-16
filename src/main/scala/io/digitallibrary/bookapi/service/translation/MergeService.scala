@@ -48,11 +48,11 @@ trait MergeService {
           val embedUrls = embedElements.map { embed => imageApiClient.imageUrlFor(embed.attr("data-resource_id").toLong).get.url }
           for (img <- imgElements) {
             val imageUrl = img.attr("src")
-            if (imageUrl.contains(BookApiProperties.CloudinaryCloudName)) {
-              if (embedUrls.contains(imageUrl)) {
-                img.replaceWith(embedElements(embedUrls.indexOf(imageUrl)))
-              }
-              else {
+            if (embedUrls.contains(imageUrl)) {
+              img.replaceWith(embedElements(embedUrls.indexOf(imageUrl)).clone())
+            }
+            else {
+              if (imageUrl.contains(BookApiProperties.CloudinaryCloudName)) {
                 // Upload new image to image-api
                 val bufferedImage = ImageIO.read(new URL(imageUrl))
                 val outputStream = new ByteArrayOutputStream()
@@ -84,9 +84,9 @@ trait MergeService {
                   case (_) => img.remove()
                 }
               }
-            }
-            else{
-              img.remove()
+              else {
+                img.remove()
+              }
             }
           }
         }
