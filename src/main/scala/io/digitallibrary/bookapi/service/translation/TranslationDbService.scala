@@ -8,6 +8,7 @@
 package io.digitallibrary.bookapi.service.translation
 
 import com.typesafe.scalalogging.LazyLogging
+import io.digitallibrary.bookapi.ComponentRegistry.allTranslationsRepository.canTranslationBeUpdatedByCrowdin
 import io.digitallibrary.language.model.LanguageTag
 import io.digitallibrary.network.AuthUser
 import io.digitallibrary.bookapi.model.api.DBException
@@ -94,6 +95,10 @@ trait TranslationDbService {
           file.copy(translationStatus = newStatus)
         )
       )
+    }
+
+    def checkIfBookCanBeUpdated(fileId: String, language: LanguageTag): Boolean = {
+      canTranslationBeUpdatedByCrowdin(fileId, language)
     }
   }
 
