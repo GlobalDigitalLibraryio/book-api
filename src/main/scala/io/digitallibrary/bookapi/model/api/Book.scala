@@ -111,7 +111,8 @@ case class Book(@(ApiModelProperty@field)(description = "The id of the book") id
                 @(ApiModelProperty@field)(description = "The source of the book") source: String,
                 @(ApiModelProperty@field)(description = "The publishing status of this book") publishingStatus: String,
                 @(ApiModelProperty@field)(description = "The translation status of this book") translationStatus: Option[String],
-                @(ApiModelProperty@field)(description = "Optional additional information about the book") additionalInformation: Option[String])
+                @(ApiModelProperty@field)(description = "Optional additional information about the book") additionalInformation: Option[String],
+                @(ApiModelProperty@field)(description = "Indicates if this book can be translated") officiallyApproved: Option[Boolean])
 
 @ApiModel(description = "Information about book search hit")
 case class BookHit(@(ApiModelProperty@field)(description = "The id of the book") id: Long,

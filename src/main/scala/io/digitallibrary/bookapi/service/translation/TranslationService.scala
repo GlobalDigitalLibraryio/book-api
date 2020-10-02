@@ -7,7 +7,7 @@
 
 package io.digitallibrary.bookapi.service.translation
 
-import com.typesafe.scalalogging.LazyLogging
+import com.typesafe.scalalogging.{LazyLogging, Logger}
 import io.digitallibrary.bookapi.BookApiProperties
 import io.digitallibrary.bookapi.integration.crowdin._
 import io.digitallibrary.bookapi.model._
@@ -31,21 +31,26 @@ trait TranslationService {
           readService.withIdAndLanguage(translateRequest.bookId, fromLanguage) match {
             case None => Failure(new NotFoundException())
             case Some(originalBook) => {
-              crowdinClientBuilder.forSourceLanguage(fromLanguage).flatMap(crowdinClient => {
-                val existingTranslations = translationDbService.translationsForOriginalId(translateRequest.bookId)
+              readService.withIdAndLanguage(translateRequest.bookId, LanguageTag(toLanguage)).map(_.officiallyApproved).getOrElse(Some(false)) match {
+                case Some(true) => Failure(new RuntimeException(Error.ALREADY_EXISTS))
+                case Some(false) => {
+                  crowdinClientBuilder.forSourceLanguage(fromLanguage).flatMap(crowdinClient => {
+                    val existingTranslations = translationDbService.translationsForOriginalId(translateRequest.bookId)
 
-                val toAddUser = existingTranslations.find(tr => tr.fromLanguage == fromLanguage && tr.toLanguage == LanguageTag(toLanguage))
-                val toAddLanguage = existingTranslations.find(tr => tr.fromLanguage == fromLanguage)
+                    val toAddUser = existingTranslations.find(tr => tr.fromLanguage == fromLanguage && tr.toLanguage == LanguageTag(toLanguage))
+                    val toAddLanguage = existingTranslations.find(tr => tr.fromLanguage == fromLanguage)
 
-                val inTranslationTry = (toAddUser, toAddLanguage) match {
-                  case (Some(addUser), _) => addUserToTranslation(addUser, translateRequest.userId.get)
-                  case (None, Some(addLanguage)) => addTargetLanguageForTranslation(addLanguage, translateRequest, originalBook.id, LanguageTag(originalBook.language.code), crowdinClient)
-                  case _ => createTranslation(translateRequest, originalBook, fromLanguage, toLanguage, crowdinClient)
+                    val inTranslationTry = (toAddUser, toAddLanguage) match {
+                      case (Some(addUser), _) => addUserToTranslation(addUser, translateRequest.userId.get)
+                      case (None, Some(addLanguage)) => addTargetLanguageForTranslation(addLanguage, translateRequest, originalBook.id, LanguageTag(originalBook.language.code), crowdinClient)
+                      case _ => createTranslation(translateRequest, originalBook, fromLanguage, toLanguage, crowdinClient)
+                    }
+
+                    inTranslationTry.map(inTranslation =>
+                      api.TranslateResponse(inTranslation.id.get, CrowdinUtils.crowdinUrlToBook(originalBook, inTranslation.crowdinProjectId, toLanguage)))
+                  })
                 }
-
-                inTranslationTry.map(inTranslation =>
-                  api.TranslateResponse(inTranslation.id.get, CrowdinUtils.crowdinUrlToBook(originalBook, inTranslation.crowdinProjectId, toLanguage)))
-              })
+              }
             }
           }
         })

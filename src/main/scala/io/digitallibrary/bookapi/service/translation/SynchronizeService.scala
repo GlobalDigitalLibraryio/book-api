@@ -34,44 +34,47 @@ trait SynchronizeService {
 
     def fetchTranslatedFile(projectIdentifier: String, crowdinToLanguage: String, fileId: String, status: TranslationStatus.Value): Try[InTranslationFile] = {
       val toLanguage = LanguageTag(crowdinToLanguage)
+      if (translationDbService.checkIfBookCanBeUpdated(fileId, toLanguage)) {
+        Failure(new RuntimeException("Won't update government approved files"))
+      } else {
+        translationDbService.fileForCrowdinProjectWithFileIdAndLanguage(projectIdentifier, fileId, toLanguage) match {
+          case None => {
+            val anInTranslationOpt = translationDbService.fileForCrowdinProjectWithFileId(projectIdentifier, fileId)
+              .headOption
+              .flatMap(x => translationDbService.translationWithId(x.inTranslationId))
 
-      translationDbService.fileForCrowdinProjectWithFileIdAndLanguage(projectIdentifier, fileId, toLanguage) match {
-        case None => {
-          val anInTranslationOpt = translationDbService.fileForCrowdinProjectWithFileId(projectIdentifier, fileId)
-            .headOption
-            .flatMap(x => translationDbService.translationWithId(x.inTranslationId))
-
-          anInTranslationOpt match {
-            case None => Failure(new RuntimeException(s"No translation for project $projectIdentifier and file_id $fileId"))
-            case Some(inTranslation) => for {
-              crowdinClient <- crowdinClientBuilder.forSourceLanguage(inTranslation.fromLanguage)
-              original <- originalBook(inTranslation)
-              addedTranslation <- translationService.addTargetLanguageForTranslation(inTranslation, domain.TranslateRequest(inTranslation.originalTranslationId, inTranslation.fromLanguage.toString, crowdinToLanguage, None), original.id, LanguageTag(original.language.code), crowdinClient)
-              translatedFile <- fetchTranslatedFile(projectIdentifier, crowdinToLanguage, fileId, status)
-            } yield translatedFile
+            anInTranslationOpt match {
+              case None => Failure(new RuntimeException(s"No translation for project $projectIdentifier and file_id $fileId"))
+              case Some(inTranslation) => for {
+                crowdinClient <- crowdinClientBuilder.forSourceLanguage(inTranslation.fromLanguage)
+                original <- originalBook(inTranslation)
+                addedTranslation <- translationService.addTargetLanguageForTranslation(inTranslation, domain.TranslateRequest(inTranslation.originalTranslationId, inTranslation.fromLanguage.toString, crowdinToLanguage, None), original.id, LanguageTag(original.language.code), crowdinClient)
+                translatedFile <- fetchTranslatedFile(projectIdentifier, crowdinToLanguage, fileId, status)
+              } yield translatedFile
+            }
           }
-        }
-        case Some(file) if file.fileType == FileType.CONTENT => {
-          for {
-            inTranslation             <- Try(translationDbService.translationWithId(file.inTranslationId).get)
-            crowdinClient             <- crowdinClientBuilder.forSourceLanguage(inTranslation.fromLanguage  )
-            translatedChapter         <- crowdinClient.fetchTranslatedChapter(file, crowdinToLanguage)
-            originalChapter           <- Try(chapterRepository.withId(file.newChapterId.get).get)
-            mergedChapter             <- Try(mergeService.mergeChapter(originalChapter, translatedChapter))
-            _                         <- Try(chapterRepository.updateChapter(mergedChapter))
-            updatedInTranslationFile  <- translationDbService.updateTranslationStatus(file, status)
-          } yield updatedInTranslationFile
-        }
-        case Some(file) if file.fileType == FileType.METADATA => {
-          for {
-            inTranslation             <- Try(translationDbService.translationWithId(file.inTranslationId).get)
-            crowdinClient             <- crowdinClientBuilder.forSourceLanguage(inTranslation.fromLanguage)
-            translatedMetadata        <- crowdinClient.fetchTranslatedMetaData(file, crowdinToLanguage)
-            newTranslation            <- Try(unFlaggedTranslationsRepository.withId(inTranslation.newTranslationId.get).get)
-            newTranslationWithContrib <- Try(extractContributors(translatedMetadata, newTranslation))
-            originalChapter           <- Try(unFlaggedTranslationsRepository.updateTranslation(newTranslationWithContrib.copy(title = translatedMetadata.title, about = translatedMetadata.description)))
-            updatedInTranslationFile  <- translationDbService.updateTranslationStatus(file, status)
-          } yield updatedInTranslationFile
+          case Some(file) if file.fileType == FileType.CONTENT => {
+            for {
+              inTranslation             <- Try(translationDbService.translationWithId(file.inTranslationId).get)
+              crowdinClient             <- crowdinClientBuilder.forSourceLanguage(inTranslation.fromLanguage  )
+              translatedChapter         <- crowdinClient.fetchTranslatedChapter(file, crowdinToLanguage)
+              originalChapter           <- Try(chapterRepository.withId(file.newChapterId.get).get)
+              mergedChapter             <- Try(mergeService.mergeChapter(originalChapter, translatedChapter))
+              _                         <- Try(chapterRepository.updateChapter(mergedChapter))
+              updatedInTranslationFile  <- translationDbService.updateTranslationStatus(file, status)
+            } yield updatedInTranslationFile
+          }
+          case Some(file) if file.fileType == FileType.METADATA => {
+            for {
+              inTranslation             <- Try(translationDbService.translationWithId(file.inTranslationId).get)
+              crowdinClient             <- crowdinClientBuilder.forSourceLanguage(inTranslation.fromLanguage)
+              translatedMetadata        <- crowdinClient.fetchTranslatedMetaData(file, crowdinToLanguage)
+              newTranslation            <- Try(unFlaggedTranslationsRepository.withId(inTranslation.newTranslationId.get).get)
+              newTranslationWithContrib <- Try(extractContributors(translatedMetadata, newTranslation))
+              originalChapter           <- Try(unFlaggedTranslationsRepository.updateTranslation(newTranslationWithContrib.copy(title = translatedMetadata.title, about = translatedMetadata.description)))
+              updatedInTranslationFile  <- translationDbService.updateTranslationStatus(file, status)
+            } yield updatedInTranslationFile
+          }
         }
       }
     }

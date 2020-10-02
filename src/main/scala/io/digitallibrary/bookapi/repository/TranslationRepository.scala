@@ -23,13 +23,15 @@ trait TranslationRepository {
   val countAllBeforeLimiting = sqls"count(*) over ()"
 
   class TranslationRepository(translationView: TranslationView = UnflaggedTranslations) {
-    private val (t, ch, ea, ctb, p, cat) = (
+    private val (t, ch, ea, ctb, p, cat, it, itf) = (
       translationView.syntax,
       Chapter.syntax,
       EducationalAlignment.syntax,
       Contributor.syntax,
       Person.syntax,
-      Category.syntax)
+      Category.syntax,
+      InTranslation.syntax,
+      InTranslationFile.syntax)
 
     def languagesFor(id: Long)(implicit session: DBSession = ReadOnlyAutoSession): Seq[LanguageTag] = {
       select(t.result.language)
@@ -181,7 +183,8 @@ trait TranslationRepository {
           t.inTransport -> translation.inTransport,
           t.tags -> tagBinder,
           t.categoryIds -> categoryBinder,
-          t.additionalInformation -> translation.additionalInformation
+          t.additionalInformation -> translation.additionalInformation,
+          t.officiallyApproved -> translation.officiallyApproved
         ).toSQL.updateAndReturnGeneratedKey().apply()
 
       translation.copy(id = Some(id), revision = Some(startRevision))
@@ -235,7 +238,8 @@ trait TranslationRepository {
           t.inTransport -> replacement.inTransport,
           t.tags -> tagBinder,
           t.categoryIds -> categoryBinder,
-          t.additionalInformation -> replacement.additionalInformation
+          t.additionalInformation -> replacement.additionalInformation,
+          t.officiallyApproved -> replacement.officiallyApproved
         )
         .where
         .eq(t.id, replacement.id)
@@ -312,6 +316,18 @@ trait TranslationRepository {
         .and
         .eq(t.publishingStatus, status.toString)
         .toSQL.map(rs => rs.int(1)).single().apply().getOrElse(0)
+    }
+
+    def canTranslationBeUpdatedByCrowdin(crowdinFileId: String, toLanguage: LanguageTag)(implicit session: DBSession = ReadOnlyAutoSession): Boolean = {
+      select(t.result.officiallyApproved)
+        .from(translationView as t)
+        .innerJoin(InTranslation as it).on(t.id, it.newTranslationId)
+        .innerJoin(InTranslationFile as itf).on(it.id, itf.inTranslationId)
+        .where
+        .eq(itf.crowdinFileId, crowdinFileId)
+        .and
+        .eq(it.toLanguage, toLanguage.toString())
+        .toSQL.map(rs => rs.boolean(1)).single().apply().getOrElse(false)
     }
   }
 

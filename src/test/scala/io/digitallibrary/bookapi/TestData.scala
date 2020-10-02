@@ -91,7 +91,8 @@ object TestData {
       pageOrientation = DefaultPageOrientation,
       publishingStatus = PublishingStatus.PUBLISHED.toString,
       translationStatus = None,
-      additionalInformation = None)
+      additionalInformation = None,
+      officiallyApproved = Some(false))
 
     val DefaultBookHit = api.BookHit(
       id = 1,
@@ -236,7 +237,8 @@ object TestData {
       bookFormat = BookFormat.HTML.toString,
       source = "storyweaver",
       pageOrientation = PageOrientation.PORTRAIT.toString,
-      additionalInformation = None
+      additionalInformation = None,
+      officiallyApproved = None
     )
   }
 
